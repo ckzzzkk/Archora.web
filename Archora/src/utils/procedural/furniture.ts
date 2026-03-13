@@ -44,6 +44,7 @@ export function createFurniturePiece(
   return {
     id,
     name: type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    category: type,
     roomId,
     position,
     rotation: { x: 0, y: rotation, z: 0 },

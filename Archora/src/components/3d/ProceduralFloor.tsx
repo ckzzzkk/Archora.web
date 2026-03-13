@@ -18,6 +18,23 @@ const FLOOR_COLORS: Record<MaterialType, string> = {
   vinyl: '#908070',
   stone: '#605850',
   parquet: '#8C6030',
+  oak: '#9E7040',
+  walnut: '#5C3A1E',
+  pine: '#C8A464',
+  engineered_wood: '#A07848',
+  laminate: '#B89060',
+  polished_concrete: '#909090',
+  resin: '#C0B8B0',
+  travertine: '#D4C8B0',
+  slate: '#505860',
+  ceramic: '#C8C4BC',
+  porcelain: '#D0CCC8',
+  terrazzo: '#B8A898',
+  cork: '#B8945A',
+  bamboo: '#C8B464',
+  herringbone_parquet: '#906830',
+  chevron_parquet: '#8C6428',
+  rubber: '#484848',
 };
 
 export function ProceduralFloor({ room, walls, selected = false }: ProceduralFloorProps) {

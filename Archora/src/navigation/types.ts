@@ -1,7 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { CompositeScreenProps } from '@react-navigation/native';
 
-// Auth stack
 export type AuthStackParamList = {
   Welcome: undefined;
   Onboarding: undefined;
@@ -9,33 +9,34 @@ export type AuthStackParamList = {
   SignUp: undefined;
 };
 
-// Main tab navigator
+// 4 tabs only
 export type MainTabParamList = {
   Dashboard: undefined;
-  Workspace: { projectId?: string };
-  Generate: undefined;
-  AR: undefined;
   Feed: undefined;
+  AR: undefined;
   Account: undefined;
 };
 
-// Root stack (wraps everything)
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
-  Subscription: { feature?: string };
+  // Workspace and Generation are modals from root stack
+  Workspace: { projectId?: string; fromAR?: boolean } | undefined;
+  Generation: undefined;
+  Subscription: { feature?: string } | undefined;
   TemplateDetail: { templateId: string };
   ThemeCustomiser: undefined;
 };
 
-// Screen props
-export type WelcomeScreenProps = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
-export type OnboardingScreenProps = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
-export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
-export type SignUpScreenProps = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
-export type DashboardScreenProps = BottomTabScreenProps<MainTabParamList, 'Dashboard'>;
-export type WorkspaceScreenProps = BottomTabScreenProps<MainTabParamList, 'Workspace'>;
-export type GenerateScreenProps = BottomTabScreenProps<MainTabParamList, 'Generate'>;
-export type ARScreenProps = BottomTabScreenProps<MainTabParamList, 'AR'>;
-export type FeedScreenProps = BottomTabScreenProps<MainTabParamList, 'Feed'>;
-export type AccountScreenProps = BottomTabScreenProps<MainTabParamList, 'Account'>;
+export type WelcomeScreenProps     = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
+export type OnboardingScreenProps  = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
+export type LoginScreenProps       = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+export type SignUpScreenProps      = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
+
+export type DashboardScreenProps   = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Dashboard'>, NativeStackScreenProps<RootStackParamList>>;
+export type FeedScreenProps        = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Feed'>, NativeStackScreenProps<RootStackParamList>>;
+export type ARScreenProps          = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'AR'>, NativeStackScreenProps<RootStackParamList>>;
+export type AccountScreenProps     = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Account'>, NativeStackScreenProps<RootStackParamList>>;
+
+export type WorkspaceScreenProps   = NativeStackScreenProps<RootStackParamList, 'Workspace'>;
+export type GenerationScreenProps  = NativeStackScreenProps<RootStackParamList, 'Generation'>;

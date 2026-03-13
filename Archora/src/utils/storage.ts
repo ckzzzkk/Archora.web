@@ -1,13 +1,11 @@
-import { createMMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const storage = createMMKV({ id: 'archora-storage' });
+export const storage = {
+  getString: async (key: string): Promise<string | null> => AsyncStorage.getItem(key),
+  set: async (key: string, value: string): Promise<void> => { await AsyncStorage.setItem(key, value); },
+  delete: async (key: string): Promise<void> => { await AsyncStorage.removeItem(key); },
+  clearAll: async (): Promise<void> => { await AsyncStorage.clear(); },
+};
 
-// Blueprint auto-save storage
-export const blueprintStorage = createMMKV({ id: 'archora-blueprint' });
-
-// Session-scoped cache (cleared on sign out)
-export const sessionStorage = createMMKV({ id: 'archora-session' });
-
-export function clearSessionStorage(): void {
-  sessionStorage.clearAll();
-}
+// Alias used by blueprintStore — same API, named separately for clarity
+export const blueprintStorage = storage;

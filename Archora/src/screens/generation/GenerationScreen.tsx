@@ -9,7 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useTierGate } from '../../hooks/useTierGate';
@@ -20,10 +20,10 @@ import { useAuthStore } from '../../stores/authStore';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { BASE_COLORS } from '../../theme/colors';
 import type { BuildingType, ArchStyle } from '../../types';
-import type { MainTabParamList } from '../../navigation/types';
+import type { RootStackParamList } from '../../navigation/types';
 
 const { width } = Dimensions.get('window');
-type Nav = BottomTabNavigationProp<MainTabParamList, 'Generate'>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const STYLES: { key: ArchStyle; label: string }[] = [
   { key: 'modern', label: 'Modern' },

@@ -3,6 +3,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '../stores/authStore';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
+import { BlueprintWorkspaceScreen } from '../screens/workspace/BlueprintWorkspaceScreen';
+import { GenerationScreen } from '../screens/generation/GenerationScreen';
 import { SubscriptionScreen } from '../screens/subscription/SubscriptionScreen';
 import { TemplateDetailScreen } from '../screens/feed/TemplateDetailScreen';
 import { ThemeCustomiserScreen } from '../screens/account/ThemeCustomiserScreen';
@@ -18,6 +20,16 @@ export function RootNavigator() {
       {isAuthenticated ? (
         <>
           <Stack.Screen name="Main" component={MainNavigator} />
+          <Stack.Screen
+            name="Workspace"
+            component={BlueprintWorkspaceScreen}
+            options={{ presentation: 'fullScreenModal' }}
+          />
+          <Stack.Screen
+            name="Generation"
+            component={GenerationScreen}
+            options={{ presentation: 'modal' }}
+          />
           <Stack.Screen
             name="Subscription"
             component={SubscriptionScreen}

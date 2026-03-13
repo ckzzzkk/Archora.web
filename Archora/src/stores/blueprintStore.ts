@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { blueprintStorage } from '../utils/storage';
 import type {
-  BlueprintData, Wall, Room, Opening, FurniturePiece, ViewMode,
-} from '../types';
+  BlueprintData, Wall, Room, Opening, FurniturePiece,
+  CustomAsset, ChatMessage, WallTexture, MaterialType, CeilingType,
+} from '../types/blueprint';
+import type { ViewMode } from '../types';
 
 const SAVE_DEBOUNCE_MS = 2000;
 const STORAGE_KEY = 'blueprint_current';
@@ -12,7 +14,7 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null;
 function scheduleSave(data: BlueprintData): void {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    blueprintStorage.set(STORAGE_KEY, JSON.stringify(data));
+    void blueprintStorage.set(STORAGE_KEY, JSON.stringify(data));
   }, SAVE_DEBOUNCE_MS);
 }
 
@@ -26,29 +28,34 @@ interface BlueprintState {
     clearBlueprint: () => void;
     setViewMode: (mode: ViewMode) => void;
     setSelectedId: (id: string | null) => void;
-
-    // Wall mutations
+    // Wall
     addWall: (wall: Wall) => void;
     updateWall: (id: string, updates: Partial<Wall>) => void;
     deleteWall: (id: string) => void;
-
-    // Room mutations
+    // Room
     addRoom: (room: Room) => void;
     updateRoom: (id: string, updates: Partial<Room>) => void;
     deleteRoom: (id: string) => void;
-
-    // Opening mutations
+    // Opening
     addOpening: (opening: Opening) => void;
     updateOpening: (id: string, updates: Partial<Opening>) => void;
     deleteOpening: (id: string) => void;
-
-    // Furniture mutations
+    // Furniture
     addFurniture: (piece: FurniturePiece) => void;
     updateFurniture: (id: string, updates: Partial<FurniturePiece>) => void;
     deleteFurniture: (id: string) => void;
-
+    // Surfaces
+    setWallTexture: (wallId: string, texture: WallTexture) => void;
+    setRoomFloor: (roomId: string, material: MaterialType) => void;
+    setRoomCeiling: (roomId: string, ceiling: CeilingType) => void;
+    // Custom assets
+    addCustomAsset: (asset: CustomAsset) => void;
+    removeCustomAsset: (id: string) => void;
+    // Chat
+    addChatMessage: (msg: ChatMessage) => void;
+    clearChatHistory: () => void;
     // Persistence
-    loadFromStorage: () => void;
+    loadFromStorage: () => Promise<void>;
     forceSave: () => void;
   };
 }
@@ -67,7 +74,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => ({
 
     clearBlueprint: () => {
       set({ blueprint: null, selectedId: null, isDirty: false });
-      blueprintStorage.remove(STORAGE_KEY);
+      void blueprintStorage.delete(STORAGE_KEY);
     },
 
     setViewMode: (mode) => set({ viewMode: mode }),
@@ -84,10 +91,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => ({
     updateWall: (id, updates) => {
       const { blueprint } = get();
       if (!blueprint) return;
-      const updated = {
-        ...blueprint,
-        walls: blueprint.walls.map((w) => w.id === id ? { ...w, ...updates } : w),
-      };
+      const updated = { ...blueprint, walls: blueprint.walls.map((w) => w.id === id ? { ...w, ...updates } : w) };
       set({ blueprint: updated, isDirty: true });
       scheduleSave(updated);
     },
@@ -111,10 +115,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => ({
     updateRoom: (id, updates) => {
       const { blueprint } = get();
       if (!blueprint) return;
-      const updated = {
-        ...blueprint,
-        rooms: blueprint.rooms.map((r) => r.id === id ? { ...r, ...updates } : r),
-      };
+      const updated = { ...blueprint, rooms: blueprint.rooms.map((r) => r.id === id ? { ...r, ...updates } : r) };
       set({ blueprint: updated, isDirty: true });
       scheduleSave(updated);
     },
@@ -138,10 +139,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => ({
     updateOpening: (id, updates) => {
       const { blueprint } = get();
       if (!blueprint) return;
-      const updated = {
-        ...blueprint,
-        openings: blueprint.openings.map((o) => o.id === id ? { ...o, ...updates } : o),
-      };
+      const updated = { ...blueprint, openings: blueprint.openings.map((o) => o.id === id ? { ...o, ...updates } : o) };
       set({ blueprint: updated, isDirty: true });
       scheduleSave(updated);
     },
@@ -149,9 +147,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => ({
     deleteOpening: (id) => {
       const { blueprint } = get();
       if (!blueprint) return;
-      const updated = {
-        ...blueprint, openings: blueprint.openings.filter((o) => o.id !== id),
-      };
+      const updated = { ...blueprint, openings: blueprint.openings.filter((o) => o.id !== id) };
       set({ blueprint: updated, isDirty: true });
       scheduleSave(updated);
     },
@@ -167,10 +163,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => ({
     updateFurniture: (id, updates) => {
       const { blueprint } = get();
       if (!blueprint) return;
-      const updated = {
-        ...blueprint,
-        furniture: blueprint.furniture.map((f) => f.id === id ? { ...f, ...updates } : f),
-      };
+      const updated = { ...blueprint, furniture: blueprint.furniture.map((f) => f.id === id ? { ...f, ...updates } : f) };
       set({ blueprint: updated, isDirty: true });
       scheduleSave(updated);
     },
@@ -178,15 +171,70 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => ({
     deleteFurniture: (id) => {
       const { blueprint } = get();
       if (!blueprint) return;
-      const updated = {
-        ...blueprint, furniture: blueprint.furniture.filter((f) => f.id !== id),
-      };
+      const updated = { ...blueprint, furniture: blueprint.furniture.filter((f) => f.id !== id) };
       set({ blueprint: updated, isDirty: true });
       scheduleSave(updated);
     },
 
-    loadFromStorage: () => {
-      const raw = blueprintStorage.getString(STORAGE_KEY);
+    setWallTexture: (wallId, texture) => {
+      const { blueprint } = get();
+      if (!blueprint) return;
+      const updated = { ...blueprint, walls: blueprint.walls.map((w) => w.id === wallId ? { ...w, texture } : w) };
+      set({ blueprint: updated, isDirty: true });
+      scheduleSave(updated);
+    },
+
+    setRoomFloor: (roomId, material) => {
+      const { blueprint } = get();
+      if (!blueprint) return;
+      const updated = { ...blueprint, rooms: blueprint.rooms.map((r) => r.id === roomId ? { ...r, floorMaterial: material } : r) };
+      set({ blueprint: updated, isDirty: true });
+      scheduleSave(updated);
+    },
+
+    setRoomCeiling: (roomId, ceiling) => {
+      const { blueprint } = get();
+      if (!blueprint) return;
+      const updated = { ...blueprint, rooms: blueprint.rooms.map((r) => r.id === roomId ? { ...r, ceilingType: ceiling } : r) };
+      set({ blueprint: updated, isDirty: true });
+      scheduleSave(updated);
+    },
+
+    addCustomAsset: (asset) => {
+      const { blueprint } = get();
+      if (!blueprint) return;
+      const updated = { ...blueprint, customAssets: [...(blueprint.customAssets ?? []), asset] };
+      set({ blueprint: updated, isDirty: true });
+      scheduleSave(updated);
+    },
+
+    removeCustomAsset: (id) => {
+      const { blueprint } = get();
+      if (!blueprint) return;
+      const updated = { ...blueprint, customAssets: (blueprint.customAssets ?? []).filter((a) => a.id !== id) };
+      set({ blueprint: updated, isDirty: true });
+      scheduleSave(updated);
+    },
+
+    addChatMessage: (msg) => {
+      const { blueprint } = get();
+      if (!blueprint) return;
+      const history = [...(blueprint.chatHistory ?? []), msg].slice(-20);
+      const updated = { ...blueprint, chatHistory: history };
+      set({ blueprint: updated });
+      scheduleSave(updated);
+    },
+
+    clearChatHistory: () => {
+      const { blueprint } = get();
+      if (!blueprint) return;
+      const updated = { ...blueprint, chatHistory: [] };
+      set({ blueprint: updated });
+      scheduleSave(updated);
+    },
+
+    loadFromStorage: async () => {
+      const raw = await blueprintStorage.getString(STORAGE_KEY);
       if (!raw) return;
       try {
         const data = JSON.parse(raw) as BlueprintData;
@@ -200,7 +248,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => ({
       const { blueprint } = get();
       if (!blueprint) return;
       if (saveTimer) clearTimeout(saveTimer);
-      blueprintStorage.set(STORAGE_KEY, JSON.stringify(blueprint));
+      void blueprintStorage.set(STORAGE_KEY, JSON.stringify(blueprint));
     },
   },
 }));

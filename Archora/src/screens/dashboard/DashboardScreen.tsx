@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useTheme } from '../../hooks/useTheme';
@@ -17,10 +17,10 @@ import { ProjectCard } from '../../components/dashboard/ProjectCard';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { BASE_COLORS } from '../../theme/colors';
 import { TIER_LIMITS } from '../../utils/tierLimits';
-import type { MainTabParamList } from '../../navigation/types';
+import type { RootStackParamList } from '../../navigation/types';
 import type { BuildingType } from '../../types';
 
-type Nav = BottomTabNavigationProp<MainTabParamList, 'Dashboard'>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const BUILDING_TYPES: { key: BuildingType; label: string }[] = [
   { key: 'house', label: 'House' },
