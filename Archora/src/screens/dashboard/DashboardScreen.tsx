@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, RefreshControl, Alert,
 } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withSpring,
+  useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -197,10 +197,23 @@ export function DashboardScreen() {
   const [showNewProject, setShowNewProject] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fabScale = useSharedValue(1);
+  const fabScale = useSharedValue(0);
   const fabStyle = useAnimatedStyle(() => ({
     transform: [{ scale: fabScale.value }],
   }));
+
+  const headerY = useSharedValue(-30);
+  const headerOp = useSharedValue(0);
+  const headerAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: headerY.value }],
+    opacity: headerOp.value,
+  }));
+
+  useEffect(() => {
+    headerY.value = withSpring(0, { damping: 18, stiffness: 200 });
+    headerOp.value = withTiming(1, { duration: 250 });
+    fabScale.value = withDelay(400, withSpring(1, { damping: 14, stiffness: 180 }));
+  }, []);
 
   useEffect(() => {
     if (user?.id) {
@@ -242,7 +255,7 @@ export function DashboardScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
       {/* Header */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16 }}>
+      <Animated.View style={[{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16 }, headerAnimStyle]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <Text style={{
             fontFamily: 'ArchitectsDaughter_400Regular',
@@ -291,7 +304,7 @@ export function DashboardScreen() {
             </View>
           </View>
         )}
-      </View>
+      </Animated.View>
 
       {/* Projects grid */}
       {isLoading ? (

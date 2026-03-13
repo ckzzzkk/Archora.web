@@ -50,7 +50,7 @@ export function useOfflineSync(projectId?: string): OfflineSyncState {
       setLastSynced(new Date());
       setPendingChanges(0);
     } catch {
-      // Sync failed — local copy is safe via MMKV
+      // Sync failed — local copy is safe via AsyncStorage
     } finally {
       setIsSyncing(false);
     }

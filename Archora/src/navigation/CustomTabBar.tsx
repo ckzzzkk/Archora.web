@@ -18,6 +18,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useHaptics } from '../hooks/useHaptics';
 import { BASE_COLORS } from '../theme/colors';
 import type { RootStackParamList } from './types';
+import { useTabDirection } from './TabDirectionContext';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -51,6 +52,14 @@ const ICONS: Record<string, (color: string) => React.ReactElement> = {
       <Path d="M2 16 V20 H6" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" />
       <Path d="M18 20 H22 V16" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" />
       <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth="1.5" fill="none" />
+    </Svg>
+  ),
+  Sketch: (color) => (
+    <Svg width={22} height={22} viewBox="0 0 24 24">
+      <Rect x="3" y="14" width="14" height="7" rx="1" stroke={color} strokeWidth="1.8" fill="none"/>
+      <Path d="M14 14 L19 9 L21 11 L16 16" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+      <Path d="M19 9 L21 7 L23 9 L21 11 Z" fill={color} opacity={0.7}/>
+      <Path d="M6 17 H11" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity={0.5}/>
     </Svg>
   ),
   Account: (color) => (
@@ -109,7 +118,7 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={{ width: 64, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}
+      style={{ width: 58, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}
     >
       {/* Active pill background */}
       <Animated.View
@@ -224,6 +233,12 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   const { colors } = useTheme();
   const { medium } = useHaptics();
   const insets = useSafeAreaInsets();
+  const { setDirection } = useTabDirection();
+  const prevIndexRef = useRef(state.index);
+
+  useEffect(() => {
+    prevIndexRef.current = state.index;
+  }, [state.index]);
 
   return (
     <View
@@ -266,6 +281,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
             });
             if (!isFocused && !event.defaultPrevented) {
               medium();
+              setDirection(index > prevIndexRef.current ? 'right' : 'left');
               navigation.navigate(route.name, route.params);
             }
           };

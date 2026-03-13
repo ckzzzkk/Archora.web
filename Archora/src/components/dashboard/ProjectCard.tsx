@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
+  withDelay,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
@@ -82,6 +83,8 @@ export function ProjectCard({ project, onPress, onDelete, onRename, index }: Pro
   const scale = useSharedValue(1);
   const translateY = useSharedValue(40);
   const opacity = useSharedValue(0);
+  const rotationOffset = useRef(Math.random() * 4 - 2).current;
+  const rotation = useSharedValue(rotationOffset);
 
   React.useEffect(() => {
     const delay = index * 80;
@@ -89,10 +92,15 @@ export function ProjectCard({ project, onPress, onDelete, onRename, index }: Pro
       translateY.value = withSpring(0, { damping: 16, stiffness: 120 });
       opacity.value = withTiming(1, { duration: 300 });
     }, delay);
+    rotation.value = withDelay(delay + 100, withSpring(0, { damping: 12, stiffness: 80 }));
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { translateY: translateY.value }],
+    transform: [
+      { scale: scale.value },
+      { translateY: translateY.value },
+      { rotate: `${rotation.value}deg` },
+    ],
     opacity: opacity.value,
   }));
 

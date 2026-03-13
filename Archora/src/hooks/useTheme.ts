@@ -1,6 +1,5 @@
-import { useCallback } from 'react';
-import { useMMKVString } from 'react-native-mmkv';
-import { storage } from '../utils/storage';
+import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_COLORS, COLOR_THEMES, type ThemeName, type ColorTheme } from '../theme/colors';
 
 const THEME_KEY = 'archora_theme';
@@ -28,11 +27,19 @@ export interface ThemeColors {
 }
 
 export function useTheme() {
-  const [themeName, setThemeName] = useMMKVString(THEME_KEY, storage);
-  const [customPrimary] = useMMKVString(CUSTOM_PRIMARY_KEY, storage);
+  const [themeName, setThemeNameState] = useState<ThemeName>('drafting');
+  const [customPrimary, setCustomPrimary] = useState<string | null>(null);
 
-  const currentThemeName = (themeName as ThemeName) ?? 'drafting';
-  const themeConfig: ColorTheme = COLOR_THEMES[currentThemeName] ?? COLOR_THEMES.drafting;
+  useEffect(() => {
+    AsyncStorage.getItem(THEME_KEY).then((v) => {
+      if (v) setThemeNameState(v as ThemeName);
+    });
+    AsyncStorage.getItem(CUSTOM_PRIMARY_KEY).then((v) => {
+      setCustomPrimary(v);
+    });
+  }, []);
+
+  const themeConfig: ColorTheme = COLOR_THEMES[themeName] ?? COLOR_THEMES.drafting;
 
   const colors: ThemeColors = {
     ...BASE_COLORS,
@@ -43,12 +50,13 @@ export function useTheme() {
   };
 
   const setTheme = useCallback((name: ThemeName) => {
-    setThemeName(name);
-  }, [setThemeName]);
+    setThemeNameState(name);
+    void AsyncStorage.setItem(THEME_KEY, name);
+  }, []);
 
   return {
     colors,
-    themeName: currentThemeName,
+    themeName,
     themeConfig,
     setTheme,
     allThemes: COLOR_THEMES,

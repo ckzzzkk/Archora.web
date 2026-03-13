@@ -9,9 +9,9 @@ export type AuthStackParamList = {
   SignUp: undefined;
 };
 
-// 4 tabs only
 export type MainTabParamList = {
   Dashboard: undefined;
+  Sketch: undefined;
   Feed: undefined;
   AR: undefined;
   Account: undefined;
@@ -37,6 +37,7 @@ export type DashboardScreenProps   = CompositeScreenProps<BottomTabScreenProps<M
 export type FeedScreenProps        = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Feed'>, NativeStackScreenProps<RootStackParamList>>;
 export type ARScreenProps          = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'AR'>, NativeStackScreenProps<RootStackParamList>>;
 export type AccountScreenProps     = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Account'>, NativeStackScreenProps<RootStackParamList>>;
+export type SketchScreenProps      = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Sketch'>, NativeStackScreenProps<RootStackParamList>>;
 
 export type WorkspaceScreenProps   = NativeStackScreenProps<RootStackParamList, 'Workspace'>;
 export type GenerationScreenProps  = NativeStackScreenProps<RootStackParamList, 'Generation'>;
