@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useReducer } from 'react';
 import { View, Text, Pressable, FlatList, Dimensions, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -14,8 +14,6 @@ import {
   Path as SkiaPath,
   Line as SkiaLine,
   Circle as SkiaCircle,
-  useSharedValueEffect,
-  useValue,
 } from '@shopify/react-native-skia';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -390,24 +388,44 @@ export function SketchScreen() {
   const lastSnappedX = useSharedValue(-9999);
   const lastSnappedY = useSharedValue(-9999);
 
-  // Skia bridged values
-  const skScale = useValue(1);
-  const skOffsetX = useValue(SCREEN_W / 2);
-  const skOffsetY = useValue(CANVAS_H / 2);
-  const skDrawStartX = useValue(-9999);
-  const skDrawStartY = useValue(-9999);
-  const skPreviewEndX = useValue(-9999);
-  const skPreviewEndY = useValue(-9999);
-  const skIsDrawing = useValue(false);
+  // Mirror Reanimated shared values into refs for Skia canvas reads.
+  // useValue / useSharedValueEffect were removed in newer @shopify/react-native-skia;
+  // we use plain refs updated via useAnimatedReaction and force a React re-render
+  // so the Canvas picks up the latest values on each gesture frame.
+  const skScale = useRef(1);
+  const skOffsetX = useRef(SCREEN_W / 2);
+  const skOffsetY = useRef(CANVAS_H / 2);
+  const skDrawStartX = useRef(-9999);
+  const skDrawStartY = useRef(-9999);
+  const skPreviewEndX = useRef(-9999);
+  const skPreviewEndY = useRef(-9999);
+  const skIsDrawing = useRef(false);
 
-  useSharedValueEffect(() => { skScale.current = scale.value; }, scale);
-  useSharedValueEffect(() => { skOffsetX.current = offsetX.value; }, offsetX);
-  useSharedValueEffect(() => { skOffsetY.current = offsetY.value; }, offsetY);
-  useSharedValueEffect(() => { skDrawStartX.current = drawStartX.value; }, drawStartX);
-  useSharedValueEffect(() => { skDrawStartY.current = drawStartY.value; }, drawStartY);
-  useSharedValueEffect(() => { skPreviewEndX.current = previewEndX.value; }, previewEndX);
-  useSharedValueEffect(() => { skPreviewEndY.current = previewEndY.value; }, previewEndY);
-  useSharedValueEffect(() => { skIsDrawing.current = isDrawing.value; }, isDrawing);
+  const [, forceCanvasRender] = useReducer((n: number) => n + 1, 0);
+
+  useAnimatedReaction(
+    () => ({
+      s: scale.value,
+      ox: offsetX.value,
+      oy: offsetY.value,
+      dsx: drawStartX.value,
+      dsy: drawStartY.value,
+      pex: previewEndX.value,
+      pey: previewEndY.value,
+      id: isDrawing.value,
+    }),
+    (curr) => {
+      skScale.current = curr.s;
+      skOffsetX.current = curr.ox;
+      skOffsetY.current = curr.oy;
+      skDrawStartX.current = curr.dsx;
+      skDrawStartY.current = curr.dsy;
+      skPreviewEndX.current = curr.pex;
+      skPreviewEndY.current = curr.pey;
+      skIsDrawing.current = curr.id;
+      runOnJS(forceCanvasRender)();
+    },
+  );
 
   // Screen entry animations
   const headerY = useSharedValue(-40);
