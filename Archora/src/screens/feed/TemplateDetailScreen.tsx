@@ -18,7 +18,7 @@ import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { BASE_COLORS } from '../../theme/colors';
-import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { LogoLoader } from '../../components/common/LogoLoader';
 import { LikeButton } from '../../components/social/LikeButton';
 import { SaveButton } from '../../components/social/SaveButton';
 import { RatingStars } from '../../components/social/RatingStars';
@@ -98,7 +98,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
-        <CompassRoseLoader size="large" />
+        <LogoLoader size="large" />
       </View>
     );
   }

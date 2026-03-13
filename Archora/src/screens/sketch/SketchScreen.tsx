@@ -27,6 +27,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { BASE_COLORS } from '../../theme/colors';
 import { useScreenSlideIn } from '../../hooks/useScreenSlideIn';
+import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData, Wall, Room, RoomType, Vector2D } from '../../types/blueprint';
 
@@ -567,10 +568,13 @@ export function SketchScreen() {
     <Animated.View style={[{ flex: 1, backgroundColor: BASE_COLORS.background }, slideStyle]}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         {/* Header */}
-        <Animated.View style={[headerAnimStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 }]}>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: BASE_COLORS.textPrimary }}>
-            Sketch
-          </Text>
+        <Animated.View style={[headerAnimStyle, { paddingHorizontal: 20, paddingVertical: 14 }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <HeaderLogoMark size={32} />
+            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: BASE_COLORS.textPrimary, marginLeft: 10 }}>
+              Sketch
+            </Text>
+          </View>
 
           {/* Mode toggle pill */}
           <View style={{
@@ -580,6 +584,7 @@ export function SketchScreen() {
             padding: 3,
             borderWidth: 1,
             borderColor: BASE_COLORS.border,
+            alignSelf: 'flex-start',
           }}>
             {(['draw', 'presets'] as SketchMode[]).map((m) => (
               <Pressable

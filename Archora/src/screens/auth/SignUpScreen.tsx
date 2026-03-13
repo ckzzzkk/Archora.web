@@ -19,7 +19,7 @@ import type { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../stores/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
-import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { LogoLoader } from '../../components/common/LogoLoader';
 import { BASE_COLORS } from '../../theme/colors';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'SignUp'>;
@@ -531,7 +531,7 @@ export function SignUpScreen() {
               }}
             >
               {loading ? (
-                <CompassRoseLoader size="small" />
+                <LogoLoader size="small" />
               ) : (
                 <>
                   <ButtonCompassRose spinning={buttonSpinning} color={BASE_COLORS.background} />

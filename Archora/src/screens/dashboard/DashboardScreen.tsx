@@ -14,7 +14,8 @@ import { useProjectStore } from '../../stores/projectStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { ProjectCard } from '../../components/dashboard/ProjectCard';
-import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { LogoLoader } from '../../components/common/LogoLoader';
+import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import { BASE_COLORS } from '../../theme/colors';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
@@ -256,31 +257,16 @@ export function DashboardScreen() {
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
       {/* Header */}
       <Animated.View style={[{ paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16 }, headerAnimStyle]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+          <HeaderLogoMark size={32} />
           <Text style={{
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 28,
             color: BASE_COLORS.textPrimary,
+            marginLeft: 10,
           }}>
             Your Projects
           </Text>
-          {/* Avatar */}
-          <View style={{
-            width: 36,
-            height: 36,
-            borderRadius: 999,
-            backgroundColor: colors.primary,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <Text style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
-              fontSize: 16,
-              color: BASE_COLORS.background,
-            }}>
-              {user?.displayName?.[0]?.toUpperCase() ?? 'A'}
-            </Text>
-          </View>
         </View>
 
         {/* Usage dimension line */}
@@ -309,7 +295,7 @@ export function DashboardScreen() {
       {/* Projects grid */}
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <CompassRoseLoader size="medium" />
+          <LogoLoader size="medium" />
         </View>
       ) : projects.length === 0 ? (
         <EmptyState colors={colors} />

@@ -18,6 +18,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { BASE_COLORS } from '../../theme/colors';
+import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import { useScreenSlideIn } from '../../hooks/useScreenSlideIn';
 import type { RootStackParamList } from '../../navigation/types';
@@ -202,6 +203,13 @@ export function AccountScreen() {
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: BASE_COLORS.background }, slideStyle]}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        {/* Header */}
+        <Animated.View style={[headerAnimStyle, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 }]}>
+          <HeaderLogoMark size={32} />
+          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 28, color: BASE_COLORS.textPrimary, marginLeft: 10 }}>
+            Account
+          </Text>
+        </Animated.View>
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
 
           {/* Header section */}

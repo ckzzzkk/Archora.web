@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, PanResponder } from 'react-native';
 import { Canvas, useFrame, useThree } from '@react-three/fiber/native';
 import * as THREE from 'three';
 import { ProceduralBuilding } from './ProceduralBuilding';
-import { CompassRoseLoader } from '../common/CompassRoseLoader';
+import { LogoLoader } from '../common/LogoLoader';
 import { EmptyState } from '../common/EmptyState';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTheme } from '../../hooks/useTheme';

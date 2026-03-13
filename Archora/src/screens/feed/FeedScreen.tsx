@@ -13,7 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FeedCard } from '../../components/social/FeedCard';
-import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { LogoLoader } from '../../components/common/LogoLoader';
+import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useFeed } from '../../hooks/useFeed';
@@ -130,7 +131,7 @@ export function FeedScreen() {
     if (!isFetchingMore) return null;
     return (
       <View style={{ padding: 16, alignItems: 'center' }}>
-        <CompassRoseLoader size="small" />
+        <LogoLoader size="small" />
       </View>
     );
   };
@@ -145,14 +146,12 @@ export function FeedScreen() {
             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16 },
           ]}
         >
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 28, color: BASE_COLORS.textPrimary }}>
-            Inspo
-          </Text>
-          <Pressable onPress={toggleSearch} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 18, color: colors.primary }}>
-              {searchVisible ? '✕' : '⌕'}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <HeaderLogoMark size={32} />
+            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 28, color: BASE_COLORS.textPrimary, marginLeft: 10 }}>
+              Inspo
             </Text>
-          </Pressable>
+          </View>
         </Animated.View>
 
         {/* Search bar */}
@@ -210,7 +209,7 @@ export function FeedScreen() {
         {/* Content */}
         {isLoading ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <CompassRoseLoader size="medium" />
+            <LogoLoader size="medium" />
           </View>
         ) : templates.length === 0 ? (
           <EmptyState colors={colors} />

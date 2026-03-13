@@ -17,7 +17,7 @@ import { aiService } from '../../services/aiService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useAuthStore } from '../../stores/authStore';
-import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { LogoLoader } from '../../components/common/LogoLoader';
 import { BASE_COLORS } from '../../theme/colors';
 import type { BuildingType, ArchStyle } from '../../types';
 import type { RootStackParamList } from '../../navigation/types';
@@ -365,7 +365,7 @@ export function GenerationScreen() {
             </Animated.View>
 
             <Animated.View style={compassStyle}>
-              <CompassRoseLoader size="medium" />
+              <LogoLoader size="medium" />
             </Animated.View>
             <Text style={{
               fontFamily: 'Inter_400Regular',
@@ -433,7 +433,7 @@ export function GenerationScreen() {
             }}
           >
             {isGenerating ? (
-              <CompassRoseLoader size="small" />
+              <LogoLoader size="small" />
             ) : null}
             <Text style={{
               fontFamily: 'ArchitectsDaughter_400Regular',

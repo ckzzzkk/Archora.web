@@ -18,6 +18,7 @@ interface UIState {
   isKeyboardVisible: boolean;
   bottomSheetSnapIndex: number;
   generationProgress: number; // 0–1
+  primaryColor: string; // synced from useTheme for reactive cross-component updates
 
   actions: {
     showToast: (message: string, type?: ToastType, duration?: number) => void;
@@ -28,6 +29,7 @@ interface UIState {
     setKeyboardVisible: (visible: boolean) => void;
     setBottomSheetSnap: (index: number) => void;
     setGenerationProgress: (progress: number) => void;
+    setPrimaryColor: (color: string) => void;
   };
 }
 
@@ -40,6 +42,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   isKeyboardVisible: false,
   bottomSheetSnapIndex: 0,
   generationProgress: 0,
+  primaryColor: '#C8C8C8', // default: drafting theme primary
 
   actions: {
     showToast: (message, type = 'info', duration = 3000) => {
@@ -64,5 +67,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     setBottomSheetSnap: (index) => set({ bottomSheetSnapIndex: index }),
 
     setGenerationProgress: (progress) => set({ generationProgress: progress }),
+
+    setPrimaryColor: (color) => set({ primaryColor: color }),
   },
 }));
