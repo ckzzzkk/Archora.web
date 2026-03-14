@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#1A1A1A"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.archora.app",
@@ -28,15 +30,22 @@
       },
       "package": "com.archora.app",
       "versionCode": 1,
-      "permissions": ["CAMERA", "RECORD_AUDIO"]
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-camera",
-      ["expo-av", { "microphonePermission": "Archora uses your microphone for voice-to-prompt architectural description." }],
-      "react-native-reanimated"
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Archora uses your microphone for voice-to-prompt architectural description."
+        }
+      ]
     ],
     "extra": {
       "eas": {

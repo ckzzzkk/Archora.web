@@ -117,74 +117,8 @@ declare module '@react-three/drei/native' {
 
 // three.js types are provided by @types/three (installed as devDependency)
 
-declare module '@react-native-community/netinfo' {
-  export interface NetInfoState { isConnected: boolean | null; }
-  export function addEventListener(cb: (state: NetInfoState) => void): () => void;
-  const NetInfo: { addEventListener: typeof addEventListener };
-  export default NetInfo;
-}
-
-declare module '@react-navigation/native' {
-  export function useNavigation<T = unknown>(): T;
-  export function useRoute<T = unknown>(): { params: T; name: string };
-  export function useFocusEffect(cb: () => void | (() => void)): void;
-  export function useIsFocused(): boolean;
-  export const NavigationContainer: import('react').ComponentType<{ children: import('react').ReactNode }>;
-}
-
-declare module '@react-navigation/stack' {
-  import type { ComponentType } from 'react';
-  export function createStackNavigator(): {
-    Navigator: ComponentType<{ children: import('react').ReactNode; screenOptions?: unknown }>;
-    Screen: ComponentType<{ name: string; component: ComponentType<any>; options?: unknown }>;
-  };
-}
-
-declare module '@react-navigation/bottom-tabs' {
-  import type { ComponentType } from 'react';
-  export interface TabRoute { key: string; name: string; params?: unknown; }
-  export interface BottomTabBarProps {
-    state: { routes: TabRoute[]; index: number };
-    descriptors: Record<string, { options: Record<string, unknown> }>;
-    navigation: {
-      navigate: (name: string, params?: unknown) => void;
-      emit: (event: { type: string; target: string; canPreventDefault?: boolean }) => { defaultPrevented: boolean };
-    };
-  }
-  export type BottomTabScreenProps<TParamList extends Record<string, unknown>, TRouteName extends keyof TParamList = keyof TParamList> = {
-    navigation: unknown;
-    route: { key: string; name: TRouteName; params: TParamList[TRouteName] };
-  };
-  export type BottomTabNavigationProp<TParamList extends Record<string, unknown>, TRouteName extends keyof TParamList = keyof TParamList> = {
-    navigate: (screen: keyof TParamList, params?: unknown) => void;
-    goBack: () => void;
-  };
-  export function createBottomTabNavigator<TParamList extends Record<string, unknown> = Record<string, unknown>>(): {
-    Navigator: ComponentType<{ children: import('react').ReactNode; screenOptions?: unknown; tabBar?: unknown }>;
-    Screen: ComponentType<{ name: keyof TParamList; component: ComponentType<any>; options?: unknown }>;
-  };
-}
-
-declare module '@react-navigation/native-stack' {
-  import type { ComponentType } from 'react';
-  export type NativeStackScreenProps<TParamList extends Record<string, unknown>, TRouteName extends keyof TParamList = keyof TParamList> = {
-    navigation: {
-      navigate: (screen: keyof TParamList, params?: unknown) => void;
-      goBack: () => void;
-      replace: (screen: keyof TParamList, params?: unknown) => void;
-    };
-    route: { key: string; name: TRouteName; params: TParamList[TRouteName] };
-  };
-  export type NativeStackNavigationProp<TParamList extends Record<string, unknown>, TRouteName extends keyof TParamList = keyof TParamList> = {
-    navigate: (screen: keyof TParamList, params?: unknown) => void;
-    goBack: () => void;
-    replace: (screen: keyof TParamList, params?: unknown) => void;
-  };
-  export function createNativeStackNavigator<TParamList extends Record<string, unknown> = Record<string, unknown>>(): {
-    Navigator: ComponentType<{ children: import('react').ReactNode; screenOptions?: unknown; initialRouteName?: keyof TParamList }>;
-    Screen: ComponentType<{ name: keyof TParamList; component: ComponentType<any>; options?: unknown }>;
-  };
-}
+// @react-native-community/netinfo — real package installed, types from package
+// @react-navigation/* — real packages installed, types from packages
 
 declare module 'expo-router' {
   export function useRouter(): { push: (route: string) => void; back: () => void; replace: (route: string) => void };

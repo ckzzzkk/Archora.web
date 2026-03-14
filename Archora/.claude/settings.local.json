@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv /home/crokora/Archora/_backup /tmp/archora_backup_internal)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npx expo:*)",
+      "Bash(echo \"exit_code=$?\")",
+      "Bash(npx tsc:*)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(npm install:*)",
+      "Bash(python3 -m json.tool)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(node node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(node node_modules/typescript/bin/tsc --version)",
+      "Bash(grep -l className node_modules/nativewind/dist/*.d.ts)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(for pkg:*)",
+      "Bash(npm info:*)",
+      "Read(//tmp/**)",
+      "Bash(npm pack:*)",
+      "Bash(tar -xzf expo-54.0.33.tgz package/bundledNativeModules.json)",
+      "Bash(rm -rf expo-54.0.33.tgz package/)",
+      "Bash(cd /tmp && npm pack react-native-reanimated@4.1.1 --silent 2>/dev/null && tar -xzf react-native-reanimated-4.1.1.tgz package/plugin/index.js 2>/dev/null && ls package/plugin/ 2>/dev/null && rm -rf react-native-reanimated-4.1.1.tgz package/)",
+      "Bash(grep -r \"zod\" /home/crokora/Archora/src --include=\"*.ts\" --include=\"*.tsx\" -l 2>/dev/null | head -5)",
+      "Bash(ls node_modules/react-native-reanimated/plugin* 2>/dev/null && ls node_modules/react-native-reanimated/plugin/ 2>/dev/null | head -5)",
+      "Bash(npx expo-doctor:*)",
+      "Bash(pkill -f \"expo start\" 2>/dev/null; sleep 2; timeout 60 npx expo start --clear --tunnel --port 8082 2>&1 || true)",
+      "Bash(cat /home/crokora/Archora/package.json | python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}; [print\\(k,v\\) for k,v in deps.items\\(\\) if any\\(x in k for x in ['reanimated','svg','native-svg','expo','supabase','nativewind']\\)]\")",
+      "Bash(cat /home/crokora/.claude/projects/-home-crokora-Archora/5c7ba616-93fc-42c2-b8db-99c87bc9b10f/tool-results/toolu_01LWC1VuZQ2HrebnF34PeHVa.json | python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0]['text']\\)\" 2>/dev/null)",
+      "Bash(git add:*)",
+      "Bash(find /home/crokora/Archora/src/types -type f -name \"*.ts\" | xargs ls -lh)",
+      "Bash(git commit:*)",
+      "Bash(file /home/crokora/Archora/assets/*.png | head -10)",
+      "Bash(node -e \"const pkg = require\\('/home/crokora/Archora/node_modules/@shopify/react-native-skia/package.json'\\); console.log\\(pkg.version\\);\"22)",
+      "Bash(node -e \"const exp = require\\('/home/crokora/Archora/node_modules/@shopify/react-native-skia/src/index.ts'\\); console.log\\(Object.keys\\(exp\\).filter\\(k => k.includes\\('Value'\\) || k.includes\\('Effect'\\)\\)\\);\" 2>/dev/null || grep -r \"useSharedValueEffect\\\\|useValue\" /home/crokora/Archora/node_modules/@shopify/react-native-skia/src/index.ts 2>/dev/null | head -5 || echo \"Cannot introspect TS exports directly\")",
+      "Bash(grep -r \"export.*Canvas\\\\b\" /home/crokora/Archora/node_modules/@shopify/react-native-skia/src/index.ts 2>/dev/null | head -5)",
+      "Bash(df /home 2>&1; echo \"exit: $?\")"
+    ]
+  }
+}
