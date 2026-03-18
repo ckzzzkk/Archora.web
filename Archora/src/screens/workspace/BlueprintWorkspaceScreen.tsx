@@ -10,12 +10,15 @@ import { useTierGate } from '../../hooks/useTierGate';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
+import { Canvas2D } from '../../components/blueprint/Canvas2D';
 import { FurnitureLibrarySheet } from '../../components/blueprint/FurnitureLibrarySheet';
 import { AIChatPanel } from '../../components/blueprint/AIChatPanel';
 import { SurfacesSheet } from '../../components/blueprint/SurfacesSheet';
 import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
 import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
 import { TierGate } from '../../components/common/TierGate';
+import { Viewer3D } from '../../components/3d/Viewer3D';
+import { InHouseView } from '../../components/3d/InHouseView';
 import { BASE_COLORS } from '../../theme/colors';
 import type { RootStackParamList } from '../../navigation/types';
 import type { ViewMode } from '../../types';
@@ -114,6 +117,9 @@ export function BlueprintWorkspaceScreen() {
   const maxFloors = TIER_LIMITS[tier].maxFloors;
 
   const { allowed: walkthroughAllowed } = useTierGate('walkthrough');
+  const { allowed: commercialAllowed } = useTierGate('commercialBuildings');
+
+  const [showStructuralGrid, setShowStructuralGrid] = useState(false);
 
   const handleToolPress = useCallback((toolId: ToolId) => {
     if (toolId === 'furniture') { setShowFurniture(true); return; }
@@ -183,10 +189,30 @@ export function BlueprintWorkspaceScreen() {
 
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
       <View style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border, backgroundColor: BASE_COLORS.surface }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
           {TOOLS.map((tool) => (
             <ToolButton key={tool.id} tool={tool} active={activeTool === tool.id} onPress={() => handleToolPress(tool.id)} />
           ))}
+          {/* Structural grid toggle — Architect only */}
+          {commercialAllowed && viewMode === '2D' && (
+            <Pressable
+              onPress={() => setShowStructuralGrid((v) => !v)}
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 14,
+                backgroundColor: showStructuralGrid ? BASE_COLORS.textPrimary + '18' : BASE_COLORS.surfaceHigh,
+                borderWidth: 1,
+                borderColor: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 8,
+              }}
+            >
+              <Text style={{ fontSize: 14, color: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.textDim }}>⊞</Text>
+              <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.textDim, marginTop: 2 }}>GRID</Text>
+            </Pressable>
+          )}
         </ScrollView>
       </View>
 
@@ -205,24 +231,15 @@ export function BlueprintWorkspaceScreen() {
 
       {/* ── Canvas ──────────────────────────────────────────────────────── */}
       <View style={{ flex: 1, position: 'relative' }}>
-        {blueprint ? (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, textAlign: 'center' }}>
-              {viewMode} view — Floor {blueprint.floors[currentFloorIndex]?.label ?? 'G'}{'\n'}
-              {blueprint.rooms.length} rooms · {blueprint.walls.length} walls{'\n'}
-              {blueprint.furniture.length} furniture pieces
-            </Text>
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary, marginTop: 16, textAlign: 'center' }}>
-              {blueprint.metadata.style}
-            </Text>
-            {blueprint.floors.length > 1 && (
-              <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: BASE_COLORS.textDim, marginTop: 4 }}>
-                {blueprint.floors.length} floors total
-              </Text>
-            )}
-          </View>
-        ) : (
+        {!blueprint ? (
           <EmptyBlueprint onGenerate={() => navigation.navigate('Generation')} />
+        ) : viewMode === '2D' ? (
+          <Canvas2D showStructuralGrid={showStructuralGrid} />
+        ) : viewMode === '3D' ? (
+          <Viewer3D />
+        ) : (
+          // FirstPerson — already tier-gated in handleViewModeSelect
+          <InHouseView onExit={() => setViewMode('2D')} />
         )}
 
         {blueprint && <AIChatPanel visible={showChat} onToggle={() => setShowChat((v) => !v)} />}

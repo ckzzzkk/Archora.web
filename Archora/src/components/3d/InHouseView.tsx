@@ -7,6 +7,7 @@ import { VirtualJoystick } from './VirtualJoystick';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useUIStore } from '../../stores/uiStore';
+import { useTierGate } from '../../hooks/useTierGate';
 import { BASE_COLORS } from '../../theme/colors';
 import { computeFirstPersonPreset, DEFAULT_LIGHTING } from '../../utils/procedural/sceneHelpers';
 import { getFloorLabel } from '../../utils/floorHelpers';
@@ -130,6 +131,9 @@ export function InHouseView({ onExit }: InHouseViewProps) {
   const [currentRoomName, setCurrentRoomName] = useState('');
   const [tourActive, setTourActive] = useState(false);
   const [selectedObject, setSelectedObject] = useState<{ name: string; info: string } | null>(null);
+
+  const { allowed: cinematicTourAllowed } = useTierGate('cinematicTour');
+  const { allowed: videoExportAllowed } = useTierGate('commercialBuildings');
 
   const yaw = useRef(0);
   const pitch = useRef(0);
@@ -333,33 +337,41 @@ export function InHouseView({ onExit }: InHouseViewProps) {
           <Text style={{ fontSize: 16 }}>{TIME_LABELS[timeOfDay]}</Text>
         </TouchableOpacity>
 
-        {/* Cinematic tour */}
+        {/* Cinematic tour — Creator+ only */}
         <TouchableOpacity
-          onPress={tourActive ? stopTour : startCinematicTour}
-          style={{ backgroundColor: BASE_COLORS.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: BASE_COLORS.border }}
+          onPress={() => {
+            if (!cinematicTourAllowed) {
+              showToast('Upgrade to Creator for cinematic tours', 'info');
+              return;
+            }
+            if (tourActive) stopTour(); else startCinematicTour();
+          }}
+          style={{ backgroundColor: BASE_COLORS.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: cinematicTourAllowed ? BASE_COLORS.border : BASE_COLORS.border + '50' }}
         >
-          <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: tourActive ? colors.primary : BASE_COLORS.textSecondary }}>
-            {tourActive ? '⏹ STOP' : '▶ TOUR'}
+          <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: tourActive ? colors.primary : cinematicTourAllowed ? BASE_COLORS.textSecondary : BASE_COLORS.textDim }}>
+            {cinematicTourAllowed ? (tourActive ? '⏹ STOP' : '▶ TOUR') : '🔒 TOUR'}
           </Text>
         </TouchableOpacity>
 
-        {/* Video export stub */}
-        <TouchableOpacity
-          onPress={() => showToast('Video export coming soon', 'info')}
-          style={{ backgroundColor: BASE_COLORS.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: BASE_COLORS.border }}
-        >
-          {/* VIDEO EXPORT STUB
-           * Requires additional packages: react-native-view-shot + ffmpeg-kit-react-native
-           * (neither is in the current stack — requires native build changes)
-           * Steps when implemented:
-           *   1) Frame capture loop at 30fps via requestAnimationFrame + captureRef()
-           *   2) Encode frames to MP4 via ffmpeg-kit
-           *   3) Save via expo-media-library
-           */}
-          <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: BASE_COLORS.textDim }}>
-            ⬇ VIDEO
-          </Text>
-        </TouchableOpacity>
+        {/* Video export stub — Architect only */}
+        {videoExportAllowed && (
+          <TouchableOpacity
+            onPress={() => showToast('Video export coming soon', 'info')}
+            style={{ backgroundColor: BASE_COLORS.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: BASE_COLORS.border }}
+          >
+            {/* VIDEO EXPORT STUB
+             * Requires additional packages: react-native-view-shot + ffmpeg-kit-react-native
+             * (neither is in the current stack — requires native build changes)
+             * Steps when implemented:
+             *   1) Frame capture loop at 30fps via requestAnimationFrame + captureRef()
+             *   2) Encode frames to MP4 via ffmpeg-kit
+             *   3) Save via expo-media-library
+             */}
+            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: BASE_COLORS.textDim }}>
+              ⬇ VIDEO
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Crosshair */}

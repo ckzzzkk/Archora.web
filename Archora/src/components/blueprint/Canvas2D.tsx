@@ -51,9 +51,10 @@ interface ContextMenuState {
 
 interface Props {
   onSelectObject?: (id: string | null) => void;
+  showStructuralGrid?: boolean;
 }
 
-export function Canvas2D({ onSelectObject }: Props) {
+export function Canvas2D({ onSelectObject, showStructuralGrid = false }: Props) {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const selectedId = useBlueprintStore((s) => s.selectedId);
   const setSelectedId = useBlueprintStore((s) => s.actions.setSelectedId);
@@ -221,6 +222,36 @@ export function Canvas2D({ onSelectObject }: Props) {
                   opacity={0.06}
                 />
               ))}
+
+              {/* Structural grid — dashed lines at 3m/6m/9m intervals (Architect) */}
+              {showStructuralGrid && (() => {
+                const STRUCT_INTERVAL = 3; // metres
+                const gridCount = 20;
+                const lines = [];
+                for (let i = 0; i <= gridCount; i++) {
+                  const xPx = metreToPixel(i * STRUCT_INTERVAL, 1, offsetX.value);
+                  const yPx = metreToPixel(i * STRUCT_INTERVAL, 1, offsetY.value);
+                  lines.push(
+                    <Line
+                      key={`sg_v${i}`}
+                      p1={{ x: xPx, y: 0 }}
+                      p2={{ x: xPx, y: CANVAS_H }}
+                      color={colors.primary}
+                      strokeWidth={1}
+                      opacity={0.18}
+                    />,
+                    <Line
+                      key={`sg_h${i}`}
+                      p1={{ x: 0, y: yPx }}
+                      p2={{ x: SCREEN_W, y: yPx }}
+                      color={colors.primary}
+                      strokeWidth={1}
+                      opacity={0.18}
+                    />,
+                  );
+                }
+                return lines;
+              })()}
 
               {/* Walls */}
               {blueprint.walls.map((wall) => {

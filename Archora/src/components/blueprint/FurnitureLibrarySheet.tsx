@@ -7,6 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Rect } from 'react-native-svg';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import { useTierGate } from '../../hooks/useTierGate';
 import type { FurniturePiece } from '../../types/blueprint';
 import { BASE_COLORS } from '../../theme/colors';
 
@@ -73,6 +74,8 @@ export function FurnitureLibrarySheet({ visible, onClose }: Props) {
   const translateY = useSharedValue(SHEET_H);
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const addFurniture = useBlueprintStore((s) => s.actions.addFurniture);
+  const { allowed: commercialAllowed } = useTierGate('commercialBuildings');
+  const { allowed: customFurnitureAllowed } = useTierGate('customFurniture');
 
   useEffect(() => {
     translateY.value = visible
@@ -134,9 +137,23 @@ export function FurnitureLibrarySheet({ visible, onClose }: Props) {
           </ScrollView>
           <View style={{ flex: 1, paddingHorizontal: 8 }}>
             {selectedCat === 'my_style' ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.textSecondary, textAlign: 'center', marginBottom: 8 }}>Your generated pieces{'\n'}appear here</Text>
-                <Text style={{ fontSize: 32 }}>✦</Text>
+              customFurnitureAllowed ? (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.textSecondary, textAlign: 'center', marginBottom: 8 }}>Your generated pieces{'\n'}appear here</Text>
+                  <Text style={{ fontSize: 32 }}>✦</Text>
+                </View>
+              ) : (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, gap: 10 }}>
+                  <Text style={{ fontSize: 28 }}>🔒</Text>
+                  <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 15, color: BASE_COLORS.textPrimary, textAlign: 'center' }}>Architect Only</Text>
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, textAlign: 'center' }}>Generate custom furniture pieces with AI on the Architect plan.</Text>
+                </View>
+              )
+            ) : selectedCat === 'structural' && !commercialAllowed ? (
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, gap: 10 }}>
+                <Text style={{ fontSize: 28 }}>🔒</Text>
+                <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 15, color: BASE_COLORS.textPrimary, textAlign: 'center' }}>Architect Only</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, textAlign: 'center' }}>Structural elements — columns, beams, fireplaces — require the Architect plan.</Text>
               </View>
             ) : (
               <FlatList
