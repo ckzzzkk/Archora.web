@@ -110,10 +110,39 @@ export interface BuildingMetadata {
   enrichedPrompt?: string;
 }
 
+export type StaircaseType = 'straight' | 'l_shape' | 'spiral';
+
+export interface StaircaseData {
+  id: string;
+  type: StaircaseType;
+  position: Vector2D;
+  connectsFloors: [number, number];
+}
+
+export interface ElevatorData {
+  id: string;
+  position: Vector2D;
+  servesFloors: number[];
+}
+
+export interface FloorData {
+  id: string;
+  label: string;         // 'B2' | 'B1' | 'G' | '1' | '2' ...
+  index: number;         // 0 = ground, negative = basement
+  walls: Wall[];
+  rooms: Room[];
+  openings: Opening[];
+  furniture: FurniturePiece[];
+  staircases: StaircaseData[];
+  elevators: ElevatorData[];
+}
+
 export interface BlueprintData {
   id: string;
   version: number;
   metadata: BuildingMetadata;
+  floors: FloorData[];          // canonical multi-floor storage
+  // Top-level flat fields mirror the active floor — kept for renderer backward compat
   walls: Wall[];
   rooms: Room[];
   openings: Opening[];

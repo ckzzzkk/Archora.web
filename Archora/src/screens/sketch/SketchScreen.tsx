@@ -234,6 +234,7 @@ function sketchToBlueprintData(
     rooms,
     openings: [],
     furniture: [],
+    floors: [],
     customAssets: [],
     chatHistory: [],
     createdAt: now,

@@ -7,6 +7,7 @@ interface ProceduralFloorProps {
   room: Room;
   walls: Wall[];
   selected?: boolean;
+  opacity?: number;
 }
 
 const FLOOR_COLORS: Record<MaterialType, string> = {
@@ -37,21 +38,26 @@ const FLOOR_COLORS: Record<MaterialType, string> = {
   rubber: '#484848',
 };
 
-export function ProceduralFloor({ room, walls, selected = false }: ProceduralFloorProps) {
+export function ProceduralFloor({ room, walls, selected = false, opacity = 1 }: ProceduralFloorProps) {
   const center = useMemo(() => getRoomCenter(room, walls), [room, walls]);
   const color = selected ? '#4A90D9' : FLOOR_COLORS[room.floorMaterial] ?? '#808080';
-
-  // Estimate floor size from room area (square approximation)
   const side = Math.sqrt(Math.max(room.area, 1));
+  const isTransparent = opacity < 1;
 
   return (
     <mesh
       position={[center.x, 0.01, center.z]}
       rotation={[-Math.PI / 2, 0, 0]}
-      receiveShadow
+      receiveShadow={!isTransparent}
     >
       <planeGeometry args={[side, side]} />
-      <meshStandardMaterial color={color} roughness={0.9} metalness={0} />
+      <meshStandardMaterial
+        color={color}
+        roughness={0.9}
+        metalness={0}
+        transparent={isTransparent}
+        opacity={opacity}
+      />
     </mesh>
   );
 }

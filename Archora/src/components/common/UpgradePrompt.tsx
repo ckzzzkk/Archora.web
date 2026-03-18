@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../hooks/useTheme';
 import type { SubscriptionTier } from '../../types';
+import type { RootStackParamList } from '../../navigation/types';
 
 interface Props {
   requiredTier: SubscriptionTier;
@@ -18,6 +20,7 @@ const TIER_LABELS: Record<SubscriptionTier, string> = {
 
 export function UpgradePrompt({ requiredTier, feature, onDismiss }: Props) {
   const { colors } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
     <View
@@ -26,7 +29,7 @@ export function UpgradePrompt({ requiredTier, feature, onDismiss }: Props) {
     >
       <Text className="text-4xl mb-4">🔒</Text>
       <Text
-        className="text-xl mb-2 text-center font-heading"
+        className="text-xl mb-2 text-center"
         style={{ color: colors.textPrimary, fontFamily: 'ArchitectsDaughter_400Regular' }}
       >
         {TIER_LABELS[requiredTier]} Feature
@@ -40,6 +43,7 @@ export function UpgradePrompt({ requiredTier, feature, onDismiss }: Props) {
       <Pressable
         className="px-6 py-3 rounded-full"
         style={{ backgroundColor: colors.primary }}
+        onPress={() => navigation.navigate('Subscription', { feature })}
       >
         <Text style={{ color: colors.background, fontFamily: 'Inter_700Bold', fontSize: 15 }}>
           Upgrade to {TIER_LABELS[requiredTier]}

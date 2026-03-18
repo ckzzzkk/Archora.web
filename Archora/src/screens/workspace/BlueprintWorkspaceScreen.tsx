@@ -6,20 +6,28 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import { useTierGate } from '../../hooks/useTierGate';
+import { TIER_LIMITS } from '../../utils/tierLimits';
+import { useAuthStore } from '../../stores/authStore';
+import { useUIStore } from '../../stores/uiStore';
 import { FurnitureLibrarySheet } from '../../components/blueprint/FurnitureLibrarySheet';
 import { AIChatPanel } from '../../components/blueprint/AIChatPanel';
 import { SurfacesSheet } from '../../components/blueprint/SurfacesSheet';
+import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
+import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
+import { TierGate } from '../../components/common/TierGate';
 import { BASE_COLORS } from '../../theme/colors';
 import type { RootStackParamList } from '../../navigation/types';
 import type { ViewMode } from '../../types';
+import type { StaircaseType } from '../../types/blueprint';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const TOOLS = [
-  { id: 'select', label: 'Select', icon: '↖' },
-  { id: 'wall',   label: 'Wall',   icon: '▬' },
-  { id: 'door',   label: 'Door',   icon: '⊡' },
-  { id: 'window', label: 'Window', icon: '⊞' },
+  { id: 'select',    label: 'Select',    icon: '↖' },
+  { id: 'wall',      label: 'Wall',      icon: '▬' },
+  { id: 'door',      label: 'Door',      icon: '⊡' },
+  { id: 'window',    label: 'Window',    icon: '⊞' },
   { id: 'furniture', label: 'Furniture', icon: '⊕' },
   { id: 'surfaces',  label: 'Surfaces',  icon: '◫' },
   { id: 'measure',   label: 'Measure',   icon: '↔' },
@@ -84,17 +92,75 @@ export function BlueprintWorkspaceScreen() {
   const [showFurniture, setShowFurniture] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showSurfaces, setShowSurfaces] = useState(false);
+  const [showStaircasePrompt, setShowStaircasePrompt] = useState(false);
 
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const viewMode = useBlueprintStore((s) => s.viewMode);
-  const setViewMode = useBlueprintStore((s) => s.actions.setViewMode);
   const isDirty = useBlueprintStore((s) => s.isDirty);
+  const currentFloorIndex = useBlueprintStore((s) => s.currentFloorIndex);
+  const {
+    setViewMode,
+    setCurrentFloor,
+    addFloor,
+    deleteFloor,
+    copyFloor,
+    addStaircase,
+    addElevator,
+  } = useBlueprintStore((s) => s.actions);
+
+  const user = useAuthStore((s) => s.user);
+  const showToast = useUIStore((s) => s.actions.showToast);
+  const tier = user?.subscriptionTier ?? 'starter';
+  const maxFloors = TIER_LIMITS[tier].maxFloors;
+
+  const { allowed: walkthroughAllowed } = useTierGate('walkthrough');
 
   const handleToolPress = useCallback((toolId: ToolId) => {
     if (toolId === 'furniture') { setShowFurniture(true); return; }
     if (toolId === 'surfaces') { setShowSurfaces(true); return; }
     setActiveTool(toolId);
   }, []);
+
+  const handleViewModeSelect = useCallback((m: ViewMode) => {
+    if (m === 'FirstPerson' && !walkthroughAllowed) {
+      showToast('Upgrade to Creator to walk through your design', 'info');
+      navigation.navigate('Subscription', { feature: 'walkthrough' });
+      return;
+    }
+    setViewMode(m);
+  }, [walkthroughAllowed, setViewMode, showToast, navigation]);
+
+  const handleAddFloor = useCallback(() => {
+    if (!blueprint) return;
+    if (blueprint.floors.length >= maxFloors) {
+      showToast('Upgrade your plan to add more floors', 'info');
+      navigation.navigate('Subscription', { feature: 'maxFloors' });
+      return;
+    }
+    addFloor();
+  }, [blueprint, maxFloors, addFloor, showToast, navigation]);
+
+  const handleStaircaseSelect = useCallback((type: StaircaseType) => {
+    if (!blueprint) return;
+    const floorIndex = blueprint.floors.length - 1;
+    addStaircase(floorIndex, {
+      id: Math.random().toString(36).slice(2),
+      type,
+      position: { x: 0, y: 0 },
+      connectsFloors: [floorIndex - 1, floorIndex],
+    });
+    setShowStaircasePrompt(false);
+  }, [blueprint, addStaircase]);
+
+  const handleAddElevator = useCallback(() => {
+    if (!blueprint) return;
+    addElevator({
+      id: Math.random().toString(36).slice(2),
+      position: { x: 0, y: 0 },
+      servesFloors: blueprint.floors.map((_, i) => i),
+    });
+    setShowStaircasePrompt(false);
+  }, [blueprint, addElevator]);
 
   return (
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
@@ -112,7 +178,7 @@ export function BlueprintWorkspaceScreen() {
             <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 9, color: BASE_COLORS.textDim, marginTop: 1 }}>unsaved changes</Text>
           )}
         </View>
-        <ViewModeToggle mode={viewMode} onSelect={setViewMode} />
+        <ViewModeToggle mode={viewMode} onSelect={handleViewModeSelect} />
       </View>
 
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
@@ -124,18 +190,36 @@ export function BlueprintWorkspaceScreen() {
         </ScrollView>
       </View>
 
+      {/* ── Floor selector ──────────────────────────────────────────────── */}
+      {blueprint && (
+        <FloorSelectorBar
+          floors={blueprint.floors}
+          currentIndex={currentFloorIndex}
+          onSelect={setCurrentFloor}
+          onAdd={handleAddFloor}
+          onCopyFloor={copyFloor}
+          onDeleteFloor={deleteFloor}
+          onStaircasePrompt={() => setShowStaircasePrompt(true)}
+        />
+      )}
+
       {/* ── Canvas ──────────────────────────────────────────────────────── */}
       <View style={{ flex: 1, position: 'relative' }}>
         {blueprint ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, textAlign: 'center' }}>
-              {viewMode} view{'\n'}
+              {viewMode} view — Floor {blueprint.floors[currentFloorIndex]?.label ?? 'G'}{'\n'}
               {blueprint.rooms.length} rooms · {blueprint.walls.length} walls{'\n'}
               {blueprint.furniture.length} furniture pieces
             </Text>
             <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary, marginTop: 16, textAlign: 'center' }}>
               {blueprint.metadata.style}
             </Text>
+            {blueprint.floors.length > 1 && (
+              <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: BASE_COLORS.textDim, marginTop: 4 }}>
+                {blueprint.floors.length} floors total
+              </Text>
+            )}
           </View>
         ) : (
           <EmptyBlueprint onGenerate={() => navigation.navigate('Generation')} />
@@ -147,6 +231,15 @@ export function BlueprintWorkspaceScreen() {
       {/* ── Sheets ──────────────────────────────────────────────────────── */}
       <FurnitureLibrarySheet visible={showFurniture} onClose={() => setShowFurniture(false)} />
       <SurfacesSheet visible={showSurfaces} onClose={() => setShowSurfaces(false)} />
+      {blueprint && (
+        <StaircasePromptSheet
+          visible={showStaircasePrompt}
+          floorCount={blueprint.floors.length}
+          onSelect={handleStaircaseSelect}
+          onAddElevator={handleAddElevator}
+          onDismiss={() => setShowStaircasePrompt(false)}
+        />
+      )}
     </View>
   );
 }

@@ -5,42 +5,66 @@ export interface TierLimits {
   arScansPerMonth: number;
   savedProjects: number;
   maxRooms: number;
-  threeDSessionMinutes: number; // -1 = unlimited
-  watermarkedExports: boolean;
+  maxFloors: number;             // Infinity = unlimited
+  threeDSessionMinutes: number;  // -1 = unlimited
+  exportWatermark: boolean;      // true = watermark on exports
   audioInput: boolean;
   blueprintUpload: boolean;
   uploadsPerMonth: number;
   firstPersonView: boolean;
+  walkthrough: boolean;
+  cinematicTour: boolean;
+  cinematicTourWatermark: boolean; // true = ASORIA watermark on cinematic tour
   meshyFurniture: boolean;
+  customFurniture: boolean;
   batchGeneration: boolean;
   batchSize: number;
+  copyRoom: boolean;
+  copyLayout: boolean;
+  stylePaste: boolean;
+  offlineMode: boolean;
   cadExport: boolean;
   buildingCodeCompliance: boolean;
   costEstimator: boolean;
-  templateMonetisation: boolean;
-  creatorRevenueSplit: number; // percentage
+  collaboration: boolean;
+  collaborationLimit: number;      // 0 = none
+  commercialBuildings: boolean;
+  monetiseTemplates: boolean;
+  creatorRevenueSplit: number;     // percentage
   prioritySupport: boolean;
 }
 
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
   starter: {
-    aiGenerationsPerMonth: 15,
-    arScansPerMonth: 2,
-    savedProjects: 10,
+    aiGenerationsPerMonth: 10,
+    arScansPerMonth: 0,
+    savedProjects: 3,
     maxRooms: 1,
+    maxFloors: 1,
     threeDSessionMinutes: 5,
-    watermarkedExports: true,
+    exportWatermark: true,
     audioInput: false,
     blueprintUpload: false,
     uploadsPerMonth: 0,
     firstPersonView: false,
+    walkthrough: false,
+    cinematicTour: false,
+    cinematicTourWatermark: true,
     meshyFurniture: false,
+    customFurniture: false,
     batchGeneration: false,
     batchSize: 1,
+    copyRoom: false,
+    copyLayout: false,
+    stylePaste: false,
+    offlineMode: false,
     cadExport: false,
     buildingCodeCompliance: false,
     costEstimator: false,
-    templateMonetisation: false,
+    collaboration: false,
+    collaborationLimit: 0,
+    commercialBuildings: false,
+    monetiseTemplates: false,
     creatorRevenueSplit: 0,
     prioritySupport: false,
   },
@@ -49,19 +73,31 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     arScansPerMonth: 15,
     savedProjects: Infinity,
     maxRooms: 5,
+    maxFloors: 5,
     threeDSessionMinutes: -1,
-    watermarkedExports: false,
+    exportWatermark: false,
     audioInput: true,
     blueprintUpload: true,
     uploadsPerMonth: 30,
     firstPersonView: true,
+    walkthrough: true,
+    cinematicTour: true,
+    cinematicTourWatermark: true,
     meshyFurniture: false,
+    customFurniture: false,
     batchGeneration: false,
     batchSize: 1,
+    copyRoom: true,
+    copyLayout: false,
+    stylePaste: true,
+    offlineMode: true,
     cadExport: false,
     buildingCodeCompliance: false,
     costEstimator: false,
-    templateMonetisation: true,
+    collaboration: false,
+    collaborationLimit: 0,
+    commercialBuildings: false,
+    monetiseTemplates: true,
     creatorRevenueSplit: 0,
     prioritySupport: false,
   },
@@ -70,19 +106,31 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     arScansPerMonth: Infinity,
     savedProjects: Infinity,
     maxRooms: Infinity,
+    maxFloors: Infinity,
     threeDSessionMinutes: -1,
-    watermarkedExports: false,
+    exportWatermark: false,
     audioInput: true,
     blueprintUpload: true,
     uploadsPerMonth: Infinity,
     firstPersonView: true,
+    walkthrough: true,
+    cinematicTour: true,
+    cinematicTourWatermark: false,
     meshyFurniture: true,
+    customFurniture: true,
     batchGeneration: true,
     batchSize: 5,
+    copyRoom: true,
+    copyLayout: true,
+    stylePaste: true,
+    offlineMode: true,
     cadExport: true,
     buildingCodeCompliance: true,
     costEstimator: true,
-    templateMonetisation: true,
+    collaboration: true,
+    collaborationLimit: 5,
+    commercialBuildings: true,
+    monetiseTemplates: true,
     creatorRevenueSplit: 70,
     prioritySupport: true,
   },

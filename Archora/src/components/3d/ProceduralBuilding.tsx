@@ -10,7 +10,8 @@ import { Wardrobe } from './furniture/Wardrobe';
 import { CoffeeTable } from './furniture/CoffeeTable';
 import { Bookshelf } from './furniture/Bookshelf';
 import { KitchenUnit } from './furniture/KitchenUnit';
-import type { BlueprintData, FurniturePiece } from '../../types';
+import { getFloorYOffset } from '../../utils/floorHelpers';
+import type { BlueprintData, FurniturePiece, FloorData, Room, Wall } from '../../types';
 
 interface ProceduralBuildingProps {
   blueprint: BlueprintData;
@@ -19,9 +20,20 @@ interface ProceduralBuildingProps {
   onSelectWall?: (id: string) => void;
   onSelectFurniture?: (id: string) => void;
   wallColor?: string;
+  // Multi-floor: when provided, renders all floors stacked with ghost effect
+  allFloors?: FloorData[];
+  currentFloorIndex?: number;
 }
 
-function FurnitureMesh({ piece, selected }: { piece: FurniturePiece; selected: boolean }) {
+function FurnitureMesh({
+  piece,
+  selected,
+  onSelect,
+}: {
+  piece: FurniturePiece;
+  selected: boolean;
+  onSelect?: (id: string) => void;
+}) {
   const props = {
     position: piece.position,
     rotation: piece.rotation,
@@ -31,19 +43,24 @@ function FurnitureMesh({ piece, selected }: { piece: FurniturePiece; selected: b
   };
 
   const name = piece.name.toLowerCase();
-  if (name.includes('sofa')) return <Sofa {...props} />;
-  if (name.includes('chair') && !name.includes('dining')) return <Chair {...props} />;
-  if (name.includes('dining') && name.includes('table')) return <DiningTable {...props} />;
-  if (name.includes('dining') && name.includes('chair')) return <Chair {...props} />;
-  if (name.includes('bed')) return <Bed {...props} />;
-  if (name.includes('desk')) return <Desk {...props} />;
-  if (name.includes('wardrobe')) return <Wardrobe {...props} />;
-  if (name.includes('coffee')) return <CoffeeTable {...props} />;
-  if (name.includes('bookshelf') || name.includes('book')) return <Bookshelf {...props} />;
-  if (name.includes('kitchen') || name.includes('counter') || name.includes('island')) return <KitchenUnit {...props} />;
+  const handleClick = onSelect ? () => onSelect(piece.id) : undefined;
+  const wrapper = (child: React.ReactNode) => (
+    // @ts-expect-error r3f group supports onClick events
+    <group onClick={handleClick}>{child}</group>
+  );
 
-  // Generic fallback box
-  return (
+  if (name.includes('sofa')) return wrapper(<Sofa {...props} />);
+  if (name.includes('chair') && !name.includes('dining')) return wrapper(<Chair {...props} />);
+  if (name.includes('dining') && name.includes('table')) return wrapper(<DiningTable {...props} />);
+  if (name.includes('dining') && name.includes('chair')) return wrapper(<Chair {...props} />);
+  if (name.includes('bed')) return wrapper(<Bed {...props} />);
+  if (name.includes('desk')) return wrapper(<Desk {...props} />);
+  if (name.includes('wardrobe')) return wrapper(<Wardrobe {...props} />);
+  if (name.includes('coffee')) return wrapper(<CoffeeTable {...props} />);
+  if (name.includes('bookshelf') || name.includes('book')) return wrapper(<Bookshelf {...props} />);
+  if (name.includes('kitchen') || name.includes('counter') || name.includes('island')) return wrapper(<KitchenUnit {...props} />);
+
+  return wrapper(
     <mesh
       position={[piece.position.x, piece.position.y + piece.dimensions.y / 2, piece.position.z]}
       rotation={[piece.rotation.x, piece.rotation.y, piece.rotation.z]}
@@ -51,7 +68,63 @@ function FurnitureMesh({ piece, selected }: { piece: FurniturePiece; selected: b
     >
       <boxGeometry args={[piece.dimensions.x, piece.dimensions.y, piece.dimensions.z]} />
       <meshStandardMaterial color={piece.materialOverride ?? '#5A5A5A'} roughness={0.7} />
-    </mesh>
+    </mesh>,
+  );
+}
+
+function FloorGroup({
+  rooms,
+  walls,
+  furniture,
+  selectedId,
+  showFurniture,
+  wallColor,
+  ghost,
+  onSelectWall,
+  onSelectFurniture,
+}: {
+  rooms: Room[];
+  walls: Wall[];
+  furniture: FurniturePiece[];
+  selectedId?: string | null;
+  showFurniture: boolean;
+  wallColor?: string;
+  ghost: boolean;
+  onSelectWall?: (id: string) => void;
+  onSelectFurniture?: (id: string) => void;
+}) {
+  return (
+    <group>
+      {rooms.map((room) => (
+        <ProceduralFloor
+          key={`floor-${room.id}`}
+          room={room}
+          walls={walls}
+          selected={!ghost && selectedId === room.id}
+          opacity={ghost ? 0.2 : 1}
+        />
+      ))}
+      {walls.map((wall) => (
+        <ProceduralWall
+          key={wall.id}
+          wall={wall}
+          selected={!ghost && selectedId === wall.id}
+          color={wallColor}
+          opacity={ghost ? 0.2 : 1}
+          onClick={!ghost && onSelectWall ? () => onSelectWall(wall.id) : undefined}
+        />
+      ))}
+      {showFurniture
+        ? furniture.map((piece) => (
+            <FurnitureMesh
+              key={piece.id}
+              piece={piece}
+              selected={!ghost && selectedId === piece.id}
+              onSelect={!ghost ? onSelectFurniture : undefined}
+            />
+          ))
+        : null}
+    </group>
   );
 }
 
@@ -60,39 +133,49 @@ export function ProceduralBuilding({
   selectedId,
   showFurniture = true,
   wallColor,
+  allFloors,
+  currentFloorIndex = 0,
+  onSelectWall,
+  onSelectFurniture,
 }: ProceduralBuildingProps) {
-  return (
-    <group>
-      {/* Floors */}
-      {blueprint.rooms.map((room) => (
-        <ProceduralFloor
-          key={`floor-${room.id}`}
-          room={room}
-          walls={blueprint.walls}
-          selected={selectedId === room.id}
-        />
-      ))}
-
-      {/* Walls */}
-      {blueprint.walls.map((wall) => (
-        <ProceduralWall
-          key={wall.id}
-          wall={wall}
-          selected={selectedId === wall.id}
-          color={wallColor}
-        />
-      ))}
-
-      {/* Furniture */}
-      {showFurniture
-        ? blueprint.furniture.map((piece) => (
-            <FurnitureMesh
-              key={piece.id}
-              piece={piece}
-              selected={selectedId === piece.id}
+  // Multi-floor mode: render all floors stacked
+  if (allFloors && allFloors.length > 0) {
+    return (
+      <group>
+        {allFloors.map((floor, i) => (
+          <group
+            key={floor.id}
+            position={[0, getFloorYOffset(floor.index), 0]}
+          >
+            <FloorGroup
+              rooms={floor.rooms}
+              walls={floor.walls}
+              furniture={floor.furniture}
+              selectedId={selectedId}
+              showFurniture={showFurniture}
+              wallColor={wallColor}
+              ghost={i !== currentFloorIndex}
+              onSelectWall={onSelectWall}
+              onSelectFurniture={onSelectFurniture}
             />
-          ))
-        : null}
-    </group>
+          </group>
+        ))}
+      </group>
+    );
+  }
+
+  // Single-floor mode: backward-compatible rendering from blueprint flat fields
+  return (
+    <FloorGroup
+      rooms={blueprint.rooms}
+      walls={blueprint.walls}
+      furniture={blueprint.furniture}
+      selectedId={selectedId}
+      showFurniture={showFurniture}
+      wallColor={wallColor}
+      ghost={false}
+      onSelectWall={onSelectWall}
+      onSelectFurniture={onSelectFurniture}
+    />
   );
 }
