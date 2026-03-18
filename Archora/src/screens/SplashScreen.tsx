@@ -11,7 +11,7 @@ import Animated, {
 import { LogoLoader } from '../components/common/LogoLoader';
 import { BASE_COLORS } from '../theme/colors';
 
-const ARCHORA = 'ARCHORA'.split('');
+const ASORIA = 'ASORIA'.split('');
 
 interface Props {
   appReady: boolean;
@@ -35,7 +35,7 @@ export function SplashScreen({ appReady, onComplete }: Props) {
   useEffect(() => {
     // Type letters: start at 350ms (logo mid-draw), one per 80ms
     const timers: ReturnType<typeof setTimeout>[] = [];
-    ARCHORA.forEach((_, i) => {
+    ASORIA.forEach((_, i) => {
       timers.push(
         setTimeout(() => setLetterCount(i + 1), 350 + i * 80),
       );
@@ -75,9 +75,9 @@ export function SplashScreen({ appReady, onComplete }: Props) {
       {/* Logo draw-in animation */}
       <LogoLoader size="large" />
 
-      {/* ARCHORA letter-by-letter */}
+      {/* ASORIA letter-by-letter */}
       <View style={{ flexDirection: 'row', marginTop: 28 }}>
-        {ARCHORA.map((letter, i) => (
+        {ASORIA.map((letter, i) => (
           <Text
             key={i}
             style={{

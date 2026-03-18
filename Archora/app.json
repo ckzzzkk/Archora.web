@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Archora",
+    "name": "Asoria",
     "slug": "crokora",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,8 +19,8 @@
       "bundleIdentifier": "com.archora.app",
       "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "Archora uses your camera to scan rooms and detect furniture for AR reconstruction.",
-        "NSMicrophoneUsageDescription": "Archora uses your microphone for voice-to-prompt architectural description."
+        "NSCameraUsageDescription": "Asoria uses your camera to scan rooms and detect furniture for AR reconstruction.",
+        "NSMicrophoneUsageDescription": "Asoria uses your microphone for voice-to-prompt architectural description."
       }
     },
     "android": {
@@ -43,7 +43,7 @@
       [
         "expo-av",
         {
-          "microphonePermission": "Archora uses your microphone for voice-to-prompt architectural description."
+          "microphonePermission": "Asoria uses your microphone for voice-to-prompt architectural description."
         }
       ]
     ],

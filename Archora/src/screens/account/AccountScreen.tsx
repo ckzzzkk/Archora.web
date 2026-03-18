@@ -428,7 +428,7 @@ export function AccountScreen() {
             <View style={[CARD_STYLE, { alignItems: 'center', paddingVertical: 20 }]}>
               <CompassRoseSVG size={40} color={colors.primary} />
               <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: BASE_COLORS.textPrimary, marginTop: 12, letterSpacing: 1 }}>
-                ARCHORA v1.0.0
+                ASORIA v1.0.0
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textSecondary, fontStyle: 'italic', marginTop: 4 }}>
                 Built with architectural precision.

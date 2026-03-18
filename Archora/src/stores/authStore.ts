@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { supabase } from '../utils/supabaseClient';
 import type { User, SubscriptionTier } from '../types';
 
-const REFRESH_TOKEN_KEY = 'archora_refresh_token';
+const REFRESH_TOKEN_KEY = 'asoria_refresh_token';
 
 interface AuthState {
   user: User | null;

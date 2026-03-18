@@ -508,7 +508,7 @@ export function LoginScreen() {
               color: BASE_COLORS.textSecondary,
               marginBottom: 48,
             }}>
-              Sign in to your Archora account
+              Sign in to your Asoria account
             </Text>
           </Animated.View>
 

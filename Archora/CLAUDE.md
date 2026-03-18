@@ -1,4 +1,4 @@
-# ARCHORA — Root Context (150 lines max)
+# ASORIA — Root Context (150 lines max)
 
 ## What We're Building
 Fully generative AI-powered mobile architecture design platform. iOS + Android.

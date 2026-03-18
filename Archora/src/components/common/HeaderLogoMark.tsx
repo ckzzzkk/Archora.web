@@ -9,7 +9,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { useUIStore } from '../../stores/uiStore';
 
 /**
- * Static ARCHORA "A" mark for use in screen headers.
+ * Static ASORIA "A" mark for use in screen headers.
  * Recolours smoothly when the user changes their theme primary colour.
  */
 export function HeaderLogoMark({ size = 32 }: { size?: number }) {

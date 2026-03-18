@@ -104,7 +104,7 @@ export function WelcomeScreen() {
               textAlign: 'center',
             }}
           >
-            ARCHORA
+            ASORIA
           </Text>
           {/* Underline */}
           <View style={{ height: 1.5, backgroundColor: colors.primary, marginTop: 6, opacity: 0.6 }} />

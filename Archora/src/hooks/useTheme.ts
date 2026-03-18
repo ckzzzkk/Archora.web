@@ -3,8 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_COLORS, COLOR_THEMES, type ThemeName, type ColorTheme } from '../theme/colors';
 import { useUIStore } from '../stores/uiStore';
 
-const THEME_KEY = 'archora_theme';
-const CUSTOM_PRIMARY_KEY = 'archora_custom_primary';
+const THEME_KEY = 'asoria_theme';
+const CUSTOM_PRIMARY_KEY = 'asoria_custom_primary';
 
 export interface ThemeColors {
   // Base

@@ -1,4 +1,4 @@
-# ARCHORA — Architecture Decisions Log
+# ASORIA — Architecture Decisions Log
 
 Lightweight log of key decisions made during development.
 Full ADRs live in docs/adr/.
