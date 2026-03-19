@@ -4,8 +4,46 @@ export type SubscriptionTier = 'starter' | 'creator' | 'architect';
 export type ViewMode = '2D' | '3D' | 'FirstPerson';
 export type BuildingType = 'house' | 'apartment' | 'office' | 'studio' | 'villa';
 export type ArchStyle =
-  | 'modern' | 'traditional' | 'scandinavian'
-  | 'industrial' | 'minimalist' | 'mediterranean';
+  | 'minimalist' | 'modern' | 'scandinavian' | 'industrial'
+  | 'bohemian' | 'luxury' | 'rustic' | 'coastal'
+  | 'japanese' | 'art_deco' | 'mid_century_modern' | 'eclectic'
+  | 'traditional' | 'mediterranean'; // legacy values retained
+
+export type NotificationType =
+  | 'like_received'
+  | 'save_received'
+  | 'follow_received'
+  | 'comment_received'
+  | 'streak_milestone'
+  | 'points_awarded'
+  | 'quota_warning'
+  | 'quota_reached'
+  | 'design_of_week'
+  | 'challenge_ending';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  payload: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+}
+
+export type PointEvent =
+  | 'DAILY_LOGIN'
+  | 'CREATE_PROJECT'
+  | 'COMPLETE_PROJECT'
+  | 'PUBLISH_TEMPLATE'
+  | 'RECEIVE_LIKE'
+  | 'RECEIVE_SAVE'
+  | 'RATE_DESIGN'
+  | 'COMPLETE_ONBOARDING'
+  | 'STREAK_7_DAY'
+  | 'STREAK_30_DAY'
+  | 'FIRST_AI_GENERATION'
+  | 'FIRST_AR_SCAN'
+  | 'FIRST_WALKTHROUGH';
 
 export interface User {
   id: string;
@@ -18,6 +56,8 @@ export interface User {
   quotaResetDate: string;
   stripeCustomerId: string | null;
   role: 'user' | 'admin';
+  pointsTotal: number;
+  streakCount: number;
 }
 
 export interface Template {

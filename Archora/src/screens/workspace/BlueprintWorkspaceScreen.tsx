@@ -1,22 +1,26 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Rect, Line } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTierGate } from '../../hooks/useTierGate';
+import { useEditTimer } from '../../hooks/useEditTimer';
+import { useShakeDetector } from '../../hooks/useShakeDetector';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { Canvas2D } from '../../components/blueprint/Canvas2D';
 import { FurnitureLibrarySheet } from '../../components/blueprint/FurnitureLibrarySheet';
+import { StyleSelectorSheet } from '../../components/blueprint/StyleSelectorSheet';
 import { AIChatPanel } from '../../components/blueprint/AIChatPanel';
 import { SurfacesSheet } from '../../components/blueprint/SurfacesSheet';
 import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
 import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
 import { TierGate } from '../../components/common/TierGate';
+import { LogoLoader } from '../../components/common/LogoLoader';
 import { Viewer3D } from '../../components/3d/Viewer3D';
 import { InHouseView } from '../../components/3d/InHouseView';
 import { BASE_COLORS } from '../../theme/colors';
@@ -96,6 +100,16 @@ export function BlueprintWorkspaceScreen() {
   const [showChat, setShowChat] = useState(false);
   const [showSurfaces, setShowSurfaces] = useState(false);
   const [showStaircasePrompt, setShowStaircasePrompt] = useState(false);
+  const [showStyleSelector, setShowStyleSelector] = useState(false);
+
+  const undo = useBlueprintStore((s) => s.actions.undo);
+  const redo = useBlueprintStore((s) => s.actions.redo);
+
+  // Shake to undo/redo
+  useShakeDetector({ onShake: undo, onDoubleShake: redo });
+
+  // Edit timer (Starter tier)
+  useEditTimer();
 
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const viewMode = useBlueprintStore((s) => s.viewMode);
@@ -247,6 +261,7 @@ export function BlueprintWorkspaceScreen() {
 
       {/* ── Sheets ──────────────────────────────────────────────────────── */}
       <FurnitureLibrarySheet visible={showFurniture} onClose={() => setShowFurniture(false)} />
+      <StyleSelectorSheet visible={showStyleSelector} onClose={() => setShowStyleSelector(false)} />
       <SurfacesSheet visible={showSurfaces} onClose={() => setShowSurfaces(false)} />
       {blueprint && (
         <StaircasePromptSheet
@@ -257,6 +272,60 @@ export function BlueprintWorkspaceScreen() {
           onDismiss={() => setShowStaircasePrompt(false)}
         />
       )}
+
+      <EditLimitModal />
+    </View>
+  );
+}
+
+function EditLimitModal() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const activeModal = useUIStore((s) => s.activeModal);
+  const closeModal = useUIStore((s) => s.actions.closeModal);
+
+  if (activeModal !== 'edit_limit_reached') return null;
+
+  const now = new Date();
+  const midnight = new Date();
+  midnight.setHours(24, 0, 0, 0);
+  const secondsToMidnight = Math.floor((midnight.getTime() - now.getTime()) / 1000);
+  const hours = Math.floor(secondsToMidnight / 3600);
+  const mins = Math.floor((secondsToMidnight % 3600) / 60);
+
+  return (
+    <View style={{
+      position: 'absolute', inset: 0,
+      backgroundColor: 'rgba(0,0,0,0.9)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 32,
+      zIndex: 999,
+    }}>
+      <LogoLoader size="medium" />
+      <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: BASE_COLORS.textPrimary, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
+        Daily Editing Time Reached
+      </Text>
+      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary, textAlign: 'center', marginBottom: 8 }}>
+        Starter plan includes 45 minutes of editing per day.
+      </Text>
+      <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: BASE_COLORS.textDim, textAlign: 'center', marginBottom: 32 }}>
+        Resets in {hours}h {mins}m
+      </Text>
+      <Pressable
+        onPress={() => {
+          closeModal();
+          navigation.navigate('Subscription', { feature: 'Daily Edit Time' });
+        }}
+        style={{ backgroundColor: BASE_COLORS.textPrimary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 14, marginBottom: 16, width: '100%', alignItems: 'center' }}
+      >
+        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: BASE_COLORS.background }}>Upgrade Now</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => { closeModal(); }}
+        style={{ paddingVertical: 12 }}
+      >
+        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim }}>Save and Exit</Text>
+      </Pressable>
     </View>
   );
 }

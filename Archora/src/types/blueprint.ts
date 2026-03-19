@@ -6,21 +6,60 @@ export type RoomType =
 export type OpeningType = 'door' | 'window' | 'sliding_door' | 'french_door' | 'skylight';
 
 export type MaterialType =
+  // Legacy
   | 'hardwood' | 'tile' | 'carpet' | 'concrete'
   | 'marble' | 'vinyl' | 'stone' | 'parquet'
   | 'oak' | 'walnut' | 'pine' | 'engineered_wood' | 'laminate'
   | 'polished_concrete' | 'resin' | 'travertine' | 'slate'
   | 'ceramic' | 'porcelain' | 'terrazzo' | 'cork' | 'bamboo'
-  | 'herringbone_parquet' | 'chevron_parquet' | 'rubber';
+  | 'herringbone_parquet' | 'chevron_parquet' | 'rubber'
+  // Extended hardwoods
+  | 'oak_hardwood' | 'walnut_hardwood' | 'pine_hardwood'
+  | 'maple_hardwood' | 'dark_hardwood' | 'bleached_oak'
+  | 'herringbone_oak' | 'chevron_oak'
+  // Engineered / laminate
+  | 'engineered_light' | 'engineered_dark'
+  | 'laminate_light' | 'laminate_dark'
+  // Concrete / resin
+  | 'raw_concrete'
+  // Stone / marble
+  | 'white_marble' | 'grey_marble' | 'black_marble' | 'sandstone'
+  // Ceramic
+  | 'white_ceramic' | 'grey_ceramic' | 'black_ceramic'
+  | 'encaustic_tiles' | 'hexagon_tiles'
+  // Soft
+  | 'carpet_grey' | 'carpet_cream'
+  // Specialty
+  | 'rubber_floor';
 
 export type WallTexture =
-  | 'plain_white' | 'plain_grey' | 'plain_charcoal'
-  | 'exposed_brick' | 'painted_brick' | 'concrete' | 'polished_concrete'
-  | 'marble' | 'stone' | 'render' | 'textured_plaster'
-  | 'wood_panelling' | 'shiplap' | 'board_and_batten'
-  | 'glass' | 'mirror_panels'
-  | 'geometric_tiles' | 'subway_tiles' | 'herringbone_tiles' | 'terrazzo_tiles'
-  | 'wallpaper_stripe' | 'wallpaper_geometric' | 'wallpaper_floral';
+  // Plain colours
+  | 'plain_white' | 'plain_cream' | 'plain_warm_grey' | 'plain_cool_grey'
+  | 'plain_grey' | 'plain_charcoal' | 'plain_navy' | 'plain_forest_green'
+  | 'plain_terracotta' | 'plain_blush_pink' | 'plain_sage' | 'plain_mustard' | 'plain_black'
+  // Brick
+  | 'exposed_brick' | 'exposed_brick_grey' | 'painted_brick' | 'whitewashed_brick'
+  // Concrete
+  | 'concrete' | 'polished_concrete' | 'concrete_board_formed'
+  // Stone / marble
+  | 'marble' | 'marble_white' | 'marble_grey' | 'marble_black'
+  | 'travertine' | 'limestone' | 'sandstone' | 'stone' | 'stone_random' | 'stone_coursed'
+  // Plaster / render
+  | 'render' | 'render_white' | 'render_grey' | 'textured_plaster'
+  // Wood
+  | 'wood_panelling' | 'wood_panelling_light' | 'wood_panelling_dark'
+  | 'shiplap' | 'shiplap_white' | 'shiplap_grey'
+  | 'board_and_batten' | 'board_and_batten_white' | 'board_and_batten_black'
+  | 'timber_cladding' | 'cedar_cladding'
+  // Tile
+  | 'subway_tiles' | 'subway_tiles_grey' | 'geometric_tiles'
+  | 'herringbone_tiles' | 'moroccan_tiles' | 'terrazzo_tiles'
+  // Glass / metal
+  | 'glass' | 'glass_frosted' | 'mirror_panels' | 'stainless_steel'
+  // Wallpaper
+  | 'wallpaper_stripe' | 'wallpaper_geometric' | 'wallpaper_floral' | 'wallpaper_textured'
+  // Natural
+  | 'bamboo_wall' | 'cork_wall';
 
 export type CeilingType =
   | 'flat_white' | 'flat_dark' | 'coffered' | 'tray' | 'vaulted'

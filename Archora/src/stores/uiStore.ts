@@ -9,7 +9,7 @@ export interface ToastMessage {
   duration: number;
 }
 
-export type ModalId = 'upgrade' | 'delete-confirm' | 'share' | 'export' | 'settings' | 'ai-options';
+export type ModalId = 'upgrade' | 'delete-confirm' | 'share' | 'export' | 'settings' | 'ai-options' | 'edit_limit_reached';
 
 interface UIState {
   toasts: ToastMessage[];

@@ -236,7 +236,6 @@ export function InHouseView({ onExit }: InHouseViewProps) {
           <ambientLight intensity={lighting.ambientIntensity} />
           <directionalLight position={lighting.sunPosition} intensity={1} castShadow />
           {timeOfDay === 'night' && (
-            // @ts-expect-error three pointLight color prop
             <pointLight position={[0, 3, 0]} intensity={0.3} color="#7B9ED9" />
           )}
 

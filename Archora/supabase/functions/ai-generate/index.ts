@@ -125,7 +125,12 @@ ${roomCount ? `Target room count: ${roomCount}` : ''}
 Generate a complete, realistic floor plan with proper room sizes, realistic furniture placement, and appropriate openings.`;
 
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY not configured');
+    if (!anthropicKey) {
+      return new Response(JSON.stringify({
+        error: 'AI_NOT_CONFIGURED',
+        message: 'AI generation coming soon — API key not yet configured',
+      }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

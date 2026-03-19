@@ -1,21 +1,379 @@
-import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  SafeAreaView,
+  Alert,
+} from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../hooks/useTheme';
+import { useAuthStore } from '../../stores/authStore';
+import { BASE_COLORS } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
+import type { SubscriptionTier } from '../../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Subscription'>;
 
+type BillingInterval = 'monthly' | 'annual';
+
+const PRICES = {
+  creator: { monthly: 14.99, annual: 11.99, annualTotal: 143.90 },
+  architect: { monthly: 39.99, annual: 31.99, annualTotal: 383.90 },
+};
+
+const FEATURES = [
+  { label: 'Projects', starter: '3', creator: '20', architect: 'Unlimited' },
+  { label: 'Rooms per project', starter: '4', creator: '15', architect: 'Unlimited' },
+  { label: 'Furniture per room', starter: '10', creator: '50', architect: 'Unlimited' },
+  { label: 'AI generations / mo', starter: '10', creator: '100', architect: 'Unlimited' },
+  { label: 'Daily edit time', starter: '45 min', creator: 'Unlimited', architect: 'Unlimited' },
+  { label: 'Undo steps', starter: '10', creator: '50', architect: 'Unlimited' },
+  { label: 'Auto-save', starter: '✗', creator: '✓', architect: '✓' },
+  { label: 'Design styles', starter: '3', creator: '12', architect: '12' },
+  { label: 'AR placement', starter: '✗', creator: '15/mo', architect: 'Unlimited' },
+  { label: 'Export designs', starter: '2/mo', creator: '20/mo', architect: 'Unlimited' },
+  { label: 'First-person view', starter: '✗', creator: '✓', architect: '✓' },
+  { label: 'Publish templates', starter: '✗', creator: '5', architect: 'Unlimited' },
+  { label: 'Template revenue share', starter: '✗', creator: '60%', architect: '80%' },
+  { label: 'VIP support', starter: '✗', creator: '✗', architect: '✓' },
+];
+
+const CONFETTI_SHAPES = ['◻', '✦', '▬', '⬡', '◇', '▲'];
+
+function ConfettiPiece({ x, delay, color }: { x: number; delay: number; color: string }) {
+  const translateY = useSharedValue(-50);
+  const opacity = useSharedValue(1);
+  const rotate = useSharedValue(0);
+
+  React.useEffect(() => {
+    translateY.value = withTiming(600 + Math.random() * 200, { duration: 2000 + delay * 300 });
+    opacity.value = withTiming(0, { duration: 2200 + delay * 300 });
+    rotate.value = withTiming(720 * (Math.random() > 0.5 ? 1 : -1), { duration: 2000 + delay * 300 });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const style = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { rotate: `${rotate.value}deg` },
+    ],
+    opacity: opacity.value,
+    position: 'absolute',
+    left: x,
+  }));
+
+  return (
+    <Animated.Text style={[style, { fontSize: 14, color }]}>
+      {CONFETTI_SHAPES[Math.floor(Math.random() * CONFETTI_SHAPES.length)]}
+    </Animated.Text>
+  );
+}
+
+function UpgradeAnimation({ onDone }: { onDone: () => void }) {
+  const scale = useSharedValue(0.8);
+  const opacity = useSharedValue(0);
+
+  React.useEffect(() => {
+    opacity.value = withTiming(1, { duration: 200 });
+    scale.value = withSpring(1.05, { damping: 14 }, () => {
+      scale.value = withSpring(1, { damping: 20 });
+      // Auto-dismiss after animation
+      setTimeout(() => runOnJS(onDone)(), 2500);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const containerStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  const confettiColors = ['#FFD700', '#4CAF50', '#2196F3', '#FF9800', '#E91E63'];
+
+  return (
+    <Animated.View
+      style={[
+        containerStyle,
+        {
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+        },
+      ]}
+    >
+      {/* Confetti */}
+      {Array.from({ length: 20 }).map((_, i) => (
+        <ConfettiPiece
+          key={i}
+          x={Math.random() * 360}
+          delay={i * 0.1}
+          color={confettiColors[i % confettiColors.length]}
+        />
+      ))}
+      <Text style={{ fontSize: 56, marginBottom: 16 }}>✦</Text>
+      <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 28, color: '#FFD700', textAlign: 'center' }}>
+        Upgraded!
+      </Text>
+      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: '#FFF', marginTop: 8, textAlign: 'center' }}>
+        Welcome to the next level
+      </Text>
+    </Animated.View>
+  );
+}
+
+interface TierCardProps {
+  tier: Exclude<SubscriptionTier, 'starter'>;
+  billingInterval: BillingInterval;
+  isCurrentTier: boolean;
+  isHighlighted: boolean;
+  onUpgrade: (tier: Exclude<SubscriptionTier, 'starter'>) => void;
+}
+
+function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgrade }: TierCardProps) {
+  const { colors } = useTheme();
+  const price = PRICES[tier];
+  const displayPrice = billingInterval === 'annual' ? price.annual : price.monthly;
+  const label = tier === 'creator' ? 'Creator' : 'Architect';
+  const accentColor = tier === 'architect' ? '#FFD700' : colors.primary;
+
+  const perks = tier === 'creator'
+    ? ['20 projects', '100 AI generations/mo', '15 AR sessions', 'Auto-save', '12 design styles']
+    : ['Unlimited everything', 'Unlimited AR', 'Custom furniture AI', 'Template revenue 80%', 'VIP support'];
+
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: isHighlighted ? 2 : 1,
+        borderColor: isHighlighted ? accentColor : BASE_COLORS.border,
+        backgroundColor: BASE_COLORS.surfaceHigh,
+        marginBottom: 16,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Badge */}
+      {isHighlighted && (
+        <View style={{ backgroundColor: accentColor, paddingVertical: 6, alignItems: 'center' }}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#000' }}>
+            {tier === 'creator' ? 'MOST POPULAR' : 'PROFESSIONAL'}
+          </Text>
+        </View>
+      )}
+
+      <View style={{ padding: 24 }}>
+        <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: BASE_COLORS.textPrimary, marginBottom: 4 }}>
+          {label}
+        </Text>
+
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 }}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 36, color: accentColor }}>
+            ${displayPrice.toFixed(2)}
+          </Text>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim, marginLeft: 4 }}>
+            /mo
+          </Text>
+        </View>
+
+        {billingInterval === 'annual' && (
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, marginBottom: 16 }}>
+            ${price.annualTotal.toFixed(2)} billed annually · Save 20%
+          </Text>
+        )}
+
+        <View style={{ marginTop: billingInterval === 'monthly' ? 12 : 0, marginBottom: 20, gap: 8 }}>
+          {perks.map((perk) => (
+            <View key={perk} style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: accentColor, marginRight: 8, fontSize: 14 }}>✓</Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary }}>
+                {perk}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <Pressable
+          onPress={() => !isCurrentTier && onUpgrade(tier)}
+          style={{
+            backgroundColor: isCurrentTier ? BASE_COLORS.border : accentColor,
+            borderRadius: 12,
+            paddingVertical: 14,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: isCurrentTier ? BASE_COLORS.textDim : '#000' }}>
+            {isCurrentTier ? 'Current Plan' : `Upgrade to ${label}`}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 export function SubscriptionScreen({ navigation }: Props) {
   const { colors } = useTheme();
+  const [billing, setBilling] = useState<BillingInterval>('monthly');
+  const [showAnimation, setShowAnimation] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const updateUser = useAuthStore((s) => s.actions.updateUser);
+  const tier = user?.subscriptionTier ?? 'starter';
+
+  const toggleX = useSharedValue(0);
+  const toggleStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: toggleX.value }],
+  }));
+
+  const handleBillingToggle = (interval: BillingInterval) => {
+    setBilling(interval);
+    toggleX.value = withSpring(interval === 'annual' ? 100 : 0, { damping: 20, stiffness: 300 });
+  };
+
+  const handleUpgrade = (newTier: Exclude<SubscriptionTier, 'starter'>) => {
+    Alert.alert(
+      `Upgrade to ${newTier === 'creator' ? 'Creator' : 'Architect'}`,
+      'Payment integration coming soon. For now, we\'ll activate the plan locally so you can explore all features.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Activate',
+          onPress: () => {
+            updateUser({ subscriptionTier: newTier });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setShowAnimation(true);
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 32, color: colors.textPrimary }}>
-        Subscription
-      </Text>
-      <Pressable onPress={() => navigation.goBack()} style={{ marginTop: 24 }}>
-        <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_400Regular' }}>Close</Text>
-      </Pressable>
-    </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        {/* Header */}
+        <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 8 }}>
+          <Pressable onPress={() => navigation.goBack()} style={{ marginBottom: 16 }}>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textDim }}>
+              ← Back
+            </Text>
+          </Pressable>
+          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 32, color: BASE_COLORS.textPrimary }}>
+            Upgrade ASORIA
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+            <View style={{ backgroundColor: colors.primary + '33', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10 }}>
+              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: colors.primary }}>
+                Current: {tier.charAt(0).toUpperCase() + tier.slice(1)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Billing toggle */}
+        <View style={{ paddingHorizontal: 24, marginVertical: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 30, padding: 4, borderWidth: 1, borderColor: BASE_COLORS.border }}>
+              <Pressable
+                onPress={() => handleBillingToggle('monthly')}
+                style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 26, backgroundColor: billing === 'monthly' ? BASE_COLORS.textPrimary : 'transparent' }}
+              >
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: billing === 'monthly' ? BASE_COLORS.background : BASE_COLORS.textDim }}>
+                  Monthly
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => handleBillingToggle('annual')}
+                style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 26, backgroundColor: billing === 'annual' ? BASE_COLORS.textPrimary : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              >
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: billing === 'annual' ? BASE_COLORS.background : BASE_COLORS.textDim }}>
+                  Annual
+                </Text>
+                <View style={{ backgroundColor: '#4CAF50', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9, color: '#FFF' }}>SAVE 20%</Text>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
+        {/* Tier cards */}
+        <View style={{ paddingHorizontal: 24 }}>
+          <TierCard
+            tier="creator"
+            billingInterval={billing}
+            isCurrentTier={tier === 'creator'}
+            isHighlighted={true}
+            onUpgrade={handleUpgrade}
+          />
+          <TierCard
+            tier="architect"
+            billingInterval={billing}
+            isCurrentTier={tier === 'architect'}
+            isHighlighted={true}
+            onUpgrade={handleUpgrade}
+          />
+        </View>
+
+        {/* Starter note */}
+        <View style={{ marginHorizontal: 24, padding: 16, backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 14, borderWidth: 1, borderColor: BASE_COLORS.border, marginBottom: 24 }}>
+          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: BASE_COLORS.textPrimary, marginBottom: 4 }}>
+            Starter — Free
+          </Text>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim }}>
+            3 projects · 4 rooms · 10 furniture items · 10 AI generations/mo · 3 design styles
+          </Text>
+        </View>
+
+        {/* Feature comparison table */}
+        <View style={{ marginHorizontal: 24 }}>
+          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: BASE_COLORS.textPrimary, marginBottom: 12 }}>
+            Compare Plans
+          </Text>
+
+          {/* Table header */}
+          <View style={{ flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border }}>
+            <Text style={{ flex: 2, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: BASE_COLORS.textDim }}>FEATURE</Text>
+            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: BASE_COLORS.textDim, textAlign: 'center' }}>FREE</Text>
+            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: colors.primary, textAlign: 'center' }}>CREATOR</Text>
+            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#FFD700', textAlign: 'center' }}>ARCH</Text>
+          </View>
+
+          {FEATURES.map((row, i) => (
+            <View
+              key={row.label}
+              style={{
+                flexDirection: 'row',
+                paddingVertical: 10,
+                borderBottomWidth: 1,
+                borderBottomColor: BASE_COLORS.border + '44',
+                backgroundColor: i % 2 === 0 ? 'transparent' : BASE_COLORS.surfaceHigh + '55',
+              }}
+            >
+              <Text style={{ flex: 2, fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textSecondary }}>{row.label}</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, textAlign: 'center' }}>{row.starter}</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.primary, textAlign: 'center' }}>{row.creator}</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: '#FFD700', textAlign: 'center' }}>{row.architect}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+
+      {/* Upgrade animation overlay */}
+      {showAnimation && (
+        <UpgradeAnimation onDone={() => { setShowAnimation(false); navigation.goBack(); }} />
+      )}
+    </SafeAreaView>
   );
 }

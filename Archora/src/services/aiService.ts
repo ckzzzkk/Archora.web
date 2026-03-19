@@ -29,6 +29,16 @@ export const aiService = {
       body: JSON.stringify(params),
     });
 
+    if (response.status === 503) {
+      const body = await response.json() as { error?: string };
+      if (body.error === 'AI_NOT_CONFIGURED') {
+        throw Object.assign(new Error('AI features coming soon'), {
+          code: 'AI_NOT_CONFIGURED',
+          status: 503,
+        });
+      }
+    }
+
     if (!response.ok) {
       const err = await response.json() as { error: string; code?: string };
       throw Object.assign(new Error(err.error), { code: err.code, status: response.status });
@@ -57,7 +67,13 @@ export const aiService = {
 
     if (!response.ok) throw new Error('Transcription failed');
 
-    const data = await response.json() as { transcript: string };
-    return data.transcript;
+    const data = await response.json() as { transcript?: string; fallback?: string };
+
+    if (data.fallback === 'device_speech') {
+      // Signal to caller to show manual text input
+      throw Object.assign(new Error('device_speech'), { code: 'DEVICE_SPEECH_FALLBACK' });
+    }
+
+    return data.transcript ?? '';
   },
 };

@@ -277,6 +277,26 @@ export function AccountScreen() {
               </Text>
             </View>
 
+            {/* Points + streak row */}
+            <View style={{ flexDirection: 'row', gap: 16, marginTop: 12 }}>
+              {(user?.pointsTotal ?? 0) > 0 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.primary}15`, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: `${colors.primary}40` }}>
+                  <Text style={{ fontSize: 14, marginRight: 4 }}>⭐</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: colors.primary }}>
+                    {user?.pointsTotal ?? 0} pts
+                  </Text>
+                </View>
+              )}
+              {(user?.streakCount ?? 0) > 0 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF6B3515', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#FF6B3540' }}>
+                  <Text style={{ fontSize: 14, marginRight: 4 }}>🔥</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#FF6B35' }}>
+                    {user?.streakCount ?? 0} day streak
+                  </Text>
+                </View>
+              )}
+            </View>
+
             {/* Stats row */}
             <View style={{ flexDirection: 'row', gap: 20, marginTop: 20 }}>
               {[

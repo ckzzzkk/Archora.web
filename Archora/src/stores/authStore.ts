@@ -140,5 +140,7 @@ function mapDbUser(row: Record<string, unknown>): User {
     quotaResetDate: row.quota_reset_date as string,
     stripeCustomerId: row.stripe_customer_id as string | null,
     role: row.role as 'user' | 'admin',
+    pointsTotal: (row.points_total as number) ?? 0,
+    streakCount: (row.streak_count as number) ?? 0,
   };
 }

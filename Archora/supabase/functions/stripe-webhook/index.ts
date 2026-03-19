@@ -24,8 +24,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   if (req.method !== 'POST') return Errors.notFound();
 
-  const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2024-06-20' });
-  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
+  const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+
+  if (!webhookSecret || !stripeSecretKey) {
+    console.warn('[stripe-webhook] STRIPE keys not configured — ignoring webhook');
+    return new Response(JSON.stringify({ received: true, note: 'keys_not_configured' }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' });
 
   const sig = req.headers.get('stripe-signature');
   if (!sig) return Errors.unauthorized('Missing Stripe signature');

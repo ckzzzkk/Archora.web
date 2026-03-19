@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, RefreshControl, Alert,
 } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay,
+  useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay, withRepeat, withSequence,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -13,9 +13,11 @@ import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
+import { useStreak } from '../../hooks/useStreak';
 import { ProjectCard } from '../../components/dashboard/ProjectCard';
 import { LogoLoader } from '../../components/common/LogoLoader';
 import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
+import { NotificationPanel } from '../../components/dashboard/NotificationPanel';
 import { BASE_COLORS } from '../../theme/colors';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
@@ -192,16 +194,30 @@ function EmptyState({ colors }: { colors: ReturnType<typeof useTheme>['colors'] 
 export function DashboardScreen() {
   const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
-  const { medium } = useHaptics();
+  const { medium, light } = useHaptics();
   const user = useAuthStore((s) => s.user);
   const { projects, isLoading, actions } = useProjectStore();
   const [showNewProject, setShowNewProject] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const { streakCount } = useStreak();
 
   const fabScale = useSharedValue(0);
   const fabStyle = useAnimatedStyle(() => ({
     transform: [{ scale: fabScale.value }],
   }));
+
+  const flameScale = useSharedValue(1);
+  useEffect(() => {
+    if (streakCount > 0) {
+      flameScale.value = withRepeat(
+        withSequence(withSpring(1.15, { damping: 8 }), withSpring(1, { damping: 12 })),
+        3
+      );
+    }
+  }, [streakCount, flameScale]);
+  const flameStyle = useAnimatedStyle(() => ({ transform: [{ scale: flameScale.value }] }));
 
   const headerY = useSharedValue(-30);
   const headerOp = useSharedValue(0);
@@ -264,9 +280,28 @@ export function DashboardScreen() {
             fontSize: 28,
             color: BASE_COLORS.textPrimary,
             marginLeft: 10,
+            flex: 1,
           }}>
             Your Projects
           </Text>
+
+          {/* Streak flame */}
+          {streakCount > 0 && (
+            <Animated.View style={[flameStyle, { flexDirection: 'row', alignItems: 'center', marginRight: 12 }]}>
+              <Text style={{ fontSize: 18 }}>🔥</Text>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#FF6B35', marginLeft: 3 }}>
+                {streakCount}
+              </Text>
+            </Animated.View>
+          )}
+
+          {/* Notification bell */}
+          <Pressable
+            onPress={() => { light(); setShowNotifications(true); }}
+            style={{ padding: 8 }}
+          >
+            <Text style={{ fontSize: 22 }}>🔔</Text>
+          </Pressable>
         </View>
 
         {/* Usage dimension line */}
@@ -364,6 +399,11 @@ export function DashboardScreen() {
         onClose={() => setShowNewProject(false)}
         onCreate={(name, type) => { void handleCreate(name, type); }}
         accentColor={colors.primary}
+      />
+
+      <NotificationPanel
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
       />
     </View>
   );

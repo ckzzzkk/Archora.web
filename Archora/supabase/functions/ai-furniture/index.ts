@@ -35,7 +35,30 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const { roomType, roomId, style, count } = parsed.data;
 
-    const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
+    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!anthropicKey) {
+      // Return procedural suggestions based on room type
+      const { ROOM_FURNITURE_SUGGESTIONS, FURNITURE_DEFAULTS } = await import('../../src/utils/procedural/furniture.ts').catch(() => ({ ROOM_FURNITURE_SUGGESTIONS: {} as Record<string, string[]>, FURNITURE_DEFAULTS: {} as Record<string, { w: number; h: number; d: number }> }));
+      const suggestions = (ROOM_FURNITURE_SUGGESTIONS[roomType] ?? ['sofa', 'chair', 'coffee_table'])
+        .slice(0, count)
+        .map((type: string, i: number) => {
+          const defaults = FURNITURE_DEFAULTS[type] ?? { w: 1, h: 1, d: 1 };
+          return {
+            id: crypto.randomUUID(),
+            name: type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            roomId,
+            position: { x: i * 2, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            dimensions: { x: defaults.w, y: defaults.h, z: defaults.d },
+            procedural: true,
+            materialOverride: '#8B6914',
+          };
+        });
+      return new Response(JSON.stringify({ furniture: suggestions, source: 'procedural' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const anthropic = new Anthropic({ apiKey: anthropicKey });
 
     const prompt = `Generate a JSON array of exactly ${count} furniture pieces for a ${roomType} room${style ? ` in ${style} style` : ''}.
 Each item must have:

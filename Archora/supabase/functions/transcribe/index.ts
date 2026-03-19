@@ -27,7 +27,11 @@ serve(async (req) => {
     }
 
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiKey) throw new Error('OPENAI_API_KEY not configured');
+    if (!openaiKey) {
+      return new Response(JSON.stringify({ fallback: 'device_speech' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const whisperForm = new FormData();
     whisperForm.append('file', audioFile, 'audio.m4a');
