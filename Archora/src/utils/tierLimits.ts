@@ -1,5 +1,8 @@
 import type { SubscriptionTier } from '../types';
 
+/** Alias for SubscriptionTier — matches CLAUDE.md spec */
+export type Tier = SubscriptionTier;
+
 export interface TierLimits {
   // Project limits
   maxProjects: number;           // -1 = unlimited
@@ -13,6 +16,7 @@ export interface TierLimits {
   // AI quotas
   aiGenerationsPerMonth: number; // -1 = unlimited
   arScansPerMonth: number;       // -1 = unlimited
+  arSessionsPerMonth: number;    // alias for arScansPerMonth
   photoImportsPerMonth: number;  // -1 = unlimited
   exportsPerMonth: number;       // -1 = unlimited
   rendersPerMonth: number;       // -1 = unlimited
@@ -78,6 +82,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 
     aiGenerationsPerMonth: 10,
     arScansPerMonth: 0,
+    arSessionsPerMonth: 0,
     photoImportsPerMonth: 0,
     exportsPerMonth: 2,
     rendersPerMonth: 0,
@@ -136,6 +141,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 
     aiGenerationsPerMonth: 200,
     arScansPerMonth: 15,
+    arSessionsPerMonth: 15,
     photoImportsPerMonth: 20,
     exportsPerMonth: 20,
     rendersPerMonth: 10,
@@ -194,6 +200,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 
     aiGenerationsPerMonth: -1,
     arScansPerMonth: -1,
+    arSessionsPerMonth: -1,
     photoImportsPerMonth: -1,
     exportsPerMonth: -1,
     rendersPerMonth: -1,
@@ -281,4 +288,17 @@ export function isUnderLimit(tier: SubscriptionTier, feature: keyof TierLimits, 
 /** Returns which styles are accessible for a given tier. */
 export function getAvailableStyles(tier: SubscriptionTier): string[] | 'all' {
   return TIER_LIMITS[tier].availableStyles;
+}
+
+/** Returns true if the given styleId is accessible for the provided availableStyles value. */
+export function isStyleAccessible(styleId: string, availableStyles: string[] | 'all'): boolean {
+  if (availableStyles === 'all') return true;
+  return (availableStyles as string[]).includes(styleId);
+}
+
+/** Returns the next tier above the given one, or null if already at top. */
+export function getUpgradeTierFromCurrent(tier: Tier): Tier | null {
+  if (tier === 'starter') return 'creator';
+  if (tier === 'creator') return 'architect';
+  return null;
 }

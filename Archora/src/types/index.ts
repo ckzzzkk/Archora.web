@@ -4,10 +4,12 @@ export type SubscriptionTier = 'starter' | 'creator' | 'architect';
 export type ViewMode = '2D' | '3D' | 'FirstPerson';
 export type BuildingType = 'house' | 'apartment' | 'office' | 'studio' | 'villa';
 export type ArchStyle =
-  | 'minimalist' | 'modern' | 'scandinavian' | 'industrial'
-  | 'bohemian' | 'luxury' | 'rustic' | 'coastal'
-  | 'japanese' | 'art_deco' | 'mid_century_modern' | 'eclectic'
-  | 'traditional' | 'mediterranean'; // legacy values retained
+  // Current 12 styles
+  | 'minimalist' | 'modern' | 'rustic' | 'industrial' | 'scandinavian'
+  | 'mediterranean' | 'art_deco' | 'japandi' | 'bohemian' | 'coastal'
+  | 'traditional' | 'contemporary'
+  // Legacy values retained for backward compat with stored blueprints
+  | 'luxury' | 'japanese' | 'mid_century_modern' | 'eclectic';
 
 export type NotificationType =
   | 'like_received'
@@ -30,7 +32,7 @@ export interface AppNotification {
   createdAt: string;
 }
 
-export type PointEvent =
+export type PointEventKey =
   | 'DAILY_LOGIN'
   | 'CREATE_PROJECT'
   | 'COMPLETE_PROJECT'
@@ -43,7 +45,16 @@ export type PointEvent =
   | 'STREAK_30_DAY'
   | 'FIRST_AI_GENERATION'
   | 'FIRST_AR_SCAN'
-  | 'FIRST_WALKTHROUGH';
+  | 'FIRST_WALKTHROUGH'
+  | 'STREAK_MILESTONE';
+
+/** Legacy alias kept for backward compat */
+export type PointEvent = PointEventKey;
+
+export interface PointEventPayload {
+  event: string;
+  delta: number;
+}
 
 export interface User {
   id: string;

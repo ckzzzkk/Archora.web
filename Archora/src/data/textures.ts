@@ -117,6 +117,17 @@ export const FLOOR_MATERIALS: TextureDefinition[] = [
 
 export const ALL_TEXTURES: TextureDefinition[] = [...WALL_TEXTURES, ...FLOOR_MATERIALS];
 
+/** Alias for ALL_TEXTURES — matches CLAUDE.md spec */
+export const TEXTURES: TextureDefinition[] = ALL_TEXTURES;
+
 export function getTextureById(id: string): TextureDefinition | undefined {
   return ALL_TEXTURES.find((t) => t.id === id);
+}
+
+export function getWallTextures(): TextureDefinition[] {
+  return WALL_TEXTURES;
+}
+
+export function getFloorTextures(): TextureDefinition[] {
+  return FLOOR_MATERIALS;
 }

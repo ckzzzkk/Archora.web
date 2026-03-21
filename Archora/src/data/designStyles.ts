@@ -145,6 +145,51 @@ export const DESIGN_STYLES: DesignStyle[] = [
     previewGradient: ['#E8D0B0', '#607090'],
     primaryWallColour: '#F0E8E0',
   },
+  // ── New 12-style set additions ────────────────────────────────
+  {
+    id: 'japandi',
+    name: 'Japandi',
+    colours: ['#F5F0E8', '#5C4A3A', '#8B9B7A', '#2C2820', '#D4C8B8'],
+    colourNames: ['Washi White', 'Wenge', 'Moss Green', 'Sumi Black', 'Clay'],
+    furnitureDescription: 'Low-profile seating, shoji-inspired screens, bonsai accents',
+    materials: ['White oak', 'Washi paper', 'Bamboo', 'Linen'],
+    characteristics: ['Wabi-sabi imperfection', 'Functional minimalism', 'Natural organic', 'Calm palette'],
+    previewGradient: ['#F5F0E8', '#5C4A3A'],
+    primaryWallColour: '#F5F0E8',
+  },
+  {
+    id: 'contemporary',
+    name: 'Contemporary',
+    colours: ['#FAFAFA', '#4A4A4A', '#8B9B8A', '#C8C0B8', '#1A1A1A'],
+    colourNames: ['White', 'Graphite', 'Sage', 'Greige', 'Black'],
+    furnitureDescription: 'Sculptural furniture, curved sofas, statement lighting, art',
+    materials: ['Terrazzo', 'Bouclé', 'Matte black metal', 'Natural stone'],
+    characteristics: ['Current trends', 'Organic curves', 'Textural interest', 'Artwork focus'],
+    previewGradient: ['#FAFAFA', '#4A4A4A'],
+    primaryWallColour: '#FAFAFA',
+  },
+  {
+    id: 'traditional',
+    name: 'Traditional',
+    colours: ['#F5ECD7', '#8B6F47', '#1B3A6B', '#C0392B', '#2C2C2C'],
+    colourNames: ['Cream', 'Caramel', 'Navy', 'Burgundy', 'Charcoal'],
+    furnitureDescription: 'Chesterfield sofas, wingback chairs, mahogany tables, Persian rugs',
+    materials: ['Mahogany', 'Persian rugs', 'Damask fabric', 'Brass hardware'],
+    characteristics: ['Symmetrical layout', 'Architectural moulding', 'Rich patterns', 'Timeless elegance'],
+    previewGradient: ['#8B6F47', '#1B3A6B'],
+    primaryWallColour: '#F5ECD7',
+  },
+  {
+    id: 'mediterranean',
+    name: 'Mediterranean',
+    colours: ['#FFFFFF', '#3B82F6', '#C0714F', '#D4A96A', '#2D5016'],
+    colourNames: ['White', 'Mediterranean Blue', 'Terracotta', 'Sand', 'Olive'],
+    furnitureDescription: 'Mosaic tiled tables, wrought iron chairs, terracotta pots',
+    materials: ['Terracotta', 'Mosaic tiles', 'Whitewash', 'Wrought iron'],
+    characteristics: ['Courtyard feel', 'Arched openings', 'Mosaic patterns', 'Al fresco living'],
+    previewGradient: ['#3B82F6', '#C0714F'],
+    primaryWallColour: '#FFFFFF',
+  },
 ];
 
 export function getStyleById(id: string): DesignStyle | undefined {
@@ -158,3 +203,6 @@ export function isStyleAccessible(styleId: string, availableStyles: string[] | '
   if (availableStyles === 'all') return true;
   return availableStyles.includes(styleId);
 }
+
+/** Alias for getStyleById — matches CLAUDE.md API */
+export const getDesignStyleById = getStyleById;
