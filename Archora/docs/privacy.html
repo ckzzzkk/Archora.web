@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — ASORIA</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0F0F0F;
+      color: #E8E8E0;
+      line-height: 1.7;
+      padding: 0 1rem;
+    }
+    .container { max-width: 760px; margin: 0 auto; padding: 4rem 0 6rem; }
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #C8B8A0;
+      margin-bottom: 2.5rem;
+      display: block;
+    }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.4rem; color: #F5F5F0; }
+    .meta { font-size: 0.85rem; color: #888; margin-bottom: 3rem; }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #C8B8A0;
+      margin: 2.5rem 0 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    p { margin-bottom: 1rem; color: #C8C8C0; }
+    ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; color: #C8C8C0; }
+    li { margin-bottom: 0.4rem; }
+    a { color: #C8B8A0; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #333; color: #888; font-weight: 500; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #222; color: #C8C8C0; vertical-align: top; }
+    .back { margin-top: 3rem; font-size: 0.9rem; }
+    hr { border: none; border-top: 1px solid #222; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="logo" href="index.html">ASORIA</a>
+
+    <h1>Privacy Policy</h1>
+    <p class="meta">Effective date: March 2026 &nbsp;·&nbsp; Last updated: March 2026</p>
+
+    <p>
+      ASORIA ("we", "our", or "us") operates the ASORIA mobile application (the "App").
+      This Privacy Policy explains what information we collect, how we use it, and your rights
+      regarding your data. We are committed to protecting your privacy.
+    </p>
+    <p>
+      By using the App you agree to the collection and use of information in accordance
+      with this policy. If you do not agree, please do not use the App.
+    </p>
+
+    <h2>1. Information We Collect</h2>
+
+    <p><strong>Account information</strong></p>
+    <ul>
+      <li>Email address (used for sign-in and communication)</li>
+      <li>Display name and avatar image (set by you, optional)</li>
+    </ul>
+
+    <p><strong>App content you create</strong></p>
+    <ul>
+      <li>Architectural blueprints, room layouts, and design projects</li>
+      <li>Furniture placements and material selections</li>
+      <li>AR scan session data (used to generate your room layout; stored securely)</li>
+      <li>Exported renders and thumbnail images</li>
+      <li>Templates you publish to the community feed</li>
+      <li>Comments, likes, ratings, and saves on community templates</li>
+    </ul>
+
+    <p><strong>AI prompt data</strong></p>
+    <ul>
+      <li>Text prompts you type or speak to generate buildings, furniture, or textures</li>
+      <li>These are sent to third-party AI providers (listed below) to fulfil your request.
+          We do not use your prompts to train our own models.</li>
+    </ul>
+
+    <p><strong>Subscription and billing</strong></p>
+    <ul>
+      <li>Your subscription tier (Starter, Creator, or Architect)</li>
+      <li>Payment is processed entirely by Stripe. ASORIA never sees or stores your card details.</li>
+    </ul>
+
+    <p><strong>Engagement data</strong></p>
+    <ul>
+      <li>Points total and streak count (for in-app rewards)</li>
+      <li>Daily editing duration (Starter tier only, to enforce the plan limit)</li>
+    </ul>
+
+    <p><strong>Device sensors (never transmitted)</strong></p>
+    <ul>
+      <li>Accelerometer / gyroscope readings are used on-device only:
+          to detect a shake gesture (undo/redo) and to tilt the 3D view.
+          This data is never stored or sent to our servers.</li>
+    </ul>
+
+    <p><strong>Local storage</strong></p>
+    <ul>
+      <li>Blueprint data is cached locally on your device using MMKV for offline access.</li>
+      <li>Your authentication token (JWT) is stored in the device's secure enclave (iOS Keychain / Android Keystore).</li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+    <ul>
+      <li>To create and maintain your account</li>
+      <li>To save, sync, and display your design projects across devices</li>
+      <li>To process your AI generation requests</li>
+      <li>To operate the community template marketplace</li>
+      <li>To manage your subscription and process payments via Stripe</li>
+      <li>To enforce plan limits (projects, rooms, AI quota, editing time)</li>
+      <li>To calculate points and streaks for in-app engagement</li>
+      <li>To send account-related notifications (e.g. comments on your templates)</li>
+      <li>To improve the reliability and performance of the App</li>
+    </ul>
+    <p>We do not sell your personal data to third parties. We do not serve advertising.</p>
+
+    <h2>3. Third-Party Services</h2>
+    <p>
+      We share data with the following sub-processors only as necessary to operate the App.
+      Each has its own privacy policy linked below.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Purpose</th>
+          <th>Privacy Policy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Supabase</td>
+          <td>Database, authentication, and file storage</td>
+          <td><a href="https://supabase.com/privacy" target="_blank">supabase.com/privacy</a></td>
+        </tr>
+        <tr>
+          <td>Stripe</td>
+          <td>Payment processing and subscription billing</td>
+          <td><a href="https://stripe.com/privacy" target="_blank">stripe.com/privacy</a></td>
+        </tr>
+        <tr>
+          <td>Anthropic (Claude)</td>
+          <td>AI floor plan and furniture generation</td>
+          <td><a href="https://www.anthropic.com/privacy" target="_blank">anthropic.com/privacy</a></td>
+        </tr>
+        <tr>
+          <td>OpenAI (Whisper)</td>
+          <td>Voice-to-text transcription for voice prompts</td>
+          <td><a href="https://openai.com/privacy" target="_blank">openai.com/privacy</a></td>
+        </tr>
+        <tr>
+          <td>Replicate</td>
+          <td>AI texture generation (Creator and Architect tiers)</td>
+          <td><a href="https://replicate.com/privacy" target="_blank">replicate.com/privacy</a></td>
+        </tr>
+        <tr>
+          <td>Meshy</td>
+          <td>3D furniture model generation (Architect tier only)</td>
+          <td><a href="https://www.meshy.ai/privacy" target="_blank">meshy.ai/privacy</a></td>
+        </tr>
+        <tr>
+          <td>Upstash Redis</td>
+          <td>Anonymous rate-limit counters (no personal data stored)</td>
+          <td><a href="https://upstash.com/privacy" target="_blank">upstash.com/privacy</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. Device Permissions</h2>
+    <p>The App requests the following device permissions:</p>
+    <ul>
+      <li><strong>Camera</strong> — used for AR room scanning. Camera images are processed on-device and used only to construct a room layout.</li>
+      <li><strong>Microphone</strong> — used for the voice-to-prompt feature. Audio is sent to OpenAI Whisper for transcription and then discarded.</li>
+      <li><strong>Photo library</strong> — used to save exported design renders to your device's photo library. We do not read or access existing photos.</li>
+    </ul>
+
+    <h2>5. Data Retention</h2>
+    <ul>
+      <li>Your account and all associated data are retained for as long as your account is active.</li>
+      <li>If you delete your account, your personal data and projects are permanently deleted within 30 days.</li>
+      <li>Published community templates may remain in anonymised form for a short period to preserve data integrity for other users; these are also deleted on request.</li>
+    </ul>
+
+    <h2>6. Your Rights</h2>
+    <p>Depending on your location you may have the following rights:</p>
+    <ul>
+      <li><strong>Access</strong> — request a copy of all data we hold about you</li>
+      <li><strong>Correction</strong> — ask us to correct inaccurate data</li>
+      <li><strong>Deletion</strong> — ask us to delete your account and personal data</li>
+      <li><strong>Portability</strong> — request your data in a structured, machine-readable format</li>
+      <li><strong>Objection / restriction</strong> — object to or restrict certain types of processing</li>
+    </ul>
+    <p>
+      To exercise any of these rights, email us at
+      <a href="mailto:support@asoria.app">support@asoria.app</a>.
+      We will respond within 30 days.
+    </p>
+
+    <h2>7. California Residents (CCPA)</h2>
+    <p>
+      We do not sell personal information. California residents have the right to know what
+      personal information we collect, to request deletion, and to opt out of the sale of
+      personal information (which we do not engage in). To exercise these rights, contact us
+      at <a href="mailto:support@asoria.app">support@asoria.app</a>.
+    </p>
+
+    <h2>8. Children's Privacy</h2>
+    <p>
+      The App is not directed at children under 13. We do not knowingly collect personal
+      information from children under 13. If you believe we have inadvertently collected
+      such information, please contact us and we will delete it promptly.
+    </p>
+
+    <h2>9. Data Security</h2>
+    <p>
+      We use industry-standard security measures: all data in transit is encrypted via TLS,
+      data at rest is encrypted by Supabase (AES-256), authentication tokens are stored in
+      the device's secure enclave, and Row-Level Security policies ensure users can only
+      access their own data.
+    </p>
+    <p>
+      No method of transmission over the internet or electronic storage is 100% secure.
+      While we strive to use commercially acceptable means to protect your data, we cannot
+      guarantee absolute security.
+    </p>
+
+    <h2>10. Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. We will notify you of any material
+      changes by updating the "Last updated" date at the top of this page. Continued use of
+      the App after changes constitutes acceptance of the updated policy.
+    </p>
+
+    <h2>11. Contact</h2>
+    <p>
+      If you have any questions about this Privacy Policy, please contact us:
+    </p>
+    <ul>
+      <li>Email: <a href="mailto:support@asoria.app">support@asoria.app</a></li>
+      <li>Web: <a href="index.html">asoria.app</a></li>
+    </ul>
+
+    <hr />
+    <p class="back"><a href="index.html">← Back to ASORIA</a></p>
+  </div>
+</body>
+</html>
