@@ -9,6 +9,7 @@ import Animated, {
 import Svg, { Path, Circle } from 'react-native-svg';
 import { LogoLoader } from '../common/LogoLoader';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import { aiService } from '../../services/aiService';
 import { BASE_COLORS } from '../../theme/colors';
 import type { ChatMessage } from '../../types/blueprint';
 
@@ -92,21 +93,9 @@ export function AIChatPanel({ visible, onToggle }: Props) {
     addChatMessage(userMsg);
 
     try {
-      const res = await fetch(
-        `${process.env['EXPO_PUBLIC_SUPABASE_URL'] ?? ''}/functions/v1/ai-edit-blueprint`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env['EXPO_PUBLIC_SUPABASE_ANON_KEY'] ?? ''}` },
-          body: JSON.stringify({ prompt: text, blueprint }),
-        }
-      );
-      if (res.ok) {
-        const data = await res.json() as { message?: string; blueprint?: typeof blueprint };
-        addChatMessage({ id: `msg_${Date.now()}_r`, role: 'assistant', content: data.message ?? 'Done! Blueprint updated.', timestamp: new Date().toISOString() });
-        if (data.blueprint) loadBlueprint(data.blueprint);
-      } else {
-        throw new Error('error');
-      }
+      const data = await aiService.editBlueprint({ prompt: text, blueprint });
+      addChatMessage({ id: `msg_${Date.now()}_r`, role: 'assistant', content: data.message ?? 'Done! Blueprint updated.', timestamp: new Date().toISOString() });
+      if (data.blueprint) loadBlueprint(data.blueprint);
     } catch {
       addChatMessage({ id: `msg_${Date.now()}_e`, role: 'assistant', content: "Sorry, I couldn't process that. Please try again.", timestamp: new Date().toISOString() });
     } finally {

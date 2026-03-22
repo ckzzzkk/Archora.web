@@ -6,21 +6,23 @@ import {
   ScrollView,
   SafeAreaView,
   Alert,
+  Linking,
 } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
-  runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { supabase } from '../../utils/supabaseClient';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/authStore';
 import { BASE_COLORS } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { SubscriptionTier } from '../../types';
+import { STRIPE_PRICE_IDS } from '../../utils/tierLimits';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Subscription'>;
 
@@ -47,90 +49,6 @@ const FEATURES = [
   { label: 'Template revenue share', starter: '✗', creator: '60%', architect: '80%' },
   { label: 'VIP support', starter: '✗', creator: '✗', architect: '✓' },
 ];
-
-const CONFETTI_SHAPES = ['◻', '✦', '▬', '⬡', '◇', '▲'];
-
-function ConfettiPiece({ x, delay, color }: { x: number; delay: number; color: string }) {
-  const translateY = useSharedValue(-50);
-  const opacity = useSharedValue(1);
-  const rotate = useSharedValue(0);
-
-  React.useEffect(() => {
-    translateY.value = withTiming(600 + Math.random() * 200, { duration: 2000 + delay * 300 });
-    opacity.value = withTiming(0, { duration: 2200 + delay * 300 });
-    rotate.value = withTiming(720 * (Math.random() > 0.5 ? 1 : -1), { duration: 2000 + delay * 300 });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const style = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value },
-      { rotate: `${rotate.value}deg` },
-    ],
-    opacity: opacity.value,
-    position: 'absolute',
-    left: x,
-  }));
-
-  return (
-    <Animated.Text style={[style, { fontSize: 14, color }]}>
-      {CONFETTI_SHAPES[Math.floor(Math.random() * CONFETTI_SHAPES.length)]}
-    </Animated.Text>
-  );
-}
-
-function UpgradeAnimation({ onDone }: { onDone: () => void }) {
-  const scale = useSharedValue(0.8);
-  const opacity = useSharedValue(0);
-
-  React.useEffect(() => {
-    opacity.value = withTiming(1, { duration: 200 });
-    scale.value = withSpring(1.05, { damping: 14 }, () => {
-      scale.value = withSpring(1, { damping: 20 });
-      // Auto-dismiss after animation
-      setTimeout(() => runOnJS(onDone)(), 2500);
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const containerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
-  }));
-
-  const confettiColors = ['#FFD700', '#4CAF50', '#2196F3', '#FF9800', '#E91E63'];
-
-  return (
-    <Animated.View
-      style={[
-        containerStyle,
-        {
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-        },
-      ]}
-    >
-      {/* Confetti */}
-      {Array.from({ length: 20 }).map((_, i) => (
-        <ConfettiPiece
-          key={i}
-          x={Math.random() * 360}
-          delay={i * 0.1}
-          color={confettiColors[i % confettiColors.length]}
-        />
-      ))}
-      <Text style={{ fontSize: 56, marginBottom: 16 }}>✦</Text>
-      <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 28, color: '#FFD700', textAlign: 'center' }}>
-        Upgraded!
-      </Text>
-      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: '#FFF', marginTop: 8, textAlign: 'center' }}>
-        Welcome to the next level
-      </Text>
-    </Animated.View>
-  );
-}
 
 interface TierCardProps {
   tier: Exclude<SubscriptionTier, 'starter'>;
@@ -223,9 +141,8 @@ function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgra
 export function SubscriptionScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const [billing, setBilling] = useState<BillingInterval>('monthly');
-  const [showAnimation, setShowAnimation] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const user = useAuthStore((s) => s.user);
-  const updateUser = useAuthStore((s) => s.actions.updateUser);
   const tier = user?.subscriptionTier ?? 'starter';
 
   const toggleX = useSharedValue(0);
@@ -238,22 +155,43 @@ export function SubscriptionScreen({ navigation }: Props) {
     toggleX.value = withSpring(interval === 'annual' ? 100 : 0, { damping: 20, stiffness: 300 });
   };
 
-  const handleUpgrade = (newTier: Exclude<SubscriptionTier, 'starter'>) => {
-    Alert.alert(
-      `Upgrade to ${newTier === 'creator' ? 'Creator' : 'Architect'}`,
-      'Payment integration coming soon. For now, we\'ll activate the plan locally so you can explore all features.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Activate',
-          onPress: () => {
-            updateUser({ subscriptionTier: newTier });
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            setShowAnimation(true);
-          },
-        },
-      ]
-    );
+  const handleUpgrade = async (newTier: Exclude<SubscriptionTier, 'starter'>) => {
+    const priceId = STRIPE_PRICE_IDS[`${newTier}_${billing}` as keyof typeof STRIPE_PRICE_IDS];
+    if (!priceId) {
+      Alert.alert('Coming Soon', 'Payment is not yet configured. Check back soon!');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+        body: { priceId },
+      });
+      if (error || !data?.url) {
+        Alert.alert('Error', 'Could not start checkout. Please try again.');
+        return;
+      }
+      await Linking.openURL(data.url as string);
+    } catch {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-portal');
+      if (error || !data?.url) {
+        Alert.alert('Error', 'Could not open billing portal. Please try again.');
+        return;
+      }
+      await Linking.openURL(data.url as string);
+    } catch {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -326,6 +264,27 @@ export function SubscriptionScreen({ navigation }: Props) {
           />
         </View>
 
+        {/* Manage subscription (shown for paying users) */}
+        {tier !== 'starter' && (
+          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+            <Pressable
+              onPress={() => { void handleManageSubscription(); }}
+              disabled={isLoading}
+              style={{
+                borderWidth: 1,
+                borderColor: BASE_COLORS.border,
+                borderRadius: 12,
+                paddingVertical: 14,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>
+                Manage Subscription
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Starter note */}
         <View style={{ marginHorizontal: 24, padding: 16, backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 14, borderWidth: 1, borderColor: BASE_COLORS.border, marginBottom: 24 }}>
           <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: BASE_COLORS.textPrimary, marginBottom: 4 }}>
@@ -370,10 +329,6 @@ export function SubscriptionScreen({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* Upgrade animation overlay */}
-      {showAnimation && (
-        <UpgradeAnimation onDone={() => { setShowAnimation(false); navigation.goBack(); }} />
-      )}
     </SafeAreaView>
   );
 }

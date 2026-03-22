@@ -54,6 +54,36 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   try {
     switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const metaUserId = session.metadata?.user_id;
+        const customerId = session.customer as string;
+        if (!metaUserId || !customerId) break;
+
+        // Verify the user referenced in metadata actually exists before trusting it
+        const { data: verifiedUser } = await supabase
+          .from('users').select('id').eq('id', metaUserId).single();
+        if (!verifiedUser) {
+          console.warn('[stripe-webhook] checkout.session.completed — unknown user_id in metadata:', metaUserId);
+          break;
+        }
+
+        await supabase
+          .from('users')
+          .update({ stripe_customer_id: customerId })
+          .eq('id', metaUserId);
+
+        await supabase.from('notifications').insert({
+          user_id: metaUserId,
+          type: 'system',
+          payload: {
+            title: 'Welcome to Asoria Pro!',
+            message: 'Your subscription is now active. Enjoy unlimited building.',
+          },
+        });
+        break;
+      }
+
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription;
@@ -116,6 +146,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
             .update({ status: 'canceled' })
             .eq('stripe_subscription_id', sub.id);
 
+          await supabase.from('notifications').insert({
+            user_id: userId,
+            type: 'system',
+            payload: {
+              title: 'Subscription ended',
+              message: 'Your subscription has been cancelled. You\'ve been moved to the Starter plan.',
+            },
+          });
+
           await logAudit({
             user_id: userId,
             action: 'stripe_webhook',
@@ -136,10 +175,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
           .single();
 
         if (user) {
+          const userId = (user as Record<string, unknown>).id as string;
           await supabase
             .from('subscriptions')
             .update({ status: 'past_due' })
             .eq('stripe_customer_id', customerId);
+
+          await supabase.from('notifications').insert({
+            user_id: userId,
+            type: 'system',
+            payload: {
+              title: 'Payment failed',
+              message: 'We couldn\'t charge your card. Please update your payment details to keep your subscription.',
+            },
+          });
         }
         break;
       }

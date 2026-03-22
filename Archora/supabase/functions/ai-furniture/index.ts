@@ -22,11 +22,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const user = await getAuthUser(req);
 
     // Rate limit: AI tier
-    const limited = await checkRateLimit(user.id, 'ai', 10, 3600);
+    const limited = await checkRateLimit(`ai:${user.id}`, 10, 3600);
     if (limited) return Errors.rateLimited();
 
     // Quota check
-    const quotaOk = await checkQuota(user.id, 'ai_generations_used', 1);
+    const quotaOk = await checkQuota(user.id, 'ai_generation');
     if (!quotaOk) return Errors.quotaExceeded();
 
     const body = await req.json() as unknown;
@@ -37,19 +37,49 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicKey) {
-      // Return procedural suggestions based on room type
-      const { ROOM_FURNITURE_SUGGESTIONS, FURNITURE_DEFAULTS } = await import('../../src/utils/procedural/furniture.ts').catch(() => ({ ROOM_FURNITURE_SUGGESTIONS: {} as Record<string, string[]>, FURNITURE_DEFAULTS: {} as Record<string, { w: number; h: number; d: number }> }));
-      const suggestions = (ROOM_FURNITURE_SUGGESTIONS[roomType] ?? ['sofa', 'chair', 'coffee_table'])
+      // Inlined procedural fallback data (mirrors src/utils/procedural/furniture.ts)
+      const ROOM_SUGGESTIONS: Record<string, string[]> = {
+        living_room:    ['sofa', 'coffee_table', 'tv_media_unit', 'chair', 'bookshelf'],
+        bedroom:        ['bed_double', 'wardrobe', 'desk', 'chair'],
+        master_bedroom: ['king_bed', 'walk_in_wardrobe', 'vanity_desk', 'chair'],
+        kitchen:        ['kitchen_counter', 'kitchen_island', 'dining_table', 'dining_chair'],
+        dining_room:    ['dining_table', 'dining_chair'],
+        bathroom:       ['bathroom_sink', 'toilet', 'bathtub'],
+        office:         ['home_office_desk', 'chair', 'bookshelf', 'modular_shelving'],
+      };
+      const FURNITURE_DIMS: Record<string, { w: number; h: number; d: number }> = {
+        sofa:             { w: 2.0,  h: 0.85, d: 0.9  },
+        chair:            { w: 0.7,  h: 0.95, d: 0.7  },
+        coffee_table:     { w: 1.1,  h: 0.4,  d: 0.6  },
+        tv_media_unit:    { w: 1.8,  h: 0.55, d: 0.45 },
+        bookshelf:        { w: 0.9,  h: 1.8,  d: 0.3  },
+        bed_double:       { w: 1.6,  h: 0.5,  d: 2.0  },
+        wardrobe:         { w: 1.8,  h: 2.2,  d: 0.6  },
+        desk:             { w: 1.4,  h: 0.75, d: 0.6  },
+        king_bed:         { w: 1.8,  h: 0.5,  d: 2.0  },
+        walk_in_wardrobe: { w: 2.4,  h: 2.2,  d: 0.6  },
+        vanity_desk:      { w: 1.2,  h: 0.75, d: 0.5  },
+        kitchen_counter:  { w: 2.4,  h: 0.9,  d: 0.6  },
+        kitchen_island:   { w: 1.2,  h: 0.9,  d: 0.8  },
+        dining_table:     { w: 1.6,  h: 0.75, d: 0.9  },
+        dining_chair:     { w: 0.5,  h: 0.9,  d: 0.5  },
+        bathroom_sink:    { w: 0.6,  h: 0.85, d: 0.5  },
+        toilet:           { w: 0.4,  h: 0.8,  d: 0.65 },
+        bathtub:          { w: 0.75, h: 0.6,  d: 1.7  },
+        home_office_desk: { w: 1.6,  h: 0.75, d: 0.7  },
+        modular_shelving: { w: 1.8,  h: 1.8,  d: 0.35 },
+      };
+      const suggestions = (ROOM_SUGGESTIONS[roomType] ?? ['sofa', 'chair', 'coffee_table'])
         .slice(0, count)
         .map((type: string, i: number) => {
-          const defaults = FURNITURE_DEFAULTS[type] ?? { w: 1, h: 1, d: 1 };
+          const dims = FURNITURE_DIMS[type] ?? { w: 1, h: 1, d: 1 };
           return {
             id: crypto.randomUUID(),
             name: type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
             roomId,
             position: { x: i * 2, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
-            dimensions: { x: defaults.w, y: defaults.h, z: defaults.d },
+            dimensions: { x: dims.w, y: dims.h, z: dims.d },
             procedural: true,
             materialOverride: '#8B6914',
           };

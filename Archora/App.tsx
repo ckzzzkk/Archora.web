@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import './src/styles/global.css';
 import React, { useEffect, useState } from 'react';
-import { StatusBar, InteractionManager } from 'react-native';
+import { StatusBar, InteractionManager, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
@@ -20,6 +20,23 @@ import {
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { useAuthStore } from './src/stores/authStore';
+
+// React Navigation linking config — maps deep link paths to screens.
+// Cast to any: RootStackParamList types Auth as undefined (no nested params),
+// but the nested screen config is valid at runtime.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const linking: any = {
+  prefixes: ['asoria://'],
+  config: {
+    screens: {
+      Auth: {
+        screens: {
+          ResetPassword: 'reset-password',
+        },
+      },
+    },
+  },
+};
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -42,6 +59,23 @@ export default function App() {
     return () => task.cancel();
   }, [loadSession]);
 
+  // Handle deep links for subscription callbacks
+  useEffect(() => {
+    const handleUrl = ({ url }: { url: string }) => {
+      if (url.startsWith('asoria://subscription-success')) {
+        // Reload user session to pick up updated subscription tier from Stripe webhook
+        void loadSession();
+      }
+      // asoria://reset-password is handled by the linking config above via NavigationContainer
+    };
+
+    const sub = Linking.addEventListener('url', handleUrl);
+    // Handle cold-start URL (app was closed when the link was opened)
+    void Linking.getInitialURL().then((url) => { if (url) handleUrl({ url }); });
+
+    return () => sub.remove();
+  }, [loadSession]);
+
   const appReady = fontsLoaded && !isLoading;
 
   if (!splashDone) {
@@ -56,7 +90,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         <RootNavigator />
       </NavigationContainer>
     </GestureHandlerRootView>

@@ -7,6 +7,9 @@ export type AuthStackParamList = {
   Onboarding: undefined;
   Login: undefined;
   SignUp: undefined;
+  EmailVerification: { email: string };
+  ForgotPassword: undefined;
+  ResetPassword: undefined;
 };
 
 export type MainTabParamList = {
@@ -30,10 +33,13 @@ export type RootStackParamList = {
   ThemeCustomiser: undefined;
 };
 
-export type WelcomeScreenProps     = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
-export type OnboardingScreenProps  = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
-export type LoginScreenProps       = NativeStackScreenProps<AuthStackParamList, 'Login'>;
-export type SignUpScreenProps      = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
+export type WelcomeScreenProps           = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
+export type OnboardingScreenProps        = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
+export type LoginScreenProps             = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+export type SignUpScreenProps            = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
+export type EmailVerificationScreenProps = NativeStackScreenProps<AuthStackParamList, 'EmailVerification'>;
+export type ForgotPasswordScreenProps    = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
+export type ResetPasswordScreenProps     = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
 export type DashboardScreenProps   = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Dashboard'>, NativeStackScreenProps<RootStackParamList>>;
 export type FeedScreenProps        = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Feed'>, NativeStackScreenProps<RootStackParamList>>;

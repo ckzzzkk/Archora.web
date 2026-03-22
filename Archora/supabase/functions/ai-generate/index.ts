@@ -132,6 +132,7 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
       }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    const startMs = Date.now();
     const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -154,6 +155,7 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
 
     const claudeData = await claudeResponse.json() as {
       content: Array<{ type: string; text: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number };
     };
     const rawText = claudeData.content[0]?.text ?? '';
 
@@ -163,8 +165,18 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
     } catch {
       // Try to extract JSON from response
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('Claude returned invalid JSON');
-      blueprintData = JSON.parse(jsonMatch[0]);
+      if (!jsonMatch) {
+        return new Response(JSON.stringify({ error: 'AI returned invalid JSON', code: 'UPSTREAM_ERROR' }), {
+          status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      try {
+        blueprintData = JSON.parse(jsonMatch[0]);
+      } catch {
+        return new Response(JSON.stringify({ error: 'AI returned invalid JSON', code: 'UPSTREAM_ERROR' }), {
+          status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // Log to ai_generations table
@@ -176,8 +188,13 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
     await supabase.from('ai_generations').insert({
       user_id: user.id,
       prompt,
-      type: 'floor_plan',
-      model: 'claude-sonnet-4-6',
+      generation_type: 'floor_plan',
+      model:           'claude-sonnet-4-6',
+      input_tokens:    claudeData.usage?.input_tokens  ?? null,
+      output_tokens:   claudeData.usage?.output_tokens ?? null,
+      duration_ms:     Date.now() - startMs,
+      status:          'complete',
+      result_data:     blueprintData as Record<string, unknown>,
     });
 
     return new Response(JSON.stringify({ blueprint: blueprintData }), {

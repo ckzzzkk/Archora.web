@@ -3,6 +3,7 @@
     "name": "Asoria",
     "slug": "crokora",
     "version": "1.0.0",
+    "scheme": "asoria",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",

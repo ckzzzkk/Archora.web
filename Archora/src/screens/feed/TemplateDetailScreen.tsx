@@ -88,9 +88,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
 
   const handleUse = () => {
     medium();
-    // Template blueprintData field not yet available — navigate to blank Workspace
-    // TODO: wire up once templates store blueprint snapshots
-    navigation.navigate('Workspace', undefined);
+    navigation.navigate('Workspace', { projectId: template?.projectId });
     void inspoService.incrementDownload(templateId);
   };
 

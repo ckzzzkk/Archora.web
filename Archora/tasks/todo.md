@@ -10,15 +10,16 @@
 - [x] Login, SignUp, Welcome, Onboarding screens
 - [x] authStore + JWT refresh
 - [x] useAuth hook
-- [ ] Email verification flow
-- [ ] Password reset screen
+- [x] Email verification flow (EmailVerificationScreen)
+- [x] Password reset screen (ForgotPasswordScreen + ResetPasswordScreen)
 
 ### Database Agent
-- [x] Migrations 001–007
+- [x] Migrations 001–012
 - [x] RLS policies on all tables
 - [x] _shared/auth, _shared/quota, _shared/rateLimit, _shared/cors
 - [x] _shared/errors, _shared/audit
-- [ ] 008_create_notifications migration
+- [x] 011_notifications migration (payload JSONB schema)
+- [x] 013_notifications_patch (Realtime pub + system type)
 - [ ] templates_feed view (denormalised)
 - [ ] comments_with_author view
 
@@ -31,7 +32,7 @@
 - [x] ProceduralBuilding, ProceduralWall, ProceduralFloor
 - [x] All 9 furniture components
 - [x] geometry.ts, sceneHelpers.ts, use3DScene
-- [ ] Undo/redo stack in blueprintStore
+- [x] Undo/redo stack in blueprintStore (history, undo, redo, useShakeDetector)
 - [ ] Wall snap-to-grid in Canvas2D
 - [ ] Opening (door/window) rendering in 3D
 
@@ -50,13 +51,14 @@
 - [ ] Meshy polling for completed scans
 
 ### Payments Agent
-- [x] SubscriptionScreen
+- [x] SubscriptionScreen (real Stripe checkout integration)
 - [x] useTierGate + TierGate component
 - [x] TIER_LIMITS (single source of truth)
 - [x] subscriptionService
-- [x] stripe-webhook Edge Function
-- [ ] stripe-checkout Edge Function
-- [ ] stripe-portal Edge Function
+- [x] stripe-webhook Edge Function (checkout.session.completed + notifications)
+- [x] stripe-checkout Edge Function
+- [x] stripe-portal Edge Function
+- [x] Deep links: asoria:// scheme, subscription-success handler, reset-password routing
 
 ### UI Social Agent
 - [x] DashboardScreen, FeedScreen, AccountScreen
@@ -65,6 +67,6 @@
 - [x] FeedCard, LikeButton, RatingStars, CommentThread
 - [x] Input, Card, SkeletonLoader, ErrorBoundary, EmptyState
 - [x] inspoService
-- [ ] Notification centre screen
+- [x] NotificationPanel with Realtime subscription (system notification type added)
 - [ ] Template publish flow
 - [ ] Template purchase flow (Stripe)

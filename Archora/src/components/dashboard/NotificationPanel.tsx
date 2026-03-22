@@ -19,10 +19,13 @@ import {
   getNotifications,
   markAllRead,
   markRead,
+  subscribeToNotifications,
+  unsubscribeFromNotifications,
 } from '../../services/notificationService';
 import { useAuthStore } from '../../stores/authStore';
 import { BASE_COLORS } from '../../theme/colors';
 import type { AppNotification } from '../../types';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { RootStackParamList } from '../../navigation/types';
 
 const TYPE_ICONS: Record<string, string> = {
@@ -36,6 +39,7 @@ const TYPE_ICONS: Record<string, string> = {
   quota_reached: '🚫',
   design_of_week: '🏆',
   challenge_ending: '⏰',
+  system: '📣',
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -49,6 +53,7 @@ const TYPE_LABELS: Record<string, string> = {
   quota_reached: 'Usage limit reached',
   design_of_week: 'Design of the week!',
   challenge_ending: 'Challenge ending soon',
+  system: 'System notification',
 };
 
 function timeAgo(iso: string): string {
@@ -144,6 +149,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
+  const channelRef = React.useRef<RealtimeChannel | null>(null);
 
   const translateY = useSharedValue(-300);
   const opacity = useSharedValue(0);
@@ -153,10 +159,25 @@ export function NotificationPanel({ visible, onClose }: Props) {
       translateY.value = withSpring(0, { damping: 22, stiffness: 280 });
       opacity.value = withTiming(1, { duration: 200 });
       loadNotifications();
+      if (user?.id) {
+        channelRef.current = subscribeToNotifications(user.id, (n) => {
+          setNotifications((prev) => [n, ...prev]);
+        });
+      }
     } else {
       translateY.value = withTiming(-300, { duration: 200 });
       opacity.value = withTiming(0, { duration: 200 });
+      if (channelRef.current) {
+        unsubscribeFromNotifications(channelRef.current);
+        channelRef.current = null;
+      }
     }
+    return () => {
+      if (channelRef.current) {
+        unsubscribeFromNotifications(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const panelStyle = useAnimatedStyle(() => ({

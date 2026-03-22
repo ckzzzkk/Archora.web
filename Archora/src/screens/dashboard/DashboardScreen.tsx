@@ -18,7 +18,11 @@ import { ProjectCard } from '../../components/dashboard/ProjectCard';
 import { LogoLoader } from '../../components/common/LogoLoader';
 import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import { NotificationPanel } from '../../components/dashboard/NotificationPanel';
-import { getNotifications } from '../../services/notificationService';
+import {
+  getNotifications,
+  subscribeToNotifications,
+  unsubscribeFromNotifications,
+} from '../../services/notificationService';
 import { BASE_COLORS } from '../../theme/colors';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
@@ -231,12 +235,15 @@ export function DashboardScreen() {
   }, []);
 
   useEffect(() => {
-    if (user?.id) {
-      void actions.load(user.id);
-      void getNotifications().then((data) => {
-        setHasUnread(data.some((n) => !n.read));
-      });
-    }
+    if (!user?.id) return;
+    void actions.load(user.id);
+    void getNotifications().then((data) => {
+      setHasUnread(data.some((n) => !n.read));
+    });
+    const channel = subscribeToNotifications(user.id, () => {
+      setHasUnread(true);
+    });
+    return () => { unsubscribeFromNotifications(channel); };
   }, [user?.id]);
 
   const handleRefresh = useCallback(async () => {

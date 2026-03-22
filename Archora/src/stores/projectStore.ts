@@ -38,13 +38,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     },
 
     delete: async (id) => {
+      const snapshot = get().projects.find((p) => p.id === id);
       set((s) => ({ projects: s.projects.filter((p) => p.id !== id) }));
       try {
         await projectService.delete(id);
       } catch {
-        // revert on error — reload
-        const { projects } = get();
-        // projects already filtered, can't easily revert without refetch
+        if (snapshot) set((s) => ({ projects: [snapshot, ...s.projects] }));
       }
     },
 

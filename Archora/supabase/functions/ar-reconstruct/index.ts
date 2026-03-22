@@ -49,10 +49,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     const user = await getAuthUser(req);
 
-    const limited = await checkRateLimit(user.id, 'ar', 5, 3600);
+    const limited = await checkRateLimit(`ar:${user.id}`, 5, 3600);
     if (limited) return Errors.rateLimited('AR scan rate limit exceeded');
 
-    const quotaOk = await checkQuota(user.id, 'ar_scans_used', 1);
+    const quotaOk = await checkQuota(user.id, 'ar_scan');
     if (!quotaOk) return Errors.quotaExceeded('AR scan quota exceeded');
 
     const body = await req.json() as unknown;
@@ -91,7 +91,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         meshy_task_id: meshTaskId,
         mesh_url: null,
         room_dimensions: { width: 0, height: 0, depth: 0 },
-        status: meshTaskId ? 'processing' : 'complete',
+        status: meshTaskId ? 'processing' : 'failed',
       })
       .select()
       .single();

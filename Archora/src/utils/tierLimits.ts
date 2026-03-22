@@ -256,11 +256,11 @@ export const TIER_PRICES = {
 } as const;
 
 export const STRIPE_PRICE_IDS = {
-  creator_monthly: 'FILL_IN_STRIPE_PRICE_ID',
-  creator_annual: 'FILL_IN_STRIPE_PRICE_ID',
-  architect_monthly: 'FILL_IN_STRIPE_PRICE_ID',
-  architect_annual: 'FILL_IN_STRIPE_PRICE_ID',
-} as const;
+  creator_monthly:   process.env.EXPO_PUBLIC_STRIPE_PRICE_CREATOR_MONTHLY   ?? '',
+  creator_annual:    process.env.EXPO_PUBLIC_STRIPE_PRICE_CREATOR_ANNUAL    ?? '',
+  architect_monthly: process.env.EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_MONTHLY ?? '',
+  architect_annual:  process.env.EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_ANNUAL  ?? '',
+};
 
 export function isFeatureAllowed(tier: SubscriptionTier, feature: keyof TierLimits): boolean {
   const limit = TIER_LIMITS[tier][feature];

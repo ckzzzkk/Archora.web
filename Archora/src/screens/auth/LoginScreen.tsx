@@ -441,8 +441,11 @@ export function LoginScreen() {
               />
 
               {/* Forgot password */}
-              <Pressable style={{ alignSelf: 'flex-end', marginTop: -4, marginBottom: 24 }}>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary }}>
+              <Pressable
+                onPress={() => navigation.navigate('ForgotPassword')}
+                style={{ alignSelf: 'flex-end', marginTop: -4, marginBottom: 24 }}
+              >
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary, textDecorationLine: 'underline' }}>
                   Forgot password?
                 </Text>
               </Pressable>

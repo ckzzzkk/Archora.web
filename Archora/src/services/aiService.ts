@@ -48,6 +48,20 @@ export const aiService = {
     return data.blueprint;
   },
 
+  async editBlueprint(params: {
+    prompt: string;
+    blueprint: BlueprintData;
+  }): Promise<{ message: string; blueprint?: BlueprintData }> {
+    const headers = await getAuthHeader();
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-edit-blueprint`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
+    if (!response.ok) throw new Error('AI blueprint edit failed');
+    return response.json() as Promise<{ message: string; blueprint?: BlueprintData }>;
+  },
+
   async transcribeAudio(audioUri: string): Promise<string> {
     const headers = await getAuthHeader();
     delete headers['Content-Type']; // FormData sets its own

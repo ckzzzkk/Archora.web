@@ -22,7 +22,6 @@ import type { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../stores/authStore';
 import { useHaptics } from '../../hooks/useHaptics';
 import { LogoLoader } from '../../components/common/LogoLoader';
-import { Particles } from '../../components/effects/Particles';
 import { BASE_COLORS } from '../../theme/colors';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'SignUp'>;
@@ -291,7 +290,6 @@ export function SignUpScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [buttonSpinning, setButtonSpinning] = useState(false);
-  const [confettiTriggered, setConfettiTriggered] = useState(false);
 
   const strength = getPasswordStrength(password);
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -367,7 +365,9 @@ export function SignUpScreen() {
     try {
       await signUp(email, password, displayName);
       success();
-      setConfettiTriggered(true);
+      // Navigate to email verification — if Supabase email confirmation is disabled,
+      // the user can tap "Already verified? Sign in" to proceed directly.
+      navigation.navigate('EmailVerification', { email });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Sign up failed. Please try again.';
       setError(msg.includes('already registered') ? 'Email already in use. Try signing in.' : msg);
@@ -411,8 +411,7 @@ export function SignUpScreen() {
         />
       </View>
 
-      {/* Confetti burst on success */}
-      <Particles triggered={confettiTriggered} count={14} radius={130} shapes={['floor_plan', 'compass', 'ruler', 'arrow']} />
+      {/* Confetti burst on success — EmailVerificationScreen handles post-signup celebration */}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
