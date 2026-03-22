@@ -18,6 +18,7 @@ import { ProjectCard } from '../../components/dashboard/ProjectCard';
 import { LogoLoader } from '../../components/common/LogoLoader';
 import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import { NotificationPanel } from '../../components/dashboard/NotificationPanel';
+import { getNotifications } from '../../services/notificationService';
 import { BASE_COLORS } from '../../theme/colors';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
@@ -202,6 +203,7 @@ export function DashboardScreen() {
   const [showNewProject, setShowNewProject] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
 
   const { streakCount } = useStreak();
 
@@ -231,6 +233,9 @@ export function DashboardScreen() {
   useEffect(() => {
     if (user?.id) {
       void actions.load(user.id);
+      void getNotifications().then((data) => {
+        setHasUnread(data.some((n) => !n.read));
+      });
     }
   }, [user?.id]);
 
@@ -298,15 +303,36 @@ export function DashboardScreen() {
 
           {/* Notification bell */}
           <Pressable
-            onPress={() => { light(); setShowNotifications(true); }}
+            onPress={() => { light(); setShowNotifications(true); setHasUnread(false); }}
             style={{ padding: 8 }}
           >
-            <Svg width={22} height={22} viewBox="0 0 24 24">
-              <Path
-                d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
-                fill="#C8C8C8"
-              />
-            </Svg>
+            <View style={{ position: 'relative' }}>
+              <Svg width={22} height={22} viewBox="0 0 24 24">
+                <Path
+                  d="M12 3.5 C9.2 3.5 7 5.8 7 8.5 L6.5 16 L5 18 L19 18 L17.5 16 L17 8.5 C17 5.8 14.8 3.5 12 3.5 Z"
+                  stroke="#C8C8C8" strokeWidth="1.5" fill="none"
+                  strokeLinecap="round" strokeLinejoin="round"
+                />
+                <Path
+                  d="M10 18 Q10.2 21 12 21 Q13.8 21 14 18"
+                  stroke="#C8C8C8" strokeWidth="1.5" fill="none" strokeLinecap="round"
+                />
+                <Path d="M12 3.5 L12 2" stroke="#C8C8C8" strokeWidth="1.5" strokeLinecap="round" />
+              </Svg>
+              {hasUnread && (
+                <View style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: 7,
+                  height: 7,
+                  borderRadius: 4,
+                  backgroundColor: '#4CAF50',
+                  borderWidth: 1,
+                  borderColor: BASE_COLORS.background,
+                }} />
+              )}
+            </View>
           </Pressable>
         </View>
 

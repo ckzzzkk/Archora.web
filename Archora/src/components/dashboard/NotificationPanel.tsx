@@ -6,6 +6,7 @@ import {
   FlatList,
   Modal,
 } from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -66,7 +67,7 @@ interface NotificationRowProps {
 }
 
 function NotificationRow({ notification, onPress }: NotificationRowProps) {
-  const icon = TYPE_ICONS[notification.type] ?? '🔔';
+  const icon = TYPE_ICONS[notification.type] ?? '📌';
   const label = TYPE_LABELS[notification.type] ?? notification.type;
 
   return (
@@ -246,7 +247,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
             paddingTop: 60,
             paddingBottom: 12,
             borderBottomWidth: 1,
-            borderBottomColor: BASE_COLORS.border,
+            borderBottomColor: '#333333',
           }}
         >
           <Text
@@ -275,8 +276,15 @@ export function NotificationPanel({ visible, onClose }: Props) {
               </Text>
             </Pressable>
           )}
-          <Pressable onPress={onClose}>
-            <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 18 }}>✕</Text>
+          <Pressable onPress={onClose} hitSlop={8}>
+            <Svg width={20} height={20} viewBox="0 0 24 24">
+              <Path
+                d="M5 5 L19 19 M19 5 L5 19"
+                stroke={BASE_COLORS.textSecondary}
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </Svg>
           </Pressable>
         </View>
 
@@ -289,16 +297,46 @@ export function NotificationPanel({ visible, onClose }: Props) {
           </View>
         ) : notifications.length === 0 ? (
           <View style={{ padding: 40, alignItems: 'center' }}>
-            <Text style={{ fontSize: 36, marginBottom: 12 }}>🔔</Text>
-            <Text
-              style={{
-                fontFamily: 'Inter_400Regular',
-                fontSize: 14,
-                color: BASE_COLORS.textDim,
-                textAlign: 'center',
-              }}
-            >
+            <Svg width={80} height={72} viewBox="0 0 80 72" style={{ marginBottom: 20 }}>
+              {/* Notice board rectangle */}
+              <Path
+                d="M6 12 L6 64 L74 64 L74 12 Z"
+                stroke="#C8C8C8" strokeWidth="1.5" fill="none"
+                strokeLinecap="round" strokeLinejoin="round"
+              />
+              {/* Board top bar */}
+              <Path d="M4 10 L76 10" stroke="#C8C8C8" strokeWidth="2" strokeLinecap="round" />
+              {/* Blank paper */}
+              <Path
+                d="M18 22 L18 56 L62 56 L62 22 Z"
+                stroke="#5A5550" strokeWidth="1" fill="none"
+                strokeLinecap="round" strokeLinejoin="round"
+              />
+              {/* Drawing pin circle */}
+              <Circle cx="40" cy="20" r="4" stroke="#C8C8C8" strokeWidth="1.5" fill="none" />
+              {/* Pin shaft */}
+              <Path d="M40 24 L40 28" stroke="#C8C8C8" strokeWidth="1.5" strokeLinecap="round" />
+              {/* Ruled lines on paper */}
+              <Path d="M24 32 H56" stroke="#333333" strokeWidth="1" strokeLinecap="round" />
+              <Path d="M24 38 H56" stroke="#333333" strokeWidth="1" strokeLinecap="round" />
+              <Path d="M24 44 H50" stroke="#333333" strokeWidth="1" strokeLinecap="round" />
+            </Svg>
+            <Text style={{
+              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontSize: 16,
+              color: BASE_COLORS.textPrimary,
+              textAlign: 'center',
+              marginBottom: 8,
+            }}>
               No notifications yet
+            </Text>
+            <Text style={{
+              fontFamily: 'Inter_400Regular',
+              fontSize: 13,
+              color: '#9A9590',
+              textAlign: 'center',
+            }}>
+              Likes, saves and follows will appear here
             </Text>
           </View>
         ) : (
