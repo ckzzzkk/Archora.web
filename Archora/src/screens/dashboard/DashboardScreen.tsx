@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, RefreshControl, Alert,
 } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay, withRepeat, withSequence,
+  useSharedValue, useAnimatedStyle, withSpring, withTiming, withRepeat, withSequence,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -196,17 +196,14 @@ export function DashboardScreen() {
   const { colors } = useTheme();
   const { medium, light } = useHaptics();
   const user = useAuthStore((s) => s.user);
+  const userTier = user?.subscriptionTier ?? 'starter';
+  const tierLimits = TIER_LIMITS[userTier] ?? TIER_LIMITS.starter;
   const { projects, isLoading, actions } = useProjectStore();
   const [showNewProject, setShowNewProject] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const { streakCount } = useStreak();
-
-  const fabScale = useSharedValue(0);
-  const fabStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: fabScale.value }],
-  }));
 
   const flameScale = useSharedValue(1);
   useEffect(() => {
@@ -229,7 +226,6 @@ export function DashboardScreen() {
   useEffect(() => {
     headerY.value = withSpring(0, { damping: 18, stiffness: 200 });
     headerOp.value = withTiming(1, { duration: 250 });
-    fabScale.value = withDelay(400, withSpring(1, { damping: 14, stiffness: 180 }));
   }, []);
 
   useEffect(() => {
@@ -247,9 +243,10 @@ export function DashboardScreen() {
 
   const handleCreate = async (name: string, buildingType: BuildingType) => {
     if (!user?.id) return;
-    const tierLimit = TIER_LIMITS[user.subscriptionTier];
-    if (projects.length >= tierLimit.savedProjects) {
-      Alert.alert('Project Limit Reached', `Your ${user.subscriptionTier} plan allows ${tierLimit.savedProjects} projects. Upgrade to save more.`);
+    const safeTier = user.subscriptionTier ?? 'starter';
+    const tierLimit = TIER_LIMITS[safeTier] ?? TIER_LIMITS.starter;
+    if (tierLimit.savedProjects !== -1 && projects.length >= tierLimit.savedProjects) {
+      Alert.alert('Project Limit Reached', `Your ${safeTier} plan allows ${tierLimit.savedProjects} projects. Upgrade to save more.`);
       return;
     }
     setShowNewProject(false);
@@ -257,17 +254,11 @@ export function DashboardScreen() {
     navigation.navigate('Workspace', { projectId: project.id });
   };
 
-  const handleFabPress = () => {
-    medium();
-    fabScale.value = withSpring(0.9, {}, () => { fabScale.value = withSpring(1); });
-    setShowNewProject(true);
-  };
-
   // Usage bar for AI generations
-  const usagePercent = user
-    ? Math.min((user.aiGenerationsUsed / TIER_LIMITS[user.subscriptionTier].aiGenerationsPerMonth) * 100, 100)
+  const usageLimit = tierLimits.aiGenerationsPerMonth;
+  const usagePercent = user && usageLimit !== -1
+    ? Math.min((user.aiGenerationsUsed / usageLimit) * 100, 100)
     : 0;
-  const usageLimit = user ? TIER_LIMITS[user.subscriptionTier].aiGenerationsPerMonth : 15;
 
   return (
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
@@ -295,12 +286,27 @@ export function DashboardScreen() {
             </Animated.View>
           )}
 
+          {/* New project button */}
+          <Pressable
+            onPress={() => { light(); setShowNewProject(true); }}
+            style={{ padding: 8, marginRight: 4 }}
+          >
+            <Svg width={22} height={22} viewBox="0 0 24 24">
+              <Path d="M12 5 V19 M5 12 H19" stroke={BASE_COLORS.textSecondary} strokeWidth="2" strokeLinecap="round" />
+            </Svg>
+          </Pressable>
+
           {/* Notification bell */}
           <Pressable
             onPress={() => { light(); setShowNotifications(true); }}
             style={{ padding: 8 }}
           >
-            <Text style={{ fontSize: 22 }}>🔔</Text>
+            <Svg width={22} height={22} viewBox="0 0 24 24">
+              <Path
+                d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+                fill="#C8C8C8"
+              />
+            </Svg>
           </Pressable>
         </View>
 
@@ -362,37 +368,6 @@ export function DashboardScreen() {
           )}
         />
       )}
-
-      {/* FAB */}
-      <Animated.View
-        style={[
-          fabStyle,
-          {
-            position: 'absolute',
-            bottom: 100,
-            right: 20,
-          },
-        ]}
-      >
-        <Pressable
-          onPress={handleFabPress}
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 999,
-            backgroundColor: colors.primary,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.4,
-            shadowRadius: 12,
-            elevation: 8,
-          }}
-        >
-          <Text style={{ fontSize: 28, color: BASE_COLORS.background, lineHeight: 32 }}>+</Text>
-        </Pressable>
-      </Animated.View>
 
       <NewProjectModal
         visible={showNewProject}

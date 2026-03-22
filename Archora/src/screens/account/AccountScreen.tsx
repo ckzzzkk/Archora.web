@@ -152,7 +152,7 @@ export function AccountScreen() {
   const [nameVal, setNameVal] = useState(user?.displayName ?? '');
   const [notificationsOn, setNotificationsOn] = useState(true);
 
-  const limits = user ? TIER_LIMITS[user.subscriptionTier] : TIER_LIMITS['starter'];
+  const limits = TIER_LIMITS[user?.subscriptionTier ?? 'starter'] ?? TIER_LIMITS.starter;
 
   // Entry animations
   const headerY = useSharedValue(-30);

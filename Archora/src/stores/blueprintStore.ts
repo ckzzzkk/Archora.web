@@ -78,6 +78,8 @@ interface BlueprintState {
     loadFromStorage: () => Promise<void>;
     forceSave: () => void;
     manualSave: () => void;
+    // Room bulk replace (bypasses undo history — used by room detection)
+    setRoomsDirectly: (rooms: Room[]) => void;
     // Undo/redo
     undo: () => void;
     redo: () => void;
@@ -512,6 +514,16 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         void blueprintStorage.set(STORAGE_KEY, JSON.stringify(blueprint)).then(() => {
           set({ saveStatus: 'saved', isDirty: false });
         });
+      },
+
+      setRoomsDirectly: (rooms) => {
+        const { blueprint, currentFloorIndex } = get();
+        if (!blueprint) return;
+        const updated = updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({ ...f, rooms }));
+        const tier = getCurrentTier();
+        scheduleSave(updated, tier);
+        set({ blueprint: updated, isDirty: true });
+        // No mutate() call — no history push
       },
 
       undo: () => {

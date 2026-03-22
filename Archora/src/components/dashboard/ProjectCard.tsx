@@ -6,10 +6,12 @@ import Animated, {
   withSpring,
   withTiming,
   withDelay,
+  interpolate,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
+import { useGyroscope } from '../../hooks/useGyroscope';
 import { BASE_COLORS } from '../../theme/colors';
 import type { Project } from '../../types';
 
@@ -79,6 +81,7 @@ export function ProjectCard({ project, onPress, onDelete, onRename, index }: Pro
   const { colors } = useTheme();
   const { light, medium } = useHaptics();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { tiltX, tiltY } = useGyroscope();
 
   const scale = useSharedValue(1);
   const translateY = useSharedValue(40);
@@ -100,6 +103,8 @@ export function ProjectCard({ project, onPress, onDelete, onRename, index }: Pro
       { scale: scale.value },
       { translateY: translateY.value },
       { rotate: `${rotation.value}deg` },
+      { rotateX: `${interpolate(tiltY.value, [-1, 1], [-8, 8])}deg` },
+      { rotateY: `${interpolate(tiltX.value, [-1, 1], [8, -8])}deg` },
     ],
     opacity: opacity.value,
   }));

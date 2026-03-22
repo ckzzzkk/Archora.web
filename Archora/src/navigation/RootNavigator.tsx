@@ -4,12 +4,31 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '../stores/authStore';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
-import { BlueprintWorkspaceScreen } from '../screens/workspace/BlueprintWorkspaceScreen';
-import { GenerationScreen } from '../screens/generation/GenerationScreen';
-import { SubscriptionScreen } from '../screens/subscription/SubscriptionScreen';
-import { TemplateDetailScreen } from '../screens/feed/TemplateDetailScreen';
-import { ThemeCustomiserScreen } from '../screens/account/ThemeCustomiserScreen';
-import { OnboardingQuizScreen } from '../screens/auth/OnboardingQuizScreen';
+import { lazyScreen } from '../utils/lazyScreen';
+
+const BlueprintWorkspaceScreen = lazyScreen(() =>
+  import('../screens/workspace/BlueprintWorkspaceScreen')
+    .then((m) => ({ default: m.BlueprintWorkspaceScreen })));
+
+const GenerationScreen = lazyScreen(() =>
+  import('../screens/generation/GenerationScreen')
+    .then((m) => ({ default: m.GenerationScreen })));
+
+const SubscriptionScreen = lazyScreen(() =>
+  import('../screens/subscription/SubscriptionScreen')
+    .then((m) => ({ default: m.SubscriptionScreen })));
+
+const TemplateDetailScreen = lazyScreen(() =>
+  import('../screens/feed/TemplateDetailScreen')
+    .then((m) => ({ default: m.TemplateDetailScreen })));
+
+const ThemeCustomiserScreen = lazyScreen(() =>
+  import('../screens/account/ThemeCustomiserScreen')
+    .then((m) => ({ default: m.ThemeCustomiserScreen })));
+
+const OnboardingQuizScreen = lazyScreen(() =>
+  import('../screens/auth/OnboardingQuizScreen')
+    .then((m) => ({ default: m.OnboardingQuizScreen })));
 import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
 import { storage } from '../utils/storage';
 import { BASE_COLORS } from '../theme/colors';

@@ -230,8 +230,6 @@ export function InHouseView({ onExit }: InHouseViewProps) {
           camera={{ position: preset.position, fov: preset.fov, near: 0.1, far: 200 }}
           style={{ flex: 1 }}
         >
-          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-          {/* @ts-expect-error r3f color element */}
           <color attach="background" args={[lighting.skyColor]} />
           <ambientLight intensity={lighting.ambientIntensity} />
           <directionalLight position={lighting.sunPosition} intensity={1} castShadow />

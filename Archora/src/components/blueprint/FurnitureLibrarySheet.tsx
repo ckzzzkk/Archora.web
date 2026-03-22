@@ -6,9 +6,9 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS,
 } from 'react-native-reanimated';
 import Svg, { Rect } from 'react-native-svg';
-import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTierGate } from '../../hooks/useTierGate';
-import type { FurniturePiece } from '../../types/blueprint';
+import { FURNITURE_DEFAULTS } from '../../utils/procedural/furniture';
+import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
 import { BASE_COLORS } from '../../theme/colors';
 
 const { height: SCREEN_H } = Dimensions.get('window');
@@ -67,14 +67,24 @@ function ItemTile({ name, category, onAdd }: ItemTileProps) {
   );
 }
 
-interface Props { visible: boolean; onClose: () => void; }
+interface Props {
+  visible: boolean;
+  onClose: () => void;
+  onSelectFurniture?: (def: FurnitureDef) => void;
+}
 
-export function FurnitureLibrarySheet({ visible, onClose }: Props) {
+/** Map a display name to a FurnitureType key from FURNITURE_DEFAULTS (best-effort) */
+function nameToFurnitureType(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+export function FurnitureLibrarySheet({ visible, onClose, onSelectFurniture }: Props) {
   const [selectedCat, setSelectedCat] = useState('seating');
   const [search, setSearch] = useState('');
   const translateY = useSharedValue(SHEET_H);
-  const blueprint = useBlueprintStore((s) => s.blueprint);
-  const addFurniture = useBlueprintStore((s) => s.actions.addFurniture);
   const { allowed: commercialAllowed } = useTierGate('commercialBuildings');
   const { allowed: customFurnitureAllowed } = useTierGate('customFurniture');
 
@@ -87,19 +97,27 @@ export function FurnitureLibrarySheet({ visible, onClose }: Props) {
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
 
   const handleAdd = useCallback((name: string, category: string) => {
-    if (!blueprint) return;
-    const piece: FurniturePiece = {
-      id: `fur_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      name, category,
-      roomId: blueprint.rooms[0]?.id ?? '',
-      position: { x: 0, y: 0, z: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      dimensions: { x: 1, y: 1, z: 1 },
-      procedural: true,
+    // Resolve dimensions from FURNITURE_DEFAULTS; fall back to 1×1×1
+    const typeKey = nameToFurnitureType(name);
+    const defaults = (FURNITURE_DEFAULTS as Record<string, { w: number; h: number; d: number; color: string; category: string }>)[typeKey];
+
+    const def: FurnitureDef = {
+      type: typeKey,
+      name,
+      category,
+      dimensions: {
+        width:  defaults?.w ?? 1,
+        height: defaults?.h ?? 1,
+        depth:  defaults?.d ?? 1,
+      },
+      defaultColor: defaults?.color ?? '#8A7A6A',
     };
-    addFurniture(piece);
+
+    if (onSelectFurniture) {
+      onSelectFurniture(def);
+    }
     onClose();
-  }, [blueprint, addFurniture, onClose]);
+  }, [onSelectFurniture, onClose]);
 
   const cat = CATEGORIES.find((c) => c.id === selectedCat);
   const items = (cat?.items ?? []).filter((i) => !search || i.toLowerCase().includes(search.toLowerCase()));

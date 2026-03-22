@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withTiming,
-  withSpring, Easing, withSequence,
+  withSpring, Easing, withSequence, withDelay, useDerivedValue,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -66,11 +66,46 @@ export function GenerationScreen() {
   // Compass rose rotation during generation
   const compassRotation = useSharedValue(0);
 
-  // Blueprint draw-in animation
-  const blueprintProgress = useSharedValue(0);
+  // Building-rise wall animations (4 walls, staggered)
+  const wall0 = useSharedValue(100);
+  const wall1 = useSharedValue(100);
+  const wall2 = useSharedValue(100);
+  const wall3 = useSharedValue(100);
+  const wallOpacity = useSharedValue(0);
+
+  // Dimension line extensions
+  const dimLineLeft = useSharedValue(0);
+  const dimLineRight = useSharedValue(0);
+
+  // Room count number animation
+  const roomCountAnim = useSharedValue(0);
+  const roomCountDisplay = useDerivedValue(() => `${Math.floor(roomCountAnim.value)}`);
 
   const gridStyle = useAnimatedStyle(() => ({
     opacity: gridOpacity.value,
+  }));
+
+  const wall0Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: wall0.value }],
+    opacity: wallOpacity.value,
+  }));
+  const wall1Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: wall1.value }],
+    opacity: wallOpacity.value,
+  }));
+  const wall2Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: wall2.value }],
+    opacity: wallOpacity.value,
+  }));
+  const wall3Style = useAnimatedStyle(() => ({
+    transform: [{ translateY: wall3.value }],
+    opacity: wallOpacity.value,
+  }));
+  const dimLeftStyle = useAnimatedStyle(() => ({
+    width: dimLineLeft.value,
+  }));
+  const dimRightStyle = useAnimatedStyle(() => ({
+    width: dimLineRight.value,
   }));
 
   const handleGenerate = async () => {
@@ -98,6 +133,20 @@ export function GenerationScreen() {
       false,
     );
 
+    // Building-rise walls (staggered)
+    wallOpacity.value = withTiming(1, { duration: 200 });
+    wall0.value = withSpring(0, { damping: 14, stiffness: 100 });
+    wall1.value = withDelay(150, withSpring(0, { damping: 14, stiffness: 100 }));
+    wall2.value = withDelay(300, withSpring(0, { damping: 14, stiffness: 100 }));
+    wall3.value = withDelay(450, withSpring(0, { damping: 14, stiffness: 100 }));
+
+    // Dimension lines extend
+    dimLineLeft.value = withDelay(500, withTiming(60, { duration: 600 }));
+    dimLineRight.value = withDelay(500, withTiming(60, { duration: 600 }));
+
+    // Count up to estimated rooms
+    roomCountAnim.value = withDelay(300, withTiming(5, { duration: 1800 }));
+
     try {
       const blueprint = await aiService.generateFloorPlan({
         prompt: prompt.trim(),
@@ -108,6 +157,10 @@ export function GenerationScreen() {
       // Stop animations
       gridOpacity.value = withTiming(0.05, { duration: 600 });
       compassRotation.value = 0;
+      wallOpacity.value = withTiming(0, { duration: 400 });
+      wall0.value = 100; wall1.value = 100; wall2.value = 100; wall3.value = 100;
+      dimLineLeft.value = 0; dimLineRight.value = 0;
+      roomCountAnim.value = 0;
 
       // Load into store
       loadBlueprint(blueprint);
@@ -121,6 +174,10 @@ export function GenerationScreen() {
     } catch (e) {
       gridOpacity.value = withTiming(0.05, { duration: 400 });
       compassRotation.value = 0;
+      wallOpacity.value = withTiming(0, { duration: 300 });
+      wall0.value = 100; wall1.value = 100; wall2.value = 100; wall3.value = 100;
+      dimLineLeft.value = 0; dimLineRight.value = 0;
+      roomCountAnim.value = 0;
       errorHaptic();
       const err = e as { code?: string; message?: string };
       if (err.code === 'QUOTA_EXCEEDED') {
@@ -341,7 +398,7 @@ export function GenerationScreen() {
         {isGenerating && (
           <View style={{
             marginHorizontal: 20,
-            height: 200,
+            height: 240,
             backgroundColor: BASE_COLORS.surface,
             borderRadius: 12,
             borderWidth: 1,
@@ -352,27 +409,40 @@ export function GenerationScreen() {
             overflow: 'hidden',
           }}>
             {/* Pulsing grid */}
-            <Animated.View style={[
-              { position: 'absolute', inset: 0 },
-              gridStyle,
-            ]}>
+            <Animated.View style={[{ position: 'absolute', inset: 0 }, gridStyle]}>
               {Array.from({ length: 8 }).map((_, i) => (
-                <View key={`h${i}`} style={{ position: 'absolute', left: 0, right: 0, top: i * 28, height: 1, backgroundColor: colors.primary }} />
+                <View key={`h${i}`} style={{ position: 'absolute', left: 0, right: 0, top: i * 30, height: 1, backgroundColor: colors.primary }} />
               ))}
               {Array.from({ length: 6 }).map((_, i) => (
-                <View key={`v${i}`} style={{ position: 'absolute', top: 0, bottom: 0, left: i * 40, width: 1, backgroundColor: colors.primary }} />
+                <View key={`v${i}`} style={{ position: 'absolute', top: 0, bottom: 0, left: i * 42, width: 1, backgroundColor: colors.primary }} />
               ))}
             </Animated.View>
 
+            {/* Building-rise silhouette */}
+            <View style={{ position: 'absolute', bottom: 48, flexDirection: 'row', alignItems: 'flex-end', gap: 3 }}>
+              <Animated.View style={[wall0Style, { width: 28, height: 70, backgroundColor: `${colors.primary}30`, borderTopLeftRadius: 2, borderTopRightRadius: 2 }]} />
+              <Animated.View style={[wall1Style, { width: 20, height: 50, backgroundColor: `${colors.primary}25`, borderTopLeftRadius: 2, borderTopRightRadius: 2 }]} />
+              <Animated.View style={[wall2Style, { width: 36, height: 90, backgroundColor: `${colors.primary}35`, borderTopLeftRadius: 2, borderTopRightRadius: 2 }]} />
+              <Animated.View style={[wall3Style, { width: 24, height: 60, backgroundColor: `${colors.primary}28`, borderTopLeftRadius: 2, borderTopRightRadius: 2 }]} />
+            </View>
+
+            {/* Dimension lines */}
+            <View style={{ position: 'absolute', bottom: 40, flexDirection: 'row', alignItems: 'center' }}>
+              <Animated.View style={[dimLeftStyle, { height: 1, backgroundColor: colors.primary, opacity: 0.5 }]} />
+              <View style={{ marginHorizontal: 8 }}>
+                <Animated.Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: colors.primary }}>
+                  {roomCountDisplay.value} rooms
+                </Animated.Text>
+              </View>
+              <Animated.View style={[dimRightStyle, { height: 1, backgroundColor: colors.primary, opacity: 0.5 }]} />
+            </View>
+
+            {/* Spinning compass */}
             <Animated.View style={compassStyle}>
               <LogoLoader size="medium" />
             </Animated.View>
-            <Text style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 13,
-              color: BASE_COLORS.textSecondary,
-              marginTop: 16,
-            }}>
+
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary, marginTop: 12 }}>
               Drawing your floor plan...
             </Text>
           </View>

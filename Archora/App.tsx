@@ -1,7 +1,7 @@
 import 'react-native-gesture-handler';
 import './src/styles/global.css';
 import React, { useEffect, useState } from 'react';
-import { StatusBar } from 'react-native';
+import { StatusBar, InteractionManager } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
@@ -36,7 +36,10 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
-    void loadSession();
+    const task = InteractionManager.runAfterInteractions(() => {
+      void loadSession();
+    });
+    return () => task.cancel();
   }, [loadSession]);
 
   const appReady = fontsLoaded && !isLoading;

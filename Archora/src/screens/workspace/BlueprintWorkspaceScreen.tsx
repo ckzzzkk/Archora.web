@@ -1,6 +1,8 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import React, { useState, useCallback } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withSpring, interpolate,
+} from 'react-native-reanimated';
 import Svg, { Rect, Line } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,6 +11,7 @@ import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTierGate } from '../../hooks/useTierGate';
 import { useEditTimer } from '../../hooks/useEditTimer';
 import { useShakeDetector } from '../../hooks/useShakeDetector';
+import { use2D3DSync } from '../../hooks/use2D3DSync';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -19,14 +22,15 @@ import { AIChatPanel } from '../../components/blueprint/AIChatPanel';
 import { SurfacesSheet } from '../../components/blueprint/SurfacesSheet';
 import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
 import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
-import { TierGate } from '../../components/common/TierGate';
 import { LogoLoader } from '../../components/common/LogoLoader';
+import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { Viewer3D } from '../../components/3d/Viewer3D';
 import { InHouseView } from '../../components/3d/InHouseView';
 import { BASE_COLORS } from '../../theme/colors';
 import type { RootStackParamList } from '../../navigation/types';
 import type { ViewMode } from '../../types';
 import type { StaircaseType } from '../../types/blueprint';
+import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -101,6 +105,7 @@ export function BlueprintWorkspaceScreen() {
   const [showSurfaces, setShowSurfaces] = useState(false);
   const [showStaircasePrompt, setShowStaircasePrompt] = useState(false);
   const [showStyleSelector, setShowStyleSelector] = useState(false);
+  const [pendingFurniturePlacement, setPendingFurniturePlacement] = useState<FurnitureDef | null>(null);
 
   const undo = useBlueprintStore((s) => s.actions.undo);
   const redo = useBlueprintStore((s) => s.actions.redo);
@@ -110,6 +115,18 @@ export function BlueprintWorkspaceScreen() {
 
   // Edit timer (Starter tier)
   useEditTimer();
+
+  // 2D/3D sync with cross-fade
+  const { syncStatus, transitionProgress } = use2D3DSync();
+
+  const canvas2DStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(transitionProgress.value, [0, 0.5], [1, 0], 'clamp'),
+    pointerEvents: transitionProgress.value < 0.5 ? 'auto' : 'none',
+  }));
+  const viewer3DStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(transitionProgress.value, [0.5, 1], [0, 1], 'clamp'),
+    pointerEvents: transitionProgress.value >= 0.5 ? 'auto' : 'none',
+  }));
 
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const viewMode = useBlueprintStore((s) => s.viewMode);
@@ -139,6 +156,16 @@ export function BlueprintWorkspaceScreen() {
     if (toolId === 'furniture') { setShowFurniture(true); return; }
     if (toolId === 'surfaces') { setShowSurfaces(true); return; }
     setActiveTool(toolId);
+  }, []);
+
+  const handleSelectFurniture = useCallback((def: FurnitureDef) => {
+    setPendingFurniturePlacement(def);
+    setActiveTool('furniture');
+  }, []);
+
+  const handleFurniturePlaced = useCallback(() => {
+    setPendingFurniturePlacement(null);
+    setActiveTool('select');
   }, []);
 
   const handleViewModeSelect = useCallback((m: ViewMode) => {
@@ -198,6 +225,9 @@ export function BlueprintWorkspaceScreen() {
             <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 9, color: BASE_COLORS.textDim, marginTop: 1 }}>unsaved changes</Text>
           )}
         </View>
+        {syncStatus === 'syncing' && (
+          <CompassRoseLoader size="small" />
+        )}
         <ViewModeToggle mode={viewMode} onSelect={handleViewModeSelect} />
       </View>
 
@@ -247,20 +277,34 @@ export function BlueprintWorkspaceScreen() {
       <View style={{ flex: 1, position: 'relative' }}>
         {!blueprint ? (
           <EmptyBlueprint onGenerate={() => navigation.navigate('Generation')} />
-        ) : viewMode === '2D' ? (
-          <Canvas2D showStructuralGrid={showStructuralGrid} />
-        ) : viewMode === '3D' ? (
-          <Viewer3D />
-        ) : (
-          // FirstPerson — already tier-gated in handleViewModeSelect
+        ) : viewMode === 'FirstPerson' ? (
           <InHouseView onExit={() => setViewMode('2D')} />
+        ) : (
+          // 2D + 3D — both mounted, cross-fade driven by transitionProgress
+          <>
+            <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, canvas2DStyle]}>
+              <Canvas2D
+                showStructuralGrid={showStructuralGrid}
+                activeTool={activeTool}
+                pendingFurniturePlacement={pendingFurniturePlacement}
+                onFurniturePlaced={handleFurniturePlaced}
+              />
+            </Animated.View>
+            <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, viewer3DStyle]}>
+              <Viewer3D />
+            </Animated.View>
+          </>
         )}
 
         {blueprint && <AIChatPanel visible={showChat} onToggle={() => setShowChat((v) => !v)} />}
       </View>
 
       {/* ── Sheets ──────────────────────────────────────────────────────── */}
-      <FurnitureLibrarySheet visible={showFurniture} onClose={() => setShowFurniture(false)} />
+      <FurnitureLibrarySheet
+        visible={showFurniture}
+        onClose={() => setShowFurniture(false)}
+        onSelectFurniture={handleSelectFurniture}
+      />
       <StyleSelectorSheet visible={showStyleSelector} onClose={() => setShowStyleSelector(false)} />
       <SurfacesSheet visible={showSurfaces} onClose={() => setShowSurfaces(false)} />
       {blueprint && (

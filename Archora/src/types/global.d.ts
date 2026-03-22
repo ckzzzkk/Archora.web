@@ -7,11 +7,19 @@ declare module '@shopify/react-native-skia' {
 
   export interface SkPoint { x: number; y: number; }
   export interface SkFont {}
-  export interface SkPath {}
+  export interface SkPath {
+    moveTo(x: number, y: number): void;
+    lineTo(x: number, y: number): void;
+    close(): void;
+    addRect(rect: { x: number; y: number; width: number; height: number }): void;
+  }
   export interface SkPaint {}
 
   export const Skia: {
-    Path: () => SkPath;
+    Path: {
+      Make(): SkPath;
+      (arg?: unknown): SkPath;
+    };
     Paint: () => SkPaint;
     Font: (typeface: unknown, size: number) => SkFont;
   };
@@ -25,13 +33,13 @@ declare module '@shopify/react-native-skia' {
   export interface CircleProps { cx: number; cy: number; r: number; color: string; opacity?: number; }
   export const Circle: ComponentType<CircleProps>;
 
-  export interface PathProps { path: string | SkPath; color: string; style?: 'fill' | 'stroke'; strokeWidth?: number; }
+  export interface PathProps { path: string | SkPath; color: string; style?: 'fill' | 'stroke'; strokeWidth?: number; opacity?: number; children?: ReactNode; }
   export const Path: ComponentType<PathProps>;
 
   export interface TextProps { x: number; y: number; text: string; color: string; font: SkFont | null; }
   export const Text: ComponentType<TextProps>;
 
-  export interface GroupProps { children?: ReactNode; transform?: { translateX?: number; translateY?: number; scale?: number }[]; }
+  export interface GroupProps { children?: ReactNode; opacity?: number; transform?: { translateX?: number; translateY?: number; scale?: number }[]; }
   export const Group: ComponentType<GroupProps>;
 
   export interface PaintProps { color?: string; }

@@ -2,10 +2,19 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
-import { SketchScreen } from '../screens/sketch/SketchScreen';
-import { ARScanScreen } from '../screens/ar/ARScanScreen';
-import { FeedScreen } from '../screens/feed/FeedScreen';
-import { AccountScreen } from '../screens/account/AccountScreen';
+import { lazyScreen } from '../utils/lazyScreen';
+
+const SketchScreen  = lazyScreen(() =>
+  import('../screens/sketch/SketchScreen').then((m) => ({ default: m.SketchScreen })));
+
+const ARScanScreen  = lazyScreen(() =>
+  import('../screens/ar/ARScanScreen').then((m) => ({ default: m.ARScanScreen })));
+
+const FeedScreen    = lazyScreen(() =>
+  import('../screens/feed/FeedScreen').then((m) => ({ default: m.FeedScreen })));
+
+const AccountScreen = lazyScreen(() =>
+  import('../screens/account/AccountScreen').then((m) => ({ default: m.AccountScreen })));
 import { CustomTabBar } from './CustomTabBar';
 import { TabDirectionProvider } from './TabDirectionContext';
 import type { MainTabParamList } from './types';
