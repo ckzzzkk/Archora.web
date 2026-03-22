@@ -87,9 +87,14 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
   }));
 
   const handleUse = () => {
+    if (!template) return;
     medium();
-    navigation.navigate('Workspace', { projectId: template?.projectId });
-    void inspoService.incrementDownload(templateId);
+    if (template.price && template.price > 0) {
+      navigation.navigate('PurchaseTemplate', { templateId: template.id });
+    } else {
+      navigation.navigate('Workspace', { projectId: template.projectId });
+      void inspoService.incrementDownload(templateId);
+    }
   };
 
   if (loading) {
@@ -252,7 +257,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
                 }}
               >
                 <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: BASE_COLORS.background }}>
-                  Use This Template
+                  {template && template.price > 0 ? `Buy for $${template.price.toFixed(2)}` : 'Use This Template'}
                 </Text>
               </Pressable>
 

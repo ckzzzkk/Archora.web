@@ -10,6 +10,7 @@ import { Wardrobe } from './furniture/Wardrobe';
 import { CoffeeTable } from './furniture/CoffeeTable';
 import { Bookshelf } from './furniture/Bookshelf';
 import { KitchenUnit } from './furniture/KitchenUnit';
+import { FloorLamp, PendantLight } from './furniture/LightingFurniture';
 import { getFloorYOffset } from '../../utils/floorHelpers';
 import type { BlueprintData, FurniturePiece, FloorData, Room, Wall } from '../../types';
 
@@ -59,6 +60,8 @@ function FurnitureMesh({
   if (name.includes('coffee')) return wrapper(<CoffeeTable {...props} />);
   if (name.includes('bookshelf') || name.includes('book')) return wrapper(<Bookshelf {...props} />);
   if (name.includes('kitchen') || name.includes('counter') || name.includes('island')) return wrapper(<KitchenUnit {...props} />);
+  if (name.includes('floor lamp') || name.includes('floor_lamp')) return wrapper(<FloorLamp {...props} />);
+  if (name.includes('pendant')) return wrapper(<PendantLight {...props} />);
 
   return wrapper(
     <mesh

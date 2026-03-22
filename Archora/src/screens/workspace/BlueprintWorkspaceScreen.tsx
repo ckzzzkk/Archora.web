@@ -4,8 +4,8 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, interpolate,
 } from 'react-native-reanimated';
 import Svg, { Rect, Line } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTierGate } from '../../hooks/useTierGate';
@@ -149,6 +149,10 @@ export function BlueprintWorkspaceScreen() {
 
   const { allowed: walkthroughAllowed } = useTierGate('walkthrough');
   const { allowed: commercialAllowed } = useTierGate('commercialBuildings');
+  const { allowed: publishAllowed } = useTierGate('publishTemplates');
+
+  const route = useRoute<NativeStackScreenProps<RootStackParamList, 'Workspace'>['route']>();
+  const currentProjectId = route.params?.projectId;
 
   const [showStructuralGrid, setShowStructuralGrid] = useState(false);
 
@@ -255,6 +259,36 @@ export function BlueprintWorkspaceScreen() {
             >
               <Text style={{ fontSize: 14, color: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.textDim }}>⊞</Text>
               <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.textDim, marginTop: 2 }}>GRID</Text>
+            </Pressable>
+          )}
+          {/* Publish — Creator+ only, only shown when blueprint has rooms */}
+          {blueprint && blueprint.rooms.length > 0 && (
+            <Pressable
+              onPress={() => {
+                if (!publishAllowed) {
+                  navigation.navigate('Subscription', { feature: 'publishTemplates' });
+                  return;
+                }
+                if (!currentProjectId) {
+                  showToast('Save your project first before publishing', 'info');
+                  return;
+                }
+                navigation.navigate('PublishTemplate', { projectId: currentProjectId });
+              }}
+              style={{
+                width: 64,
+                height: 52,
+                borderRadius: 14,
+                backgroundColor: BASE_COLORS.surfaceHigh,
+                borderWidth: 1,
+                borderColor: BASE_COLORS.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 8,
+              }}
+            >
+              <Text style={{ fontSize: 14, color: BASE_COLORS.textDim }}>⬆</Text>
+              <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: BASE_COLORS.textDim, marginTop: 2 }}>PUBLISH</Text>
             </Pressable>
           )}
         </ScrollView>

@@ -23,6 +23,7 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
   const { colors } = useTheme();
   const { medium } = useHaptics();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const userId = useAuthStore((s) => s.user?.id);
 
   const [saved, setSaved] = useState(initialSaved);
   const [count, setCount] = useState(initialCount);
@@ -43,10 +44,11 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
     setLoading(true);
 
     try {
+      if (!userId) return;
       if (next) {
-        await inspoService.saveTemplate(templateId);
+        await inspoService.saveTemplate(templateId, userId);
       } else {
-        await inspoService.unsaveTemplate(templateId);
+        await inspoService.unsaveTemplate(templateId, userId);
       }
     } catch {
       setSaved(!next);

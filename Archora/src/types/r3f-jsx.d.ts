@@ -26,7 +26,7 @@ declare namespace React {
       planeGeometry: { args?: [number, number] };
       cylinderGeometry: { args?: [number?, number?, number?, number?, number?, boolean?, number?, number?] };
       sphereGeometry: { args?: [number, number, number] };
-      coneGeometry: { args?: [number, number, number] };
+      coneGeometry: { args?: [number?, number?, number?, number?, boolean?, number?, number?] };
       torusGeometry: { args?: [number, number, number, number] };
       ringGeometry: { args?: [number, number, number] };
       meshStandardMaterial: {
@@ -54,7 +54,9 @@ declare namespace React {
         position?: [number, number, number];
         intensity?: number;
         distance?: number;
+        decay?: number;
         color?: string;
+        castShadow?: boolean;
       };
       spotLight: {
         position?: [number, number, number];

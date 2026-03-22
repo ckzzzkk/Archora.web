@@ -26,6 +26,14 @@ const ThemeCustomiserScreen = lazyScreen(() =>
   import('../screens/account/ThemeCustomiserScreen')
     .then((m) => ({ default: m.ThemeCustomiserScreen })));
 
+const PublishTemplateScreen = lazyScreen(() =>
+  import('../screens/feed/PublishTemplateScreen')
+    .then((m) => ({ default: m.PublishTemplateScreen })));
+
+const PurchaseTemplateScreen = lazyScreen(() =>
+  import('../screens/feed/PurchaseTemplateScreen')
+    .then((m) => ({ default: m.PurchaseTemplateScreen })));
+
 const OnboardingQuizScreen = lazyScreen(() =>
   import('../screens/auth/OnboardingQuizScreen')
     .then((m) => ({ default: m.OnboardingQuizScreen })));
@@ -106,6 +114,16 @@ export function RootNavigator() {
           <Stack.Screen
             name="ThemeCustomiser"
             component={ThemeCustomiserScreen}
+            options={{ presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="PublishTemplate"
+            component={PublishTemplateScreen}
+            options={{ presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="PurchaseTemplate"
+            component={PurchaseTemplateScreen}
             options={{ presentation: 'modal' }}
           />
         </>

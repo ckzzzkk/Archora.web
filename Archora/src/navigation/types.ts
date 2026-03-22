@@ -31,6 +31,8 @@ export type RootStackParamList = {
   Subscription: { feature?: string } | undefined;
   TemplateDetail: { templateId: string };
   ThemeCustomiser: undefined;
+  PublishTemplate: { projectId: string };
+  PurchaseTemplate: { templateId: string };
 };
 
 export type WelcomeScreenProps           = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
@@ -47,6 +49,8 @@ export type ARScreenProps          = CompositeScreenProps<BottomTabScreenProps<M
 export type AccountScreenProps     = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Account'>, NativeStackScreenProps<RootStackParamList>>;
 export type SketchScreenProps      = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Sketch'>, NativeStackScreenProps<RootStackParamList>>;
 
-export type WorkspaceScreenProps      = NativeStackScreenProps<RootStackParamList, 'Workspace'>;
-export type GenerationScreenProps     = NativeStackScreenProps<RootStackParamList, 'Generation'>;
-export type OnboardingQuizScreenProps = NativeStackScreenProps<RootStackParamList, 'OnboardingQuiz'>;
+export type WorkspaceScreenProps         = NativeStackScreenProps<RootStackParamList, 'Workspace'>;
+export type GenerationScreenProps        = NativeStackScreenProps<RootStackParamList, 'Generation'>;
+export type OnboardingQuizScreenProps    = NativeStackScreenProps<RootStackParamList, 'OnboardingQuiz'>;
+export type PublishTemplateScreenProps   = NativeStackScreenProps<RootStackParamList, 'PublishTemplate'>;
+export type PurchaseTemplateScreenProps  = NativeStackScreenProps<RootStackParamList, 'PurchaseTemplate'>;

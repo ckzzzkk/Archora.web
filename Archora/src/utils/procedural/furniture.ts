@@ -39,7 +39,9 @@ export type FurnitureType =
   | 'garden_wall' | 'fence_panel' | 'gate' | 'deck_area'
   | 'steps' | 'retaining_wall'
   // Outdoor — accessories
-  | 'letterbox' | 'gate_post' | 'outdoor_light_post' | 'bicycle_storage';
+  | 'letterbox' | 'gate_post' | 'outdoor_light_post' | 'bicycle_storage'
+  // ── Lighting ─────────────────────────────────────────────────
+  | 'floor_lamp' | 'pendant_light';
 
 export interface ProceduralConfig {
   type: FurnitureType;
@@ -165,6 +167,10 @@ export const FURNITURE_DEFAULTS: Record<FurnitureType, FurnitureDefault> = {
   gate_post:             { w: 0.15, h: 1.5, d: 0.15, color: '#808080', category: 'outdoor',  outdoor: true  },
   outdoor_light_post:    { w: 0.1, h: 3.0,  d: 0.1,  color: '#707070', category: 'outdoor',  outdoor: true  },
   bicycle_storage:       { w: 1.2, h: 1.5,  d: 0.6,  color: '#707878', category: 'outdoor',  outdoor: true  },
+
+  // ── Lighting ─────────────────────────────────────────────────
+  floor_lamp:            { w: 0.4, h: 1.7,  d: 0.4,  color: '#C0C0C0', category: 'lighting', outdoor: false },
+  pendant_light:         { w: 0.5, h: 1.2,  d: 0.5,  color: '#B0A030', category: 'lighting', outdoor: false },
 };
 
 export function createFurniturePiece(
