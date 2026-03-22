@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Asoria",
-    "slug": "crokora",
+    "slug": "asoria",
     "version": "1.0.0",
     "scheme": "asoria",
     "orientation": "portrait",
@@ -17,11 +17,12 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.archora.app",
+      "bundleIdentifier": "com.asoria.app",
       "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "Asoria uses your camera to scan rooms and detect furniture for AR reconstruction.",
-        "NSMicrophoneUsageDescription": "Asoria uses your microphone for voice-to-prompt architectural description."
+        "NSCameraUsageDescription": "ASORIA uses your camera for AR room scanning",
+        "NSMicrophoneUsageDescription": "ASORIA uses your microphone for voice prompts",
+        "NSPhotoLibraryUsageDescription": "ASORIA saves your designs and exports renders to your photo library"
       }
     },
     "android": {
@@ -29,7 +30,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1A1A1A"
       },
-      "package": "com.archora.app",
+      "package": "com.asoria.app",
       "versionCode": 1,
       "permissions": [
         "CAMERA",

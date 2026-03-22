@@ -1,0 +1,6 @@
+.env
+.env.local
+*.tar.gz
+supabase.tar.gz
+google-service-account.json
+.claude/
