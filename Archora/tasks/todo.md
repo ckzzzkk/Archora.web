@@ -41,7 +41,7 @@
 - [x] transcribe Edge Function
 - [x] ai-furniture Edge Function
 - [x] generate-texture Edge Function
-- [ ] generate-furniture (Meshy) Edge Function
+- [x] generate-furniture (Meshy) Edge Function
 - [!] FUTURE: generate-texture uses a blocking 60-second polling loop waiting for
       Replicate to complete. Should be refactored to an async job queue pattern
       (e.g., Supabase pg_cron + status polling endpoint) to prevent timeout failures
