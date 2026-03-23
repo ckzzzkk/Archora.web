@@ -255,7 +255,7 @@ export function DashboardScreen() {
 
   const handleCreate = async (name: string, buildingType: BuildingType) => {
     if (!user?.id) return;
-    const safeTier = user.subscriptionTier ?? 'starter';
+    const safeTier = user?.subscriptionTier ?? 'starter';
     const tierLimit = TIER_LIMITS[safeTier] ?? TIER_LIMITS.starter;
     if (tierLimit.savedProjects !== -1 && projects.length >= tierLimit.savedProjects) {
       Alert.alert('Project Limit Reached', `Your ${safeTier} plan allows ${tierLimit.savedProjects} projects. Upgrade to save more.`);
