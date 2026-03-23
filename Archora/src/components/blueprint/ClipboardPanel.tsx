@@ -41,7 +41,7 @@ export function ClipboardPanel({ visible, onClose, onPaste }: Props) {
 
   useEffect(() => {
     if (visible) {
-      setItems(clipboard.getAll());
+      void clipboard.getAll().then(setItems);
       translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
       opacity.value = withTiming(1, { duration: 150 });
     } else {
@@ -56,12 +56,11 @@ export function ClipboardPanel({ visible, onClose, onPaste }: Props) {
   }));
 
   const handleRemove = (id: string) => {
-    clipboard.remove(id);
-    setItems(clipboard.getAll());
+    void clipboard.remove(id).then(() => clipboard.getAll()).then(setItems);
   };
 
   const handleClear = () => {
-    clipboard.clear();
+    void clipboard.clear();
     setItems([]);
   };
 

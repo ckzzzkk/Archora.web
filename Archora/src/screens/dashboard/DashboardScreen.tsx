@@ -269,7 +269,7 @@ export function DashboardScreen() {
   // Usage bar for AI generations
   const usageLimit = tierLimits.aiGenerationsPerMonth;
   const usagePercent = user && usageLimit !== -1
-    ? Math.min((user.aiGenerationsUsed / usageLimit) * 100, 100)
+    ? Math.min(((user.aiGenerationsUsed ?? 0) / usageLimit) * 100, 100)
     : 0;
 
   return (
@@ -351,7 +351,7 @@ export function DashboardScreen() {
                 AI Generations
               </Text>
               <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: colors.primary }}>
-                {user.aiGenerationsUsed} / {usageLimit}
+                {user.aiGenerationsUsed ?? 0} / {usageLimit}
               </Text>
             </View>
             <View style={{ height: 2, backgroundColor: BASE_COLORS.border, borderRadius: 1 }}>

@@ -1,4 +1,4 @@
-import { MMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { FurniturePiece, Room, Wall } from '../types/blueprint';
 
 export type ClipboardItemType = 'furniture' | 'room' | 'layout' | 'style';
@@ -25,7 +25,6 @@ export interface ClipboardItem {
   sourceWallNeighbors?: string[];
 }
 
-const mmkv = new MMKV({ id: 'clipboard' });
 const CLIPBOARD_KEY = 'asoria_clipboard';
 const MAX_CLIPBOARD_ITEMS = 5;
 
@@ -33,9 +32,9 @@ function generateId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-function readAll(): ClipboardItem[] {
+async function readAll(): Promise<ClipboardItem[]> {
   try {
-    const raw = mmkv.getString(CLIPBOARD_KEY);
+    const raw = await AsyncStorage.getItem(CLIPBOARD_KEY);
     if (!raw) return [];
     return JSON.parse(raw) as ClipboardItem[];
   } catch {
@@ -43,37 +42,41 @@ function readAll(): ClipboardItem[] {
   }
 }
 
-function writeAll(items: ClipboardItem[]): void {
-  mmkv.set(CLIPBOARD_KEY, JSON.stringify(items));
+async function writeAll(items: ClipboardItem[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(CLIPBOARD_KEY, JSON.stringify(items));
+  } catch {}
 }
 
 export const clipboard = {
-  push(item: Omit<ClipboardItem, 'id' | 'timestamp'>): void {
-    const existing = readAll();
+  async push(item: Omit<ClipboardItem, 'id' | 'timestamp'>): Promise<void> {
+    const existing = await readAll();
     const newItem: ClipboardItem = {
       ...item,
       id: generateId(),
       timestamp: Date.now(),
     };
     const updated = [newItem, ...existing].slice(0, MAX_CLIPBOARD_ITEMS);
-    writeAll(updated);
+    await writeAll(updated);
   },
 
-  getAll(): ClipboardItem[] {
+  async getAll(): Promise<ClipboardItem[]> {
     return readAll();
   },
 
-  getLatest(): ClipboardItem | null {
-    const all = readAll();
+  async getLatest(): Promise<ClipboardItem | null> {
+    const all = await readAll();
     return all[0] ?? null;
   },
 
-  remove(id: string): void {
-    const filtered = readAll().filter((item) => item.id !== id);
-    writeAll(filtered);
+  async remove(id: string): Promise<void> {
+    const filtered = (await readAll()).filter((item) => item.id !== id);
+    await writeAll(filtered);
   },
 
-  clear(): void {
-    mmkv.delete(CLIPBOARD_KEY);
+  async clear(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(CLIPBOARD_KEY);
+    } catch {}
   },
 };

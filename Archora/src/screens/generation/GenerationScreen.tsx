@@ -169,7 +169,7 @@ export function GenerationScreen() {
 
       // Save as new project if user is logged in
       if (user) {
-        await projectActions.create(user.id, `${blueprint.metadata.style} ${blueprint.metadata.buildingType}`.replace(/^\w/, (c) => c.toUpperCase()), selectedType);
+        await projectActions.create(user.id, `${blueprint.metadata?.style ?? 'Modern'} ${blueprint.metadata?.buildingType ?? 'Building'}`.replace(/^\w/, (c) => c.toUpperCase()), selectedType);
       }
     } catch (e) {
       gridOpacity.value = withTiming(0.05, { duration: 400 });
