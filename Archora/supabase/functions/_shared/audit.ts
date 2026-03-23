@@ -7,6 +7,8 @@ export type AuditAction =
   | 'ar_reconstruct'
   | 'stripe_checkout'
   | 'stripe_webhook'
+  | 'stripe_cancel'
+  | 'stripe_sync'
   | 'template_publish'
   | 'template_download'
   | 'project_create'

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Audio } from 'expo-av';
-import { supabase } from '../utils/supabaseClient';
+import { aiService } from '../services/aiService';
 
 export interface VoiceInputState {
   isRecording: boolean;
@@ -62,29 +62,18 @@ export function useVoiceInput() {
 
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
 
-      // Read file and convert to base64
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const base64 = await blobToBase64(blob);
-
-      // Call transcribe edge function
-      const { data, error: fnError } = await supabase.functions.invoke('transcribe', {
-        body: { audio: base64, mimeType: 'audio/m4a' },
-      });
-
-      if (fnError) {
-        setError('Transcription failed');
-        return;
-      }
-
-      if (data?.fallback === 'device_speech') {
-        // Edge function signalled to use manual text input
-        setIsFallback(true);
-      } else if (data?.text) {
-        setTranscript(data.text);
+      try {
+        const text = await aiService.transcribeAudio(uri);
+        setTranscript(text);
         setIsFallback(false);
-      } else {
-        setIsFallback(true);
+      } catch (transcribeErr) {
+        const code = (transcribeErr as { code?: string }).code;
+        if (code === 'DEVICE_SPEECH_FALLBACK') {
+          setIsFallback(true);
+        } else {
+          setError('Transcription failed');
+          setIsFallback(true);
+        }
       }
     } catch (err) {
       setError('Failed to transcribe recording');
@@ -115,18 +104,4 @@ export function useVoiceInput() {
     setManualTranscript,
     clearTranscript,
   };
-}
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      // Strip data URL prefix
-      const base64 = result.split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
 }

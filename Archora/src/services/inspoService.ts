@@ -121,7 +121,7 @@ export const inspoService = {
   },
 
   async postComment(templateId: string, userId: string, content: string): Promise<void> {
-    await supabase.from('comments').insert({ template_id: templateId, user_id: userId, content });
+    await supabase.from('comments').insert({ template_id: templateId, user_id: userId, body: content });
   },
 
   async saveTemplate(templateId: string, userId: string): Promise<void> {
