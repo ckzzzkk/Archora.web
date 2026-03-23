@@ -152,6 +152,7 @@ export function AccountScreen() {
   const [editing, setEditing] = useState(false);
   const [nameVal, setNameVal] = useState(user?.displayName ?? '');
   const [notificationsOn, setNotificationsOn] = useState(true);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   const limits = TIER_LIMITS[user?.subscriptionTier ?? 'starter'] ?? TIER_LIMITS.starter;
 
@@ -163,11 +164,12 @@ export function AccountScreen() {
   const s2Y = useSharedValue(-20); const s2Op = useSharedValue(0);
   const s3Y = useSharedValue(-20); const s3Op = useSharedValue(0);
   const s4Y = useSharedValue(-20); const s4Op = useSharedValue(0);
+  const s5Y = useSharedValue(-20); const s5Op = useSharedValue(0);
 
   useEffect(() => {
     headerY.value = withSpring(0, { damping: 18, stiffness: 200 });
     headerOp.value = withTiming(1, { duration: 250 });
-    const pairs = [[s0Y, s0Op], [s1Y, s1Op], [s2Y, s2Op], [s3Y, s3Op], [s4Y, s4Op]];
+    const pairs = [[s0Y, s0Op], [s1Y, s1Op], [s2Y, s2Op], [s3Y, s3Op], [s4Y, s4Op], [s5Y, s5Op]];
     pairs.forEach(([y, op], i) => {
       y.value = withDelay(100 + i * 60, withSpring(0, { damping: 16 }));
       op.value = withDelay(100 + i * 60, withTiming(1, { duration: 250 }));
@@ -184,11 +186,25 @@ export function AccountScreen() {
   const s2Style = useAnimatedStyle(() => ({ transform: [{ translateY: s2Y.value }], opacity: s2Op.value }));
   const s3Style = useAnimatedStyle(() => ({ transform: [{ translateY: s3Y.value }], opacity: s3Op.value }));
   const s4Style = useAnimatedStyle(() => ({ transform: [{ translateY: s4Y.value }], opacity: s4Op.value }));
+  const s5Style = useAnimatedStyle(() => ({ transform: [{ translateY: s5Y.value }], opacity: s5Op.value }));
 
   const submitName = async () => {
     setEditing(false);
     if (!nameVal.trim() || nameVal === user?.displayName) return;
     authActions.updateUser({ displayName: nameVal.trim() });
+  };
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-portal');
+      if (error || !data?.url) throw new Error('Could not open billing portal');
+      await Linking.openURL(data.url as string);
+    } catch {
+      Alert.alert('Error', 'Could not open the billing portal. Please try again.');
+    } finally {
+      setPortalLoading(false);
+    }
   };
 
   const handleSignOut = () => {
@@ -353,8 +369,41 @@ export function AccountScreen() {
             </View>
           </Animated.View>
 
-          {/* Account card */}
+          {/* Subscription card */}
           <Animated.View style={s1Style}>
+            <SectionTitle title="Subscription" />
+            <View style={CARD_STYLE}>
+              <View style={ROW_STYLE}>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>Current Plan</Text>
+                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: colors.primary, textTransform: 'capitalize' }}>
+                  {user?.subscriptionTier ?? 'Starter'}
+                </Text>
+              </View>
+              {(user?.subscriptionTier === 'creator' || user?.subscriptionTier === 'architect') ? (
+                <Pressable
+                  style={ROW_STYLE_LAST}
+                  onPress={() => { medium(); void handleManageSubscription(); }}
+                  disabled={portalLoading}
+                >
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>
+                    {portalLoading ? 'Opening…' : 'Manage Subscription'}
+                  </Text>
+                  <Text style={{ color: BASE_COLORS.textDim }}>›</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  style={ROW_STYLE_LAST}
+                  onPress={() => { medium(); navigation.navigate('Subscription'); }}
+                >
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: colors.primary }}>Upgrade Plan</Text>
+                  <Text style={{ color: colors.primary }}>›</Text>
+                </Pressable>
+              )}
+            </View>
+          </Animated.View>
+
+          {/* Account card */}
+          <Animated.View style={s2Style}>
             <SectionTitle title="Account" />
             <View style={CARD_STYLE}>
               <Pressable
@@ -432,7 +481,7 @@ export function AccountScreen() {
           </Animated.View>
 
           {/* Preferences card */}
-          <Animated.View style={s2Style}>
+          <Animated.View style={s3Style}>
             <SectionTitle title="Preferences" />
             <View style={CARD_STYLE}>
               <View style={ROW_STYLE}>
@@ -455,7 +504,7 @@ export function AccountScreen() {
           </Animated.View>
 
           {/* Support card */}
-          <Animated.View style={s3Style}>
+          <Animated.View style={s4Style}>
             <SectionTitle title="Support" />
             <View style={CARD_STYLE}>
               <Pressable style={ROW_STYLE} onPress={() => { void Linking.openURL('https://archora.app/help'); }}>
@@ -474,7 +523,7 @@ export function AccountScreen() {
           </Animated.View>
 
           {/* About card */}
-          <Animated.View style={s4Style}>
+          <Animated.View style={s5Style}>
             <SectionTitle title="About" />
             <View style={[CARD_STYLE, { alignItems: 'center', paddingVertical: 20 }]}>
               <CompassRoseSVG size={40} color={colors.primary} />

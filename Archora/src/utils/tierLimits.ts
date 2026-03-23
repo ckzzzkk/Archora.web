@@ -172,7 +172,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     collaborationLimit: 1,
 
     maxPublishedTemplates: 5,
-    templateRevenueShare: 0,
+    templateRevenueShare: 0.60,
     availableStyles: 'all',
     templateAccess: 'all',
 
@@ -185,7 +185,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     batchSize: 1,
     buildingCodeCompliance: false,
     monetiseTemplates: true,
-    creatorRevenueSplit: 0,
+    creatorRevenueSplit: 60,
     prioritySupport: false,
     threeDSessionMinutes: -1,
   },
@@ -231,7 +231,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     collaborationLimit: 5,
 
     maxPublishedTemplates: -1,
-    templateRevenueShare: 0.70,
+    templateRevenueShare: 0.80,
     availableStyles: 'all',
     templateAccess: 'all',
 
