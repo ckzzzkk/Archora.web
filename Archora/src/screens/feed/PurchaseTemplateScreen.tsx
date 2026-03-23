@@ -106,20 +106,10 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
 
       if (error) throw error;
 
-      const { clientSecret } = data as { clientSecret: string };
+      const { url } = data as { url: string };
+      if (!url) throw new Error('No checkout URL returned');
 
-      // Open Stripe checkout in browser
-      // clientSecret is used for confirming, but we use a hosted flow via URL
-      const checkoutUrl = `https://checkout.stripe.com/pay/${clientSecret}`;
-      const canOpen = await Linking.canOpenURL(checkoutUrl);
-      if (canOpen) {
-        await Linking.openURL(checkoutUrl);
-      } else {
-        Alert.alert(
-          'Open Payment',
-          'Unable to open the payment page. Please try again.',
-        );
-      }
+      await Linking.openURL(url);
     } catch {
       showToast('Payment setup failed. Please try again.', 'error');
     } finally {

@@ -95,14 +95,56 @@ Deno.serve(async (req: Request): Promise<Response> => {
           .update({ stripe_customer_id: customerId })
           .eq('id', metaUserId);
 
-        await supabase.from('notifications').insert({
-          user_id: metaUserId,
-          type: 'system',
-          payload: {
-            title: 'Welcome to Asoria Pro!',
-            message: 'Your subscription is now active. Enjoy unlimited building.',
-          },
-        });
+        if (session.mode === 'payment' && session.metadata?.type === 'template_purchase') {
+          // Template one-time purchase — save template for buyer + notify
+          const templateId = session.metadata.template_id;
+          const sellerId = session.metadata.seller_id;
+
+          if (templateId) {
+            await supabase
+              .from('saves')
+              .upsert({ user_id: metaUserId, template_id: templateId }, { onConflict: 'user_id,template_id' });
+
+            await supabase.rpc('increment_template_download', { p_template_id: templateId });
+
+            await supabase.from('notifications').insert({
+              user_id: metaUserId,
+              type: 'system',
+              payload: {
+                title: 'Purchase complete!',
+                message: 'Your template has been saved. Open it from your saved designs.',
+              },
+            });
+
+            // Notify seller if different from buyer
+            if (sellerId && sellerId !== metaUserId) {
+              await supabase.from('notifications').insert({
+                user_id: sellerId,
+                type: 'system',
+                payload: {
+                  title: 'Template sold!',
+                  message: 'Someone purchased your template.',
+                },
+              });
+            }
+
+            await logAudit({
+              user_id: metaUserId,
+              action: 'stripe_webhook',
+              metadata: { event: 'template_purchase', template_id: templateId },
+            });
+          }
+        } else {
+          // Subscription checkout completion
+          await supabase.from('notifications').insert({
+            user_id: metaUserId,
+            type: 'system',
+            payload: {
+              title: 'Welcome to Asoria Pro!',
+              message: 'Your subscription is now active. Enjoy unlimited building.',
+            },
+          });
+        }
         break;
       }
 

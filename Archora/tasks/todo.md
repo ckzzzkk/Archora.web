@@ -20,8 +20,8 @@
 - [x] _shared/errors, _shared/audit
 - [x] 011_notifications migration (payload JSONB schema)
 - [x] 013_notifications_patch (Realtime pub + system type)
-- [ ] templates_feed view (denormalised)
-- [ ] comments_with_author view
+- [x] templates_feed view (denormalised)
+- [x] comments_with_author view
 
 ### 3D Blueprint Agent
 - [x] blueprintStore (Zustand, MMKV auto-save)
@@ -72,5 +72,5 @@
 - [x] Input, Card, SkeletonLoader, ErrorBoundary, EmptyState
 - [x] inspoService
 - [x] NotificationPanel with Realtime subscription (system notification type added)
-- [ ] Template publish flow
-- [ ] Template purchase flow (Stripe)
+- [x] Template publish flow
+- [x] Template purchase flow (Stripe)
