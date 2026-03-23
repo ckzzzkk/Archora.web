@@ -22,8 +22,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const user = await getAuthUser(req);
 
     // Rate limit: AI tier
-    const limited = await checkRateLimit(`ai:${user.id}`, 10, 3600);
-    if (limited) return Errors.rateLimited();
+    const rateLimitOk = await checkRateLimit(`ai:${user.id}`, 10, 3600);
+    if (!rateLimitOk) return Errors.rateLimited();
 
     // Quota check
     const quotaOk = await checkQuota(user.id, 'ai_generation');

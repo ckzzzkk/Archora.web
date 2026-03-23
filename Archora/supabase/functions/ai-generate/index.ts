@@ -203,7 +203,7 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
     });
   } catch (error) {
     console.error('AI generate error:', error);
-    return new Response(JSON.stringify({ error: 'Generation failed', message: String(error) }), {
+    return new Response(JSON.stringify({ error: 'Generation failed', code: 'INTERNAL_ERROR' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
