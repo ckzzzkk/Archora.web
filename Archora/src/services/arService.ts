@@ -75,6 +75,21 @@ export const arService = {
     };
   },
 
+  async checkMeshyStatus(scanId: string): Promise<ARScanResult> {
+    const headers = await getAuthHeader();
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/ar-scan-status?scanId=${encodeURIComponent(scanId)}`,
+      { headers },
+    );
+
+    if (!response.ok) {
+      const err = await response.json() as { error: string };
+      throw new Error(err.error);
+    }
+
+    return response.json() as Promise<ARScanResult>;
+  },
+
   async listScans(): Promise<ARScanResult[]> {
     const { data, error } = await supabase
       .from('ar_scans')
