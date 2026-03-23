@@ -39,6 +39,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return Errors.validation('priceId is required');
   }
 
+  // Whitelist valid price IDs — reject anything not in our Stripe products
+  const VALID_PRICE_IDS = new Set(
+    [
+      Deno.env.get('STRIPE_PRICE_CREATOR_MONTHLY'),
+      Deno.env.get('STRIPE_PRICE_CREATOR_ANNUAL'),
+      Deno.env.get('STRIPE_PRICE_ARCHITECT_MONTHLY'),
+      Deno.env.get('STRIPE_PRICE_ARCHITECT_ANNUAL'),
+    ].filter(Boolean),
+  );
+  if (!VALID_PRICE_IDS.has(priceId)) {
+    return Errors.validation('Invalid price ID');
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,

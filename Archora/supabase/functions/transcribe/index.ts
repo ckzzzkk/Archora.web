@@ -26,6 +26,19 @@ serve(async (req) => {
       });
     }
 
+    const MAX_AUDIO_BYTES = 25 * 1024 * 1024; // 25 MB — Whisper API limit
+    if (audioFile.size > MAX_AUDIO_BYTES) {
+      return new Response(JSON.stringify({ error: 'Audio file exceeds 25 MB limit' }), {
+        status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!audioFile.type.startsWith('audio/')) {
+      return new Response(JSON.stringify({ error: 'File must be an audio type' }), {
+        status: 415, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiKey) {
       return new Response(JSON.stringify({ fallback: 'device_speech' }), {

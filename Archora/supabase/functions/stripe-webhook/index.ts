@@ -47,6 +47,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return Errors.validation('Webhook signature verification failed');
   }
 
+  // Idempotency — atomic SET NX prevents double-processing on Stripe retries
+  const upstashUrl = Deno.env.get('UPSTASH_REDIS_REST_URL');
+  const upstashToken = Deno.env.get('UPSTASH_REDIS_REST_TOKEN');
+  if (upstashUrl && upstashToken) {
+    const idempotencyRes = await fetch(
+      `${upstashUrl}/set/webhook:${event.id}/1/NX/EX/86400`,
+      { method: 'GET', headers: { Authorization: `Bearer ${upstashToken}` } },
+    ).catch(() => null);
+    if (idempotencyRes?.ok) {
+      const body = await idempotencyRes.json() as { result: string | null };
+      if (body.result === null) {
+        // Key already existed — event already processed
+        return new Response(JSON.stringify({ received: true, note: 'already_processed' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      // Redis unavailable — fail open, process anyway; DB upsert provides secondary idempotency
+      console.warn('[stripe-webhook] Redis unavailable for idempotency check — processing anyway');
+    }
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
