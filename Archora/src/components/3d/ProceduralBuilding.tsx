@@ -12,7 +12,7 @@ import { Bookshelf } from './furniture/Bookshelf';
 import { KitchenUnit } from './furniture/KitchenUnit';
 import { FloorLamp, PendantLight } from './furniture/LightingFurniture';
 import { getFloorYOffset } from '../../utils/floorHelpers';
-import type { BlueprintData, FurniturePiece, FloorData, Room, Wall } from '../../types';
+import type { BlueprintData, FurniturePiece, FloorData, Room, Wall, Opening } from '../../types';
 
 interface ProceduralBuildingProps {
   blueprint: BlueprintData;
@@ -78,6 +78,7 @@ function FurnitureMesh({
 function FloorGroup({
   rooms,
   walls,
+  openings = [],
   furniture,
   selectedId,
   showFurniture,
@@ -88,6 +89,7 @@ function FloorGroup({
 }: {
   rooms: Room[];
   walls: Wall[];
+  openings?: Opening[];
   furniture: FurniturePiece[];
   selectedId?: string | null;
   showFurniture: boolean;
@@ -111,6 +113,7 @@ function FloorGroup({
         <ProceduralWall
           key={wall.id}
           wall={wall}
+          openings={openings.filter((o) => o.wallId === wall.id)}
           selected={!ghost && selectedId === wall.id}
           color={wallColor}
           opacity={ghost ? 0.2 : 1}
@@ -153,6 +156,7 @@ export function ProceduralBuilding({
             <FloorGroup
               rooms={floor.rooms}
               walls={floor.walls}
+              openings={floor.openings}
               furniture={floor.furniture}
               selectedId={selectedId}
               showFurniture={showFurniture}
@@ -172,6 +176,7 @@ export function ProceduralBuilding({
     <FloorGroup
       rooms={blueprint.rooms}
       walls={blueprint.walls}
+      openings={blueprint.openings}
       furniture={blueprint.furniture}
       selectedId={selectedId}
       showFurniture={showFurniture}

@@ -33,8 +33,8 @@
 - [x] All 9 furniture components
 - [x] geometry.ts, sceneHelpers.ts, use3DScene
 - [x] Undo/redo stack in blueprintStore (history, undo, redo, useShakeDetector)
-- [ ] Wall snap-to-grid in Canvas2D
-- [ ] Opening (door/window) rendering in 3D
+- [x] Wall snap-to-grid in Canvas2D
+- [x] Opening (door/window) rendering in 3D
 
 ### AI Pipeline Agent
 - [x] ai-generate Edge Function
