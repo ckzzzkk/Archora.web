@@ -24,13 +24,17 @@ import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
 import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
 import { LogoLoader } from '../../components/common/LogoLoader';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
-import { Viewer3D } from '../../components/3d/Viewer3D';
 import { InHouseView } from '../../components/3d/InHouseView';
 import { BASE_COLORS } from '../../theme/colors';
 import type { RootStackParamList } from '../../navigation/types';
 import type { ViewMode } from '../../types';
 import type { StaircaseType } from '../../types/blueprint';
 import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
+
+const Viewer3D = React.lazy(() =>
+  import('../../components/3d/Viewer3D')
+    .then((m) => ({ default: m.Viewer3D }))
+);
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -325,7 +329,9 @@ export function BlueprintWorkspaceScreen() {
               />
             </Animated.View>
             <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, viewer3DStyle]}>
-              <Viewer3D />
+              <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: '#1A1A1A' }} />}>
+                <Viewer3D />
+              </React.Suspense>
             </Animated.View>
           </>
         )}
