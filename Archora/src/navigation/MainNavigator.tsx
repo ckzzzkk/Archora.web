@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { lazyScreen } from '../utils/lazyScreen';
 
 const SketchScreen  = lazyScreen(() =>
@@ -21,6 +22,12 @@ import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+const DashboardTab  = () => <ErrorBoundary><DashboardScreen /></ErrorBoundary>;
+const SketchTab     = () => <ErrorBoundary><SketchScreen /></ErrorBoundary>;
+const FeedTab       = () => <ErrorBoundary><FeedScreen /></ErrorBoundary>;
+const ARTab         = () => <ErrorBoundary><ARScanScreen /></ErrorBoundary>;
+const AccountTab    = () => <ErrorBoundary><AccountScreen /></ErrorBoundary>;
+
 export function MainNavigator() {
   return (
     <TabDirectionProvider>
@@ -28,11 +35,11 @@ export function MainNavigator() {
         tabBar={(props: BottomTabBarProps) => <CustomTabBar {...props} />}
         screenOptions={{ headerShown: false }}
       >
-        <Tab.Screen name="Dashboard" component={DashboardScreen} />
-        <Tab.Screen name="Sketch" component={SketchScreen} />
-        <Tab.Screen name="Feed" component={FeedScreen} />
-        <Tab.Screen name="AR" component={ARScanScreen} />
-        <Tab.Screen name="Account" component={AccountScreen} />
+        <Tab.Screen name="Dashboard" component={DashboardTab} />
+        <Tab.Screen name="Sketch" component={SketchTab} />
+        <Tab.Screen name="Feed" component={FeedTab} />
+        <Tab.Screen name="AR" component={ARTab} />
+        <Tab.Screen name="Account" component={AccountTab} />
       </Tab.Navigator>
     </TabDirectionProvider>
   );

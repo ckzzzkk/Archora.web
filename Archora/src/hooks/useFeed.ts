@@ -14,6 +14,7 @@ interface UseFeedResult {
   isRefreshing: boolean;
   isFetchingMore: boolean;
   hasMore: boolean;
+  loadError: boolean;
   filter: FeedFilter;
   setFilter: (f: FeedFilter) => void;
   refresh: () => Promise<void>;
@@ -51,6 +52,7 @@ export function useFeed(): UseFeedResult {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const pageRef = useRef(0);
 
   const load = useCallback(async (page: number, replace: boolean) => {
@@ -97,17 +99,32 @@ export function useFeed(): UseFeedResult {
     setIsFetchingMore(false);
   }, [isFetchingMore, hasMore, load]);
 
-  // Initial load
+  // Initial load with 10-second timeout
   useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
     setIsLoading(true);
+    setLoadError(false);
     inspoService
       .getFeed({ page: 0, limit: PAGE_SIZE })
       .then((data) => {
+        if (controller.signal.aborted) return;
         setHasMore(data.length === PAGE_SIZE);
         setRawTemplates(data);
       })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
+      .catch(() => {
+        if (!controller.signal.aborted) setLoadError(true);
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
+        setIsLoading(false);
+      });
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const templates = applyClientFilter(rawTemplates, filter);
@@ -118,6 +135,7 @@ export function useFeed(): UseFeedResult {
     isRefreshing,
     isFetchingMore,
     hasMore,
+    loadError,
     filter,
     setFilter,
     refresh,

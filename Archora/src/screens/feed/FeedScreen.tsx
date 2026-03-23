@@ -63,7 +63,7 @@ export function FeedScreen() {
   const { light } = useHaptics();
   const slideStyle = useScreenSlideIn();
 
-  const { templates, isLoading, isRefreshing, isFetchingMore, hasMore, filter, setFilter, refresh, fetchMore } = useFeed();
+  const { templates, isLoading, isRefreshing, isFetchingMore, hasMore, loadError, filter, setFilter, refresh, fetchMore } = useFeed();
 
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -210,6 +210,18 @@ export function FeedScreen() {
         {isLoading ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <LogoLoader size="medium" />
+          </View>
+        ) : loadError ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: BASE_COLORS.textPrimary, textAlign: 'center', marginBottom: 16 }}>
+              Couldn't load designs
+            </Text>
+            <Pressable
+              onPress={() => { void refresh(); }}
+              style={{ backgroundColor: BASE_COLORS.textPrimary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+            >
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: BASE_COLORS.background }}>Retry</Text>
+            </Pressable>
           </View>
         ) : templates.length === 0 ? (
           <EmptyState colors={colors} />

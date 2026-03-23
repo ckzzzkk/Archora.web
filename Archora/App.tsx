@@ -60,6 +60,17 @@ export default function App() {
     return () => task.cancel();
   }, [loadSession]);
 
+  // Global error handler — surfaces unhandled JS errors in Metro (dev) for debugging
+  useEffect(() => {
+    const originalHandler = ErrorUtils.getGlobalHandler();
+    ErrorUtils.setGlobalHandler((error, isFatal) => {
+      if (__DEV__) {
+        console.error('[GlobalError]', isFatal ? 'FATAL' : 'error', error?.message ?? error);
+      }
+      originalHandler(error, isFatal);
+    });
+  }, []);
+
   // Handle deep links for subscription callbacks
   useEffect(() => {
     const handleUrl = ({ url }: { url: string }) => {
