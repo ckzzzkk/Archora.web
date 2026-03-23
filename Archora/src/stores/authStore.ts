@@ -47,6 +47,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         user: userData ? mapDbUser(userData) : null,
       });
+
+      // Fire-and-forget audit log — non-blocking, failure is acceptable
+      void supabase.functions.invoke('log-auth-event', { body: { action: 'login_success' } });
     },
 
     signUp: async (email: string, password: string, displayName: string) => {

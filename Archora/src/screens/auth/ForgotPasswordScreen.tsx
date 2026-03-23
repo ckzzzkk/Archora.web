@@ -207,11 +207,21 @@ export function ForgotPasswordScreen() {
                   fontSize: 14,
                   color: BASE_COLORS.textSecondary,
                   textAlign: 'center',
-                  marginBottom: 32,
+                  marginBottom: 8,
                   lineHeight: 21,
                 }}>
                   Reset instructions sent to{'\n'}
                   <Text style={{ color: BASE_COLORS.textPrimary }}>{email}</Text>
+                </Text>
+                <Text style={{
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 12,
+                  color: BASE_COLORS.textDim,
+                  textAlign: 'center',
+                  marginBottom: 32,
+                  lineHeight: 18,
+                }}>
+                  Reset link expires in 1 hour.{'\n'}Check your spam folder if you don{'\u2019'}t see it.
                 </Text>
                 <Pressable onPress={() => navigation.navigate('Login')}>
                   <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>

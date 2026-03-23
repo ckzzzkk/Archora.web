@@ -279,6 +279,8 @@ export function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [attempts, setAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(0);
+  const [countdown, setCountdown] = useState(0);
   const [buttonSpinning, setButtonSpinning] = useState(false);
   const [confettiTriggered, setConfettiTriggered] = useState(false);
 
@@ -293,6 +295,21 @@ export function LoginScreen() {
     titleTranslateY.value = withDelay(100, withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }));
     formOpacity.value = withDelay(350, withTiming(1, { duration: 500 }));
   }, []);
+
+  useEffect(() => {
+    if (lockedUntil === 0) return;
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setCountdown(0);
+        setLockedUntil(0);
+        clearInterval(interval);
+      } else {
+        setCountdown(remaining);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockedUntil]);
 
   const titleStyle = useAnimatedStyle(() => ({
     opacity: titleOpacity.value,
@@ -322,6 +339,7 @@ export function LoginScreen() {
 
   const handleSignIn = async () => {
     setButtonSpinning(false);
+    if (countdown > 0) return;
     if (!email || !password) {
       setError('Please fill in all fields.');
       return;
@@ -336,6 +354,11 @@ export function LoginScreen() {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       if (newAttempts >= 4) errorHaptic();
+      if (newAttempts >= 5) {
+        const until = Date.now() + 30_000;
+        setLockedUntil(until);
+        setCountdown(30);
+      }
       const msg = e instanceof Error ? e.message : 'Invalid email or password. Please try again.';
       setError(msg.includes('Invalid login') ? 'Invalid email or password. Please try again.' : msg);
       setLoading(false);
@@ -455,9 +478,9 @@ export function LoginScreen() {
                   onPressIn={handlePressIn}
                   onPressOut={handlePressOut}
                   onPress={() => { void handleSignIn(); }}
-                  disabled={loading}
+                  disabled={loading || countdown > 0}
                   style={{
-                    backgroundColor: loading ? BASE_COLORS.border : '#C8C8C8',
+                    backgroundColor: (loading || countdown > 0) ? BASE_COLORS.border : '#C8C8C8',
                     borderRadius: 16,
                     height: 56,
                     alignItems: 'center',
@@ -467,6 +490,10 @@ export function LoginScreen() {
                 >
                   {loading ? (
                     <LogoLoader size="small" />
+                  ) : countdown > 0 ? (
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: BASE_COLORS.textDim }}>
+                      Too many attempts — wait {countdown}s
+                    </Text>
                   ) : (
                     <>
                       <ButtonCompassRose spinning={buttonSpinning} color="#1A1A1A" />

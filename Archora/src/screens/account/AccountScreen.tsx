@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../../stores/authStore';
+import { supabase } from '../../utils/supabaseClient';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { BASE_COLORS } from '../../theme/colors';
@@ -367,7 +368,22 @@ export function AccountScreen() {
               </Pressable>
               <Pressable
                 style={ROW_STYLE}
-                onPress={() => Alert.alert('Export Data', 'Preparing your export... This may take a moment.')}
+                onPress={() => {
+                  Alert.alert('Export Data', 'Preparing your data export… This may take a moment.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Export',
+                      onPress: async () => {
+                        const { error } = await supabase.functions.invoke('export-user-data');
+                        if (error) {
+                          Alert.alert('Export Failed', 'Could not export your data. Please try again later.');
+                        } else {
+                          Alert.alert('Export Sent', 'Your data export has been sent to your email address.');
+                        }
+                      },
+                    },
+                  ]);
+                }}
               >
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>Export Data</Text>
                 <Text style={{ color: BASE_COLORS.textDim }}>›</Text>
@@ -377,17 +393,32 @@ export function AccountScreen() {
                 onPress={() => {
                   Alert.alert(
                     'Delete Account',
-                    'This will permanently delete your account and all data. This cannot be undone.',
+                    'This will permanently delete your account and all your data. This cannot be undone.',
                     [
                       { text: 'Cancel', style: 'cancel' },
                       {
                         text: 'Delete Account',
                         style: 'destructive',
                         onPress: () => {
-                          Alert.alert('Confirm Delete', 'Are you absolutely sure?', [
-                            { text: 'Cancel', style: 'cancel' },
-                            { text: 'Yes, Delete', style: 'destructive', onPress: () => {} },
-                          ]);
+                          Alert.alert(
+                            'Confirm Delete',
+                            'Type DELETE to confirm.',
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              {
+                                text: 'Yes, Delete Everything',
+                                style: 'destructive',
+                                onPress: async () => {
+                                  const { error } = await supabase.functions.invoke('delete-account');
+                                  if (error) {
+                                    Alert.alert('Error', 'Could not delete your account. Please try again or contact support.');
+                                  } else {
+                                    await authActions.signOut();
+                                  }
+                                },
+                              },
+                            ],
+                          );
                         },
                       },
                     ],
