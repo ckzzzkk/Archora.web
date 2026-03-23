@@ -51,8 +51,8 @@
 - [x] ARScanScreen (stub)
 - [x] arService
 - [x] ar-reconstruct Edge Function
-- [ ] Roboflow live detection integration
-- [ ] Meshy polling for completed scans
+- [x] Roboflow live detection integration
+- [x] Meshy polling for completed scans
 
 ### Payments Agent
 - [x] SubscriptionScreen (real Stripe checkout integration)
