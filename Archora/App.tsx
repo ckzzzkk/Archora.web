@@ -11,6 +11,7 @@ import {
 import {
   Inter_400Regular,
   Inter_500Medium,
+  Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import {
@@ -43,13 +44,13 @@ export default function App() {
     ArchitectsDaughter_400Regular,
     Inter_400Regular,
     Inter_500Medium,
+    Inter_600SemiBold,
     Inter_700Bold,
     JetBrainsMono_400Regular,
     JetBrainsMono_700Bold,
   });
 
   const loadSession = useAuthStore((s) => s.actions.loadSession);
-  const isLoading = useAuthStore((s) => s.isLoading);
   const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function App() {
     return () => sub.remove();
   }, [loadSession]);
 
-  const appReady = fontsLoaded && !isLoading;
+  const appReady = fontsLoaded;
 
   if (!splashDone) {
     return (

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { inspoService } from '../services/inspoService';
 import type { Template } from '../types';
 
@@ -98,7 +98,7 @@ export function useFeed(): UseFeedResult {
   }, [isFetchingMore, hasMore, load]);
 
   // Initial load
-  useState(() => {
+  useEffect(() => {
     setIsLoading(true);
     inspoService
       .getFeed({ page: 0, limit: PAGE_SIZE })
@@ -108,7 +108,7 @@ export function useFeed(): UseFeedResult {
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  });
+  }, []);
 
   const templates = applyClientFilter(rawTemplates, filter);
 
