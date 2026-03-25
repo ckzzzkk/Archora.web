@@ -272,6 +272,14 @@ export function DashboardScreen() {
     ? Math.min(((user.aiGenerationsUsed ?? 0) / usageLimit) * 100, 100)
     : 0;
 
+  if (!user) {
+    return (
+      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 13 }}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
       {/* Header */}
@@ -334,7 +342,7 @@ export function DashboardScreen() {
                   width: 7,
                   height: 7,
                   borderRadius: 4,
-                  backgroundColor: '#4CAF50',
+                  backgroundColor: BASE_COLORS.success,
                   borderWidth: 1,
                   borderColor: BASE_COLORS.background,
                 }} />

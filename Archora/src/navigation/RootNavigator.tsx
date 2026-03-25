@@ -79,7 +79,11 @@ export function RootNavigator() {
           <Stack.Screen
             name="Workspace"
             component={BlueprintWorkspaceScreen}
-            options={{ presentation: 'fullScreenModal' }}
+            options={{
+              presentation: 'fullScreenModal',
+              animation: 'fade',
+              animationDuration: 150,
+            }}
           />
           <Stack.Screen
             name="Subscription"
@@ -93,12 +97,20 @@ export function RootNavigator() {
           <Stack.Screen
             name="Workspace"
             component={BlueprintWorkspaceScreen}
-            options={{ presentation: 'fullScreenModal' }}
+            options={{
+              presentation: 'fullScreenModal',
+              animation: 'fade',
+              animationDuration: 150,
+            }}
           />
           <Stack.Screen
             name="Generation"
             component={GenerationScreen}
-            options={{ presentation: 'modal' }}
+            options={{
+              presentation: 'modal',
+              animation: 'fade',
+              animationDuration: 150,
+            }}
           />
           <Stack.Screen
             name="Subscription"

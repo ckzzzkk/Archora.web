@@ -450,10 +450,10 @@ export function Canvas2D({
 
                 return (
                   <Group key={dim.id}>
-                    <Line p1={{ x: sx, y: sy }} p2={{ x: ex, y: ey }} color="#C8C8C8" strokeWidth={0.5} />
-                    <Path path={arrowPath1} color="#C8C8C8" style="fill" />
-                    <Path path={arrowPath2} color="#C8C8C8" style="fill" />
-                    <SkiaText x={mx - 16} y={my - 4} text={dim.displayText} color="#C8C8C8" font={dimFont} />
+                    <Line p1={{ x: sx, y: sy }} p2={{ x: ex, y: ey }} color={BASE_COLORS.textSecondary} strokeWidth={0.5} />
+                    <Path path={arrowPath1} color={BASE_COLORS.textSecondary} style="fill" />
+                    <Path path={arrowPath2} color={BASE_COLORS.textSecondary} style="fill" />
+                    <SkiaText x={mx - 16} y={my - 4} text={dim.displayText} color={BASE_COLORS.textSecondary} font={dimFont} />
                   </Group>
                 );
               })}
@@ -574,12 +574,12 @@ export function Canvas2D({
                 measPath.lineTo(bx, by);
                 return (
                   <Group>
-                    <Path path={measPath} color="#FFD700" strokeWidth={1.5} style="stroke">
+                    <Path path={measPath} color={BASE_COLORS.warning} strokeWidth={1.5} style="stroke">
                       <DashPathEffect intervals={[6, 3]} />
                     </Path>
-                    <Circle cx={ax} cy={ay} r={4} color="#FFD700" />
-                    <Circle cx={bx} cy={by} r={4} color="#FFD700" />
-                    <SkiaText x={(ax + bx) / 2 - 16} y={(ay + by) / 2 - 8} text={label} color="#FFD700" font={dimFont} />
+                    <Circle cx={ax} cy={ay} r={4} color={BASE_COLORS.warning} />
+                    <Circle cx={bx} cy={by} r={4} color={BASE_COLORS.warning} />
+                    <SkiaText x={(ax + bx) / 2 - 16} y={(ay + by) / 2 - 8} text={label} color={BASE_COLORS.warning} font={dimFont} />
                   </Group>
                 );
               })()}

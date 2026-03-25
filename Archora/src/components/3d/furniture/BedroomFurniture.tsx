@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Vector3D } from '../../../types/blueprint';
+import { BASE_COLORS } from '../../../theme/colors';
 
 interface Props {
   position: Vector3D;
@@ -9,7 +10,7 @@ interface Props {
   selected?: boolean;
 }
 
-const outline = (selected?: boolean) => selected ? '#FFD700' : '#000000';
+const outline = (selected?: boolean) => selected ? BASE_COLORS.warning : 'transparent';
 
 export function KingBed({ position, rotation, dimensions, color = '#D0C8B8', selected }: Props) {
   const { x: w, y: h, z: d } = dimensions;

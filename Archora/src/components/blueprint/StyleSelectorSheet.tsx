@@ -147,7 +147,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                     borderRadius: 14,
                     overflow: 'hidden',
                     borderWidth: isSelected ? 2 : 1,
-                    borderColor: isSelected ? '#FFD700' : BASE_COLORS.border,
+                    borderColor: isSelected ? BASE_COLORS.warning : BASE_COLORS.border,
                     opacity: accessible ? 1 : 0.6,
                   }}
                 >
@@ -192,7 +192,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                         <Text style={{ fontSize: 12 }}>🔒</Text>
                       )}
                       {isSelected && accessible && (
-                        <Text style={{ fontSize: 12, color: '#FFD700' }}>✓</Text>
+                        <Text style={{ fontSize: 12, color: BASE_COLORS.warning }}>✓</Text>
                       )}
                     </View>
                     <Text

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Vector3D } from '../../../types/blueprint';
+import { BASE_COLORS } from '../../../theme/colors';
 
 interface Props {
   position: Vector3D;
@@ -9,7 +10,7 @@ interface Props {
   selected?: boolean;
 }
 
-const outline = (selected?: boolean) => selected ? '#FFD700' : '#000000';
+const outline = (selected?: boolean) => selected ? BASE_COLORS.warning : 'transparent';
 const outlineWidth = (selected?: boolean) => selected ? 0.008 : 0.004;
 
 export function CurvedSofa({ position, rotation, dimensions, color = '#8A7A6A', selected }: Props) {

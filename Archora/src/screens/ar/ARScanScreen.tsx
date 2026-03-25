@@ -270,9 +270,9 @@ export function ARScanScreen() {
                 justifyContent: 'center',
                 borderRadius: 8,
                 borderWidth: selectedItemId === item.id ? 2 : 0,
-                borderColor: '#FFD700',
+                borderColor: BASE_COLORS.warning,
                 backgroundColor: selectedItemId === item.id
-                  ? 'rgba(255,215,0,0.15)'
+                  ? `${BASE_COLORS.warning}26`
                   : 'rgba(255,255,255,0.1)',
               }}
             >
@@ -295,7 +295,7 @@ export function ARScanScreen() {
           {scanResult && scanResult.detectedObjects.length > 0 && (
             <View style={{ position: 'absolute', top: 110, left: 16, right: 16 }}>
               <View style={{ backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 12, padding: 12 }}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#FFD700', marginBottom: 6 }}>
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: BASE_COLORS.warning, marginBottom: 6 }}>
                   Detected Objects
                 </Text>
                 {scanResult.detectedObjects.slice(0, 5).map((obj, i) => (
@@ -309,7 +309,7 @@ export function ARScanScreen() {
                   </Text>
                 )}
                 {scanResult.status === 'complete' && (
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#4CAF50', marginTop: 4 }}>
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.success, marginTop: 4 }}>
                     3D model ready
                   </Text>
                 )}
@@ -398,15 +398,15 @@ export function ARScanScreen() {
                   disabled={scanning}
                   style={{
                     flex: 1,
-                    backgroundColor: scanning ? 'rgba(255,255,255,0.06)' : 'rgba(255,215,0,0.15)',
+                    backgroundColor: scanning ? 'rgba(255,255,255,0.06)' : `${BASE_COLORS.warning}26`,
                     borderRadius: 12,
                     padding: 14,
                     alignItems: 'center',
                     borderWidth: 1,
-                    borderColor: scanning ? 'rgba(255,255,255,0.1)' : 'rgba(255,215,0,0.5)',
+                    borderColor: scanning ? 'rgba(255,255,255,0.1)' : `${BASE_COLORS.warning}80`,
                   }}
                 >
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: scanning ? 'rgba(255,255,255,0.3)' : '#FFD700' }}>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: scanning ? 'rgba(255,255,255,0.3)' : BASE_COLORS.warning }}>
                     {scanning ? 'Scanning…' : '◎ Scan Room'}
                   </Text>
                   <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>

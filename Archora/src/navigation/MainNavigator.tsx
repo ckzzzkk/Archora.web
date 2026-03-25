@@ -33,12 +33,23 @@ export function MainNavigator() {
     <TabDirectionProvider>
       <Tab.Navigator
         tabBar={(props: BottomTabBarProps) => <CustomTabBar {...props} />}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+        }}
       >
         <Tab.Screen name="Dashboard" component={DashboardTab} />
-        <Tab.Screen name="Sketch" component={SketchTab} />
+        <Tab.Screen
+          name="Sketch"
+          component={SketchTab}
+          options={{ tabBarStyle: { display: 'none' } }}
+        />
         <Tab.Screen name="Feed" component={FeedTab} />
-        <Tab.Screen name="AR" component={ARTab} />
+        <Tab.Screen
+          name="AR"
+          component={ARTab}
+          options={{ tabBarStyle: { display: 'none' } }}
+        />
         <Tab.Screen name="Account" component={AccountTab} />
       </Tab.Navigator>
     </TabDirectionProvider>

@@ -129,7 +129,7 @@ function NotificationRow({ notification, onPress }: NotificationRowProps) {
             width: 8,
             height: 8,
             borderRadius: 4,
-            backgroundColor: '#4CAF50',
+            backgroundColor: BASE_COLORS.success,
             marginTop: 6,
           }}
         />
@@ -268,7 +268,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
             paddingTop: 60,
             paddingBottom: 12,
             borderBottomWidth: 1,
-            borderBottomColor: '#333333',
+            borderBottomColor: BASE_COLORS.border,
           }}
         >
           <Text
@@ -281,7 +281,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
           >
             Notifications
             {unreadCount > 0 && (
-              <Text style={{ color: '#4CAF50', fontSize: 14 }}>  {unreadCount} new</Text>
+              <Text style={{ color: BASE_COLORS.success, fontSize: 14 }}>  {unreadCount} new</Text>
             )}
           </Text>
           {unreadCount > 0 && (
@@ -354,7 +354,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
             <Text style={{
               fontFamily: 'Inter_400Regular',
               fontSize: 13,
-              color: '#9A9590',
+              color: BASE_COLORS.textSecondary,
               textAlign: 'center',
             }}>
               Likes, saves and follows will appear here

@@ -158,7 +158,7 @@ function IconButton({
 
 function SaveStatusDot({ status }: { status: 'saved' | 'saving' | 'unsaved' }) {
   const dotColor =
-    status === 'saved' ? '#4CAF50' : status === 'saving' ? '#FFC107' : '#FF9800';
+    status === 'saved' ? BASE_COLORS.success : status === 'saving' ? BASE_COLORS.warning : BASE_COLORS.error;
   const label = status === 'saved' ? 'Saved' : status === 'saving' ? 'Saving…' : 'Unsaved';
 
   return (

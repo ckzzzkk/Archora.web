@@ -63,7 +63,7 @@ function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgra
   const price = PRICES[tier];
   const displayPrice = billingInterval === 'annual' ? price.annual : price.monthly;
   const label = tier === 'creator' ? 'Creator' : 'Architect';
-  const accentColor = tier === 'architect' ? '#FFD700' : colors.primary;
+  const accentColor = tier === 'architect' ? BASE_COLORS.warning : colors.primary;
 
   const perks = tier === 'creator'
     ? ['20 projects', '100 AI generations/mo', '15 AR sessions', 'Auto-save', '12 design styles']
@@ -238,7 +238,7 @@ export function SubscriptionScreen({ navigation }: Props) {
                 <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: billing === 'annual' ? BASE_COLORS.background : BASE_COLORS.textDim }}>
                   Annual
                 </Text>
-                <View style={{ backgroundColor: '#4CAF50', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                <View style={{ backgroundColor: BASE_COLORS.success, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9, color: '#FFF' }}>SAVE 20%</Text>
                 </View>
               </Pressable>
@@ -306,7 +306,7 @@ export function SubscriptionScreen({ navigation }: Props) {
             <Text style={{ flex: 2, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: BASE_COLORS.textDim }}>FEATURE</Text>
             <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: BASE_COLORS.textDim, textAlign: 'center' }}>FREE</Text>
             <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: colors.primary, textAlign: 'center' }}>CREATOR</Text>
-            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#FFD700', textAlign: 'center' }}>ARCH</Text>
+            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: BASE_COLORS.warning, textAlign: 'center' }}>ARCH</Text>
           </View>
 
           {FEATURES.map((row, i) => (
@@ -323,7 +323,7 @@ export function SubscriptionScreen({ navigation }: Props) {
               <Text style={{ flex: 2, fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textSecondary }}>{row.label}</Text>
               <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, textAlign: 'center' }}>{row.starter}</Text>
               <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.primary, textAlign: 'center' }}>{row.creator}</Text>
-              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: '#FFD700', textAlign: 'center' }}>{row.architect}</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.warning, textAlign: 'center' }}>{row.architect}</Text>
             </View>
           ))}
         </View>
