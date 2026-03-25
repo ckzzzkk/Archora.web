@@ -1,5 +1,6 @@
 export * from './colors';
 export * from './spacing';
+export * from './shapes';
 
 export const SHADOW = {
   card: {

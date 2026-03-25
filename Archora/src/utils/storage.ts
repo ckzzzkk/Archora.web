@@ -1,17 +1,20 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createMMKV } from 'react-native-mmkv';
 
-export const storage = {
-  getString: async (key: string): Promise<string | null> => AsyncStorage.getItem(key),
-  set: async (key: string, value: string): Promise<void> => { await AsyncStorage.setItem(key, value); },
-  delete: async (key: string): Promise<void> => { await AsyncStorage.removeItem(key); },
-  clearAll: async (): Promise<void> => { await AsyncStorage.clear(); },
-  contains: async (key: string): Promise<boolean> => {
-    const val = await AsyncStorage.getItem(key);
-    return val !== null;
+const storage = createMMKV();
+
+export const Storage = {
+  getString: (key: string): string | null =>
+    storage.getString(key) ?? null,
+  set: (key: string, value: string): void =>
+    storage.set(key, value),
+  delete: (key: string): void => {
+    storage.remove(key);
   },
+  clearAll: (): void =>
+    storage.clearAll(),
+  contains: (key: string): boolean =>
+    storage.contains(key),
 };
 
-// Alias used by blueprintStore — same API, named separately for clarity
-export const blueprintStorage = storage;
-// Capital-S alias for callers that import Storage
-export const Storage = storage;
+export const blueprintStorage = Storage;
+export default Storage;

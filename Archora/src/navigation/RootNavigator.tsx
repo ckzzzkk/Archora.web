@@ -38,7 +38,7 @@ const OnboardingQuizScreen = lazyScreen(() =>
   import('../screens/auth/OnboardingQuizScreen')
     .then((m) => ({ default: m.OnboardingQuizScreen })));
 import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
-import { storage } from '../utils/storage';
+import { Storage } from '../utils/storage';
 import { BASE_COLORS } from '../theme/colors';
 import type { RootStackParamList } from './types';
 
@@ -59,9 +59,8 @@ export function RootNavigator() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      void storage.getString('asoria_quiz_done').then((val) => {
-        setQuizDone(val === 'true');
-      });
+      const val = Storage.getString('asoria_quiz_done');
+      setQuizDone(val === 'true');
     } else {
       setQuizDone(null);
     }

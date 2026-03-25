@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Storage } from '../utils/storage';
 import { BASE_COLORS, COLOR_THEMES, type ThemeName, type ColorTheme } from '../theme/colors';
 import { useUIStore } from '../stores/uiStore';
 
@@ -33,12 +33,10 @@ export function useTheme() {
   const setPrimaryColor = useUIStore((s) => s.actions.setPrimaryColor);
 
   useEffect(() => {
-    AsyncStorage.getItem(THEME_KEY).then((v) => {
-      if (v) setThemeNameState(v as ThemeName);
-    });
-    AsyncStorage.getItem(CUSTOM_PRIMARY_KEY).then((v) => {
-      setCustomPrimary(v);
-    });
+    const v = Storage.getString(THEME_KEY);
+    if (v) setThemeNameState(v as ThemeName);
+    const cp = Storage.getString(CUSTOM_PRIMARY_KEY);
+    setCustomPrimary(cp);
   }, []);
 
   const themeConfig: ColorTheme = COLOR_THEMES[themeName] ?? COLOR_THEMES.drafting;
@@ -60,7 +58,7 @@ export function useTheme() {
 
   const setTheme = useCallback((name: ThemeName) => {
     setThemeNameState(name);
-    void AsyncStorage.setItem(THEME_KEY, name);
+    Storage.set(THEME_KEY, name);
     const cfg = COLOR_THEMES[name] ?? COLOR_THEMES.drafting;
     setPrimaryColor(customPrimary ?? cfg.primary);
   }, [customPrimary, setPrimaryColor]);
@@ -68,10 +66,10 @@ export function useTheme() {
   const setCustomPrimaryColor = useCallback((color: string | null) => {
     setCustomPrimary(color);
     if (color !== null) {
-      void AsyncStorage.setItem(CUSTOM_PRIMARY_KEY, color);
+      Storage.set(CUSTOM_PRIMARY_KEY, color);
       setPrimaryColor(color);
     } else {
-      void AsyncStorage.removeItem(CUSTOM_PRIMARY_KEY);
+      Storage.delete(CUSTOM_PRIMARY_KEY);
       setPrimaryColor(themeConfig.primary);
     }
   }, [themeConfig.primary, setPrimaryColor]);

@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Storage } from './storage';
 import type { FurniturePiece, Room, Wall } from '../types/blueprint';
 
 export type ClipboardItemType = 'furniture' | 'room' | 'layout' | 'style';
@@ -32,9 +32,9 @@ function generateId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-async function readAll(): Promise<ClipboardItem[]> {
+function readAll(): ClipboardItem[] {
   try {
-    const raw = await AsyncStorage.getItem(CLIPBOARD_KEY);
+    const raw = Storage.getString(CLIPBOARD_KEY);
     if (!raw) return [];
     return JSON.parse(raw) as ClipboardItem[];
   } catch {
@@ -42,22 +42,22 @@ async function readAll(): Promise<ClipboardItem[]> {
   }
 }
 
-async function writeAll(items: ClipboardItem[]): Promise<void> {
+function writeAll(items: ClipboardItem[]): void {
   try {
-    await AsyncStorage.setItem(CLIPBOARD_KEY, JSON.stringify(items));
+    Storage.set(CLIPBOARD_KEY, JSON.stringify(items));
   } catch {}
 }
 
 export const clipboard = {
   async push(item: Omit<ClipboardItem, 'id' | 'timestamp'>): Promise<void> {
-    const existing = await readAll();
+    const existing = readAll();
     const newItem: ClipboardItem = {
       ...item,
       id: generateId(),
       timestamp: Date.now(),
     };
     const updated = [newItem, ...existing].slice(0, MAX_CLIPBOARD_ITEMS);
-    await writeAll(updated);
+    writeAll(updated);
   },
 
   async getAll(): Promise<ClipboardItem[]> {
@@ -65,18 +65,18 @@ export const clipboard = {
   },
 
   async getLatest(): Promise<ClipboardItem | null> {
-    const all = await readAll();
+    const all = readAll();
     return all[0] ?? null;
   },
 
   async remove(id: string): Promise<void> {
-    const filtered = (await readAll()).filter((item) => item.id !== id);
-    await writeAll(filtered);
+    const filtered = readAll().filter((item) => item.id !== id);
+    writeAll(filtered);
   },
 
   async clear(): Promise<void> {
     try {
-      await AsyncStorage.removeItem(CLIPBOARD_KEY);
+      Storage.delete(CLIPBOARD_KEY);
     } catch {}
   },
 };

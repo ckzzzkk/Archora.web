@@ -26,7 +26,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
-import { storage } from '../../utils/storage';
+import { Storage } from '../../utils/storage';
 import { supabase } from '../../utils/supabaseClient';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { BASE_COLORS } from '../../theme/colors';
@@ -432,7 +432,7 @@ export function OnboardingQuizScreen() {
     setIsGenerating(true);
 
     try {
-      await storage.set('asoria_quiz_done', 'true');
+      Storage.set('asoria_quiz_done', 'true');
 
       // Upsert quiz answers to Supabase
       const { data: { session } } = await supabase.auth.getSession();

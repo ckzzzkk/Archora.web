@@ -109,9 +109,8 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       set({ saveStatus: 'saving' });
-      void blueprintStorage.set(STORAGE_KEY, JSON.stringify(data)).then(() => {
-        set({ saveStatus: 'saved' });
-      });
+      blueprintStorage.set(STORAGE_KEY, JSON.stringify(data));
+      set({ saveStatus: 'saved' });
     }, debounce);
   }
 
@@ -501,9 +500,8 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         if (!blueprint) return;
         if (saveTimer) clearTimeout(saveTimer);
         set({ saveStatus: 'saving' });
-        void blueprintStorage.set(STORAGE_KEY, JSON.stringify(blueprint)).then(() => {
-          set({ saveStatus: 'saved', isDirty: false });
-        });
+        blueprintStorage.set(STORAGE_KEY, JSON.stringify(blueprint));
+        set({ saveStatus: 'saved', isDirty: false });
       },
 
       manualSave: () => {
@@ -511,9 +509,8 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         if (!blueprint) return;
         if (saveTimer) clearTimeout(saveTimer);
         set({ saveStatus: 'saving' });
-        void blueprintStorage.set(STORAGE_KEY, JSON.stringify(blueprint)).then(() => {
-          set({ saveStatus: 'saved', isDirty: false });
-        });
+        blueprintStorage.set(STORAGE_KEY, JSON.stringify(blueprint));
+        set({ saveStatus: 'saved', isDirty: false });
       },
 
       setRoomsDirectly: (rooms) => {
