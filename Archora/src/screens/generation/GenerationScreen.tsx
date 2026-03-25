@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView,
   Platform, Dimensions,
@@ -52,6 +52,15 @@ export function GenerationScreen() {
   const loadBlueprint = useBlueprintStore((s) => s.actions.loadBlueprint);
   const user = useAuthStore((s) => s.user);
   const projectActions = useProjectStore((s) => s.actions);
+
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const [prompt, setPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState<ArchStyle>('modern');
@@ -154,6 +163,8 @@ export function GenerationScreen() {
         style: selectedStyle,
       });
 
+      if (!isMounted.current) return;
+
       // Stop animations
       gridOpacity.value = withTiming(0.05, { duration: 600 });
       compassRotation.value = 0;
@@ -172,6 +183,7 @@ export function GenerationScreen() {
         await projectActions.create(user.id, `${blueprint.metadata?.style ?? 'Modern'} ${blueprint.metadata?.buildingType ?? 'Building'}`.replace(/^\w/, (c) => c.toUpperCase()), selectedType);
       }
     } catch (e) {
+      if (!isMounted.current) return;
       gridOpacity.value = withTiming(0.05, { duration: 400 });
       compassRotation.value = 0;
       wallOpacity.value = withTiming(0, { duration: 300 });

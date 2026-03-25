@@ -329,7 +329,7 @@ export function BlueprintWorkspaceScreen() {
               />
             </Animated.View>
             <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, viewer3DStyle]}>
-              <React.Suspense fallback={<CompassRoseLoader />}>
+              <React.Suspense fallback={<CompassRoseLoader size="large" />}>
                 <Viewer3D />
               </React.Suspense>
             </Animated.View>

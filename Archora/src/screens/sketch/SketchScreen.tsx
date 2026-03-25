@@ -633,9 +633,9 @@ export function SketchScreen() {
         {mode === 'draw' ? (
           /* --- Draw mode --- */
           <Animated.View style={[canvasAnimStyle, { flex: 1 }]}>
-            <GestureDetector gesture={activeGesture}>
-              <ErrorBoundary fallback={<View style={{ width: SCREEN_W, height: CANVAS_H, backgroundColor: '#1A1A1A' }} />}>
-              <Canvas style={{ width: SCREEN_W, height: CANVAS_H }}>
+            <ErrorBoundary fallback={<View style={{ width: SCREEN_W, height: CANVAS_H, backgroundColor: '#1A1A1A' }} />}>
+              <GestureDetector gesture={activeGesture}>
+                <Canvas style={{ width: SCREEN_W, height: CANVAS_H }}>
                 {/* Grid */}
                 {Array.from({ length: 21 }, (_, i) => i - 10).map((n) => (
                   <React.Fragment key={`g${n}`}>
@@ -701,9 +701,9 @@ export function SketchScreen() {
                     color={`${accentColor}99`}
                   />
                 )}
-              </Canvas>
-              </ErrorBoundary>
-            </GestureDetector>
+                </Canvas>
+              </GestureDetector>
+            </ErrorBoundary>
 
             {/* Bottom toolbar */}
             <Animated.View style={[
