@@ -1,6 +1,6 @@
 import { createMMKV } from 'react-native-mmkv';
 
-const storage = createMMKV();
+const storage = createMMKV({ id: 'asoria-app-storage' });
 
 export const Storage = {
   getString: (key: string): string | null =>

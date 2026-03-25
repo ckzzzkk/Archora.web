@@ -75,7 +75,7 @@ interface BlueprintState {
     addChatMessage: (msg: ChatMessage) => void;
     clearChatHistory: () => void;
     // Persistence
-    loadFromStorage: () => Promise<void>;
+    loadFromStorage: () => void;
     forceSave: () => void;
     manualSave: () => void;
     // Room bulk replace (bypasses undo history — used by room detection)
@@ -184,7 +184,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           blueprint: null, selectedId: null, isDirty: false, currentFloorIndex: 0,
           saveStatus: 'saved', history: [], historyIndex: -1,
         });
-        void blueprintStorage.delete(STORAGE_KEY);
+        blueprintStorage.delete(STORAGE_KEY);
       },
 
       setViewMode: (mode) => set({ viewMode: mode }),
@@ -472,7 +472,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         const history = [...(blueprint.chatHistory ?? []), msg].slice(-20);
         const updated = { ...blueprint, chatHistory: history };
         set({ blueprint: updated });
-        void blueprintStorage.set(STORAGE_KEY, JSON.stringify(updated));
+        blueprintStorage.set(STORAGE_KEY, JSON.stringify(updated));
       },
 
       clearChatHistory: () => {
@@ -480,11 +480,11 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         if (!blueprint) return;
         const updated = { ...blueprint, chatHistory: [] };
         set({ blueprint: updated });
-        void blueprintStorage.set(STORAGE_KEY, JSON.stringify(updated));
+        blueprintStorage.set(STORAGE_KEY, JSON.stringify(updated));
       },
 
-      loadFromStorage: async () => {
-        const raw = await blueprintStorage.getString(STORAGE_KEY);
+      loadFromStorage: () => {
+        const raw = blueprintStorage.getString(STORAGE_KEY);
         if (!raw) return;
         try {
           const data = JSON.parse(raw) as BlueprintData;
