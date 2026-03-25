@@ -184,6 +184,10 @@ export function GenerationScreen() {
         setError('Monthly AI generation limit reached. Upgrade your plan.');
       } else if (err.code === 'RATE_LIMITED') {
         setError('Too many requests. Please wait a moment.');
+      } else if (err.code === 'TIMEOUT') {
+        setError('This is taking a while — try a simpler description');
+      } else if (err.code === 'INVALID_RESPONSE') {
+        setError('Something went wrong with the design — please try again');
       } else {
         setError('Generation failed. Please try again.');
       }

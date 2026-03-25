@@ -23,29 +23,48 @@ export const aiService = {
     roomCount?: number;
   }): Promise<BlueprintData> {
     const headers = await getAuthHeader();
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-generate`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(params),
-    });
 
-    if (response.status === 503) {
-      const body = await response.json() as { error?: string };
-      if (body.error === 'AI_NOT_CONFIGURED') {
-        throw Object.assign(new Error('AI features coming soon'), {
-          code: 'AI_NOT_CONFIGURED',
-          status: 503,
-        });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-generate`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(params),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (response.status === 503) {
+        const body = await response.json() as { error?: string };
+        if (body.error === 'AI_NOT_CONFIGURED') {
+          throw Object.assign(new Error('AI features coming soon'), {
+            code: 'AI_NOT_CONFIGURED',
+            status: 503,
+          });
+        }
       }
-    }
 
-    if (!response.ok) {
-      const err = await response.json() as { error: string; code?: string };
-      throw Object.assign(new Error(err.error), { code: err.code, status: response.status });
-    }
+      if (!response.ok) {
+        const err = await response.json() as { error: string; code?: string };
+        throw Object.assign(new Error(err.error), { code: err.code, status: response.status });
+      }
 
-    const data = await response.json() as { blueprint: BlueprintData };
-    return data.blueprint;
+      const data = await response.json() as { blueprint: BlueprintData };
+      if (!data.blueprint || !Array.isArray(data.blueprint.rooms)) {
+        throw Object.assign(new Error('Invalid response from AI'), { code: 'INVALID_RESPONSE' });
+      }
+      return data.blueprint;
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        const e = new Error('Request timed out') as Error & { code: string };
+        e.code = 'TIMEOUT';
+        throw e;
+      }
+      throw err;
+    }
   },
 
   async editBlueprint(params: {

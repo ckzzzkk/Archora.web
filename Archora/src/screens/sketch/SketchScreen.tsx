@@ -26,6 +26,7 @@ import { useHaptics } from '../../hooks/useHaptics';
 import { BASE_COLORS } from '../../theme/colors';
 import { useScreenSlideIn } from '../../hooks/useScreenSlideIn';
 import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
+import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData, Wall, Room, RoomType, Vector2D } from '../../types/blueprint';
 
@@ -299,7 +300,7 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
       {/* Size chips */}
       <View style={{ flexDirection: 'row', gap: 6, marginBottom: 14 }}>
         {sizes.map((s) => {
-          const dims = preset.sizes[s];
+          const dims = preset.sizes?.[s] ?? preset.sizes['medium'];
           return (
             <Pressable
               key={s}
@@ -633,6 +634,7 @@ export function SketchScreen() {
           /* --- Draw mode --- */
           <Animated.View style={[canvasAnimStyle, { flex: 1 }]}>
             <GestureDetector gesture={activeGesture}>
+              <ErrorBoundary fallback={<View style={{ width: SCREEN_W, height: CANVAS_H, backgroundColor: '#1A1A1A' }} />}>
               <Canvas style={{ width: SCREEN_W, height: CANVAS_H }}>
                 {/* Grid */}
                 {Array.from({ length: 21 }, (_, i) => i - 10).map((n) => (
@@ -700,6 +702,7 @@ export function SketchScreen() {
                   />
                 )}
               </Canvas>
+              </ErrorBoundary>
             </GestureDetector>
 
             {/* Bottom toolbar */}
