@@ -31,7 +31,7 @@ const SCREEN_W = Dimensions.get('window').width;
 
 const CARD_STYLE = {
   backgroundColor: BASE_COLORS.surface,
-  borderRadius: 12,
+  borderRadius: 20,
   borderWidth: 1.5,
   borderColor: BASE_COLORS.border,
   marginBottom: 12,
@@ -323,7 +323,7 @@ export function AccountScreen() {
                 paddingHorizontal: 12,
                 paddingVertical: 4,
                 backgroundColor: `${colors.primary}20`,
-                borderRadius: 4,
+                borderRadius: 50,
                 borderWidth: 1,
                 borderColor: colors.primary,
                 transform: [{ rotate: '-12deg' }],
@@ -363,7 +363,7 @@ export function AccountScreen() {
                 <View key={stat.label} style={{
                   alignItems: 'center',
                   backgroundColor: BASE_COLORS.surface,
-                  borderRadius: 8,
+                  borderRadius: 20,
                   borderWidth: 1,
                   borderColor: BASE_COLORS.border,
                   paddingHorizontal: 14,
@@ -574,7 +574,7 @@ export function AccountScreen() {
             style={{
               borderWidth: 1.5,
               borderColor: BASE_COLORS.error,
-              borderRadius: 12,
+              borderRadius: 50,
               paddingVertical: 16,
               alignItems: 'center',
               marginTop: 8,

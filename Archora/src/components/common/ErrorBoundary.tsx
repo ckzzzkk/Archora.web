@@ -1,5 +1,5 @@
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { BASE_COLORS } from '../../theme/colors';
 
 interface Props {
@@ -59,18 +59,18 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.stack?.slice(0, 400) ?? ''}
             </Text>
           )}
-          <TouchableOpacity
+          <Pressable
             onPress={this.reset}
             style={{
               borderWidth: 1,
               borderColor: BASE_COLORS.border,
-              borderRadius: 8,
+              borderRadius: 50,
               paddingHorizontal: 24,
               paddingVertical: 10,
             }}
           >
             <Text style={{ color: BASE_COLORS.textPrimary }}>Try again</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       );
     }

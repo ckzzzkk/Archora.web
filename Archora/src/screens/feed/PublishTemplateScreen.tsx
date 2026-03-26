@@ -141,7 +141,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
           </Text>
           <Pressable
             onPress={() => navigation.navigate('Subscription', { feature: 'publishTemplates' })}
-            style={{ backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 32 }}
+            style={{ backgroundColor: colors.primary, borderRadius: 50, paddingVertical: 14, paddingHorizontal: 32 }}
           >
             <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.background }}>
               View Plans
@@ -329,7 +329,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
               disabled={loading}
               style={{
                 backgroundColor: loading ? BASE_COLORS.border : colors.primary,
-                borderRadius: 12,
+                borderRadius: 50,
                 paddingVertical: 16,
                 alignItems: 'center',
                 marginBottom: 32,

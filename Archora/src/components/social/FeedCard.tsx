@@ -37,7 +37,7 @@ function BlueprintPlaceholder({ color }: { color: string }) {
   );
 }
 
-export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCardProps) {
+function FeedCardInner({ template, onPress, index = 0, height = 240 }: FeedCardProps) {
   const { colors } = useTheme();
 
   const translateY = useSharedValue(30);
@@ -200,3 +200,5 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
     </Animated.View>
   );
 }
+
+export const FeedCard = React.memo(FeedCardInner);

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Pressable, Text, Dimensions } from 'react-native';
+import { View, Pressable, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -118,7 +118,7 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={{ width: 58, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}
     >
       {/* Active pill background */}
       <Animated.View
@@ -148,19 +148,9 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
       </View>
 
       {/* Icon */}
-      <View style={{ marginBottom: 3 }}>
+      <View>
         {iconRenderer ? iconRenderer(iconColor) : null}
       </View>
-
-      {/* Label */}
-      <Text style={{
-        fontSize: 9,
-        fontFamily: 'Inter_500Medium',
-        color: iconColor,
-        letterSpacing: 0.4,
-      }}>
-        {route.name}
-      </Text>
     </Pressable>
   );
 }
@@ -190,12 +180,11 @@ function FABButton() {
     <Pressable
       onPress={handlePress}
       style={{
-        width: 56, height: 56,
-        borderRadius: 28,
+        width: 48, height: 48,
+        borderRadius: 24,
         backgroundColor: BASE_COLORS.textPrimary,
         alignItems: 'center',
         justifyContent: 'center',
-        marginLeft: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
@@ -251,61 +240,52 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     <View
       style={{
         position: 'absolute',
-        bottom: insets.bottom + 16,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
+        bottom: Math.max(insets.bottom, 8) + 16,
+        left: 24,
+        right: 24,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: BASE_COLORS.background,
+        borderWidth: 1,
+        borderColor: BASE_COLORS.border,
         flexDirection: 'row',
-        justifyContent: 'center',
-        pointerEvents: 'box-none',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+        elevation: 12,
       }}
     >
-      {/* Pill container */}
-      <View
-        style={{
-          flexDirection: 'row',
-          backgroundColor: BASE_COLORS.surfaceHigh,
-          borderRadius: 32,
-          paddingHorizontal: 4,
-          paddingVertical: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.4,
-          shadowRadius: 16,
-          elevation: 12,
-          borderWidth: 1,
-          borderColor: BASE_COLORS.border,
-        }}
-      >
-        {state.routes.map((route, index) => {
-          const isFocused = state.index === index;
+      {state.routes.map((route, index) => {
+        const isFocused = state.index === index;
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              medium();
-              setDirection(index > prevIndexRef.current ? 'right' : 'left');
-              navigation.navigate(route.name, route.params);
-            }
-          };
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+          if (!isFocused && !event.defaultPrevented) {
+            medium();
+            setDirection(index > prevIndexRef.current ? 'right' : 'left');
+            navigation.navigate(route.name, route.params);
+          }
+        };
 
-          return (
-            <TabItem
-              key={route.key}
-              route={route}
-              index={index}
-              isFocused={isFocused}
-              onPress={onPress}
-            />
-          );
-        })}
-      </View>
+        return (
+          <TabItem
+            key={route.key}
+            route={route}
+            index={index}
+            isFocused={isFocused}
+            onPress={onPress}
+          />
+        );
+      })}
 
-      {/* FAB */}
+      {/* FAB — positioned inside the pill on the right */}
       <FABButton />
     </View>
   );

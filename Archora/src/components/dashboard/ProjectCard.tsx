@@ -77,7 +77,7 @@ function BlueprintThumbnail({ projectId, colors }: { projectId: string; colors: 
   );
 }
 
-export function ProjectCard({ project, onPress, onDelete, onRename, index }: Props) {
+function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props) {
   const { colors } = useTheme();
   const { light, medium } = useHaptics();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -137,7 +137,7 @@ export function ProjectCard({ project, onPress, onDelete, onRename, index }: Pro
         onPressOut={handlePressOut}
         style={{
           backgroundColor: BASE_COLORS.surface,
-          borderRadius: 12,
+          borderRadius: 20,
           overflow: 'hidden',
           borderWidth: 1,
           borderColor: BASE_COLORS.border,
@@ -185,7 +185,7 @@ export function ProjectCard({ project, onPress, onDelete, onRename, index }: Pro
             paddingHorizontal: 8,
             paddingVertical: 3,
             backgroundColor: BASE_COLORS.surfaceHigh,
-            borderRadius: 4,
+            borderRadius: 50,
             marginTop: 6,
           }}>
             <Text style={{
@@ -255,3 +255,5 @@ export function ProjectCard({ project, onPress, onDelete, onRename, index }: Pro
     </Animated.View>
   );
 }
+
+export const ProjectCard = React.memo(ProjectCardInner);

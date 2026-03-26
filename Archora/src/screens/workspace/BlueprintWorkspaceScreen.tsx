@@ -63,7 +63,7 @@ function ToolButton({ tool, active, onPress }: { tool: typeof TOOLS[number]; act
       scale.value = withSpring(0.88, { damping: 10 }, () => { scale.value = withSpring(1, { damping: 14 }); });
       onPress();
     }}>
-      <Animated.View style={[animStyle, { width: 52, height: 52, borderRadius: 14, backgroundColor: active ? BASE_COLORS.textPrimary + '18' : BASE_COLORS.surfaceHigh, borderWidth: 1, borderColor: active ? BASE_COLORS.textPrimary : BASE_COLORS.border, alignItems: 'center', justifyContent: 'center', marginRight: 8 }]}>
+      <Animated.View style={[animStyle, { width: 52, height: 52, borderRadius: 20, backgroundColor: active ? BASE_COLORS.textPrimary + '18' : BASE_COLORS.surfaceHigh, borderWidth: 1, borderColor: active ? BASE_COLORS.textPrimary : BASE_COLORS.border, alignItems: 'center', justifyContent: 'center', marginRight: 8 }]}>
         <Text style={{ fontSize: 18, color: active ? BASE_COLORS.textPrimary : BASE_COLORS.textDim }}>{tool.icon}</Text>
         <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: active ? BASE_COLORS.textPrimary : BASE_COLORS.textDim, marginTop: 2 }}>{tool.label}</Text>
       </Animated.View>
@@ -98,7 +98,7 @@ function EmptyBlueprint({ onGenerate }: { onGenerate: () => void }) {
       <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 28 }}>
         Generate a building with AI, scan a room, or start drawing manually.
       </Text>
-      <Pressable onPress={onGenerate} style={{ backgroundColor: BASE_COLORS.textPrimary, borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 }}>
+      <Pressable onPress={onGenerate} style={{ backgroundColor: BASE_COLORS.textPrimary, borderRadius: 50, paddingHorizontal: 24, paddingVertical: 12 }}>
         <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 15, color: BASE_COLORS.background }}>Generate with AI</Text>
       </Pressable>
     </View>
@@ -258,7 +258,7 @@ export function BlueprintWorkspaceScreen() {
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.textPrimary }} numberOfLines={1}>
-            {blueprint?.metadata.style ?? 'Blueprint Workspace'}
+            {blueprint?.metadata.style ?? 'Design Studio'}
           </Text>
           {isDirty && (
             <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 9, color: BASE_COLORS.textDim, marginTop: 1 }}>unsaved changes</Text>
@@ -283,7 +283,7 @@ export function BlueprintWorkspaceScreen() {
               style={{
                 width: 52,
                 height: 52,
-                borderRadius: 14,
+                borderRadius: 20,
                 backgroundColor: showStructuralGrid ? BASE_COLORS.textPrimary + '18' : BASE_COLORS.surfaceHigh,
                 borderWidth: 1,
                 borderColor: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.border,
@@ -303,7 +303,7 @@ export function BlueprintWorkspaceScreen() {
               style={{
                 width: 64,
                 height: 52,
-                borderRadius: 14,
+                borderRadius: 20,
                 backgroundColor: BASE_COLORS.surfaceHigh,
                 borderWidth: 1,
                 borderColor: BASE_COLORS.border,
@@ -333,7 +333,7 @@ export function BlueprintWorkspaceScreen() {
               style={{
                 width: 64,
                 height: 52,
-                borderRadius: 14,
+                borderRadius: 20,
                 backgroundColor: BASE_COLORS.surfaceHigh,
                 borderWidth: 1,
                 borderColor: BASE_COLORS.border,
@@ -475,7 +475,7 @@ function EditLimitModal() {
           closeModal();
           navigation.navigate('Subscription', { feature: 'Daily Edit Time' });
         }}
-        style={{ backgroundColor: BASE_COLORS.textPrimary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 14, marginBottom: 16, width: '100%', alignItems: 'center' }}
+        style={{ backgroundColor: BASE_COLORS.textPrimary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 50, marginBottom: 16, width: '100%', alignItems: 'center' }}
       >
         <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: BASE_COLORS.background }}>Upgrade Now</Text>
       </Pressable>

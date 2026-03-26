@@ -140,7 +140,7 @@ function NewProjectModal({
             disabled={!name.trim()}
             style={{
               backgroundColor: name.trim() ? accentColor : BASE_COLORS.border,
-              borderRadius: 24,
+              borderRadius: 50,
               paddingVertical: 16,
               alignItems: 'center',
             }}
@@ -390,7 +390,7 @@ export function DashboardScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => { void handleRefresh(); }} tintColor={colors.primary} />
           }
-          renderItem={({ item, index }) => (
+          renderItem={useCallback(({ item, index }: { item: typeof projects[0]; index: number }) => (
             <ProjectCard
               project={item}
               index={index}
@@ -406,7 +406,7 @@ export function DashboardScreen() {
                 );
               }}
             />
-          )}
+          ), [navigation, actions, projects])}
         />
       )}
 

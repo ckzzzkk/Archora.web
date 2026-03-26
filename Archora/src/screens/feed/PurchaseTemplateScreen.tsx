@@ -237,7 +237,7 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
               disabled={purchasing}
               style={{
                 backgroundColor: purchasing ? BASE_COLORS.border : colors.primary,
-                borderRadius: 14,
+                borderRadius: 50,
                 paddingVertical: 18,
                 alignItems: 'center',
                 marginBottom: 16,
