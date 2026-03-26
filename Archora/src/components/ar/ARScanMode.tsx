@@ -2,6 +2,11 @@ import React, { useState, useRef } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BASE_COLORS, withAlpha } from '../../theme/colors';
 
+// interface Props {
+//   // cameraRef will be used for real frame capture when integrated
+//   // cameraRef?: React.RefObject<Camera>;
+// }
+
 export function ARScanMode() {
   const [isScanning, setIsScanning] = useState(false);
   const [frames, setFrames] = useState<string[]>([]);
@@ -18,14 +23,14 @@ export function ARScanMode() {
       setFrames(prev => {
         const next = [...prev, `frame_${prev.length}`];
         if (next.length >= 10) {
-          stopScan(next);
+          stopScan();
         }
         return next;
       });
     }, 2000);
   };
 
-  const stopScan = (capturedFrames?: string[]) => {
+  const stopScan = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -34,8 +39,6 @@ export function ARScanMode() {
     setScanComplete(true);
     // Placeholder — Roboflow would populate this in production
     setDetectedLabels(['Sofa', 'Table', 'Chair', 'Window']);
-    // capturedFrames param is available for future use
-    void capturedFrames;
   };
 
   return (
@@ -79,7 +82,7 @@ export function ARScanMode() {
               width: 72, height: 72, borderRadius: 36,
               backgroundColor: isScanning ? BASE_COLORS.error : BASE_COLORS.textPrimary,
               alignItems: 'center', justifyContent: 'center',
-              borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)',
+              borderWidth: 3, borderColor: withAlpha(BASE_COLORS.textPrimary, 0.3),
             }}
           >
             <Text style={{ color: BASE_COLORS.background, fontSize: 13, fontWeight: '600' }}>

@@ -21,8 +21,8 @@ function ARPlaceModeContent() {
 
   useEffect(() => {
     const sub = Accelerometer.addListener(({ z }) => {
-      // Device near-flat = floor likely detected (z > 0.85 means near-vertical to gravity)
-      const isFlat = Math.abs(z) > 0.85;
+      // Phone held upright (camera pointing forward at floor): z near 0
+      const isFlat = Math.abs(z) < 0.3;
       setSurfaceDetected(isFlat);
     });
     Accelerometer.setUpdateInterval(500);
@@ -41,8 +41,16 @@ function ARPlaceModeContent() {
     transform: [{ scale: pulseScale.value }],
   }));
 
+  const handleTap = (e: any) => {
+    if (!surfaceDetected) return;
+    setPlacedItems(prev => [
+      ...prev,
+      { label: 'Furniture', x: e.nativeEvent.locationX, y: e.nativeEvent.locationY }
+    ]);
+  };
+
   return (
-    <View style={{ flex: 1 }}>
+    <Pressable style={{ flex: 1 }} onPress={handleTap}>
       {/* Surface detected indicator */}
       {surfaceDetected && (
         <Animated.View style={[{
@@ -76,6 +84,6 @@ function ARPlaceModeContent() {
           <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 12 }}>{item.label}</Text>
         </View>
       ))}
-    </View>
+    </Pressable>
   );
 }

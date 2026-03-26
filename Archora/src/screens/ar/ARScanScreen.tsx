@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { useCameraDevice, Camera } from 'react-native-vision-camera';
 import { BASE_COLORS } from '../../theme/colors';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { ARPermissionRequest } from '../../components/ar/ARPermissionRequest';
 import { ARModeSelector } from '../../components/ar/ARModeSelector';
 import type { ARMode } from '../../components/ar/ARModeSelector';
@@ -16,6 +16,7 @@ export function ARScanScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const device = useCameraDevice('back');
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     Camera.requestCameraPermission().then(status => {
@@ -51,7 +52,7 @@ export function ARScanScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
-      <Camera style={{ ...StyleSheet.absoluteFillObject }} device={device} isActive photo={false} />
+      <Camera style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} device={device} isActive={isFocused} photo={false} />
       <ARModeSelector current={mode} onChange={setMode} />
       <ARBackButton onPress={() => navigation.goBack()} />
       {mode === 'scan' && <ARScanMode />}
