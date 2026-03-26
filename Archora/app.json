@@ -34,7 +34,10 @@
       "versionCode": 1,
       "permissions": [
         "CAMERA",
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
     "web": {
@@ -47,12 +50,20 @@
         {
           "microphonePermission": "Asoria uses your microphone for voice-to-prompt architectural description."
         }
+      ],
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "ASORIA needs camera access for AR features",
+          "enableMicrophonePermission": false
+        }
       ]
     ],
     "extra": {
       "eas": {
-        "projectId": "FILL_IN_AFTER_EAS_INIT"
+        "projectId": "1697aad8-bba0-442d-ac24-275a5ddd8e74"
       }
-    }
+    },
+    "owner": "ckng"
   }
 }
