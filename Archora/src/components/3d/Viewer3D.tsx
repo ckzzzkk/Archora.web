@@ -51,6 +51,21 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
     setIsRendering,
   } = use3DScene(viewMode);
 
+  const grid = useMemo(() => (blueprint ? gridDimensions(blueprint) : { size: 20, divisions: 20 }), [blueprint]);
+  const cam = useMemo(
+    () => activeCameraPreset ?? { position: [10, 8, 10] as [number, number, number], target: [0, 0, 0] as [number, number, number], fov: 45 },
+    [activeCameraPreset],
+  );
+  const cameraConfig = useMemo(
+    () => ({ position: cam.position, fov: cam.fov, near: 0.1, far: 500 } as const),
+    [cam],
+  );
+  const sceneProps = useMemo(() => ({
+    walls: blueprint?.walls ?? [],
+    rooms: blueprint?.rooms ?? [],
+    furniture: blueprint?.furniture ?? [],
+  }), [blueprint]);
+
   if (!blueprint) {
     return (
       <EmptyState
@@ -60,16 +75,6 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
       />
     );
   }
-
-  const grid = useMemo(() => gridDimensions(blueprint), [blueprint]);
-  const cam = useMemo(
-    () => activeCameraPreset ?? { position: [10, 8, 10] as [number, number, number], target: [0, 0, 0] as [number, number, number], fov: 45 },
-    [activeCameraPreset],
-  );
-  const cameraConfig = useMemo(
-    () => ({ position: cam.position, fov: cam.fov, near: 0.1, far: 500 } as const),
-    [cam],
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
+import { BASE_COLORS } from '../../theme/colors';
 
 interface Props {
   onClose: () => void;
@@ -63,11 +64,11 @@ export function AIAssistantSheet({ onClose }: Props) {
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#222222',
+        backgroundColor: BASE_COLORS.surface,
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         borderWidth: 1,
-        borderColor: '#333333',
+        borderColor: BASE_COLORS.border,
         maxHeight: '60%',
       }}
     >
@@ -79,12 +80,12 @@ export function AIAssistantSheet({ onClose }: Props) {
           justifyContent: 'space-between',
           padding: 16,
           borderBottomWidth: 1,
-          borderBottomColor: '#333333',
+          borderBottomColor: BASE_COLORS.border,
         }}
       >
         <Text
           style={{
-            color: '#F0EDE8',
+            color: BASE_COLORS.textPrimary,
             fontSize: 16,
             fontFamily: 'ArchitectsDaughter_400Regular',
           }}
@@ -92,7 +93,7 @@ export function AIAssistantSheet({ onClose }: Props) {
           AI Design Assistant
         </Text>
         <Pressable onPress={onClose} style={{ padding: 8 }}>
-          <Text style={{ color: '#C8C8C8', fontSize: 18 }}>✕</Text>
+          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 18 }}>✕</Text>
         </Pressable>
       </View>
 
@@ -105,7 +106,7 @@ export function AIAssistantSheet({ onClose }: Props) {
         {messages.length === 0 && (
           <Text
             style={{
-              color: '#666666',
+              color: BASE_COLORS.textDim,
               fontSize: 14,
               textAlign: 'center',
               marginTop: 24,
@@ -119,18 +120,18 @@ export function AIAssistantSheet({ onClose }: Props) {
             key={i}
             style={{
               alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              backgroundColor: msg.role === 'user' ? '#333333' : '#2A2A2A',
+              backgroundColor: msg.role === 'user' ? BASE_COLORS.border : BASE_COLORS.surfaceHigh,
               borderRadius: 16,
               padding: 12,
               marginBottom: 8,
               maxWidth: '80%',
             }}
           >
-            <Text style={{ color: '#F0EDE8', fontSize: 14 }}>{msg.content}</Text>
+            <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 14 }}>{msg.content}</Text>
           </View>
         ))}
         {isLoading && (
-          <Text style={{ color: '#666666', fontSize: 13, marginBottom: 8 }}>
+          <Text style={{ color: BASE_COLORS.textDim, fontSize: 13, marginBottom: 8 }}>
             Thinking...
           </Text>
         )}
@@ -149,15 +150,15 @@ export function AIAssistantSheet({ onClose }: Props) {
           <TextInput
             style={{
               flex: 1,
-              backgroundColor: '#333333',
+              backgroundColor: BASE_COLORS.border,
               borderRadius: 50,
               paddingHorizontal: 16,
               paddingVertical: 10,
-              color: '#F0EDE8',
+              color: BASE_COLORS.textPrimary,
               fontSize: 14,
             }}
             placeholder="Add a pool to the garden..."
-            placeholderTextColor="#666666"
+            placeholderTextColor={BASE_COLORS.textDim}
             value={input}
             onChangeText={setInput}
             onSubmitEditing={handleSend}
@@ -169,14 +170,14 @@ export function AIAssistantSheet({ onClose }: Props) {
               width: 44,
               height: 44,
               borderRadius: 22,
-              backgroundColor: input.trim() ? '#F0EDE8' : '#333333',
+              backgroundColor: input.trim() ? BASE_COLORS.textPrimary : BASE_COLORS.border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
             <Text
               style={{
-                color: input.trim() ? '#1A1A1A' : '#666666',
+                color: input.trim() ? BASE_COLORS.background : BASE_COLORS.textDim,
                 fontSize: 16,
               }}
             >

@@ -11,7 +11,7 @@ function getAutoCompleteSuggestions(type: string, area: number): FurnitureSugges
   switch (type) {
     case 'kitchen':
       return [
-        { furnitureType: 'bathroom_sink', position: 'north_wall', reason: 'Near exterior wall for plumbing' },
+        { furnitureType: 'kitchen_sink', position: 'north_wall', reason: 'Near exterior wall for plumbing' },
         { furnitureType: 'kitchen_counter', position: 'perimeter', reason: 'Standard counter layout' },
       ];
     case 'bathroom':
@@ -24,11 +24,13 @@ function getAutoCompleteSuggestions(type: string, area: number): FurnitureSugges
       return [
         { furnitureType: area >= 12 ? 'king_bed' : 'bed_double', position: 'centre_far_wall', reason: 'Natural focal point' },
       ];
+    case 'living':
     case 'living_room':
       return [
         { furnitureType: 'sofa', position: 'centre', reason: 'Main seating area' },
         { furnitureType: 'coffee_table', position: 'front_sofa', reason: 'Standard layout' },
       ];
+    case 'home_office':
     case 'office':
       return [
         { furnitureType: 'desk', position: 'window_wall', reason: 'Natural light for work' },
