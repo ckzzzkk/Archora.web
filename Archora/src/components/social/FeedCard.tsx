@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path, Line } from 'react-native-svg';
 import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 import { LikeButton } from './LikeButton';
@@ -21,65 +21,69 @@ interface FeedCardProps {
   height?: number;
 }
 
-function DrawingPin({ color }: { color: string }) {
+function BlueprintPlaceholder({ color }: { color: string }) {
   return (
-    <Svg width={18} height={22} viewBox="0 0 18 22">
-      <Circle cx={9} cy={7} r={5} fill={color} opacity={0.9} />
-      <Path d="M9 12 L9 22" stroke={color} strokeWidth="2" strokeLinecap="round" opacity={0.7} />
-      <Circle cx={9} cy={7} r={2} fill="#fff" opacity={0.4} />
+    <Svg width="100%" height="100%" viewBox="0 0 120 80">
+      <Line x1="0" y1="20" x2="120" y2="20" stroke={color} strokeWidth="0.5" opacity={0.3} />
+      <Line x1="0" y1="40" x2="120" y2="40" stroke={color} strokeWidth="0.5" opacity={0.3} />
+      <Line x1="0" y1="60" x2="120" y2="60" stroke={color} strokeWidth="0.5" opacity={0.3} />
+      <Line x1="20" y1="0" x2="20" y2="80" stroke={color} strokeWidth="0.5" opacity={0.3} />
+      <Line x1="60" y1="0" x2="60" y2="80" stroke={color} strokeWidth="0.5" opacity={0.3} />
+      <Line x1="100" y1="0" x2="100" y2="80" stroke={color} strokeWidth="0.5" opacity={0.3} />
+      <Path d="M30 25 L50 25 L50 55 L30 55 Z" stroke={color} strokeWidth="1" fill="none" opacity={0.5} />
+      <Path d="M65 30 L95 30 L95 55 L65 55 Z" stroke={color} strokeWidth="1" fill="none" opacity={0.4} />
+      <Path d="M35 55 L45 45" stroke={color} strokeWidth="1" opacity={0.4} />
     </Svg>
   );
 }
 
 export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCardProps) {
   const { colors } = useTheme();
-  const rotationOffset = useRef(Math.random() * 6 - 3).current;
 
-  const translateY = useSharedValue(40);
+  const translateY = useSharedValue(30);
   const opacity = useSharedValue(0);
-  const rotation = useSharedValue(rotationOffset);
   const pressScale = useSharedValue(1);
 
   useEffect(() => {
     const delay = index * 40;
-    translateY.value = withDelay(delay, withSpring(0, { damping: 16, stiffness: 120 }));
-    opacity.value = withDelay(delay, withTiming(1, { duration: 300 }));
-    rotation.value = withDelay(delay + 150, withSpring(0, { damping: 14 }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    translateY.value = withDelay(delay, withSpring(0, { damping: 18, stiffness: 140 }));
+    opacity.value = withDelay(delay, withTiming(1, { duration: 250 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value },
-      { rotate: `${rotation.value}deg` },
-      { scale: pressScale.value },
-    ],
+    transform: [{ translateY: translateY.value }, { scale: pressScale.value }],
     opacity: opacity.value,
   }));
 
-  const thumbnailHeight = Math.round(height * 0.75);
+  const thumbnailHeight = Math.round(height * 0.65);
 
   return (
-    <Animated.View style={[animStyle, { flex: 1, margin: 6 }]}>
+    <Animated.View style={[animStyle, { marginBottom: 8 }]}>
       <Pressable
         onPress={onPress}
-        onPressIn={() => { pressScale.value = withSpring(1.02, { damping: 14 }); }}
-        onPressOut={() => { pressScale.value = withSpring(1, { damping: 14 }); }}
+        onPressIn={() => {
+          pressScale.value = withSpring(0.97, { damping: 14 });
+        }}
+        onPressOut={() => {
+          pressScale.value = withSpring(1, { damping: 14 });
+        }}
         style={{
-          borderRadius: 12,
+          borderRadius: 16,
           overflow: 'hidden',
           backgroundColor: BASE_COLORS.surface,
           borderWidth: 1,
           borderColor: BASE_COLORS.border,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.4,
-          shadowRadius: 12,
-          elevation: 6,
         }}
       >
         {/* Thumbnail */}
-        <View style={{ height: thumbnailHeight, backgroundColor: BASE_COLORS.surfaceHigh }}>
+        <View
+          style={{
+            height: thumbnailHeight,
+            backgroundColor: BASE_COLORS.surfaceHigh,
+            overflow: 'hidden',
+          }}
+        >
           {template.thumbnailUrl ? (
             <Image
               source={{ uri: template.thumbnailUrl }}
@@ -88,30 +92,21 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
             />
           ) : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 32, color: colors.primaryDim }}>
-                ◻
-              </Text>
+              <BlueprintPlaceholder color={colors.primary} />
             </View>
           )}
-
-          {/* Gradient overlay */}
+          {/* Bottom gradient overlay */}
           <View
             style={{
               position: 'absolute',
               bottom: 0,
               left: 0,
               right: 0,
-              height: thumbnailHeight * 0.4,
-              backgroundColor: 'rgba(0,0,0,0.55)',
+              height: 48,
+              backgroundColor: 'rgba(0,0,0,0.5)',
             }}
           />
-
-          {/* Drawing pin */}
-          <View style={{ position: 'absolute', top: -6, left: '50%', marginLeft: -9 }}>
-            <DrawingPin color={colors.primary} />
-          </View>
-
-          {/* Project name overlay */}
+          {/* Title overlay */}
           <Text
             numberOfLines={1}
             style={{
@@ -119,62 +114,79 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
               bottom: 8,
               left: 10,
               right: 10,
-              fontFamily: 'ArchitectsDaughter_400Regular',
-              fontSize: 14,
-              color: '#fff',
+              fontSize: 13,
+              color: BASE_COLORS.textPrimary,
             }}
           >
             {template.title}
           </Text>
         </View>
 
-        {/* Body */}
-        <View style={{ padding: 10 }}>
-          {/* Author row */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <View
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                backgroundColor: colors.primaryDim,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 6,
-              }}
-            >
-              {template.authorAvatarUrl ? (
-                <Image
-                  source={{ uri: template.authorAvatarUrl }}
-                  style={{ width: 22, height: 22, borderRadius: 11 }}
-                />
-              ) : (
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: BASE_COLORS.background }}>
-                  {template.authorDisplayName?.[0]?.toUpperCase() ?? '?'}
-                </Text>
-              )}
-            </View>
-            <Text
-              numberOfLines={1}
-              style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.textSecondary, flex: 1 }}
-            >
-              {template.authorDisplayName}
-            </Text>
+        {/* Author row */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 10,
+            paddingTop: 8,
+            paddingBottom: 4,
+            gap: 6,
+          }}
+        >
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: colors.primaryDim,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {template.authorAvatarUrl ? (
+              <Image
+                source={{ uri: template.authorAvatarUrl }}
+                style={{ width: 24, height: 24, borderRadius: 12 }}
+              />
+            ) : (
+              <Text style={{ fontSize: 10, color: BASE_COLORS.background }}>
+                {template.authorDisplayName?.[0]?.toUpperCase() ?? '?'}
+              </Text>
+            )}
           </View>
+          <Text
+            numberOfLines={1}
+            style={{
+              fontSize: 11,
+              color: BASE_COLORS.textSecondary,
+              flex: 1,
+            }}
+          >
+            {template.authorDisplayName}
+          </Text>
+        </View>
 
-          {/* Stats row */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <LikeButton
-              templateId={template.id}
-              likeCount={template.likeCount}
-              isLiked={template.isLiked}
-            />
-            <SaveButton
-              templateId={template.id}
-              saveCount={template.saveCount}
-              isSaved={template.isSaved}
-            />
-          </View>
+        {/* Stats row: like + save */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 10,
+            paddingBottom: 8,
+          }}
+        >
+          <LikeButton
+            templateId={template.id}
+            likeCount={template.likeCount}
+            isLiked={template.isLiked}
+          />
+          <SaveButton
+            templateId={template.id}
+            saveCount={template.saveCount}
+            isSaved={template.isSaved}
+          />
         </View>
       </Pressable>
     </Animated.View>
