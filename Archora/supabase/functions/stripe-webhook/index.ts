@@ -4,7 +4,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 import { logAudit } from '../_shared/audit.ts';
 
-type SubscriptionTier = 'starter' | 'creator' | 'architect';
+type SubscriptionTier = 'starter' | 'creator' | 'pro' | 'architect';
 
 const PRICE_TO_TIER: Record<string, SubscriptionTier> = {
   // These are populated from env to avoid hardcoding Stripe IDs
@@ -14,6 +14,8 @@ function getTierFromPriceId(priceId: string): SubscriptionTier {
   const envMap: Record<string, string> = {
     [Deno.env.get('STRIPE_PRICE_CREATOR_MONTHLY') ?? '']: 'creator',
     [Deno.env.get('STRIPE_PRICE_CREATOR_ANNUAL') ?? '']: 'creator',
+    [Deno.env.get('STRIPE_PRICE_PRO_MONTHLY') ?? '']: 'pro',
+    [Deno.env.get('STRIPE_PRICE_PRO_ANNUAL') ?? '']: 'pro',
     [Deno.env.get('STRIPE_PRICE_ARCHITECT_MONTHLY') ?? '']: 'architect',
     [Deno.env.get('STRIPE_PRICE_ARCHITECT_ANNUAL') ?? '']: 'architect',
   };

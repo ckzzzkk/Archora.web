@@ -44,6 +44,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     [
       Deno.env.get('STRIPE_PRICE_CREATOR_MONTHLY'),
       Deno.env.get('STRIPE_PRICE_CREATOR_ANNUAL'),
+      Deno.env.get('STRIPE_PRICE_PRO_MONTHLY'),
+      Deno.env.get('STRIPE_PRICE_PRO_ANNUAL'),
       Deno.env.get('STRIPE_PRICE_ARCHITECT_MONTHLY'),
       Deno.env.get('STRIPE_PRICE_ARCHITECT_ANNUAL'),
     ].filter(Boolean),

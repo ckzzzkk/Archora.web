@@ -245,20 +245,34 @@ export function SubscriptionScreen({ navigation }: Props) {
   const handleUpgrade = async (newTier: Exclude<SubscriptionTier, 'starter'>) => {
     const priceId = STRIPE_PRICE_IDS[`${newTier}_${billing}` as keyof typeof STRIPE_PRICE_IDS];
     if (!priceId) {
-      Alert.alert('Coming Soon', 'Payment is not yet configured. Check back soon!');
+      Alert.alert('Coming Soon', 'Upgrade not yet available — check back soon!');
       return;
     }
     setIsLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        Alert.alert('Sign in required', 'Please sign in to upgrade your plan.');
+        return;
+      }
       const { data, error } = await supabase.functions.invoke('stripe-checkout', {
         body: { priceId },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-      if (error || !data?.url) {
+      if (error) {
+        console.error('[SubscriptionScreen] stripe-checkout error:', error);
+        Alert.alert('Error', `Could not start checkout: ${error.message ?? 'Please try again.'}`);
+        return;
+      }
+      if (!data?.url) {
+        console.error('[SubscriptionScreen] stripe-checkout returned no URL:', data);
         Alert.alert('Error', 'Could not start checkout. Please try again.');
         return;
       }
       await Linking.openURL(data.url as string);
-    } catch {
+    } catch (err) {
+      console.error('[SubscriptionScreen] unexpected error:', err);
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
@@ -268,13 +282,19 @@ export function SubscriptionScreen({ navigation }: Props) {
   const handleManageSubscription = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('stripe-portal');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      const { data, error } = await supabase.functions.invoke('stripe-portal', {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      });
       if (error || !data?.url) {
+        console.error('[SubscriptionScreen] stripe-portal error:', error);
         Alert.alert('Error', 'Could not open billing portal. Please try again.');
         return;
       }
       await Linking.openURL(data.url as string);
-    } catch {
+    } catch (err) {
+      console.error('[SubscriptionScreen] manage subscription error:', err);
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);

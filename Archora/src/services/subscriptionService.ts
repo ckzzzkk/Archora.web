@@ -14,7 +14,7 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   };
 }
 
-type UpgradeTier = 'creator' | 'architect';
+type UpgradeTier = 'creator' | 'pro' | 'architect';
 type BillingInterval = 'monthly' | 'annual';
 
 export const subscriptionService = {
