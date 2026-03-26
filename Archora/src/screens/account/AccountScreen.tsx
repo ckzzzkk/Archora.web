@@ -386,7 +386,7 @@ export function AccountScreen() {
             <SectionTitle title="Usage" />
             <View style={CARD_STYLE}>
               <ProgressBar
-                label="AI Generations"
+                label="AI Designs"
                 used={user?.aiGenerationsUsed ?? 0}
                 limit={limits.aiGenerationsPerMonth}
                 color={colors.primary}

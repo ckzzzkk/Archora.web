@@ -356,7 +356,7 @@ export function DashboardScreen() {
           <View style={{ marginBottom: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
               <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim }}>
-                AI Generations
+                AI Designs
               </Text>
               <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: colors.primary }}>
                 {user.aiGenerationsUsed ?? 0} / {usageLimit}
