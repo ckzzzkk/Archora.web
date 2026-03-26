@@ -11,7 +11,6 @@ interface Props {
 }
 
 const outline = (selected?: boolean) => selected ? BASE_COLORS.warning : 'transparent';
-const outlineWidth = (selected?: boolean) => selected ? 0.008 : 0.004;
 
 export function CurvedSofa({ position, rotation, dimensions, color = '#8A7A6A', selected }: Props) {
   const { x: w, y: h, z: d } = dimensions;

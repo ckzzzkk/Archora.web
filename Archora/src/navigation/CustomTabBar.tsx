@@ -240,6 +240,13 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     prevIndexRef.current = state.index;
   }, [state.index]);
 
+  const focusedRoute = state.routes[state.index];
+  const focusedOptions = descriptors[focusedRoute.key].options;
+  // Hide the tab bar if the active screen requests it:
+  if ((focusedOptions.tabBarStyle as { display?: string } | undefined)?.display === 'none') {
+    return null;
+  }
+
   return (
     <View
       style={{
