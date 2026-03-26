@@ -66,7 +66,7 @@ export function useFeed(): UseFeedResult {
       setRawTemplates((prev) => (replace ? data : [...prev, ...data]));
       pageRef.current = page;
     } catch {
-      // ignore
+      setLoadError(true);
     }
   }, [filter.buildingType]);
 
@@ -74,6 +74,7 @@ export function useFeed(): UseFeedResult {
     setFilterState(f);
     pageRef.current = 0;
     setRawTemplates([]);
+    setLoadError(false);
     setIsLoading(true);
     inspoService
       .getFeed({ page: 0, limit: PAGE_SIZE, buildingType: f.buildingType })
@@ -82,11 +83,14 @@ export function useFeed(): UseFeedResult {
         setRawTemplates(data);
         pageRef.current = 0;
       })
-      .catch(() => {})
+      .catch(() => {
+        setLoadError(true);
+      })
       .finally(() => setIsLoading(false));
   }, []);
 
   const refresh = useCallback(async () => {
+    setLoadError(false);
     setIsRefreshing(true);
     await load(0, true);
     setIsRefreshing(false);

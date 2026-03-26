@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
-import { BASE_COLORS } from '../../theme/colors';
+import { BASE_COLORS, withAlpha } from '../../theme/colors';
 import { FeedCard } from '../../components/social/FeedCard';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { useFeed } from '../../hooks/useFeed';
@@ -26,6 +26,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useScreenSlideIn } from '../../hooks/useScreenSlideIn';
 import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
+import { useUIStore } from '../../stores/uiStore';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -52,9 +53,11 @@ const CHIPS: ChipConfig[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 function FeedHeader({
   onToggleSearch,
+  onNotificationPress,
   colors,
 }: {
   onToggleSearch: () => void;
+  onNotificationPress: () => void;
   colors: { primary: string };
 }) {
   return (
@@ -102,6 +105,7 @@ function FeedHeader({
           </Svg>
         </Pressable>
         <Pressable
+          onPress={onNotificationPress}
           style={{
             width: 40,
             height: 40,
@@ -195,7 +199,7 @@ function FilterChipsRow({
             borderColor:
               activeChip === chip.label ? colors.primary : BASE_COLORS.border,
             backgroundColor:
-              activeChip === chip.label ? `${colors.primary}20` : 'transparent',
+              activeChip === chip.label ? withAlpha(colors.primary, 0.12) : 'transparent',
           }}
         >
           <Text
@@ -306,6 +310,7 @@ export function FeedScreen() {
   const { colors } = useTheme();
   const { light } = useHaptics();
   const slideStyle = useScreenSlideIn();
+  const showToast = useUIStore((s) => s.actions.showToast);
 
   const {
     templates,
@@ -402,7 +407,11 @@ export function FeedScreen() {
     >
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         {/* Header */}
-        <FeedHeader onToggleSearch={toggleSearch} colors={colors} />
+        <FeedHeader
+          onToggleSearch={toggleSearch}
+          onNotificationPress={() => showToast('Notifications coming soon')}
+          colors={colors}
+        />
 
         {/* Search bar */}
         <Animated.View
@@ -491,7 +500,8 @@ export function FeedScreen() {
           <FlashList
             data={templates}
             numColumns={2}
-            {...({ estimatedItemSize: 230 } as object)}
+            // @ts-expect-error -- FlashList v2 prop not in types
+            estimatedItemSize={230}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
             onEndReached={handleEndReached}

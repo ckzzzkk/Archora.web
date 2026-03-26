@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -59,7 +59,7 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
   };
 
   return (
-    <TouchableOpacity onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center' }}>
       <Animated.View style={animStyle}>
         <Text style={{ fontSize: 16, color: saved ? colors.primary : BASE_COLORS.textDim }}>
           {saved ? '⊸' : '⊹'}
@@ -75,6 +75,6 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
       >
         {count}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }

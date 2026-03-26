@@ -69,7 +69,7 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
           pressScale.value = withSpring(1, { damping: 14 });
         }}
         style={{
-          borderRadius: 16,
+          borderRadius: 20,
           overflow: 'hidden',
           backgroundColor: BASE_COLORS.surface,
           borderWidth: 1,
@@ -103,7 +103,7 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
               left: 0,
               right: 0,
               height: 48,
-              backgroundColor: withAlpha('#000000', 0.5),
+              backgroundColor: withAlpha(BASE_COLORS.background, 0.75),
             }}
           />
           {/* Title overlay */}
@@ -115,6 +115,7 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
               left: 10,
               right: 10,
               fontSize: 13,
+              fontFamily: 'ArchitectsDaughter_400Regular',
               color: BASE_COLORS.textPrimary,
             }}
           >

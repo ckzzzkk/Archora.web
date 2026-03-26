@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, View } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useAuthStore } from '../../stores/authStore';
-import { supabase } from '../../utils/supabaseClient';
+import { inspoService } from '../../services/inspoService';
 import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -23,6 +23,7 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
   const { colors } = useTheme();
   const { medium } = useHaptics();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const userId = useAuthStore((s) => s.user?.id);
 
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);
@@ -43,10 +44,11 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
     setLoading(true);
 
     try {
+      if (!userId) return;
       if (next) {
-        await supabase.from('template_likes').insert({ template_id: templateId });
+        await inspoService.likeTemplate(templateId, userId);
       } else {
-        await supabase.from('template_likes').delete().eq('template_id', templateId);
+        await inspoService.unlikeTemplate(templateId, userId);
       }
     } catch {
       // Revert on error
@@ -58,7 +60,7 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
   };
 
   return (
-    <TouchableOpacity onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center' }}>
       <Animated.View style={animStyle}>
         <Text style={{ fontSize: 16, color: liked ? BASE_COLORS.error : BASE_COLORS.textDim }}>
           {liked ? '♥' : '♡'}
@@ -74,6 +76,6 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
       >
         {count}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
