@@ -33,6 +33,9 @@ export type RootStackParamList = {
   ThemeCustomiser: undefined;
   PublishTemplate: { projectId: string };
   PurchaseTemplate: { templateId: string };
+  HelpFAQ: undefined;
+  PrivacyPolicy: undefined;
+  Terms: undefined;
 };
 
 export type WelcomeScreenProps           = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;

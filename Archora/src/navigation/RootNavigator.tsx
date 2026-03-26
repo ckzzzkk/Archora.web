@@ -37,6 +37,18 @@ const PurchaseTemplateScreen = lazyScreen(() =>
 const OnboardingQuizScreen = lazyScreen(() =>
   import('../screens/auth/OnboardingQuizScreen')
     .then((m) => ({ default: m.OnboardingQuizScreen })));
+
+const HelpFAQScreen = lazyScreen(() =>
+  import('../screens/account/HelpFAQScreen')
+    .then((m) => ({ default: m.HelpFAQScreen })));
+
+const PrivacyPolicyScreen = lazyScreen(() =>
+  import('../screens/account/PrivacyPolicyScreen')
+    .then((m) => ({ default: m.PrivacyPolicyScreen })));
+
+const TermsScreen = lazyScreen(() =>
+  import('../screens/account/TermsScreen')
+    .then((m) => ({ default: m.TermsScreen })));
 import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
 import { Storage } from '../utils/storage';
 import { BASE_COLORS } from '../theme/colors';
@@ -90,6 +102,21 @@ export function RootNavigator() {
             component={SubscriptionScreen}
             options={{ presentation: 'modal' }}
           />
+          <Stack.Screen
+            name="HelpFAQ"
+            component={HelpFAQScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
+          />
+          <Stack.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicyScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
+          />
+          <Stack.Screen
+            name="Terms"
+            component={TermsScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
+          />
         </>
       ) : (
         <>
@@ -136,6 +163,21 @@ export function RootNavigator() {
             name="PurchaseTemplate"
             component={PurchaseTemplateScreen}
             options={{ presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="HelpFAQ"
+            component={HelpFAQScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
+          />
+          <Stack.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicyScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
+          />
+          <Stack.Screen
+            name="Terms"
+            component={TermsScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
           />
         </>
       )}

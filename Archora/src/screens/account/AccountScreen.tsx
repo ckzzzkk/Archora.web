@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, Switch, Alert, TextInput, Dimensions, Linking,
+  View, Text, ScrollView, Pressable, Switch, Alert, TextInput, Dimensions, Linking, Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -188,6 +189,14 @@ export function AccountScreen() {
   const s4Style = useAnimatedStyle(() => ({ transform: [{ translateY: s4Y.value }], opacity: s4Op.value }));
   const s5Style = useAnimatedStyle(() => ({ transform: [{ translateY: s5Y.value }], opacity: s5Op.value }));
 
+  if (!user) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#1A1A1A', alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: '#9A9590', fontSize: 13 }}>Loading...</Text>
+      </View>
+    );
+  }
+
   const submitName = async () => {
     setEditing(false);
     if (!nameVal.trim() || nameVal === user?.displayName) return;
@@ -214,6 +223,37 @@ export function AccountScreen() {
     ]);
   };
 
+  const pickAvatar = async () => {
+    const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1] as [number, number],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const file = result.assets[0];
+    const userId = user?.id;
+    if (!userId) return;
+
+    const { supabase: sb } = await import('../../utils/supabaseClient');
+    const path = `${userId}/avatar.jpg`;
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
+    const { error } = await sb.storage.from('avatars').upload(path, blob, {
+      upsert: true,
+      contentType: 'image/jpeg',
+    });
+    if (error) {
+      Alert.alert('Upload Failed', 'Could not upload avatar. Please try again.');
+      return;
+    }
+    const { data } = sb.storage.from('avatars').getPublicUrl(path);
+    authActions.updateUser({ avatarUrl: data.publicUrl });
+  };
+
   const tierLabel = user?.subscriptionTier?.toUpperCase() ?? 'STARTER';
   const initial = user?.displayName?.[0]?.toUpperCase() ?? user?.email?.[0]?.toUpperCase() ?? 'A';
 
@@ -232,7 +272,7 @@ export function AccountScreen() {
           {/* Header section */}
           <Animated.View style={[headerAnimStyle, { alignItems: 'center', marginBottom: 24 }]}>
             <Pressable
-              onPress={() => Alert.alert('Change Photo', 'Coming soon!')}
+              onPress={() => { void pickAvatar(); }}
               style={{
                 width: 80,
                 height: 80,
@@ -243,11 +283,19 @@ export function AccountScreen() {
                 marginBottom: 12,
                 borderWidth: 2,
                 borderColor: colors.primary,
+                overflow: 'hidden',
               }}
             >
-              <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 36, color: BASE_COLORS.background }}>
-                {initial}
-              </Text>
+              {user?.avatarUrl ? (
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={{ width: 80, height: 80, borderRadius: 40 }}
+                />
+              ) : (
+                <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 36, color: BASE_COLORS.background }}>
+                  {initial}
+                </Text>
+              )}
             </Pressable>
 
             {editing ? (
@@ -507,15 +555,15 @@ export function AccountScreen() {
           <Animated.View style={s4Style}>
             <SectionTitle title="Support" />
             <View style={CARD_STYLE}>
-              <Pressable style={ROW_STYLE} onPress={() => { void Linking.openURL('https://archora.app/help'); }}>
+              <Pressable style={ROW_STYLE} onPress={() => { light(); navigation.navigate('HelpFAQ'); }}>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>Help & FAQ</Text>
                 <Text style={{ color: BASE_COLORS.textDim }}>›</Text>
               </Pressable>
-              <Pressable style={ROW_STYLE} onPress={() => { void Linking.openURL('https://archora.app/privacy'); }}>
+              <Pressable style={ROW_STYLE} onPress={() => { light(); navigation.navigate('PrivacyPolicy'); }}>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>Privacy Policy</Text>
                 <Text style={{ color: BASE_COLORS.textDim }}>›</Text>
               </Pressable>
-              <Pressable style={ROW_STYLE_LAST} onPress={() => { void Linking.openURL('https://archora.app/terms'); }}>
+              <Pressable style={ROW_STYLE_LAST} onPress={() => { light(); navigation.navigate('Terms'); }}>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>Terms of Service</Text>
                 <Text style={{ color: BASE_COLORS.textDim }}>›</Text>
               </Pressable>

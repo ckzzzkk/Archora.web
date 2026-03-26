@@ -1,0 +1,209 @@
+import React, { useState } from 'react';
+import { View, Text, Pressable, ScrollView, TextInput, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { BASE_COLORS } from '../../theme/colors';
+
+const FAQ_SECTIONS = [
+  {
+    category: 'Getting Started',
+    questions: [
+      {
+        q: 'How do I create my first blueprint?',
+        a: 'Tap the compass rose FAB button in the tab bar, then follow the 7-step interview to describe your ideal space. Our AI will generate a complete blueprint in about 30 seconds.',
+      },
+      {
+        q: 'What is the difference between tiers?',
+        a: 'Starter is free and includes 3 projects, 10 AI generations/month, and 3 design styles. Creator unlocks 25 projects, 200 AI generations, all 12 styles, AR furniture placement, and community publishing. Pro adds AR room scanning, texture generation, and furniture from photos. Architect gives you unlimited everything plus CAD export and team collaboration.',
+      },
+    ],
+  },
+  {
+    category: 'Design Studio',
+    questions: [
+      {
+        q: 'How do I add furniture?',
+        a: 'In the Design Studio, tap the furniture icon in the toolbar to open the Furniture Library. Browse by category — Living, Bedroom, Kitchen, Bathroom, Office, Outdoor, or Decor — then drag items onto the canvas.',
+      },
+      {
+        q: 'Can I edit the AI-generated blueprint?',
+        a: 'Yes! Every wall, room, door, and window can be moved, resized, or deleted. Use the AI assistant button to make changes by voice or text.',
+      },
+      {
+        q: 'How do I export my blueprint?',
+        a: 'In 2D view, tap the Export button in the toolbar. Your blueprint will be saved to your photo library as a PNG image.',
+      },
+    ],
+  },
+  {
+    category: 'Subscriptions',
+    questions: [
+      {
+        q: 'Can I cancel anytime?',
+        a: 'Yes. Go to Account → Manage Subscription → Cancel. Your access continues until the end of the billing period.',
+      },
+      {
+        q: 'Do you offer refunds?',
+        a: 'We offer a 7-day refund on annual plans. Monthly plans are non-refundable but you can cancel immediately. Contact support@asoria.app.',
+      },
+    ],
+  },
+  {
+    category: 'Technical',
+    questions: [
+      {
+        q: 'Why is AI generation slow?',
+        a: 'Complex designs with many rooms and detailed specifications take 20–60 seconds. Try a simpler description for faster results. Make sure you have a stable internet connection.',
+      },
+      {
+        q: 'The 3D view is not loading',
+        a: 'The 3D renderer requires a GPU-capable device. Force quit and reopen the app. If the issue persists, use 2D view which works on all devices.',
+      },
+    ],
+  },
+];
+
+export function HelpFAQScreen() {
+  const navigation = useNavigation();
+  const [search, setSearch] = useState('');
+  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
+
+  const filteredSections = FAQ_SECTIONS.map((section) => ({
+    ...section,
+    questions: section.questions.filter(
+      (q) =>
+        !search ||
+        q.q.toLowerCase().includes(search.toLowerCase()) ||
+        q.a.toLowerCase().includes(search.toLowerCase()),
+    ),
+  })).filter((s) => s.questions.length > 0);
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+      {/* Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 }}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: BASE_COLORS.surface,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: BASE_COLORS.border,
+          }}
+        >
+          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 18 }}>←</Text>
+        </Pressable>
+        <Text
+          style={{
+            color: BASE_COLORS.textPrimary,
+            fontSize: 24,
+            fontFamily: 'ArchitectsDaughter_400Regular',
+            flex: 1,
+          }}
+        >
+          Help & FAQ
+        </Text>
+      </View>
+
+      {/* Search */}
+      <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+        <TextInput
+          style={{
+            backgroundColor: BASE_COLORS.surface,
+            borderRadius: 50,
+            paddingHorizontal: 20,
+            paddingVertical: 12,
+            color: BASE_COLORS.textPrimary,
+            borderWidth: 1,
+            borderColor: BASE_COLORS.border,
+          }}
+          placeholder="Search questions..."
+          placeholderTextColor={BASE_COLORS.textDim}
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
+
+      {/* FAQ list */}
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        {filteredSections.map((section) => (
+          <View key={section.category} style={{ marginBottom: 24 }}>
+            <View
+              style={{
+                backgroundColor: BASE_COLORS.surface,
+                borderRadius: 50,
+                alignSelf: 'flex-start',
+                paddingHorizontal: 16,
+                paddingVertical: 6,
+                marginBottom: 12,
+                borderWidth: 1,
+                borderColor: BASE_COLORS.border,
+              }}
+            >
+              <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 13, fontWeight: '600' }}>
+                {section.category}
+              </Text>
+            </View>
+            {section.questions.map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() =>
+                  setExpandedQuestion(
+                    expandedQuestion === `${section.category}-${i}`
+                      ? null
+                      : `${section.category}-${i}`,
+                  )
+                }
+                style={{
+                  backgroundColor: BASE_COLORS.surface,
+                  borderRadius: 16,
+                  padding: 16,
+                  marginBottom: 8,
+                  borderWidth: 1,
+                  borderColor: BASE_COLORS.border,
+                }}
+              >
+                <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 15, fontWeight: '500' }}>
+                  {item.q}
+                </Text>
+                {expandedQuestion === `${section.category}-${i}` && (
+                  <Text
+                    style={{
+                      color: BASE_COLORS.textSecondary,
+                      fontSize: 14,
+                      lineHeight: 22,
+                      marginTop: 8,
+                    }}
+                  >
+                    {item.a}
+                  </Text>
+                )}
+              </Pressable>
+            ))}
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Contact support */}
+      <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: BASE_COLORS.border }}>
+        <Pressable
+          onPress={() => { void Linking.openURL('mailto:support@asoria.app'); }}
+          style={{
+            backgroundColor: BASE_COLORS.surface,
+            borderRadius: 50,
+            paddingVertical: 14,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: BASE_COLORS.border,
+          }}
+        >
+          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 15 }}>Contact Support</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
+}
