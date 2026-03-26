@@ -57,3 +57,6 @@ export type GenerationScreenProps        = NativeStackScreenProps<RootStackParam
 export type OnboardingQuizScreenProps    = NativeStackScreenProps<RootStackParamList, 'OnboardingQuiz'>;
 export type PublishTemplateScreenProps   = NativeStackScreenProps<RootStackParamList, 'PublishTemplate'>;
 export type PurchaseTemplateScreenProps  = NativeStackScreenProps<RootStackParamList, 'PurchaseTemplate'>;
+export type HelpFAQScreenProps           = NativeStackScreenProps<RootStackParamList, 'HelpFAQ'>;
+export type PrivacyPolicyScreenProps     = NativeStackScreenProps<RootStackParamList, 'PrivacyPolicy'>;
+export type TermsScreenProps             = NativeStackScreenProps<RootStackParamList, 'Terms'>;

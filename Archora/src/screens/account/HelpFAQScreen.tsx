@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
 import { BASE_COLORS } from '../../theme/colors';
 
 const FAQ_SECTIONS = [
@@ -64,7 +66,7 @@ const FAQ_SECTIONS = [
 ];
 
 export function HelpFAQScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [search, setSearch] = useState('');
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
 
@@ -148,14 +150,14 @@ export function HelpFAQScreen() {
                 {section.category}
               </Text>
             </View>
-            {section.questions.map((item, i) => (
+            {section.questions.map((item) => (
               <Pressable
-                key={i}
+                key={item.q}
                 onPress={() =>
                   setExpandedQuestion(
-                    expandedQuestion === `${section.category}-${i}`
+                    expandedQuestion === item.q
                       ? null
-                      : `${section.category}-${i}`,
+                      : item.q,
                   )
                 }
                 style={{
@@ -170,7 +172,7 @@ export function HelpFAQScreen() {
                 <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 15, fontWeight: '500' }}>
                   {item.q}
                 </Text>
-                {expandedQuestion === `${section.category}-${i}` && (
+                {expandedQuestion === item.q && (
                   <Text
                     style={{
                       color: BASE_COLORS.textSecondary,

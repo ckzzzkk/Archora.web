@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../../stores/authStore';
-import { supabase } from '../../utils/supabaseClient';
+import { authService } from '../../services/authService';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { BASE_COLORS } from '../../theme/colors';
@@ -36,7 +36,7 @@ const CARD_STYLE = {
   borderColor: BASE_COLORS.border,
   marginBottom: 12,
   overflow: 'hidden' as const,
-  shadowColor: '#000',
+  shadowColor: BASE_COLORS.background,
   shadowOffset: { width: 1, height: 1 },
   shadowOpacity: 0.08,
   shadowRadius: 0,
@@ -191,8 +191,8 @@ export function AccountScreen() {
 
   if (!user) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#1A1A1A', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#9A9590', fontSize: 13 }}>Loading...</Text>
+      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 13 }}>Loading...</Text>
       </View>
     );
   }
@@ -206,9 +206,9 @@ export function AccountScreen() {
   const handleManageSubscription = async () => {
     setPortalLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('stripe-portal');
-      if (error || !data?.url) throw new Error('Could not open billing portal');
-      await Linking.openURL(data.url as string);
+      const { url, error } = await authService.getStripePortalUrl();
+      if (error || !url) throw new Error('Could not open billing portal');
+      await Linking.openURL(url);
     } catch {
       Alert.alert('Error', 'Could not open the billing portal. Please try again.');
     } finally {
@@ -238,20 +238,12 @@ export function AccountScreen() {
     const userId = user?.id;
     if (!userId) return;
 
-    const { supabase: sb } = await import('../../utils/supabaseClient');
-    const path = `${userId}/avatar.jpg`;
-    const response = await fetch(file.uri);
-    const blob = await response.blob();
-    const { error } = await sb.storage.from('avatars').upload(path, blob, {
-      upsert: true,
-      contentType: 'image/jpeg',
-    });
-    if (error) {
+    const publicUrl = await authService.uploadAvatar(userId, file.uri);
+    if (!publicUrl) {
       Alert.alert('Upload Failed', 'Could not upload avatar. Please try again.');
       return;
     }
-    const { data } = sb.storage.from('avatars').getPublicUrl(path);
-    authActions.updateUser({ avatarUrl: data.publicUrl });
+    authActions.updateUser({ avatarUrl: publicUrl });
   };
 
   const tierLabel = user?.subscriptionTier?.toUpperCase() ?? 'STARTER';
@@ -353,9 +345,9 @@ export function AccountScreen() {
                 </View>
               )}
               {(user?.streakCount ?? 0) > 0 && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF6B3515', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#FF6B3540' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: `${BASE_COLORS.warning}15`, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: `${BASE_COLORS.warning}40` }}>
                   <Text style={{ fontSize: 14, marginRight: 4 }}>🔥</Text>
-                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#FF6B35' }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: BASE_COLORS.warning }}>
                     {user?.streakCount ?? 0} day streak
                   </Text>
                 </View>
@@ -365,7 +357,6 @@ export function AccountScreen() {
             {/* Stats row */}
             <View style={{ flexDirection: 'row', gap: 20, marginTop: 20 }}>
               {[
-                { label: 'Projects', value: '—' },
                 { label: 'Generations', value: String(user?.aiGenerationsUsed ?? 0) },
                 { label: 'AR Scans', value: String(user?.arScansUsed ?? 0) },
               ].map((stat) => (
@@ -407,13 +398,6 @@ export function AccountScreen() {
                 limit={limits.arScansPerMonth}
                 color={colors.primary}
               />
-              <View style={{ height: 1, backgroundColor: BASE_COLORS.border }} />
-              <ProgressBar
-                label="Storage"
-                used={20}
-                limit={100}
-                color={colors.primary}
-              />
             </View>
           </Animated.View>
 
@@ -427,7 +411,7 @@ export function AccountScreen() {
                   {user?.subscriptionTier ?? 'Starter'}
                 </Text>
               </View>
-              {(user?.subscriptionTier === 'creator' || user?.subscriptionTier === 'architect') ? (
+              {user?.subscriptionTier !== 'starter' ? (
                 <Pressable
                   style={ROW_STYLE_LAST}
                   onPress={() => { medium(); void handleManageSubscription(); }}
@@ -471,7 +455,7 @@ export function AccountScreen() {
                     {
                       text: 'Export',
                       onPress: async () => {
-                        const { error } = await supabase.functions.invoke('export-user-data');
+                        const { error } = await authService.exportUserData();
                         if (error) {
                           Alert.alert('Export Failed', 'Could not export your data. Please try again later.');
                         } else {
@@ -506,7 +490,7 @@ export function AccountScreen() {
                                 text: 'Yes, Delete Everything',
                                 style: 'destructive',
                                 onPress: async () => {
-                                  const { error } = await supabase.functions.invoke('delete-account');
+                                  const { error } = await authService.deleteAccount();
                                   if (error) {
                                     Alert.alert('Error', 'Could not delete your account. Please try again or contact support.');
                                   } else {
