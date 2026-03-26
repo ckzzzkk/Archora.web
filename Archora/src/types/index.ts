@@ -1,8 +1,8 @@
 export * from './blueprint';
 
-export type SubscriptionTier = 'starter' | 'creator' | 'architect';
+export type SubscriptionTier = 'starter' | 'creator' | 'pro' | 'architect';
 export type ViewMode = '2D' | '3D' | 'FirstPerson';
-export type BuildingType = 'house' | 'apartment' | 'office' | 'studio' | 'villa';
+export type BuildingType = 'house' | 'apartment' | 'office' | 'studio' | 'villa' | 'commercial';
 export type ArchStyle =
   // Current 12 styles
   | 'minimalist' | 'modern' | 'rustic' | 'industrial' | 'scandinavian'

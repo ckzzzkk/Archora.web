@@ -28,8 +28,9 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Subscription'>;
 
 type BillingInterval = 'monthly' | 'annual';
 
-const PRICES = {
+const PRICES: Record<Exclude<SubscriptionTier, 'starter'>, { monthly: number; annual: number; annualTotal: number }> = {
   creator: { monthly: 14.99, annual: 11.99, annualTotal: 143.90 },
+  pro: { monthly: 24.99, annual: 19.99, annualTotal: 239.90 },
   architect: { monthly: 39.99, annual: 31.99, annualTotal: 383.90 },
 };
 
@@ -62,11 +63,13 @@ function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgra
   const { colors } = useTheme();
   const price = PRICES[tier];
   const displayPrice = billingInterval === 'annual' ? price.annual : price.monthly;
-  const label = tier === 'creator' ? 'Creator' : 'Architect';
-  const accentColor = tier === 'architect' ? BASE_COLORS.warning : colors.primary;
+  const label = tier === 'creator' ? 'Creator' : tier === 'pro' ? 'Pro' : 'Architect';
+  const accentColor = tier === 'architect' ? BASE_COLORS.warning : tier === 'pro' ? BASE_COLORS.success : colors.primary;
 
   const perks = tier === 'creator'
     ? ['20 projects', '100 AI generations/mo', '15 AR sessions', 'Auto-save', '12 design styles']
+    : tier === 'pro'
+    ? ['50 projects', '500 AI generations/mo', 'Unlimited AR', 'Custom textures', '12 design styles']
     : ['Unlimited everything', 'Unlimited AR', 'Custom furniture AI', 'Template revenue 80%', 'VIP support'];
 
   return (

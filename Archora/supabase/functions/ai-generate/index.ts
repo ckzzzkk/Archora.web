@@ -7,21 +7,39 @@ import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const RequestSchema = z.object({
-  prompt: z.string().min(3).max(1000),
-  buildingType: z.enum(['house', 'apartment', 'office', 'studio', 'villa']),
+  prompt: z.string().max(2000).optional().default(''),
+  buildingType: z.enum(['house', 'apartment', 'office', 'studio', 'villa', 'commercial']),
   style: z.string().optional(),
   roomCount: z.number().int().min(1).max(20).optional(),
+  plotSize: z.number().positive().optional(),
+  plotUnit: z.enum(['m2', 'ft2']).optional().default('m2'),
+  bedrooms: z.number().int().min(0).max(20).optional(),
+  bathrooms: z.number().int().min(0).max(20).optional(),
+  livingAreas: z.number().int().min(0).max(10).optional(),
+  hasGarage: z.boolean().optional(),
+  hasGarden: z.boolean().optional(),
+  hasPool: z.boolean().optional(),
+  poolSize: z.enum(['small', 'medium', 'large']).optional(),
+  hasHomeOffice: z.boolean().optional(),
+  hasUtilityRoom: z.boolean().optional(),
+  referenceImageUrl: z.string().url().optional(),
+  additionalNotes: z.string().max(500).optional(),
+  transcript: z.string().max(2000).optional(),
 });
 
 const SYSTEM_PROMPT = `You are an expert architectural design AI. Your role is to generate complete, accurate floor plans from user descriptions.
 
-BUILDING CODE MINIMUMS (always enforce):
-- Bedroom: minimum 2.8m × 3.0m
-- Bathroom: minimum 1.5m × 2.0m
-- Kitchen: minimum 2.4m wide
-- Hallway: minimum 0.9m wide
-- Ceiling height: minimum 2.4m
-- Door width: minimum 0.8m
+ARCHITECTURAL KNOWLEDGE BASE:
+- Building code minimums: bedroom min 9m², master 12m², bathroom 4m², kitchen 10m², living 15m²
+- Ceiling height: 2.4m minimum, 2.7m standard
+- Passage width: 0.9m minimum doorways, 1.2m hallways
+- Structural: load-bearing walls on exterior perimeter, interior load-bearing walls every 4-6m span
+- Room placement: bedrooms away from street-facing walls, kitchen adjacent to dining, bathrooms accessible from bedrooms, living room toward garden/best light
+- Windows on exterior walls only, never on interior walls
+- Doors centred on walls where possible
+- Self-alignment: all walls snap to 0.5m grid, rooms must not overlap, minimum room dimensions respected
+- Outdoor elements: when hasGarden=true generate lawn area, garden beds, boundary; when hasPool=true add pool with decking; when hasGarage=true add driveway and garage
+- Services: mark electrical sockets every 3m on walls, water outlets near kitchen/bathrooms, light fitting at room centre
 - Wall thickness: 0.2m standard
 
 OUTPUT FORMAT: Return ONLY valid JSON matching this exact TypeScript interface. No markdown, no explanation:
@@ -82,7 +100,8 @@ RULES:
 - Generate realistic room sizes and proportions
 - Include appropriate furniture for each room type
 - Style the building according to the requested architectural style
-- Add windows on exterior walls, doors between rooms`;
+- Add windows on exterior walls, doors between rooms
+- Output only valid JSON matching the BlueprintData schema`;
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -116,11 +135,31 @@ serve(async (req) => {
       });
     }
 
-    const { prompt, buildingType, style, roomCount } = parsed.data;
+    const {
+      prompt, buildingType, style, roomCount,
+      plotSize, plotUnit, bedrooms, bathrooms, livingAreas,
+      hasGarage, hasGarden, hasPool, poolSize,
+      hasHomeOffice, hasUtilityRoom, additionalNotes, transcript,
+    } = parsed.data;
 
-    const userMessage = `Design a ${buildingType} with the following description: "${prompt}"
-${style ? `Architectural style: ${style}` : ''}
-${roomCount ? `Target room count: ${roomCount}` : ''}
+    const details: string[] = [];
+    if (plotSize) details.push(`Plot size: ${plotSize} ${plotUnit === 'ft2' ? 'ft²' : 'm²'}`);
+    if (bedrooms != null) details.push(`Bedrooms: ${bedrooms}`);
+    if (bathrooms != null) details.push(`Bathrooms: ${bathrooms}`);
+    if (livingAreas != null) details.push(`Living areas: ${livingAreas}`);
+    if (hasGarage) details.push('Include garage with driveway');
+    if (hasGarden) details.push('Include garden/lawn area with boundary');
+    if (hasPool) details.push(`Include ${poolSize ?? 'medium'} swimming pool with decking`);
+    if (hasHomeOffice) details.push('Include home office');
+    if (hasUtilityRoom) details.push('Include utility/laundry room');
+    if (style) details.push(`Architectural style: ${style}`);
+    if (roomCount) details.push(`Target room count: ${roomCount}`);
+
+    const combinedNotes = [prompt, additionalNotes, transcript].filter(Boolean).join('\n');
+
+    const userMessage = `Design a ${buildingType} with the following specifications:
+${details.join('\n')}
+${combinedNotes ? `\nAdditional notes from the user:\n${combinedNotes}` : ''}
 
 Generate a complete, realistic floor plan with proper room sizes, realistic furniture placement, and appropriate openings.`;
 

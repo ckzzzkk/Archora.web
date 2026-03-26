@@ -447,7 +447,7 @@ export function OnboardingQuizScreen() {
       const prompt = buildQuizPrompt(answers);
       const blueprint = await aiService.generateFloorPlan({
         prompt,
-        buildingType: answers.buildingType,
+        buildingType: answers.buildingType as 'house' | 'apartment' | 'office' | 'studio' | 'villa' | 'commercial',
         style: answers.styles[0],
       });
       loadBlueprint(blueprint);

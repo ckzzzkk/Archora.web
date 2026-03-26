@@ -190,6 +190,65 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     threeDSessionMinutes: -1,
   },
 
+  pro: {
+    maxProjects: 50,
+    maxRoomsPerProject: 20,
+    maxFurniturePerRoom: 100,
+    maxFloors: 10,
+    savedProjects: 50,
+    maxRooms: 20,
+
+    aiGenerationsPerMonth: 500,
+    arScansPerMonth: -1,
+    arSessionsPerMonth: -1,
+    photoImportsPerMonth: -1,
+    exportsPerMonth: -1,
+    rendersPerMonth: -1,
+    aiChatMessagesPerDay: -1,
+
+    dailyEditTimeSeconds: -1,
+    maxUndoSteps: 100,
+    autoSave: true,
+    autoSaveIntervalSeconds: 60,
+
+    walkthrough: true,
+    cinematicTour: true,
+    cinematicTourWatermark: false,
+    copyRoom: true,
+    copyLayout: true,
+    stylePaste: true,
+    customFurniture: true,
+    offlineMode: true,
+    cadExport: false,
+    costEstimator: true,
+    collaboration: true,
+    commercialBuildings: true,
+    exportWatermark: false,
+    publishTemplates: true,
+    vipSupport: false,
+
+    maxCollaborators: 1,
+    collaborationLimit: 1,
+
+    maxPublishedTemplates: -1,
+    templateRevenueShare: 0.60,
+    availableStyles: 'all',
+    templateAccess: 'all',
+
+    audioInput: true,
+    blueprintUpload: true,
+    uploadsPerMonth: -1,
+    firstPersonView: true,
+    meshyFurniture: false,
+    batchGeneration: true,
+    batchSize: 3,
+    buildingCodeCompliance: true,
+    monetiseTemplates: true,
+    creatorRevenueSplit: 60,
+    prioritySupport: false,
+    threeDSessionMinutes: -1,
+  },
+
   architect: {
     maxProjects: -1,
     maxRoomsPerProject: -1,
@@ -252,12 +311,15 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 
 export const TIER_PRICES = {
   creator: { monthly: 14.99, annual: 143.90 },
+  pro: { monthly: 24.99, annual: 239.90 },
   architect: { monthly: 39.99, annual: 383.90 },
 } as const;
 
 export const STRIPE_PRICE_IDS = {
   creator_monthly:   process.env.EXPO_PUBLIC_STRIPE_PRICE_CREATOR_MONTHLY   ?? '',
   creator_annual:    process.env.EXPO_PUBLIC_STRIPE_PRICE_CREATOR_ANNUAL    ?? '',
+  pro_monthly:       process.env.EXPO_PUBLIC_STRIPE_PRICE_PRO_MONTHLY       ?? '',
+  pro_annual:        process.env.EXPO_PUBLIC_STRIPE_PRICE_PRO_ANNUAL        ?? '',
   architect_monthly: process.env.EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_MONTHLY ?? '',
   architect_annual:  process.env.EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_ANNUAL  ?? '',
 };
@@ -273,6 +335,7 @@ export function isFeatureAllowed(tier: SubscriptionTier, feature: keyof TierLimi
 
 export function getUpgradeTier(feature: keyof TierLimits): SubscriptionTier | null {
   if (isFeatureAllowed('creator', feature)) return 'creator';
+  if (isFeatureAllowed('pro', feature)) return 'pro';
   if (isFeatureAllowed('architect', feature)) return 'architect';
   return null;
 }
@@ -299,6 +362,7 @@ export function isStyleAccessible(styleId: string, availableStyles: string[] | '
 /** Returns the next tier above the given one, or null if already at top. */
 export function getUpgradeTierFromCurrent(tier: Tier): Tier | null {
   if (tier === 'starter') return 'creator';
-  if (tier === 'creator') return 'architect';
+  if (tier === 'creator') return 'pro';
+  if (tier === 'pro') return 'architect';
   return null;
 }

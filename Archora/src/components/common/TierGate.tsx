@@ -18,13 +18,15 @@ import { supabase } from '../../utils/supabaseClient';
 const TIER_LABELS: Record<SubscriptionTier, string> = {
   starter: 'Starter',
   creator: 'Creator',
+  pro: 'Pro',
   architect: 'Architect',
 };
 
 const TIER_DESCRIPTIONS: Record<SubscriptionTier, string> = {
   starter: 'Get started for free',
-  creator: 'Unlock full creative suite — $14.99/mo',
-  architect: 'Professional tools, unlimited everything — $39.99/mo',
+  creator: 'Unlock full creative suite \u2014 $14.99/mo',
+  pro: 'Power user tools & unlimited AR \u2014 $24.99/mo',
+  architect: 'Professional tools, unlimited everything \u2014 $39.99/mo',
 };
 
 interface Props {

@@ -1,6 +1,7 @@
 import { supabase } from '../utils/supabaseClient';
 import * as SecureStore from 'expo-secure-store';
 import type { BlueprintData } from '../types';
+import type { GenerationPayload } from '../types/generation';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -16,8 +17,8 @@ async function getAuthHeader(): Promise<Record<string, string>> {
 }
 
 export const aiService = {
-  async generateFloorPlan(params: {
-    prompt: string;
+  async generateFloorPlan(params: Partial<GenerationPayload> & {
+    prompt?: string;
     buildingType: string;
     style?: string;
     roomCount?: number;

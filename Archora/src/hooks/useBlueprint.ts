@@ -24,7 +24,10 @@ export function useBlueprint() {
   const generateFromPrompt = useCallback(
     async (params: { prompt: string; buildingType: string; style?: string; roomCount?: number }) => {
       try {
-        const data = await aiService.generateFloorPlan(params);
+        const data = await aiService.generateFloorPlan({
+          ...params,
+          buildingType: params.buildingType as 'house' | 'apartment' | 'office' | 'studio' | 'villa' | 'commercial',
+        });
         actions.loadBlueprint(data);
         return data;
       } catch (err) {

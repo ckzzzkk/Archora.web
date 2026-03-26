@@ -15,6 +15,7 @@ interface Props {
 const TIER_LABELS: Record<SubscriptionTier, string> = {
   starter: 'Starter',
   creator: 'Creator',
+  pro: 'Pro',
   architect: 'Architect',
 };
 
