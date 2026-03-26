@@ -15,6 +15,7 @@ import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { BASE_COLORS } from '../../theme/colors';
 import { supabase } from '../../utils/supabaseClient';
 import type { RootStackParamList } from '../../navigation/types';
+import type { BlueprintData } from '../../types/blueprint';
 import type { GenerationPayload, GenerationStep } from '../../types/generation';
 
 // Step components
@@ -59,7 +60,8 @@ export function GenerationScreen() {
   const [step, setStep] = useState<GenerationStep>(1);
   const [screenState, setScreenState] = useState<ScreenState>('steps');
   const [errorMessage, setErrorMessage] = useState('');
-  const [loadingPhase, setLoadingPhase] = useState(0);
+  const [generationPhase, setGenerationPhase] = useState(0);
+  const [result, setResult] = useState<BlueprintData | null>(null);
 
   // Payload fields
   const [buildingType, setBuildingType] = useState<GenerationPayload['buildingType'] | null>(null);
@@ -101,9 +103,9 @@ export function GenerationScreen() {
   // Loading phase animation
   useEffect(() => {
     if (screenState !== 'generating') return;
-    setLoadingPhase(0);
+    setGenerationPhase(0);
     const interval = setInterval(() => {
-      setLoadingPhase((prev) => {
+      setGenerationPhase((prev) => {
         if (prev >= LOADING_PHASES.length - 1) return prev;
         return prev + 1;
       });
@@ -141,7 +143,8 @@ export function GenerationScreen() {
 
       if (!isMounted.current) return;
 
-      // Load into store
+      // Load into store and capture locally
+      setResult(blueprint);
       loadBlueprint(blueprint);
       successHaptic();
       setScreenState('success');
@@ -183,8 +186,11 @@ export function GenerationScreen() {
         setErrorMessage('This is taking a while \u2014 try a simpler description');
       } else if (err.code === 'INVALID_RESPONSE') {
         setErrorMessage('Something went wrong with the design \u2014 please try again');
+      } else if (err.code === 'NETWORK') {
+        setErrorMessage('Check your connection and try again');
       } else {
-        setErrorMessage('Generation failed. Please try again');
+        // Unclassified errors treated as network failures
+        setErrorMessage('Check your connection and try again');
       }
       setScreenState('error');
     }
@@ -218,6 +224,7 @@ export function GenerationScreen() {
     setStep(1);
     setScreenState('steps');
     setErrorMessage('');
+    setResult(null);
   }, []);
 
   // -- Generating State --
@@ -228,20 +235,20 @@ export function GenerationScreen() {
           {LOADING_PHASES.map((phase, i) => (
             <Animated.View
               key={phase}
-              entering={i <= loadingPhase ? FadeIn.duration(150) : undefined}
+              entering={i <= generationPhase ? FadeIn.duration(150) : undefined}
               style={{
                 paddingHorizontal: 20,
                 paddingVertical: 10,
                 borderRadius: 50,
-                backgroundColor: i <= loadingPhase ? BASE_COLORS.surface : 'transparent',
-                opacity: i <= loadingPhase ? 1 : 0,
+                backgroundColor: i <= generationPhase ? BASE_COLORS.surface : 'transparent',
+                opacity: i <= generationPhase ? 1 : 0,
               }}
             >
               <Text
                 style={{
                   fontFamily: 'Inter_400Regular',
                   fontSize: 14,
-                  color: i === loadingPhase ? BASE_COLORS.textPrimary : BASE_COLORS.textSecondary,
+                  color: i === generationPhase ? BASE_COLORS.textPrimary : BASE_COLORS.textSecondary,
                 }}
               >
                 {phase}
@@ -446,6 +453,7 @@ export function GenerationScreen() {
           {step === 7 && (
             <Step7Review
               payload={buildPayload()}
+              result={result}
               onGenerate={() => { void handleGenerate(); }}
             />
           )}

@@ -4,6 +4,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { BASE_COLORS } from '../../../theme/colors';
 import { DESIGN_STYLES } from '../../../data/designStyles';
 import type { GenerationPayload } from '../../../types/generation';
+import type { BlueprintData } from '../../../types/blueprint';
 
 const TYPE_EMOJI: Record<string, string> = {
   house: '\u{1F3E0}',
@@ -16,10 +17,11 @@ const TYPE_EMOJI: Record<string, string> = {
 
 interface Props {
   payload: GenerationPayload;
+  result?: BlueprintData | null;
   onGenerate: () => void;
 }
 
-export function Step7Review({ payload, onGenerate }: Props) {
+export function Step7Review({ payload, result, onGenerate }: Props) {
   const styleName = DESIGN_STYLES.find((s) => s.id === payload.style)?.name ?? payload.style;
 
   return (
@@ -89,6 +91,20 @@ export function Step7Review({ payload, onGenerate }: Props) {
           </Text>
         ) : null}
       </View>
+
+      {result && (
+        <Text
+          style={{
+            fontFamily: 'Inter_400Regular',
+            fontSize: 13,
+            color: BASE_COLORS.textDim,
+            textAlign: 'center',
+            marginBottom: 12,
+          }}
+        >
+          Previous design loaded — generating will replace it
+        </Text>
+      )}
 
       <Pressable
         onPress={onGenerate}
