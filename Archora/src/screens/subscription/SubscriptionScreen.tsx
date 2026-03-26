@@ -8,14 +8,12 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import Animated, {
+import {
   useSharedValue,
-  useAnimatedStyle,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { supabase } from '../../utils/supabaseClient';
+import { subscriptionService } from '../../services/subscriptionService';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/authStore';
 import { BASE_COLORS } from '../../theme/colors';
@@ -137,6 +135,7 @@ const FEATURES = [
 
 interface StarterCardProps {
   isCurrentTier: boolean;
+  disabled?: boolean;
 }
 
 function StarterCard({ isCurrentTier }: StarterCardProps) {
@@ -204,9 +203,10 @@ interface TierCardProps {
   isCurrentTier: boolean;
   isHighlighted: boolean;
   onUpgrade: (tier: Exclude<SubscriptionTier, 'starter'>) => void;
+  disabled?: boolean;
 }
 
-function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgrade }: TierCardProps) {
+function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgrade, disabled }: TierCardProps) {
   const { colors } = useTheme();
   const price = PRICES[tier];
   const displayPrice = billingInterval === 'annual' ? price.annual : price.monthly;
@@ -214,7 +214,7 @@ function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgra
   const accentColor = tier === 'architect' ? BASE_COLORS.warning : tier === 'pro' ? BASE_COLORS.success : colors.primary;
 
   const perks = tier === 'creator'
-    ? ['20 projects', '100 AI generations/mo', '15 AR sessions', 'Auto-save', '12 design styles']
+    ? [`${TIER_LIMITS.creator.maxProjects} projects`, `${TIER_LIMITS.creator.aiGenerationsPerMonth} AI generations/mo`, `${TIER_LIMITS.creator.arSessionsPerMonth} AR sessions`, 'Auto-save', '12 design styles']
     : tier === 'pro'
     ? ['50 projects', '500 AI generations/mo', 'Unlimited AR', 'Custom textures', '12 design styles']
     : ['Unlimited everything', 'Unlimited AR', 'Custom furniture AI', 'Template revenue 80%', 'VIP support'];
@@ -233,7 +233,7 @@ function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgra
       {/* Badge */}
       {isHighlighted && (
         <View style={{ backgroundColor: accentColor, paddingVertical: 6, alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#000' }}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: BASE_COLORS.background }}>
             {tier === 'creator' ? 'MOST POPULAR' : 'PROFESSIONAL'}
           </Text>
         </View>
@@ -272,6 +272,7 @@ function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgra
 
         <Pressable
           onPress={() => !isCurrentTier && onUpgrade(tier)}
+          disabled={disabled || isCurrentTier}
           style={{
             backgroundColor: isCurrentTier ? BASE_COLORS.border : accentColor,
             borderRadius: 12,
@@ -279,7 +280,7 @@ function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgra
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: isCurrentTier ? BASE_COLORS.textDim : '#000' }}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: isCurrentTier ? BASE_COLORS.textDim : BASE_COLORS.background }}>
             {isCurrentTier ? 'Current Plan' : `Upgrade to ${label}`}
           </Text>
         </Pressable>
@@ -296,9 +297,6 @@ export function SubscriptionScreen({ navigation }: Props) {
   const tier = user?.subscriptionTier ?? 'starter';
 
   const toggleX = useSharedValue(0);
-  const toggleStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: toggleX.value }],
-  }));
 
   const handleBillingToggle = (interval: BillingInterval) => {
     setBilling(interval);
@@ -306,37 +304,18 @@ export function SubscriptionScreen({ navigation }: Props) {
   };
 
   const handleUpgrade = async (newTier: Exclude<SubscriptionTier, 'starter'>) => {
-    const priceId = STRIPE_PRICE_IDS[`${newTier}_${billing}` as keyof typeof STRIPE_PRICE_IDS];
-    if (!priceId) {
-      Alert.alert('Coming Soon', 'Upgrade not yet available — check back soon!');
-      return;
-    }
     setIsLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) {
-        Alert.alert('Sign in required', 'Please sign in to upgrade your plan.');
+      const priceId = STRIPE_PRICE_IDS[`${newTier}_${billing}` as keyof typeof STRIPE_PRICE_IDS];
+      if (!priceId) {
+        Alert.alert('Not available', 'Upgrade not yet available — check back soon');
         return;
       }
-      const { data, error } = await supabase.functions.invoke('stripe-checkout', {
-        body: { priceId },
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (error) {
-        console.error('[SubscriptionScreen] stripe-checkout error:', error);
-        Alert.alert('Error', `Could not start checkout: ${error.message ?? 'Please try again.'}`);
-        return;
-      }
-      if (!data?.url) {
-        console.error('[SubscriptionScreen] stripe-checkout returned no URL:', data);
-        Alert.alert('Error', 'Could not start checkout. Please try again.');
-        return;
-      }
-      await Linking.openURL(data.url as string);
+      const { url } = await subscriptionService.createCheckout(newTier, billing);
+      if (url) await Linking.openURL(url);
     } catch (err) {
-      console.error('[SubscriptionScreen] unexpected error:', err);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      console.error('[checkout error]', err);
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not start checkout');
     } finally {
       setIsLoading(false);
     }
@@ -345,20 +324,11 @@ export function SubscriptionScreen({ navigation }: Props) {
   const handleManageSubscription = async () => {
     setIsLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      const { data, error } = await supabase.functions.invoke('stripe-portal', {
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-      });
-      if (error || !data?.url) {
-        console.error('[SubscriptionScreen] stripe-portal error:', error);
-        Alert.alert('Error', 'Could not open billing portal. Please try again.');
-        return;
-      }
-      await Linking.openURL(data.url as string);
+      const { url } = await subscriptionService.getPortalUrl();
+      if (url) await Linking.openURL(url);
     } catch (err) {
-      console.error('[SubscriptionScreen] manage subscription error:', err);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      console.error('[portal error]', err);
+      Alert.alert('Error', 'Could not open subscription management');
     } finally {
       setIsLoading(false);
     }
@@ -409,7 +379,7 @@ export function SubscriptionScreen({ navigation }: Props) {
                   Annual
                 </Text>
                 <View style={{ backgroundColor: BASE_COLORS.success, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9, color: '#FFF' }}>SAVE 20%</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9, color: BASE_COLORS.textPrimary }}>SAVE 20%</Text>
                 </View>
               </Pressable>
             </View>
@@ -418,13 +388,14 @@ export function SubscriptionScreen({ navigation }: Props) {
 
         {/* Tier cards */}
         <View style={{ paddingHorizontal: 24 }}>
-          <StarterCard isCurrentTier={tier === 'starter'} />
+          <StarterCard isCurrentTier={tier === 'starter'} disabled={isLoading} />
           <TierCard
             tier="creator"
             billingInterval={billing}
             isCurrentTier={tier === 'creator'}
             isHighlighted={true}
             onUpgrade={handleUpgrade}
+            disabled={isLoading}
           />
           <TierCard
             tier="pro"
@@ -432,6 +403,7 @@ export function SubscriptionScreen({ navigation }: Props) {
             isCurrentTier={tier === 'pro'}
             isHighlighted={false}
             onUpgrade={handleUpgrade}
+            disabled={isLoading}
           />
           <TierCard
             tier="architect"
@@ -439,6 +411,7 @@ export function SubscriptionScreen({ navigation }: Props) {
             isCurrentTier={tier === 'architect'}
             isHighlighted={false}
             onUpgrade={handleUpgrade}
+            disabled={isLoading}
           />
         </View>
 

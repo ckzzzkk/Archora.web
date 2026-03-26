@@ -18,7 +18,7 @@ type UpgradeTier = 'creator' | 'pro' | 'architect';
 type BillingInterval = 'monthly' | 'annual';
 
 export const subscriptionService = {
-  async createCheckout(tier: UpgradeTier, interval: BillingInterval): Promise<{ checkoutUrl: string }> {
+  async createCheckout(tier: UpgradeTier, interval: BillingInterval): Promise<{ url: string; sessionId: string }> {
     const priceKey = `${tier}_${interval}` as keyof typeof STRIPE_PRICE_IDS;
     const priceId = STRIPE_PRICE_IDS[priceKey];
 
@@ -34,7 +34,7 @@ export const subscriptionService = {
       throw new Error(err.error);
     }
 
-    return response.json() as Promise<{ checkoutUrl: string }>;
+    return response.json() as Promise<{ url: string; sessionId: string }>;
   },
 
   async cancelSubscription(): Promise<void> {
@@ -50,7 +50,7 @@ export const subscriptionService = {
     }
   },
 
-  async getPortalUrl(): Promise<string> {
+  async getPortalUrl(): Promise<{ url: string }> {
     const headers = await getAuthHeader();
     const response = await fetch(`${SUPABASE_URL}/functions/v1/stripe-portal`, {
       method: 'POST',
@@ -59,8 +59,7 @@ export const subscriptionService = {
 
     if (!response.ok) throw new Error('Failed to get portal URL');
 
-    const data = await response.json() as { url: string };
-    return data.url;
+    return response.json() as Promise<{ url: string }>;
   },
 
   async syncSubscription(): Promise<void> {

@@ -6,10 +6,6 @@ import { logAudit } from '../_shared/audit.ts';
 
 type SubscriptionTier = 'starter' | 'creator' | 'pro' | 'architect';
 
-const PRICE_TO_TIER: Record<string, SubscriptionTier> = {
-  // These are populated from env to avoid hardcoding Stripe IDs
-};
-
 function getTierFromPriceId(priceId: string): SubscriptionTier {
   const envMap: Record<string, string> = {
     [Deno.env.get('STRIPE_PRICE_CREATOR_MONTHLY') ?? '']: 'creator',

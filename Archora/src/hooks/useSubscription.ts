@@ -24,8 +24,8 @@ export function useSubscription() {
       setLoading(true);
       setError(null);
       try {
-        const { checkoutUrl } = await subscriptionService.createCheckout(targetTier, interval);
-        return checkoutUrl;
+        const { url } = await subscriptionService.createCheckout(targetTier, interval);
+        return url;
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Checkout failed';
         setError(msg);
