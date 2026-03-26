@@ -92,6 +92,7 @@ export interface Template {
   isLiked: boolean;
   isSaved: boolean;
   userRating: number | null;
+  tier?: string;
   createdAt: string;
 }
 

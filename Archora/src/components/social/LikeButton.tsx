@@ -4,7 +4,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useHaptics } from '../../hooks/useHaptics';
@@ -35,7 +34,7 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
   const toggle = async () => {
     if (!isAuthenticated || loading) return;
     medium();
-    scale.value = withSequence(withSpring(1.4, { damping: 10 }), withSpring(1, { damping: 15 }));
+    scale.value = withSequence(withTiming(1.2, { duration: 100 }), withTiming(1, { duration: 100 }));
 
     const next = !liked;
     setLiked(next);

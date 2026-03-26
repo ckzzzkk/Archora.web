@@ -4,7 +4,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSequence,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useAuthStore } from '../../stores/authStore';
@@ -35,7 +35,7 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
   const toggle = async () => {
     if (!isAuthenticated || loading) return;
     medium();
-    scale.value = withSequence(withSpring(1.3, { damping: 10 }), withSpring(1, { damping: 15 }));
+    scale.value = withSequence(withTiming(1.2, { duration: 100 }), withTiming(1, { duration: 100 }));
 
     const next = !saved;
     setSaved(next);

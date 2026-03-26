@@ -80,26 +80,40 @@ function FeedHeader({
           Inspo
         </Text>
       </View>
-      <Pressable
-        onPress={onToggleSearch}
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: BASE_COLORS.surface,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Svg width={18} height={18} viewBox="0 0 24 24">
-          <Path
-            d="M21 21L15 15M17 11C17 14.3137 14.3137 17 11 17C7.68629 17 5 14.3137 5 11C5 7.68629 7.68629 5 11 5C14.3137 5 17 7.68629 17 11Z"
-            stroke={BASE_COLORS.textSecondary}
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </Svg>
-      </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Pressable
+          onPress={onToggleSearch}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: BASE_COLORS.surface,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Svg width={18} height={18} viewBox="0 0 24 24">
+            <Path
+              d="M21 21L15 15M17 11C17 14.3137 14.3137 17 11 17C7.68629 17 5 14.3137 5 11C5 7.68629 7.68629 5 11 5C14.3137 5 17 7.68629 17 11Z"
+              stroke={BASE_COLORS.textSecondary}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </Svg>
+        </Pressable>
+        <Pressable
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: BASE_COLORS.surface,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 18 }}>🔔</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -477,6 +491,7 @@ export function FeedScreen() {
           <FlashList
             data={templates}
             numColumns={2}
+            {...({ estimatedItemSize: 230 } as object)}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
             onEndReached={handleEndReached}

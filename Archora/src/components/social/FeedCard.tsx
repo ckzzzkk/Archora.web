@@ -8,7 +8,7 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import Svg, { Path, Line } from 'react-native-svg';
-import { BASE_COLORS } from '../../theme/colors';
+import { BASE_COLORS, withAlpha } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 import { LikeButton } from './LikeButton';
 import { SaveButton } from './SaveButton';
@@ -103,7 +103,7 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
               left: 0,
               right: 0,
               height: 48,
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              backgroundColor: withAlpha('#000000', 0.5),
             }}
           />
           {/* Title overlay */}
@@ -135,9 +135,9 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
         >
           <View
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: 12,
+              width: 28,
+              height: 28,
+              borderRadius: 14,
               backgroundColor: colors.primaryDim,
               alignItems: 'center',
               justifyContent: 'center',
@@ -147,7 +147,7 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
             {template.authorAvatarUrl ? (
               <Image
                 source={{ uri: template.authorAvatarUrl }}
-                style={{ width: 24, height: 24, borderRadius: 12 }}
+                style={{ width: 28, height: 28, borderRadius: 14 }}
               />
             ) : (
               <Text style={{ fontSize: 10, color: BASE_COLORS.background }}>
@@ -165,6 +165,13 @@ export function FeedCard({ template, onPress, index = 0, height = 240 }: FeedCar
           >
             {template.authorDisplayName}
           </Text>
+          {template.tier && template.tier !== 'starter' && template.tier !== 'free' && (
+            <View style={{ backgroundColor: BASE_COLORS.border, borderRadius: 50, paddingHorizontal: 6, paddingVertical: 2 }}>
+              <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 9 }}>
+                {(template.tier as string).toUpperCase()}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Stats row: like + save */}
