@@ -135,6 +135,69 @@ const FEATURES = [
   },
 ];
 
+interface StarterCardProps {
+  isCurrentTier: boolean;
+}
+
+function StarterCard({ isCurrentTier }: StarterCardProps) {
+  return (
+    <View
+      style={{
+        borderRadius: 20,
+        borderWidth: isCurrentTier ? 2 : 1,
+        borderColor: isCurrentTier ? BASE_COLORS.textPrimary : BASE_COLORS.border,
+        backgroundColor: BASE_COLORS.surfaceHigh,
+        marginBottom: 16,
+        overflow: 'hidden',
+      }}
+    >
+      {isCurrentTier && (
+        <View style={{ backgroundColor: BASE_COLORS.textPrimary, paddingVertical: 6, alignItems: 'center' }}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: BASE_COLORS.background }}>
+            YOUR CURRENT PLAN
+          </Text>
+        </View>
+      )}
+
+      <View style={{ padding: 24 }}>
+        <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: BASE_COLORS.textPrimary, marginBottom: 4 }}>
+          Starter
+        </Text>
+
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 12 }}>
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 36, color: BASE_COLORS.textPrimary }}>
+            Free
+          </Text>
+        </View>
+
+        <View style={{ marginBottom: 20, gap: 8 }}>
+          {['3 projects', '10 AI generations/mo', '3 design styles'].map((perk) => (
+            <View key={perk} style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ color: BASE_COLORS.textDim, marginRight: 8, fontSize: 14 }}>✓</Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary }}>
+                {perk}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <View
+          style={{
+            backgroundColor: BASE_COLORS.border,
+            borderRadius: 12,
+            paddingVertical: 14,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: BASE_COLORS.textDim }}>
+            {isCurrentTier ? 'Current Plan' : "You're on Free"}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 interface TierCardProps {
   tier: Exclude<SubscriptionTier, 'starter'>;
   billingInterval: BillingInterval;
@@ -355,6 +418,7 @@ export function SubscriptionScreen({ navigation }: Props) {
 
         {/* Tier cards */}
         <View style={{ paddingHorizontal: 24 }}>
+          <StarterCard isCurrentTier={tier === 'starter'} />
           <TierCard
             tier="creator"
             billingInterval={billing}
@@ -366,14 +430,14 @@ export function SubscriptionScreen({ navigation }: Props) {
             tier="pro"
             billingInterval={billing}
             isCurrentTier={tier === 'pro'}
-            isHighlighted={true}
+            isHighlighted={false}
             onUpgrade={handleUpgrade}
           />
           <TierCard
             tier="architect"
             billingInterval={billing}
             isCurrentTier={tier === 'architect'}
-            isHighlighted={true}
+            isHighlighted={false}
             onUpgrade={handleUpgrade}
           />
         </View>
@@ -398,16 +462,6 @@ export function SubscriptionScreen({ navigation }: Props) {
             </Pressable>
           </View>
         )}
-
-        {/* Starter note */}
-        <View style={{ marginHorizontal: 24, padding: 16, backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 14, borderWidth: 1, borderColor: BASE_COLORS.border, marginBottom: 24 }}>
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: BASE_COLORS.textPrimary, marginBottom: 4 }}>
-            Starter — Free
-          </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim }}>
-            3 projects · 4 rooms · 10 furniture items · 10 AI generations/mo · 3 design styles
-          </Text>
-        </View>
 
         {/* Feature comparison table */}
         <View style={{ marginHorizontal: 24 }}>
