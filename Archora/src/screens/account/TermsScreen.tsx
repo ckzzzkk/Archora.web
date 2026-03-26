@@ -55,38 +55,38 @@ export function TermsScreen() {
           Terms of Service
         </Text>
       </View>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Sticky disclaimer */}
-        <View
+      {/* Sticky disclaimer — OUTSIDE ScrollView */}
+      <View
+        style={{
+          // dark red tint — no BASE_COLORS token for this specific use
+          backgroundColor: '#3A1A1A',
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: BASE_COLORS.error,
+          padding: 16,
+          margin: 16,
+          marginBottom: 0,
+        }}
+      >
+        <Text
           style={{
-            // dark red tint — no BASE_COLORS token for this specific use
-            backgroundColor: '#3A1A1A',
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: BASE_COLORS.error,
-            padding: 16,
-            margin: 16,
-            marginBottom: 0,
+            color: BASE_COLORS.error,
+            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontSize: 14,
           }}
         >
-          <Text
-            style={{
-              color: BASE_COLORS.error,
-              fontFamily: 'ArchitectsDaughter_400Regular',
-              fontSize: 14,
-            }}
-          >
-            IMPORTANT NOTICE
-          </Text>
-          <Text
-            style={{ color: BASE_COLORS.textPrimary, fontSize: 13, lineHeight: 20, marginTop: 8 }}
-          >
-            ASORIA is a creative design tool for exploration and inspiration only. Designs generated
-            are NOT suitable for actual construction without review by a qualified architect or
-            structural engineer. ASORIA does not provide professional architectural advice or
-            services.
-          </Text>
-        </View>
+          IMPORTANT NOTICE
+        </Text>
+        <Text
+          style={{ color: BASE_COLORS.textPrimary, fontSize: 13, lineHeight: 20, marginTop: 8 }}
+        >
+          ASORIA is a creative design tool for exploration and inspiration only. Designs generated
+          are NOT suitable for actual construction without review by a qualified architect or
+          structural engineer. ASORIA does not provide professional architectural advice or
+          services.
+        </Text>
+      </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={{ padding: 20 }}>
           <Text
             style={{
