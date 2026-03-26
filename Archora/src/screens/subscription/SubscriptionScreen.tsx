@@ -22,7 +22,7 @@ import { BASE_COLORS } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { SubscriptionTier } from '../../types';
-import { STRIPE_PRICE_IDS } from '../../utils/tierLimits';
+import { STRIPE_PRICE_IDS, TIER_LIMITS } from '../../utils/tierLimits';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Subscription'>;
 
@@ -35,20 +35,104 @@ const PRICES: Record<Exclude<SubscriptionTier, 'starter'>, { monthly: number; an
 };
 
 const FEATURES = [
-  { label: 'Projects', starter: '3', creator: '20', architect: 'Unlimited' },
-  { label: 'Rooms per project', starter: '4', creator: '15', architect: 'Unlimited' },
-  { label: 'Furniture per room', starter: '10', creator: '50', architect: 'Unlimited' },
-  { label: 'AI generations / mo', starter: '10', creator: '100', architect: 'Unlimited' },
-  { label: 'Daily edit time', starter: '45 min', creator: 'Unlimited', architect: 'Unlimited' },
-  { label: 'Undo steps', starter: '10', creator: '50', architect: 'Unlimited' },
-  { label: 'Auto-save', starter: '✗', creator: '✓', architect: '✓' },
-  { label: 'Design styles', starter: '3', creator: '12', architect: '12' },
-  { label: 'AR placement', starter: '✗', creator: '15/mo', architect: 'Unlimited' },
-  { label: 'Export designs', starter: '2/mo', creator: '20/mo', architect: 'Unlimited' },
-  { label: 'First-person view', starter: '✗', creator: '✓', architect: '✓' },
-  { label: 'Publish templates', starter: '✗', creator: '5', architect: 'Unlimited' },
-  { label: 'Template revenue share', starter: '✗', creator: '60%', architect: '80%' },
-  { label: 'VIP support', starter: '✗', creator: '✗', architect: '✓' },
+  {
+    label: 'Projects',
+    starter: String(TIER_LIMITS.starter.maxProjects),
+    creator: String(TIER_LIMITS.creator.maxProjects),
+    pro: String(TIER_LIMITS.pro.maxProjects),
+    architect: 'Unlimited',
+  },
+  {
+    label: 'Rooms per project',
+    starter: String(TIER_LIMITS.starter.maxRoomsPerProject),
+    creator: String(TIER_LIMITS.creator.maxRoomsPerProject),
+    pro: String(TIER_LIMITS.pro.maxRoomsPerProject),
+    architect: 'Unlimited',
+  },
+  {
+    label: 'Furniture per room',
+    starter: String(TIER_LIMITS.starter.maxFurniturePerRoom),
+    creator: String(TIER_LIMITS.creator.maxFurniturePerRoom),
+    pro: String(TIER_LIMITS.pro.maxFurniturePerRoom),
+    architect: 'Unlimited',
+  },
+  {
+    label: 'AI generations / mo',
+    starter: String(TIER_LIMITS.starter.aiGenerationsPerMonth),
+    creator: String(TIER_LIMITS.creator.aiGenerationsPerMonth),
+    pro: String(TIER_LIMITS.pro.aiGenerationsPerMonth),
+    architect: 'Unlimited',
+  },
+  {
+    label: 'Daily edit time',
+    starter: '45 min',
+    creator: 'Unlimited',
+    pro: 'Unlimited',
+    architect: 'Unlimited',
+  },
+  {
+    label: 'Undo steps',
+    starter: String(TIER_LIMITS.starter.maxUndoSteps),
+    creator: String(TIER_LIMITS.creator.maxUndoSteps),
+    pro: String(TIER_LIMITS.pro.maxUndoSteps),
+    architect: 'Unlimited',
+  },
+  {
+    label: 'Auto-save',
+    starter: '✗',
+    creator: '✓',
+    pro: '✓',
+    architect: '✓',
+  },
+  {
+    label: 'Design styles',
+    starter: String((TIER_LIMITS.starter.availableStyles as string[]).length),
+    creator: '12',
+    pro: '12',
+    architect: '12',
+  },
+  {
+    label: 'AR placement',
+    starter: '✗',
+    creator: `${TIER_LIMITS.creator.arSessionsPerMonth}/mo`,
+    pro: 'Unlimited',
+    architect: 'Unlimited',
+  },
+  {
+    label: 'Export designs',
+    starter: `${TIER_LIMITS.starter.exportsPerMonth}/mo`,
+    creator: `${TIER_LIMITS.creator.exportsPerMonth}/mo`,
+    pro: 'Unlimited',
+    architect: 'Unlimited',
+  },
+  {
+    label: 'First-person view',
+    starter: '✗',
+    creator: '✓',
+    pro: '✓',
+    architect: '✓',
+  },
+  {
+    label: 'Publish templates',
+    starter: '✗',
+    creator: String(TIER_LIMITS.creator.maxPublishedTemplates),
+    pro: 'Unlimited',
+    architect: 'Unlimited',
+  },
+  {
+    label: 'Template revenue share',
+    starter: '✗',
+    creator: `${Math.round(TIER_LIMITS.creator.templateRevenueShare * 100)}%`,
+    pro: `${Math.round(TIER_LIMITS.pro.templateRevenueShare * 100)}%`,
+    architect: `${Math.round(TIER_LIMITS.architect.templateRevenueShare * 100)}%`,
+  },
+  {
+    label: 'VIP support',
+    starter: '✗',
+    creator: '✗',
+    pro: '✗',
+    architect: '✓',
+  },
 ];
 
 interface TierCardProps {
@@ -259,6 +343,13 @@ export function SubscriptionScreen({ navigation }: Props) {
             onUpgrade={handleUpgrade}
           />
           <TierCard
+            tier="pro"
+            billingInterval={billing}
+            isCurrentTier={tier === 'pro'}
+            isHighlighted={true}
+            onUpgrade={handleUpgrade}
+          />
+          <TierCard
             tier="architect"
             billingInterval={billing}
             isCurrentTier={tier === 'architect'}
@@ -306,10 +397,11 @@ export function SubscriptionScreen({ navigation }: Props) {
 
           {/* Table header */}
           <View style={{ flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border }}>
-            <Text style={{ flex: 2, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: BASE_COLORS.textDim }}>FEATURE</Text>
-            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: BASE_COLORS.textDim, textAlign: 'center' }}>FREE</Text>
-            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: colors.primary, textAlign: 'center' }}>CREATOR</Text>
-            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: BASE_COLORS.warning, textAlign: 'center' }}>ARCH</Text>
+            <Text style={{ flex: 2, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: BASE_COLORS.textDim }}>FEATURE</Text>
+            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: BASE_COLORS.textDim, textAlign: 'center' }}>FREE</Text>
+            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: colors.primary, textAlign: 'center' }}>CREATOR</Text>
+            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: BASE_COLORS.success, textAlign: 'center' }}>PRO</Text>
+            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: BASE_COLORS.warning, textAlign: 'center' }}>ARCH</Text>
           </View>
 
           {FEATURES.map((row, i) => (
@@ -323,10 +415,11 @@ export function SubscriptionScreen({ navigation }: Props) {
                 backgroundColor: i % 2 === 0 ? 'transparent' : BASE_COLORS.surfaceHigh + '55',
               }}
             >
-              <Text style={{ flex: 2, fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textSecondary }}>{row.label}</Text>
-              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, textAlign: 'center' }}>{row.starter}</Text>
-              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: colors.primary, textAlign: 'center' }}>{row.creator}</Text>
-              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.warning, textAlign: 'center' }}>{row.architect}</Text>
+              <Text style={{ flex: 2, fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.textSecondary }}>{row.label}</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.textDim, textAlign: 'center' }}>{row.starter}</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.primary, textAlign: 'center' }}>{row.creator}</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.success, textAlign: 'center' }}>{row.pro}</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.warning, textAlign: 'center' }}>{row.architect}</Text>
             </View>
           ))}
         </View>

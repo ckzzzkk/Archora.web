@@ -64,6 +64,11 @@ export const aiService = {
         e.code = 'TIMEOUT';
         throw e;
       }
+      if (err instanceof TypeError && (err.message.includes('Network request failed') || err.message.includes('Failed to fetch'))) {
+        const e = new Error('Network error') as Error & { code: string };
+        e.code = 'NETWORK';
+        throw e;
+      }
       throw err;
     }
   },
@@ -80,6 +85,37 @@ export const aiService = {
     });
     if (!response.ok) throw new Error('AI blueprint edit failed');
     return response.json() as Promise<{ message: string; blueprint?: BlueprintData }>;
+  },
+
+  async upsertUserPreferences(userId: string, payload: Partial<GenerationPayload>): Promise<void> {
+    await supabase.from('user_ai_preferences').upsert({
+      user_id: userId,
+      building_type: payload.buildingType,
+      style_id: payload.style,
+      plot_size: payload.plotSize,
+      plot_unit: payload.plotUnit ?? 'm2',
+      bedrooms: payload.bedrooms,
+      bathrooms: payload.bathrooms,
+      has_pool: payload.hasPool ?? false,
+      has_garden: payload.hasGarden ?? false,
+      has_garage: payload.hasGarage ?? false,
+      has_home_office: payload.hasHomeOffice ?? false,
+      has_utility_room: payload.hasUtilityRoom ?? false,
+      last_used_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+  },
+
+  async uploadReferenceImage(userId: string, uri: string): Promise<string | null> {
+    const path = `${userId}/${Date.now()}.jpg`;
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const { error } = await supabase.storage.from('reference-images').upload(path, blob, {
+      upsert: true,
+      contentType: 'image/jpeg',
+    });
+    if (error) return null;
+    const { data } = supabase.storage.from('reference-images').getPublicUrl(path);
+    return data.publicUrl;
   },
 
   async transcribeAudio(audioUri: string): Promise<string> {

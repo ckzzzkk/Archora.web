@@ -4,6 +4,8 @@ import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { logAudit } from '../_shared/audit.ts';
+import { Errors } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const RequestSchema = z.object({
@@ -103,43 +105,43 @@ RULES:
 - Add windows on exterior walls, doors between rooms
 - Output only valid JSON matching the BlueprintData schema`;
 
+/** Adds CORS headers to any Response returned by Errors.* helpers. */
+function addCors(res: Response): Response {
+  const headers = new Headers(res.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);
+  return new Response(res.body, { status: res.status, headers });
+}
+
 serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   try {
     const user = await getAuthUser(req);
-    const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
 
     // Rate limit: 10 AI requests per hour
     const rateLimitOk = await checkRateLimit(`ai:${user.id}`, 10, 3600);
     if (!rateLimitOk) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Try again later.', code: 'RATE_LIMITED' }), {
-        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return addCors(Errors.rateLimited('Rate limit exceeded. Try again later.'));
     }
 
     // Quota check (atomic, race-condition safe)
     const quotaOk = await checkQuota(user.id, 'ai_generation');
     if (!quotaOk) {
-      return new Response(JSON.stringify({ error: 'Monthly AI generation quota reached.', code: 'QUOTA_EXCEEDED' }), {
-        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return addCors(Errors.quotaExceeded('Monthly AI generation quota reached.'));
     }
 
     const body = await req.json();
     const parsed = RequestSchema.safeParse(body);
     if (!parsed.success) {
-      return new Response(JSON.stringify({ error: 'Invalid request', details: parsed.error.issues }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return addCors(Errors.validation('Invalid request', parsed.error.issues));
     }
 
     const {
       prompt, buildingType, style, roomCount,
       plotSize, plotUnit, bedrooms, bathrooms, livingAreas,
       hasGarage, hasGarden, hasPool, poolSize,
-      hasHomeOffice, hasUtilityRoom, additionalNotes, transcript,
+      hasHomeOffice, hasUtilityRoom, referenceImageUrl, additionalNotes, transcript,
     } = parsed.data;
 
     const details: string[] = [];
@@ -157,14 +159,19 @@ serve(async (req) => {
 
     const combinedNotes = [prompt, additionalNotes, transcript].filter(Boolean).join('\n');
 
-    const userMessage = `Design a ${buildingType} with the following specifications:
+    let userMessage = `Design a ${buildingType} with the following specifications:
 ${details.join('\n')}
 ${combinedNotes ? `\nAdditional notes from the user:\n${combinedNotes}` : ''}
 
 Generate a complete, realistic floor plan with proper room sizes, realistic furniture placement, and appropriate openings.`;
 
+    if (referenceImageUrl) {
+      userMessage += `\n\nReference image URL for style/layout inspiration: ${referenceImageUrl}`;
+    }
+
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicKey) {
+      // AI_NOT_CONFIGURED is a custom code not in Errors.* — kept as direct response
       return new Response(JSON.stringify({
         error: 'AI_NOT_CONFIGURED',
         message: 'AI generation coming soon — API key not yet configured',
@@ -205,16 +212,12 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
       // Try to extract JSON from response
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        return new Response(JSON.stringify({ error: 'AI returned invalid JSON', code: 'UPSTREAM_ERROR' }), {
-          status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return addCors(Errors.upstream('AI returned invalid JSON'));
       }
       try {
         blueprintData = JSON.parse(jsonMatch[0]);
       } catch {
-        return new Response(JSON.stringify({ error: 'AI returned invalid JSON', code: 'UPSTREAM_ERROR' }), {
-          status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return addCors(Errors.upstream('AI returned invalid JSON'));
       }
     }
 
@@ -236,14 +239,19 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
       result_data:     blueprintData as Record<string, unknown>,
     });
 
+    await logAudit({
+      user_id: user.id,
+      action: 'ai_generate',
+      resource_type: 'blueprint',
+      metadata: { buildingType, style, tier: user.app_metadata?.subscription_tier ?? 'starter' },
+    });
+
     return new Response(JSON.stringify({ blueprint: blueprintData }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('AI generate error:', error);
-    return new Response(JSON.stringify({ error: 'Generation failed', code: 'INTERNAL_ERROR' }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return addCors(Errors.internal('Generation failed'));
   }
 });

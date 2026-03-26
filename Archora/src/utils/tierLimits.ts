@@ -133,11 +133,11 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 
   creator: {
     maxProjects: 25,
-    maxRoomsPerProject: 20,
+    maxRoomsPerProject: 15,
     maxFurniturePerRoom: 50,
     maxFloors: 5,
     savedProjects: 25,
-    maxRooms: 20,
+    maxRooms: 15,
 
     aiGenerationsPerMonth: 200,
     arScansPerMonth: 15,
@@ -303,7 +303,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     batchSize: 5,
     buildingCodeCompliance: true,
     monetiseTemplates: true,
-    creatorRevenueSplit: 70,
+    creatorRevenueSplit: 80,
     prioritySupport: true,
     threeDSessionMinutes: -1,
   },

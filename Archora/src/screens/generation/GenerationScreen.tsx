@@ -13,7 +13,6 @@ import { useProjectStore } from '../../stores/projectStore';
 import { useAuthStore } from '../../stores/authStore';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { BASE_COLORS } from '../../theme/colors';
-import { supabase } from '../../utils/supabaseClient';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData } from '../../types/blueprint';
 import type { GenerationPayload, GenerationStep } from '../../types/generation';
@@ -149,30 +148,20 @@ export function GenerationScreen() {
       successHaptic();
       setScreenState('success');
 
-      // Save as new project if user is logged in
-      if (user) {
-        await projectActions.create(
+      // Fire-and-forget project creation — don't affect success state
+      if (user?.id) {
+        projectActions.create(
           user.id,
           `${blueprint.metadata?.style ?? 'Modern'} ${blueprint.metadata?.buildingType ?? 'Building'}`.replace(/^\w/, (c) => c.toUpperCase()),
-          payload.buildingType as 'house' | 'apartment' | 'office' | 'studio' | 'villa',
-        );
+          payload.buildingType,
+        ).catch((err) => {
+          console.warn('Project creation failed silently:', err);
+        });
       }
 
-      // Fire-and-forget: upsert user preferences
+      // Fire-and-forget: upsert user preferences via service layer
       if (user?.id) {
-        supabase.from('user_ai_preferences').upsert({
-          user_id: user.id,
-          building_type: payload.buildingType,
-          style_id: payload.style,
-          plot_size: payload.plotSize,
-          plot_unit: payload.plotUnit,
-          bedrooms: payload.bedrooms,
-          bathrooms: payload.bathrooms,
-          has_pool: payload.hasPool,
-          has_garden: payload.hasGarden,
-          has_garage: payload.hasGarage,
-          last_used_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' }).then(() => {});
+        aiService.upsertUserPreferences(user.id, payload).catch(() => {});
       }
     } catch (e) {
       if (!isMounted.current) return;

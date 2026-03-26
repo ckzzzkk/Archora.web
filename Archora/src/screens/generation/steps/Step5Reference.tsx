@@ -3,8 +3,9 @@ import { View, Text, Pressable, Image, Alert } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 import { BASE_COLORS } from '../../../theme/colors';
-import { supabase } from '../../../utils/supabaseClient';
+import { aiService } from '../../../services/aiService';
 import { useAuthStore } from '../../../stores/authStore';
+import { useTierGate } from '../../../hooks/useTierGate';
 import { CompassRoseLoader } from '../../../components/common/CompassRoseLoader';
 
 interface Props {
@@ -16,10 +17,20 @@ interface Props {
 
 export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onNext }: Props) {
   const userId = useAuthStore((s) => s.user?.id);
+  const { allowed: canUploadReference } = useTierGate('blueprintUpload');
   const [uploading, setUploading] = useState(false);
   const [localUri, setLocalUri] = useState<string | null>(null);
 
   const pickImage = async () => {
+    if (!canUploadReference) {
+      Alert.alert(
+        'Creator Feature',
+        'Reference image upload is available on Creator plan and above. Upgrade to unlock this feature.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Please allow access to your photo library.');
@@ -39,21 +50,10 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
     setUploading(true);
 
     try {
-      const filename = `${userId}/${Date.now()}.jpg`;
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-
-      const { error } = await supabase.storage
-        .from('reference-images')
-        .upload(filename, blob, { contentType: 'image/jpeg', upsert: true });
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage
-        .from('reference-images')
-        .getPublicUrl(filename);
-
-      onImageUploaded(urlData.publicUrl);
+      if (!userId) throw new Error('Not authenticated');
+      const publicUrl = await aiService.uploadReferenceImage(userId, asset.uri);
+      if (!publicUrl) throw new Error('Upload returned no URL');
+      onImageUploaded(publicUrl);
     } catch {
       Alert.alert('Upload failed', 'Could not upload image. Please try again.');
       setLocalUri(null);
