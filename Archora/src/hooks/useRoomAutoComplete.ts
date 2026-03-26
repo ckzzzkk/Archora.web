@@ -1,3 +1,15 @@
+/**
+ * useRoomAutoComplete — ready-to-wire hook for furniture auto-complete suggestions.
+ *
+ * Intended usage: import into FurnitureLibrarySheet when a room is selected.
+ * Pass the blueprint from useBlueprintStore, then call suggestForRoom(selectedRoomId)
+ * to get prioritised furniture suggestions to show at the top of the sheet.
+ *
+ * Example:
+ *   const { blueprint } = useBlueprintStore();
+ *   const { suggestForRoom } = useRoomAutoComplete(blueprint);
+ *   const suggestions = selectedRoomId ? suggestForRoom(selectedRoomId) : [];
+ */
 import { useCallback } from 'react';
 import type { BlueprintData } from '../types/blueprint';
 
@@ -18,7 +30,7 @@ function getAutoCompleteSuggestions(type: string, area: number): FurnitureSugges
       return [
         { furnitureType: 'toilet', position: 'corner', reason: 'Standard placement' },
         { furnitureType: 'bathroom_sink', position: 'adjacent_toilet', reason: 'Near toilet' },
-        { furnitureType: area > 6 ? 'bathtub' : 'bathtub', position: 'far_wall', reason: 'Standard layout' },
+        { furnitureType: area > 6 ? 'bathtub' : 'shower', position: 'far_wall', reason: 'Standard layout' },
       ];
     case 'bedroom':
       return [

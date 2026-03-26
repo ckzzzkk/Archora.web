@@ -28,6 +28,7 @@ import { LogoLoader } from '../../components/common/LogoLoader';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { InHouseView } from '../../components/3d/InHouseView';
 import { BASE_COLORS } from '../../theme/colors';
+import { randomUUID } from 'expo-crypto';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import type { RootStackParamList } from '../../navigation/types';
@@ -205,7 +206,7 @@ export function BlueprintWorkspaceScreen() {
     if (!blueprint) return;
     const floorIndex = blueprint.floors.length - 1;
     addStaircase(floorIndex, {
-      id: Math.random().toString(36).slice(2),
+      id: randomUUID(),
       type,
       position: { x: 0, y: 0 },
       connectsFloors: [floorIndex - 1, floorIndex],
@@ -216,7 +217,7 @@ export function BlueprintWorkspaceScreen() {
   const handleAddElevator = useCallback(() => {
     if (!blueprint) return;
     addElevator({
-      id: Math.random().toString(36).slice(2),
+      id: randomUUID(),
       position: { x: 0, y: 0 },
       servesFloors: blueprint.floors.map((_, i) => i),
     });
@@ -399,15 +400,15 @@ export function BlueprintWorkspaceScreen() {
               width: 56,
               height: 56,
               borderRadius: 28,
-              backgroundColor: '#222222',
+              backgroundColor: BASE_COLORS.surface,
               borderWidth: 1,
-              borderColor: '#333333',
+              borderColor: BASE_COLORS.border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
             onPress={() => setAISheetVisible(true)}
           >
-            <Text style={{ color: '#C8C8C8', fontSize: 20 }}>✦</Text>
+            <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 20 }}>✦</Text>
           </Pressable>
         )}
         {aiSheetVisible && <AIAssistantSheet onClose={() => setAISheetVisible(false)} />}

@@ -46,30 +46,19 @@ export class ErrorBoundary extends Component<Props, State> {
             padding: 24,
           }}
         >
-          <Text
-            style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
-              fontSize: 18,
-              color: BASE_COLORS.error,
-              marginBottom: 8,
-              textAlign: 'center',
-            }}
-          >
+          <Text style={{ fontSize: 16, color: BASE_COLORS.error, marginBottom: 8, textAlign: 'center' }}>
             Something went wrong
           </Text>
-          {__DEV__ ? (
-            <Text
-              style={{
-                fontFamily: 'JetBrainsMono_400Regular',
-                fontSize: 11,
-                color: BASE_COLORS.textSecondary,
-                textAlign: 'center',
-                marginBottom: 20,
-              }}
-            >
-              {this.state.error?.message}
+          {__DEV__ && (
+            <Text style={{ fontSize: 11, color: BASE_COLORS.textSecondary, textAlign: 'center', marginBottom: 8 }}>
+              {this.state.error?.message ?? 'Unknown error'}
             </Text>
-          ) : null}
+          )}
+          {__DEV__ && (
+            <Text style={{ fontSize: 10, color: BASE_COLORS.textDim, textAlign: 'center', marginBottom: 20 }}>
+              {this.state.error?.stack?.slice(0, 400) ?? ''}
+            </Text>
+          )}
           <TouchableOpacity
             onPress={this.reset}
             style={{
@@ -80,9 +69,7 @@ export class ErrorBoundary extends Component<Props, State> {
               paddingVertical: 10,
             }}
           >
-            <Text style={{ color: BASE_COLORS.textPrimary, fontFamily: 'Inter_400Regular' }}>
-              Try again
-            </Text>
+            <Text style={{ color: BASE_COLORS.textPrimary }}>Try again</Text>
           </TouchableOpacity>
         </View>
       );

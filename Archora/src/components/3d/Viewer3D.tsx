@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Canvas } from '@react-three/fiber/native';
 import { OrbitControls, Grid, Sky } from '@react-three/drei/native';
@@ -60,12 +60,6 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
     () => ({ position: cam.position, fov: cam.fov, near: 0.1, far: 500 } as const),
     [cam],
   );
-  const sceneProps = useMemo(() => ({
-    walls: blueprint?.walls ?? [],
-    rooms: blueprint?.rooms ?? [],
-    furniture: blueprint?.furniture ?? [],
-  }), [blueprint]);
-
   if (!blueprint) {
     return (
       <EmptyState
@@ -80,7 +74,7 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Canvas
-        {...({ frameloop: 'demand' } as any)}
+        {...({ frameloop: 'always' } as any)}
         shadows={showShadows}
         camera={cameraConfig}
         style={{ flex: 1 }}

@@ -37,13 +37,12 @@ export function AIAssistantSheet({ onClose }: Props) {
     setIsLoading(true);
     try {
       let response = 'I understand your request. Blueprint editing via AI chat is being set up.';
-      const svc = aiService as unknown as Record<string, ((...args: unknown[]) => Promise<{ blueprint?: unknown; message?: string }>) | undefined>;
-      if (typeof svc['editBlueprint'] === 'function') {
-        const result = await svc['editBlueprint'](userMessage, blueprint);
-        if (result?.blueprint) {
-          loadBlueprint(result.blueprint as Parameters<typeof loadBlueprint>[0]);
-          response = result.message ?? 'Blueprint updated successfully.';
-        }
+      const result = await aiService.editBlueprint({ prompt: userMessage, blueprint: blueprint! });
+      if (result?.blueprint) {
+        loadBlueprint(result.blueprint);
+        response = result.message ?? 'Blueprint updated successfully.';
+      } else if (result?.message) {
+        response = result.message;
       }
       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
     } catch {

@@ -394,7 +394,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
               })}
 
               {/* ── Layer 4: Room labels ───────────────────────────────── */}
-              {(blueprint?.rooms ?? []).map((room) => {
+              {roomFont && (blueprint?.rooms ?? []).map((room) => {
                 const cx = toPixelX(room.centroid.x);
                 const cy = toPixelY(room.centroid.y);
                 const warning = roomWarning(room);
@@ -467,7 +467,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                     <Line p1={{ x: sx, y: sy }} p2={{ x: ex, y: ey }} color={BASE_COLORS.textSecondary} strokeWidth={0.5} />
                     <Path path={arrowPath1} color={BASE_COLORS.textSecondary} style="fill" />
                     <Path path={arrowPath2} color={BASE_COLORS.textSecondary} style="fill" />
-                    <SkiaText x={mx - 16} y={my - 4} text={dim.displayText} color={BASE_COLORS.textSecondary} font={dimFont} />
+                    {dimFont && <SkiaText x={mx - 16} y={my - 4} text={dim.displayText} color={BASE_COLORS.textSecondary} font={dimFont} />}
                   </Group>
                 );
               })}
@@ -496,7 +496,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                     {/* Start point dot */}
                     <Circle cx={x1} cy={y1} r={5} color={previewColor} opacity={0.9} />
                     {/* Live dimension label */}
-                    {preview.length > 0 && (
+                    {dimFont && preview.length > 0 && (
                       <SkiaText
                         x={mx - 20}
                         y={my - 10}
@@ -593,7 +593,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                     </Path>
                     <Circle cx={ax} cy={ay} r={4} color={BASE_COLORS.warning} />
                     <Circle cx={bx} cy={by} r={4} color={BASE_COLORS.warning} />
-                    <SkiaText x={(ax + bx) / 2 - 16} y={(ay + by) / 2 - 8} text={label} color={BASE_COLORS.warning} font={dimFont} />
+                    {dimFont && <SkiaText x={(ax + bx) / 2 - 16} y={(ay + by) / 2 - 8} text={label} color={BASE_COLORS.warning} font={dimFont} />}
                   </Group>
                 );
               })()}
