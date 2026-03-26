@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Canvas } from '@react-three/fiber/native';
 import { OrbitControls, Grid, Sky } from '@react-three/drei/native';
@@ -61,14 +61,23 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
     );
   }
 
-  const grid = gridDimensions(blueprint);
-  const cam = activeCameraPreset ?? { position: [10, 8, 10] as [number, number, number], target: [0, 0, 0] as [number, number, number], fov: 45 };
+  const grid = useMemo(() => gridDimensions(blueprint), [blueprint]);
+  const cam = useMemo(
+    () => activeCameraPreset ?? { position: [10, 8, 10] as [number, number, number], target: [0, 0, 0] as [number, number, number], fov: 45 },
+    [activeCameraPreset],
+  );
+  const cameraConfig = useMemo(
+    () => ({ position: cam.position, fov: cam.fov, near: 0.1, far: 500 } as const),
+    [cam],
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Canvas
+        {...({ frameloop: 'demand' } as any)}
         shadows={showShadows}
-        camera={{ position: cam.position, fov: cam.fov, near: 0.1, far: 500 }}
+        camera={cameraConfig}
         style={{ flex: 1 }}
         onCreated={() => setIsRendering(true)}
       >

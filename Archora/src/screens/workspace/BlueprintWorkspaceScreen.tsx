@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, interpolate,
@@ -16,9 +16,11 @@ import { TIER_LIMITS } from '../../utils/tierLimits';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { Canvas2D } from '../../components/blueprint/Canvas2D';
+import type { Canvas2DHandle } from '../../components/blueprint/Canvas2D';
 import { FurnitureLibrarySheet } from '../../components/blueprint/FurnitureLibrarySheet';
 import { StyleSelectorSheet } from '../../components/blueprint/StyleSelectorSheet';
 import { AIChatPanel } from '../../components/blueprint/AIChatPanel';
+import { AIAssistantSheet } from '../../components/blueprint/AIAssistantSheet';
 import { SurfacesSheet } from '../../components/blueprint/SurfacesSheet';
 import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
 import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
@@ -26,6 +28,8 @@ import { LogoLoader } from '../../components/common/LogoLoader';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { InHouseView } from '../../components/3d/InHouseView';
 import { BASE_COLORS } from '../../theme/colors';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
 import type { RootStackParamList } from '../../navigation/types';
 import type { ViewMode } from '../../types';
 import type { StaircaseType } from '../../types/blueprint';
@@ -159,6 +163,8 @@ export function BlueprintWorkspaceScreen() {
   const currentProjectId = route.params?.projectId;
 
   const [showStructuralGrid, setShowStructuralGrid] = useState(false);
+  const [aiSheetVisible, setAISheetVisible] = useState(false);
+  const canvasRef = useRef<Canvas2DHandle>(null);
 
   const handleToolPress = useCallback((toolId: ToolId) => {
     if (toolId === 'furniture') { setShowFurniture(true); return; }
@@ -217,6 +223,30 @@ export function BlueprintWorkspaceScreen() {
     setShowStaircasePrompt(false);
   }, [blueprint, addElevator]);
 
+  const exportImage = useCallback(async () => {
+    const image = canvasRef.current?.makeImageSnapshot();
+    if (!image) {
+      showToast('Nothing to export — switch to 2D view first', 'info');
+      return;
+    }
+    try {
+      const base64 = image.encodeToBase64();
+      const uri = (FileSystem.documentDirectory ?? '') + 'blueprint.png';
+      await FileSystem.writeAsStringAsync(uri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        showToast('Photo library permission denied', 'error');
+        return;
+      }
+      await MediaLibrary.saveToLibraryAsync(uri);
+      showToast('Blueprint saved to photos', 'success');
+    } catch {
+      showToast('Export failed — please try again', 'error');
+    }
+  }, [showToast]);
+
   return (
     <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
 
@@ -263,6 +293,26 @@ export function BlueprintWorkspaceScreen() {
             >
               <Text style={{ fontSize: 14, color: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.textDim }}>⊞</Text>
               <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.textDim, marginTop: 2 }}>GRID</Text>
+            </Pressable>
+          )}
+          {/* Export — available in 2D view with a blueprint loaded */}
+          {blueprint && viewMode === '2D' && (
+            <Pressable
+              onPress={exportImage}
+              style={{
+                width: 64,
+                height: 52,
+                borderRadius: 14,
+                backgroundColor: BASE_COLORS.surfaceHigh,
+                borderWidth: 1,
+                borderColor: BASE_COLORS.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 8,
+              }}
+            >
+              <Text style={{ fontSize: 14, color: BASE_COLORS.textDim }}>⤓</Text>
+              <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: BASE_COLORS.textDim, marginTop: 2 }}>EXPORT</Text>
             </Pressable>
           )}
           {/* Publish — Creator+ only, only shown when blueprint has rooms */}
@@ -322,6 +372,7 @@ export function BlueprintWorkspaceScreen() {
           <>
             <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, canvas2DStyle]}>
               <Canvas2D
+                ref={canvasRef}
                 showStructuralGrid={showStructuralGrid}
                 activeTool={activeTool}
                 pendingFurniturePlacement={pendingFurniturePlacement}
@@ -337,6 +388,29 @@ export function BlueprintWorkspaceScreen() {
         )}
 
         {blueprint && <AIChatPanel visible={showChat} onToggle={() => setShowChat((v) => !v)} />}
+
+        {/* Floating AI assistant button */}
+        {blueprint && (
+          <Pressable
+            style={{
+              position: 'absolute',
+              bottom: 24,
+              right: 24,
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              backgroundColor: '#222222',
+              borderWidth: 1,
+              borderColor: '#333333',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onPress={() => setAISheetVisible(true)}
+          >
+            <Text style={{ color: '#C8C8C8', fontSize: 20 }}>✦</Text>
+          </Pressable>
+        )}
+        {aiSheetVisible && <AIAssistantSheet onClose={() => setAISheetVisible(false)} />}
       </View>
 
       {/* ── Sheets ──────────────────────────────────────────────────────── */}

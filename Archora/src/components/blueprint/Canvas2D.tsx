@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { View, Dimensions } from 'react-native';
 import {
   Canvas,
@@ -26,6 +26,7 @@ import { useRoomDetection } from '../../hooks/useRoomDetection';
 import { useDimensions } from '../../hooks/useDimensions';
 import { clipboard } from '../../utils/clipboard';
 import { FurnitureContextMenu } from './FurnitureContextMenu';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { BASE_COLORS } from '../../theme/colors';
 import {
   PIXELS_PER_METRE,
@@ -49,6 +50,10 @@ interface ContextMenuState {
   item: FurniturePiece | null;
 }
 
+export interface Canvas2DHandle {
+  makeImageSnapshot: () => { encodeToBase64: () => string } | undefined;
+}
+
 interface Props {
   onSelectObject?: (id: string | null) => void;
   showStructuralGrid?: boolean;
@@ -57,19 +62,26 @@ interface Props {
   onFurniturePlaced?: () => void;
 }
 
-export function Canvas2D({
+export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner({
   onSelectObject,
   showStructuralGrid = false,
   activeTool,
   pendingFurniturePlacement,
   onFurniturePlaced,
-}: Props) {
+}, ref) {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const selectedId = useBlueprintStore((s) => s.selectedId);
   const setSelectedId = useBlueprintStore((s) => s.actions.setSelectedId);
   const deleteFurniture = useBlueprintStore((s) => s.actions.deleteFurniture);
   const { colors } = useTheme();
   const { light } = useHaptics();
+
+  // ── Skia canvas ref (for image export) ───────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const skiaCanvasRef = useRef<any>(null);
+  useImperativeHandle(ref, () => ({
+    makeImageSnapshot: () => skiaCanvasRef.current?.makeImageSnapshot?.() as { encodeToBase64: () => string } | undefined,
+  }));
 
   // ── Fonts ────────────────────────────────────────────────────────────────
   // Using null for now (fonts loaded via useFonts at app level)
@@ -310,10 +322,12 @@ export function Canvas2D({
   };
 
   return (
+    <ErrorBoundary>
     <View style={{ width: SCREEN_W, height: CANVAS_H }}>
       <GestureDetector gesture={combined}>
         <View style={{ width: SCREEN_W, height: CANVAS_H }}>
-          <Canvas style={{ width: SCREEN_W, height: CANVAS_H }}>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <Canvas {...({ ref: skiaCanvasRef } as any)} style={{ width: SCREEN_W, height: CANVAS_H }}>
             <Group>
 
               {/* ── Layer 1: Blueprint grid ────────────────────────────── */}
@@ -355,7 +369,7 @@ export function Canvas2D({
               })()}
 
               {/* ── Layer 3: Room fills ────────────────────────────────── */}
-              {blueprint.rooms.map((room) => {
+              {(blueprint?.rooms ?? []).map((room) => {
                 const cx = toPixelX(room.centroid.x);
                 const cy = toPixelY(room.centroid.y);
                 // Approximate room bounding box from area
@@ -380,7 +394,7 @@ export function Canvas2D({
               })}
 
               {/* ── Layer 4: Room labels ───────────────────────────────── */}
-              {blueprint.rooms.map((room) => {
+              {(blueprint?.rooms ?? []).map((room) => {
                 const cx = toPixelX(room.centroid.x);
                 const cy = toPixelY(room.centroid.y);
                 const warning = roomWarning(room);
@@ -398,7 +412,7 @@ export function Canvas2D({
               })}
 
               {/* ── Layer 5: Walls ─────────────────────────────────────── */}
-              {blueprint.walls.map((wall) => {
+              {(blueprint?.walls ?? []).map((wall) => {
                 const isSelected = selectedId === wall.id;
                 const x1 = toPixelX(wall.start.x);
                 const y1 = toPixelY(wall.start.y);
@@ -498,7 +512,7 @@ export function Canvas2D({
               })()}
 
               {/* ── Layer 8: Furniture rectangles ──────────────────────── */}
-              {blueprint.furniture.map((piece) => {
+              {(blueprint?.furniture ?? []).map((piece) => {
                 const isSelected = selectedId === piece.id;
                 const px = toPixelX(piece.position.x);
                 const py = toPixelY(piece.position.z);
@@ -600,5 +614,6 @@ export function Canvas2D({
         onClose={closeContextMenu}
       />
     </View>
+    </ErrorBoundary>
   );
-}
+});
