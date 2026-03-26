@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { BASE_COLORS } from '../../theme/colors';
+import { BASE_COLORS, withAlpha } from '../../theme/colors';
 import { TierGate } from '../common/TierGate';
 
 interface Point { x: number; y: number; }
 
-// ARMeasureMode gates on copyLayout — false for Starter/Creator, true for Pro/Architect
-// This is the closest available Pro+ gate key in TierLimits.
-// TODO: add a dedicated `arMeasure: boolean` key to TierLimits for semantic clarity.
 export function ARMeasureMode() {
   return (
-    <TierGate feature="copyLayout" featureLabel="AR measurements">
+    <TierGate feature="arMeasure" featureLabel="AR measurements">
       <ARMeasureModeContent />
     </TierGate>
   );
@@ -44,7 +41,7 @@ function ARMeasureModeContent() {
     >
       {/* Instruction */}
       <View style={{ position: 'absolute', top: 130, left: 0, right: 0, alignItems: 'center' }}>
-        <View style={{ backgroundColor: 'rgba(34,34,34,0.85)', borderRadius: 50, paddingHorizontal: 20, paddingVertical: 10 }}>
+        <View style={{ backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 50, paddingHorizontal: 20, paddingVertical: 10 }}>
           <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 14 }}>
             {!point1 ? 'Tap to set first point' : !point2 ? 'Tap to set second point' : 'Tap anywhere to reset'}
           </Text>
@@ -69,7 +66,7 @@ function ARMeasureModeContent() {
           position: 'absolute',
           left: (point1.x + point2.x) / 2 - 40,
           top: (point1.y + point2.y) / 2 - 20,
-          backgroundColor: 'rgba(34,34,34,0.9)', borderRadius: 50,
+          backgroundColor: withAlpha(BASE_COLORS.surface, 0.9), borderRadius: 50,
           paddingHorizontal: 12, paddingVertical: 6,
           borderWidth: 1, borderColor: BASE_COLORS.border,
         }}>

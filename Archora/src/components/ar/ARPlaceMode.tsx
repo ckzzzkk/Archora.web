@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../theme/colors';
+import { BASE_COLORS, withAlpha } from '../../theme/colors';
 import { TierGate } from '../common/TierGate';
 
 // ARPlaceMode gates on arScansPerMonth — 0 for Starter, 15 for Creator+
@@ -49,7 +49,7 @@ function ARPlaceModeContent() {
           position: 'absolute', top: 130, left: 0, right: 0, alignItems: 'center',
         }, pulseStyle]}>
           <View style={{
-            backgroundColor: 'rgba(34,34,34,0.85)', borderRadius: 50,
+            backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 50,
             paddingHorizontal: 20, paddingVertical: 10,
             borderWidth: 1, borderColor: BASE_COLORS.border,
           }}>
@@ -60,7 +60,7 @@ function ARPlaceModeContent() {
 
       {!surfaceDetected && (
         <View style={{ position: 'absolute', top: 130, left: 20, right: 20, alignItems: 'center' }}>
-          <View style={{ backgroundColor: 'rgba(34,34,34,0.85)', borderRadius: 50, paddingHorizontal: 20, paddingVertical: 10 }}>
+          <View style={{ backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 50, paddingHorizontal: 20, paddingVertical: 10 }}>
             <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 14 }}>Point camera at a flat surface</Text>
           </View>
         </View>
@@ -70,7 +70,7 @@ function ARPlaceModeContent() {
       {placedItems.map((item, i) => (
         <View key={i} style={{
           position: 'absolute', left: item.x, top: item.y,
-          backgroundColor: 'rgba(34,34,34,0.85)', borderRadius: 8,
+          backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 8,
           padding: 8, borderWidth: 1, borderColor: BASE_COLORS.border,
         }}>
           <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 12 }}>{item.label}</Text>

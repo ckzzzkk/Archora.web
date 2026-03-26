@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { BASE_COLORS } from '../../theme/colors';
+import { BASE_COLORS, withAlpha } from '../../theme/colors';
 
 export type ARMode = 'scan' | 'place' | 'measure';
 
@@ -28,7 +28,7 @@ export function ARModeSelector({ current, onChange }: Props) {
           onPress={() => onChange(key)}
           style={{
             paddingHorizontal: 20, paddingVertical: 8, borderRadius: 50,
-            backgroundColor: current === key ? BASE_COLORS.textPrimary : 'rgba(34,34,34,0.8)',
+            backgroundColor: current === key ? BASE_COLORS.textPrimary : withAlpha(BASE_COLORS.surface, 0.8),
             borderWidth: 1, borderColor: BASE_COLORS.border,
           }}
         >

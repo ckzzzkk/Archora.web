@@ -29,6 +29,7 @@ export interface TierLimits {
   autoSaveIntervalSeconds: number; // 0 if autoSave false
 
   // Features — booleans
+  arMeasure: boolean;
   walkthrough: boolean;
   cinematicTour: boolean;
   cinematicTourWatermark: boolean;
@@ -93,6 +94,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     autoSave: false,
     autoSaveIntervalSeconds: 0,
 
+    arMeasure: false,
     walkthrough: false,
     cinematicTour: false,
     cinematicTourWatermark: true,
@@ -152,6 +154,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     autoSave: true,
     autoSaveIntervalSeconds: 120,
 
+    arMeasure: false,
     walkthrough: true,
     cinematicTour: true,
     cinematicTourWatermark: true,
@@ -211,6 +214,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     autoSave: true,
     autoSaveIntervalSeconds: 60,
 
+    arMeasure: true,
     walkthrough: true,
     cinematicTour: true,
     cinematicTourWatermark: false,
@@ -270,6 +274,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     autoSave: true,
     autoSaveIntervalSeconds: 30,
 
+    arMeasure: true,
     walkthrough: true,
     cinematicTour: true,
     cinematicTourWatermark: false,

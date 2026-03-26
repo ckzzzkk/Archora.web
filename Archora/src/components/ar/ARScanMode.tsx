@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { BASE_COLORS } from '../../theme/colors';
+import { BASE_COLORS, withAlpha } from '../../theme/colors';
 
 export function ARScanMode() {
   const [isScanning, setIsScanning] = useState(false);
@@ -44,7 +44,7 @@ export function ARScanMode() {
       {!scanComplete && (
         <View style={{
           position: 'absolute', top: 120, left: 20, right: 20,
-          backgroundColor: 'rgba(34,34,34,0.85)', borderRadius: 50,
+          backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 50,
           paddingHorizontal: 20, paddingVertical: 10, alignItems: 'center',
         }}>
           <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 14 }}>
@@ -61,7 +61,7 @@ export function ARScanMode() {
             position: 'absolute',
             top: 200 + i * 60,
             left: 40 + (i % 2) * 120,
-            backgroundColor: 'rgba(34,34,34,0.8)',
+            backgroundColor: withAlpha(BASE_COLORS.surface, 0.8),
             borderRadius: 50, paddingHorizontal: 12, paddingVertical: 6,
             borderWidth: 1, borderColor: BASE_COLORS.border,
           }}
