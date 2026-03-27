@@ -147,3 +147,11 @@ export const aiService = {
     return data.transcript ?? '';
   },
 };
+
+// Named export matching the spec's generateBlueprint signature.
+// Placed after aiService to avoid temporal dead zone reference.
+export const generateBlueprint = async (params: {
+  prompt:       string;
+  buildingType: GenerationPayload['buildingType'];
+  style:        string;
+}): Promise<BlueprintData> => aiService.generateFloorPlan(params);

@@ -1,3 +1,12 @@
+/**
+ * GenerationScreen — ASORIA AI design interview.
+ * Three states: idle (input) → generating → success
+ *
+ * Design intent: architect's black drafting desk.
+ * Every element references the physical act of sketching on paper.
+ * The grid behind everything is graph paper. Ovals everywhere.
+ * Animations are tactile — weight, spring, deliberate pacing.
+ */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -8,6 +17,7 @@ import {
   Modal,
   Platform,
   Dimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -16,42 +26,53 @@ import Animated, {
   withTiming,
   useAnimatedStyle,
   runOnJS,
+  Easing,
 } from 'react-native-reanimated';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Audio } from 'expo-av';
 import { useHaptics } from '../../hooks/useHaptics';
 import { aiService } from '../../services/aiService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { useAuthStore } from '../../stores/authStore';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
-import { BASE_COLORS } from '../../theme/colors';
+import { GridBackground }     from '../../components/common/GridBackground';
+import { OvalButton }         from '../../components/common/OvalButton';
+import { OvalChip }           from '../../components/common/OvalChip';
+import { SketchCard }         from '../../components/common/SketchCard';
+import { ArchText }           from '../../components/common/ArchText';
+import { WaveformVisualizer } from '../../components/common/WaveformVisualizer';
+import { SketchLoader }       from '../../components/common/SketchLoader';
+import { FloatingCard }       from '../../components/common/FloatingCard';
+import { DS }                 from '../../theme/designSystem';
 import type { RootStackParamList } from '../../navigation/types';
-import type { BlueprintData } from '../../types/blueprint';
-import type { GenerationPayload } from '../../types/generation';
+import type { BlueprintData }      from '../../types/blueprint';
+import type { GenerationPayload }  from '../../types/generation';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+type ScreenState = 'idle' | 'generating' | 'success' | 'error';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const GRID_SPACING = 32;
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const BUILDING_TYPES = [
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+const BUILDING_TYPES: Array<{ id: GenerationPayload['buildingType']; emoji: string; label: string }> = [
   { id: 'house',      emoji: '🏠', label: 'House'  },
   { id: 'apartment',  emoji: '🏢', label: 'Flat'   },
   { id: 'office',     emoji: '🏗️', label: 'Office' },
   { id: 'studio',     emoji: '🎨', label: 'Studio' },
   { id: 'villa',      emoji: '🏡', label: 'Villa'  },
   { id: 'commercial', emoji: '🏪', label: 'Shop'   },
-] as const;
+];
 
 const DESIGN_STYLES = [
-  { id: 'modern',       icon: '◻',  label: 'Modern'     },
-  { id: 'minimalist',   icon: '◻',  label: 'Minimal'    },
-  { id: 'industrial',   icon: '⚙',  label: 'Industrial' },
-  { id: 'scandinavian', icon: '❄',  label: 'Scandi'     },
-  { id: 'tropical',     icon: '🌿', label: 'Tropical'   },
-  { id: 'classic',      icon: '🏛', label: 'Classic'    },
-] as const;
+  { id: 'modern',       label: 'Modern'     },
+  { id: 'minimalist',   label: 'Minimal'    },
+  { id: 'industrial',   label: 'Industrial' },
+  { id: 'scandinavian', label: 'Scandi'     },
+  { id: 'tropical',     label: 'Tropical'   },
+  { id: 'classic',      label: 'Classic'    },
+];
 
 const PROMPT_CHIPS = [
   'Modern family home',
@@ -59,63 +80,247 @@ const PROMPT_CHIPS = [
   'Studio with mezzanine',
   'Villa with pool',
   'Home office',
-  'Kitchen extension',
+  'Barn conversion',
+  'Beach house',
+  'City penthouse',
 ];
 
 const LOADING_PHASES = [
   'Understanding your vision...',
-  'Designing your space...',
+  'Sketching your space...',
   'Placing rooms and walls...',
-  'Adding furniture...',
-  'Finishing details...',
+  'Arranging furniture...',
+  'Adding the details...',
 ];
 
-type ScreenState = 'input' | 'generating' | 'success' | 'error';
+const ERROR_MESSAGES: Record<string, string> = {
+  QUOTA_EXCEEDED:   'You have used all your designs this month',
+  RATE_LIMITED:     'Slow down — please wait a moment',
+  TIMEOUT:          'Taking longer than usual — try a simpler description',
+  NETWORK:          'Check your connection and try again',
+  AUTH_ERROR:       'Please sign in again',
+  AI_NOT_CONFIGURED:'AI features are coming soon',
+};
 
-function GridBackground() {
-  const hCount = Math.ceil(SCREEN_HEIGHT / GRID_SPACING) + 1;
-  const vCount = Math.ceil(SCREEN_WIDTH  / GRID_SPACING) + 1;
+// ─── Sub-components ────────────────────────────────────────────────────────
+
+/** Animated compass A logo mark with gentle pulse */
+function LogoMark() {
+  const opacity = useSharedValue(0.75);
+
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(1,    { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.75, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      false,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
   return (
-    <View
+    <Animated.View style={[animStyle, { alignItems: 'center' }]}>
+      <Svg width={48} height={48} viewBox="0 0 48 48">
+        {/* Compass circle */}
+        <Circle
+          cx={24} cy={24} r={22}
+          stroke={DS.colors.primary}
+          strokeWidth={1.5}
+          fill="none"
+        />
+        {/* A glyph — two diagonal strokes + crossbar */}
+        <Path
+          d="M 16 36 L 24 12 L 32 36"
+          stroke={DS.colors.primary}
+          strokeWidth={1.5}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <Path
+          d="M 19 27 L 29 27"
+          stroke={DS.colors.primary}
+          strokeWidth={1.5}
+          strokeLinecap="round"
+        />
+        {/* Cardinal tick marks */}
+        <Path d="M 24 2 L 24 6"  stroke={DS.colors.primaryDim} strokeWidth={1} strokeLinecap="round" />
+        <Path d="M 24 42 L 24 46" stroke={DS.colors.primaryDim} strokeWidth={1} strokeLinecap="round" />
+        <Path d="M 2 24 L 6 24"  stroke={DS.colors.primaryDim} strokeWidth={1} strokeLinecap="round" />
+        <Path d="M 42 24 L 46 24" stroke={DS.colors.primaryDim} strokeWidth={1} strokeLinecap="round" />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+/** Pulsing red halo behind mic button when recording */
+function RecordingHalo() {
+  const scale   = useSharedValue(1);
+  const opacity = useSharedValue(0.6);
+
+  useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.5, { duration: 700, easing: Easing.out(Easing.quad) }),
+        withTiming(1,   { duration: 700, easing: Easing.in(Easing.quad)  }),
+      ),
+      -1,
+      false,
+    );
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0, { duration: 700 }),
+        withTiming(0.4, { duration: 700 }),
+      ),
+      -1,
+      false,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity:   opacity.value,
+  }));
+
+  return (
+    <Animated.View
       pointerEvents="none"
-      style={{
-        position: 'absolute', top: 0, left: 0,
-        width: SCREEN_WIDTH, height: SCREEN_HEIGHT,
-      }}
-    >
-      {Array.from({ length: hCount }).map((_, i) => (
-        <View
-          key={`h${i}`}
-          style={{
-            position: 'absolute',
-            top: i * GRID_SPACING,
-            left: 0, right: 0,
-            height: 1,
-            backgroundColor: '#222222',
-          }}
-        />
-      ))}
-      {Array.from({ length: vCount }).map((_, i) => (
-        <View
-          key={`v${i}`}
-          style={{
-            position: 'absolute',
-            left: i * GRID_SPACING,
-            top: 0, bottom: 0,
-            width: 1,
-            backgroundColor: '#222222',
-          }}
-        />
-      ))}
+      style={[
+        animStyle,
+        {
+          position:        'absolute',
+          width:           48,
+          height:          48,
+          borderRadius:    24,
+          backgroundColor: DS.colors.error,
+        },
+      ]}
+    />
+  );
+}
+
+/** Cycling loading phase text with fade transition */
+function PhaseText({ phase }: { phase: number }) {
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    opacity.value = withSequence(
+      withTiming(0, { duration: 200 }),
+      withTiming(1, { duration: 300 }),
+    );
+  }, [phase, opacity]);
+
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return (
+    <Animated.View style={[animStyle, { marginTop: DS.spacing.md, alignItems: 'center' }]}>
+      <ArchText variant="label" align="center" color={DS.colors.primaryDim}>
+        {LOADING_PHASES[phase] ?? LOADING_PHASES[0]}
+      </ArchText>
+    </Animated.View>
+  );
+}
+
+/** Three animated loading dots */
+function LoadingDots() {
+  const d = [
+    useSharedValue(DS.colors.primaryGhost),
+    useSharedValue(DS.colors.primaryGhost),
+    useSharedValue(DS.colors.primaryGhost),
+  ];
+  const op = [useSharedValue(0.3), useSharedValue(0.3), useSharedValue(0.3)];
+
+  useEffect(() => {
+    [0, 1, 2].forEach((i) => {
+      op[i].value = withRepeat(
+        withSequence(
+          withTiming(1,   { duration: 350 }),
+          withTiming(0.3, { duration: 350 }),
+        ),
+        -1,
+        false,
+      );
+    });
+    void d; // suppress
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <View style={{ flexDirection: 'row', gap: 6, marginTop: DS.spacing.sm }}>
+      {op.map((opVal, i) => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const style = useAnimatedStyle(() => ({ opacity: opVal.value }));
+        return (
+          <Animated.View
+            key={i}
+            style={[style, {
+              width: 5, height: 5, borderRadius: 3,
+              backgroundColor: DS.colors.primaryDim,
+            }]}
+          />
+        );
+      })}
     </View>
   );
 }
 
+/** Blueprint SVG preview — renders wall lines from BlueprintData */
+function BlueprintPreview({ blueprint }: { blueprint: BlueprintData }) {
+  const BOX = 260;
+  const PAD = 16;
+  const inner = BOX - PAD * 2;
+
+  // Normalise all wall coords to fit inside `inner`
+  const walls = blueprint.walls ?? [];
+  if (walls.length === 0) return null;
+
+  const allX = walls.flatMap((w) => [w.start.x, w.end.x]);
+  const allY = walls.flatMap((w) => [w.start.y, w.end.y]);
+  const minX = Math.min(...allX), maxX = Math.max(...allX);
+  const minY = Math.min(...allY), maxY = Math.max(...allY);
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+  const scale  = Math.min(inner / rangeX, inner / rangeY);
+
+  const nx = (x: number) => PAD + (x - minX) * scale;
+  const ny = (y: number) => PAD + (y - minY) * scale;
+
+  const svgH = Math.max(120, (maxY - minY) * scale + PAD * 2);
+
+  return (
+    <View style={{
+      backgroundColor: DS.colors.background,
+      borderRadius:    DS.radius.medium,
+      overflow:        'hidden',
+      marginBottom:    DS.spacing.md,
+    }}>
+      <Svg width={BOX} height={svgH} style={{ alignSelf: 'center' }}>
+        {walls.map((w) => (
+          <Path
+            key={w.id}
+            d={`M ${nx(w.start.x)} ${ny(w.start.y)} L ${nx(w.end.x)} ${ny(w.end.y)}`}
+            stroke={DS.colors.primary}
+            strokeWidth={1}
+            strokeLinecap="round"
+            opacity={0.7}
+          />
+        ))}
+      </Svg>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export function GenerationScreen() {
   const navigation = useNavigation<Nav>();
-  const { success: successHaptic, error: errorHaptic } = useHaptics();
+  const { success: hapticSuccess, error: hapticError } = useHaptics();
   const loadBlueprint = useBlueprintStore((s) => s.actions.loadBlueprint);
-  useAuthStore((s) => s.user); // subscribe for re-renders if needed
 
   const isMounted   = useRef(true);
   const isCancelled = useRef(false);
@@ -126,660 +331,460 @@ export function GenerationScreen() {
     return () => { isMounted.current = false; };
   }, []);
 
-  const [screenState, setScreenState]       = useState<ScreenState>('input');
-  const [textInput, setTextInput]           = useState('');
-  const [selectedType, setSelectedType]     = useState<GenerationPayload['buildingType']>('house');
-  const [selectedStyle, setSelectedStyle]   = useState<string>('modern');
-  const [isRecording, setIsRecording]       = useState(false);
-  const [showExtras, setShowExtras]         = useState(false);
-  const [generationPhase, setGenerationPhase] = useState(0);
-  const [errorMessage, setErrorMessage]     = useState('');
-  const [errorCode, setErrorCode]           = useState('');
-  const [result, setResult]                 = useState<BlueprintData | null>(null);
+  // State
+  const [screenState, setScreenState]   = useState<ScreenState>('idle');
+  const [textInput,   setTextInput]     = useState('');
+  const [selectedType, setSelectedType] = useState<GenerationPayload['buildingType']>('house');
+  const [selectedStyle, setSelectedStyle] = useState<string>('modern');
+  const [isRecording,  setIsRecording]  = useState(false);
+  const [showExtras,   setShowExtras]   = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState(0);
+  const [errorCode,    setErrorCode]    = useState('');
+  const [result,       setResult]       = useState<BlueprintData | null>(null);
 
-  // ── Waveform animation ──────────────────────────────────────────────────
-  const bar1 = useSharedValue(8);
-  const bar2 = useSharedValue(8);
-  const bar3 = useSharedValue(8);
-  const bar4 = useSharedValue(8);
+  // Idle ↔ generating fade
+  const idleOpacity = useSharedValue(1);
+  const idleStyle   = useAnimatedStyle(() => ({ opacity: idleOpacity.value }));
 
-  const bar1Style = useAnimatedStyle(() => ({ height: bar1.value }));
-  const bar2Style = useAnimatedStyle(() => ({ height: bar2.value }));
-  const bar3Style = useAnimatedStyle(() => ({ height: bar3.value }));
-  const bar4Style = useAnimatedStyle(() => ({ height: bar4.value }));
-
+  // Loading phase cycle
   useEffect(() => {
-    if (isRecording) {
-      bar1.value = withRepeat(withSequence(
-        withTiming(28, { duration: 200 }), withTiming(6,  { duration: 200 })), -1, false);
-      bar2.value = withRepeat(withSequence(
-        withTiming(10, { duration: 280 }), withTiming(26, { duration: 280 })), -1, false);
-      bar3.value = withRepeat(withSequence(
-        withTiming(24, { duration: 180 }), withTiming(8,  { duration: 180 })), -1, false);
-      bar4.value = withRepeat(withSequence(
-        withTiming(16, { duration: 240 }), withTiming(6,  { duration: 240 })), -1, false);
-    } else {
-      bar1.value = withTiming(8, { duration: 200 });
-      bar2.value = withTiming(8, { duration: 200 });
-      bar3.value = withTiming(8, { duration: 200 });
-      bar4.value = withTiming(8, { duration: 200 });
-    }
-  }, [isRecording, bar1, bar2, bar3, bar4]);
-
-  // ── Loading phase animation ─────────────────────────────────────────────
-  const phaseOpacity = useSharedValue(0);
-
-  const advancePhase = useCallback(() => {
-    setGenerationPhase((p) => Math.min(p + 1, LOADING_PHASES.length - 1));
-    phaseOpacity.value = withTiming(1, { duration: 350 });
-  }, [phaseOpacity]);
-
-  useEffect(() => {
-    if (screenState !== 'generating') {
-      phaseOpacity.value = 0;
-      return;
-    }
-    setGenerationPhase(0);
-    phaseOpacity.value = withTiming(1, { duration: 350 });
-
+    if (screenState !== 'generating') return;
+    setLoadingPhase(0);
     const interval = setInterval(() => {
-      phaseOpacity.value = withTiming(0, { duration: 280 }, () => {
-        runOnJS(advancePhase)();
-      });
-    }, 3000);
+      setLoadingPhase((p) => Math.min(p + 1, LOADING_PHASES.length - 1));
+    }, 2800);
     return () => clearInterval(interval);
-  }, [screenState, advancePhase, phaseOpacity]);
+  }, [screenState]);
 
-  const phaseAnimStyle = useAnimatedStyle(() => ({ opacity: phaseOpacity.value }));
-
-  // ── Voice ───────────────────────────────────────────────────────────────
+  // ── Voice ────────────────────────────────────────────────────────────────
   const startRecording = async () => {
     try {
       const { granted } = await Audio.requestPermissionsAsync();
       if (!granted) return;
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      await recording.startAsync();
-      recordingRef.current = recording;
+      const rec = new Audio.Recording();
+      await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await rec.startAsync();
+      recordingRef.current = rec;
       setIsRecording(true);
     } catch {
-      // Permission denied or hardware unavailable — silent fail
+      // no-op: permission denied or hardware unavailable
     }
   };
 
   const stopRecording = async () => {
     setIsRecording(false);
-    const recording = recordingRef.current;
-    if (!recording) return;
+    const rec = recordingRef.current;
+    if (!rec) return;
     recordingRef.current = null;
     try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
+      await rec.stopAndUnloadAsync();
+      const uri = rec.getURI();
       if (!uri) return;
       const transcript = await aiService.transcribeAudio(uri);
       if (transcript) {
         setTextInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
       }
     } catch {
-      // Transcription failed — user can type manually
+      // transcription failed — user can type manually
     }
   };
 
   const handleMicPress = () => {
-    if (isRecording) {
-      void stopRecording();
-    } else {
-      void startRecording();
-    }
+    if (isRecording) { void stopRecording(); }
+    else             { void startRecording(); }
   };
 
-  // ── Generation ──────────────────────────────────────────────────────────
+  // ── Generation ───────────────────────────────────────────────────────────
   const handleGenerate = async () => {
     if (!textInput.trim()) return;
     isCancelled.current = false;
-    setScreenState('generating');
-    setErrorMessage('');
-    setErrorCode('');
+
+    // Fade out idle content
+    idleOpacity.value = withTiming(0, { duration: 300 }, () => {
+      runOnJS(setScreenState)('generating');
+    });
 
     try {
       const blueprint = await aiService.generateFloorPlan({
-        prompt: textInput,
+        prompt:       textInput,
         buildingType: selectedType,
-        style: selectedStyle,
+        style:        selectedStyle,
       });
 
       if (isCancelled.current || !isMounted.current) return;
       loadBlueprint(blueprint);
       setResult(blueprint);
-      successHaptic();
+      hapticSuccess();
       setScreenState('success');
+      idleOpacity.value = 1; // reset for next time
     } catch (e) {
       if (isCancelled.current || !isMounted.current) return;
-      errorHaptic();
-      const err = e as { code?: string };
-      const code = err.code ?? '';
-      setErrorCode(code);
-      switch (code) {
-        case 'QUOTA_EXCEEDED':
-          setErrorMessage('You have used all your designs this month');
-          break;
-        case 'RATE_LIMITED':
-          setErrorMessage('Slow down — please wait a moment before trying again');
-          break;
-        case 'TIMEOUT':
-          setErrorMessage('Taking longer than usual — try a simpler description');
-          break;
-        case 'NETWORK':
-          setErrorMessage('Check your connection and try again');
-          break;
-        case 'AUTH_ERROR':
-          setErrorMessage('Please sign in again');
-          break;
-        default:
-          setErrorMessage('Something went wrong — please try again');
-      }
+      hapticError();
+      setErrorCode((e as { code?: string }).code ?? 'UNKNOWN');
       setScreenState('error');
+      idleOpacity.value = 1;
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     isCancelled.current = true;
-    setScreenState('input');
-  };
+    setScreenState('idle');
+    idleOpacity.value = withTiming(1, { duration: 300 });
+  }, [idleOpacity]);
 
-  const resetToInput = useCallback(() => {
+  const resetToIdle = useCallback(() => {
     setTextInput('');
-    setSelectedType('house');
-    setSelectedStyle('modern');
     setResult(null);
-    setErrorMessage('');
     setErrorCode('');
-    setScreenState('input');
-  }, []);
+    setLoadingPhase(0);
+    setScreenState('idle');
+    idleOpacity.value = 1;
+  }, [idleOpacity]);
 
-  // ── Generating ──────────────────────────────────────────────────────────
-  if (screenState === 'generating') {
-    return (
-      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
-        <GridBackground />
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-          <CompassRoseLoader size="large" />
-          <Animated.View style={[{ marginTop: 32, alignItems: 'center' }, phaseAnimStyle]}>
-            <Text style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 15,
-              color: BASE_COLORS.textSecondary,
-              textAlign: 'center',
-            }}>
-              {LOADING_PHASES[generationPhase]}
-            </Text>
-          </Animated.View>
-        </View>
-        <View style={{ paddingBottom: Platform.OS === 'ios' ? 48 : 32, paddingHorizontal: 24 }}>
-          <Pressable
-            onPress={handleCancel}
-            style={{
-              borderRadius: 50,
-              borderWidth: 1,
-              borderColor: BASE_COLORS.border,
-              paddingVertical: 14,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 15, color: BASE_COLORS.textSecondary }}>
-              Cancel
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-    );
-  }
-
-  // ── Success ─────────────────────────────────────────────────────────────
-  if (screenState === 'success') {
-    const styleLabel = result?.metadata?.style
-      ? result.metadata.style.charAt(0).toUpperCase() + result.metadata.style.slice(1)
-      : 'Modern';
-    const typeLabel = result?.metadata?.buildingType
-      ? result.metadata.buildingType.charAt(0).toUpperCase() + result.metadata.buildingType.slice(1)
-      : 'Design';
-
-    return (
-      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
-        <GridBackground />
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-          <Text style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
-            fontSize: 24,
-            color: BASE_COLORS.textPrimary,
-            textAlign: 'center',
-            marginBottom: 8,
-          }}>
-            Your design is ready
-          </Text>
-          <Text style={{
-            fontFamily: 'Inter_400Regular',
-            fontSize: 14,
-            color: BASE_COLORS.textSecondary,
-            textAlign: 'center',
-            marginBottom: 40,
-          }}>
-            {styleLabel} {typeLabel}
-          </Text>
-
-          <View style={{ width: '100%', gap: 12 }}>
-            <Pressable
-              onPress={() => navigation.navigate('Workspace', {})}
-              style={{
-                backgroundColor: BASE_COLORS.textPrimary,
-                borderRadius: 50,
-                paddingVertical: 16,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: BASE_COLORS.background }}>
-                Open in Studio
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={resetToInput}
-              style={{
-                borderRadius: 50,
-                paddingVertical: 16,
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: BASE_COLORS.border,
-              }}
-            >
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 16, color: BASE_COLORS.textPrimary }}>
-                Generate Again
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  // ── Error ────────────────────────────────────────────────────────────────
-  if (screenState === 'error') {
-    return (
-      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
-        <GridBackground />
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-          <View style={{
-            backgroundColor: `${BASE_COLORS.error}18`,
-            borderRadius: 24,
-            borderWidth: 1,
-            borderColor: `${BASE_COLORS.error}50`,
-            padding: 24,
-            marginBottom: 24,
-            width: '100%',
-          }}>
-            <Text style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 15,
-              color: BASE_COLORS.textPrimary,
-              textAlign: 'center',
-              lineHeight: 22,
-            }}>
-              {errorMessage}
-            </Text>
-          </View>
-
-          {errorCode === 'QUOTA_EXCEEDED' ? (
-            <Pressable
-              onPress={() => navigation.navigate('Subscription', {})}
-              style={{
-                backgroundColor: BASE_COLORS.textPrimary,
-                borderRadius: 50,
-                paddingVertical: 14,
-                paddingHorizontal: 32,
-                marginBottom: 12,
-              }}
-            >
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: BASE_COLORS.background }}>
-                Upgrade
-              </Text>
-            </Pressable>
-          ) : (
-            <Pressable
-              onPress={() => setScreenState('input')}
-              style={{
-                backgroundColor: BASE_COLORS.textPrimary,
-                borderRadius: 50,
-                paddingVertical: 14,
-                paddingHorizontal: 32,
-                marginBottom: 12,
-              }}
-            >
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: BASE_COLORS.background }}>
-                Try Again
-              </Text>
-            </Pressable>
-          )}
-
-          <Pressable onPress={resetToInput} style={{ paddingVertical: 10 }}>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textDim }}>
-              Start over
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-    );
-  }
-
-  // ── Input ────────────────────────────────────────────────────────────────
   const inputActive = textInput.trim().length > 0;
 
-  return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
-      <GridBackground />
+  // ── Generating state ─────────────────────────────────────────────────────
+  if (screenState === 'generating') {
+    return (
+      <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+        <GridBackground />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingTop: 56,
-          paddingBottom: 160,
-          paddingHorizontal: 20,
-        }}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Logo + tagline */}
-        <View style={{ alignItems: 'center', marginBottom: 28 }}>
-          <View style={{
-            width: 40, height: 40,
-            borderRadius: 20,
-            borderWidth: 1.5,
-            borderColor: BASE_COLORS.textPrimary,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 8,
-          }}>
-            <Text style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
-              fontSize: 18,
-              color: BASE_COLORS.textPrimary,
-              lineHeight: 22,
-            }}>
-              A
-            </Text>
-          </View>
-          <Text style={{
-            fontFamily: 'Inter_400Regular',
-            fontSize: 14,
-            color: BASE_COLORS.textSecondary,
-            letterSpacing: 0.3,
-          }}>
-            Design Without Limits
-          </Text>
+        {/* Background sketch animation — fills screen, centred */}
+        <View style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: 0.4,
+        }} pointerEvents="none">
+          <SketchLoader width={220} height={170} />
         </View>
 
-        {/* Prompt chips */}
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: DS.spacing.lg }}>
+          <SketchCard glowing padding={DS.spacing.xl} style={{ alignItems: 'center', width: '100%', maxWidth: 320 }}>
+            {/* Rotating compass loader */}
+            <CompassRoseLoader size="large" />
+
+            <PhaseText phase={loadingPhase} />
+            <LoadingDots />
+          </SketchCard>
+
+          <View style={{ marginTop: DS.spacing.xl }}>
+            <OvalButton label="Cancel" variant="ghost" size="small" onPress={handleCancel} />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Success state ─────────────────────────────────────────────────────────
+  if (screenState === 'success' && result) {
+    const roomCount = result.rooms?.length ?? 0;
+    const totalArea = result.metadata?.totalArea;
+    const styleLabel = result.metadata?.style
+      ? result.metadata.style.charAt(0).toUpperCase() + result.metadata.style.slice(1)
+      : 'Modern';
+
+    return (
+      <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+        <GridBackground />
+
+        <FloatingCard heightFraction={0.62} onDismiss={resetToIdle}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: DS.spacing.lg, paddingTop: DS.spacing.sm }}
+          >
+            <ArchText variant="heading" size="xl" align="center" style={{ marginBottom: DS.spacing.xs }}>
+              Your design is ready
+            </ArchText>
+            <ArchText variant="caption" align="center" style={{ marginBottom: DS.spacing.md }}>
+              {styleLabel} {result.metadata?.buildingType ?? 'design'}
+            </ArchText>
+
+            {/* Blueprint wall preview */}
+            <BlueprintPreview blueprint={result} />
+
+            {/* Stats row */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: DS.spacing.xs, marginBottom: DS.spacing.lg }}>
+              {roomCount > 0 && (
+                <OvalChip label={`${roomCount} room${roomCount !== 1 ? 's' : ''}`} />
+              )}
+              {totalArea != null && (
+                <OvalChip label={`${Math.round(totalArea)} m²`} />
+              )}
+              <OvalChip label={styleLabel} />
+            </View>
+
+            {/* Action buttons */}
+            <OvalButton
+              label="Open in Studio"
+              variant="filled"
+              size="large"
+              fullWidth
+              onPress={() => navigation.navigate('Workspace', {})}
+            />
+            <View style={{ height: DS.spacing.sm }} />
+            <OvalButton
+              label="Try Again"
+              variant="outline"
+              size="large"
+              fullWidth
+              onPress={resetToIdle}
+            />
+          </ScrollView>
+        </FloatingCard>
+      </View>
+    );
+  }
+
+  // ── Error state ───────────────────────────────────────────────────────────
+  if (screenState === 'error') {
+    const msg = ERROR_MESSAGES[errorCode] ?? 'Something went wrong — please try again';
+    return (
+      <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+        <GridBackground />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: DS.spacing.lg }}>
+          <SketchCard style={{ alignItems: 'center', width: '100%', maxWidth: 320 }}>
+            <ArchText variant="body" align="center" style={{ marginBottom: DS.spacing.lg }}>
+              {msg}
+            </ArchText>
+            {errorCode === 'QUOTA_EXCEEDED' ? (
+              <OvalButton
+                label="Upgrade"
+                variant="filled"
+                onPress={() => navigation.navigate('Subscription', {})}
+              />
+            ) : (
+              <OvalButton label="Try Again" variant="filled" onPress={() => setScreenState('idle')} />
+            )}
+            <View style={{ height: DS.spacing.sm }} />
+            <OvalButton label="Start over" variant="ghost" size="small" onPress={resetToIdle} />
+          </SketchCard>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Idle state ────────────────────────────────────────────────────────────
+  return (
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+      <GridBackground />
+
+      <Animated.View style={[{ flex: 1 }, idleStyle]}>
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingRight: 8 }}
-          style={{ marginBottom: 28, marginHorizontal: -20, paddingHorizontal: 20 }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingTop:        56,
+            paddingBottom:     180,
+            paddingHorizontal: DS.spacing.md,
+          }}
+          keyboardShouldPersistTaps="handled"
         >
-          {PROMPT_CHIPS.map((chip) => (
+          {/* ── Logo + tagline ─────────────────────────────────────────── */}
+          <View style={{ alignItems: 'center', marginBottom: DS.spacing.xl }}>
+            <LogoMark />
+            <View style={{ height: DS.spacing.sm }} />
+            <ArchText variant="caption" align="center">
+              Design Without Limits
+            </ArchText>
+          </View>
+
+          {/* ── Prompt chips ──────────────────────────────────────────── */}
+          <ArchText variant="caption" style={{ marginBottom: DS.spacing.sm, marginLeft: DS.spacing.xs }}>
+            Start with...
+          </ArchText>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: DS.spacing.sm, paddingRight: DS.spacing.sm }}
+            style={{ marginBottom: DS.spacing.xl, marginHorizontal: -DS.spacing.md, paddingHorizontal: DS.spacing.md }}
+          >
+            {PROMPT_CHIPS.map((chip) => (
+              <OvalChip
+                key={chip}
+                label={chip}
+                onPress={() => setTextInput(chip)}
+              />
+            ))}
+          </ScrollView>
+
+          {/* ── Building type ─────────────────────────────────────────── */}
+          <ArchText variant="caption" style={{ marginBottom: DS.spacing.sm, marginLeft: DS.spacing.xs }}>
+            What are we designing?
+          </ArchText>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: DS.spacing.sm, paddingRight: DS.spacing.sm }}
+            style={{ marginBottom: DS.spacing.lg, marginHorizontal: -DS.spacing.md, paddingHorizontal: DS.spacing.md }}
+          >
+            {BUILDING_TYPES.map((bt) => (
+              <OvalChip
+                key={bt.id}
+                label={bt.label}
+                icon={bt.emoji}
+                selected={selectedType === bt.id}
+                onPress={() => setSelectedType(bt.id)}
+              />
+            ))}
+          </ScrollView>
+
+          {/* ── Design style ──────────────────────────────────────────── */}
+          <ArchText variant="caption" style={{ marginBottom: DS.spacing.sm, marginLeft: DS.spacing.xs }}>
+            Design style
+          </ArchText>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: DS.spacing.sm, paddingRight: DS.spacing.sm }}
+            style={{ marginHorizontal: -DS.spacing.md, paddingHorizontal: DS.spacing.md }}
+          >
+            {DESIGN_STYLES.map((ds) => (
+              <OvalChip
+                key={ds.id}
+                label={ds.label}
+                selected={selectedStyle === ds.id}
+                onPress={() => setSelectedStyle(ds.id)}
+              />
+            ))}
+          </ScrollView>
+        </ScrollView>
+
+        {/* ── Voice waveform ────────────────────────────────────────────── */}
+        {isRecording && (
+          <View style={{
+            position:        'absolute',
+            bottom:          Platform.OS === 'ios' ? 126 : 108,
+            left:            DS.spacing.md,
+            right:           DS.spacing.md,
+            backgroundColor: DS.colors.surfaceHigh,
+            borderRadius:    DS.radius.card,
+            borderWidth:     1,
+            borderColor:     DS.colors.border,
+            paddingVertical: DS.spacing.sm,
+            paddingHorizontal: DS.spacing.md,
+            flexDirection:   'row',
+            alignItems:      'center',
+            gap:             DS.spacing.md,
+          }}>
+            <WaveformVisualizer active={isRecording} />
+            <ArchText variant="caption">Listening...</ArchText>
+          </View>
+        )}
+
+        {/* ── Floating input bar ────────────────────────────────────────── */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{
+            position: 'absolute',
+            bottom:   Platform.OS === 'ios' ? 34 : 16,
+            left:     DS.spacing.md,
+            right:    DS.spacing.md,
+          }}
+        >
+          <View style={[
+            DS.shadow.large,
+            {
+              backgroundColor:   DS.colors.surface,
+              borderRadius:      DS.radius.button,
+              borderWidth:       1,
+              borderColor:       DS.colors.borderLight,
+              paddingVertical:   DS.spacing.sm,
+              paddingHorizontal: DS.spacing.sm,
+              flexDirection:     'row',
+              alignItems:        'flex-end',
+              gap:               DS.spacing.xs,
+            },
+          ]}>
+
+            {/* + Extras */}
             <Pressable
-              key={chip}
-              onPress={() => setTextInput(chip)}
+              onPress={() => setShowExtras(true)}
               style={{
-                borderRadius: 50,
-                backgroundColor: BASE_COLORS.surface,
-                borderWidth: 1,
-                borderColor: BASE_COLORS.border,
-                paddingHorizontal: 14,
-                paddingVertical: 8,
+                width:           40,
+                height:          40,
+                borderRadius:    20,
+                backgroundColor: DS.colors.surfaceHigh,
+                alignItems:      'center',
+                justifyContent:  'center',
+                marginBottom:    2,
               }}
             >
               <Text style={{
-                fontFamily: 'Inter_400Regular',
-                fontSize: 13,
-                color: BASE_COLORS.textSecondary,
+                color:              DS.colors.primaryDim,
+                fontSize:           20,
+                lineHeight:         22,
+                includeFontPadding: false,
+              }}>+</Text>
+            </Pressable>
+
+            {/* Text input */}
+            <TextInput
+              multiline
+              value={textInput}
+              onChangeText={setTextInput}
+              placeholder="Describe your dream space..."
+              placeholderTextColor={DS.colors.primaryGhost}
+              style={{
+                flex:               1,
+                fontFamily:         DS.font.regular,
+                fontSize:           DS.fontSize.md,
+                color:              DS.colors.primary,
+                maxHeight:          100,
+                paddingTop:         DS.spacing.sm,
+                paddingBottom:      DS.spacing.sm,
+                includeFontPadding: false,
+              }}
+            />
+
+            {/* Mic */}
+            <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center', marginBottom: 2 }}>
+              {isRecording && <RecordingHalo />}
+              <Pressable
+                onPress={handleMicPress}
+                style={{
+                  width:           40,
+                  height:          40,
+                  borderRadius:    20,
+                  backgroundColor: isRecording ? DS.colors.error : DS.colors.surfaceHigh,
+                  alignItems:      'center',
+                  justifyContent:  'center',
+                }}
+              >
+                <Text style={{ fontSize: 17, lineHeight: 20 }}>🎤</Text>
+              </Pressable>
+            </View>
+
+            {/* Generate */}
+            <Pressable
+              onPress={() => { void handleGenerate(); }}
+              disabled={!inputActive}
+              style={{
+                width:           40,
+                height:          40,
+                borderRadius:    20,
+                backgroundColor: inputActive ? DS.colors.primary : DS.colors.border,
+                alignItems:      'center',
+                justifyContent:  'center',
+                marginBottom:    2,
+              }}
+            >
+              <Text style={{
+                color:              inputActive ? DS.colors.background : DS.colors.primaryGhost,
+                fontSize:           19,
+                fontWeight:         '600',
+                lineHeight:         22,
+                includeFontPadding: false,
               }}>
-                {chip}
+                ↑
               </Text>
             </Pressable>
-          ))}
-        </ScrollView>
-
-        {/* Building type */}
-        <Text style={{
-          fontFamily: 'Inter_400Regular',
-          fontSize: 12,
-          color: BASE_COLORS.textDim,
-          marginBottom: 10,
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-        }}>
-          What are we designing?
-        </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingRight: 8 }}
-          style={{ marginBottom: 24, marginHorizontal: -20, paddingHorizontal: 20 }}
-        >
-          {BUILDING_TYPES.map((bt) => {
-            const active = selectedType === bt.id;
-            return (
-              <Pressable
-                key={bt.id}
-                onPress={() => setSelectedType(bt.id)}
-                style={{
-                  height: 44,
-                  paddingHorizontal: 14,
-                  borderRadius: 50,
-                  backgroundColor: active ? BASE_COLORS.textPrimary : BASE_COLORS.surface,
-                  borderWidth: 1,
-                  borderColor: active ? BASE_COLORS.textPrimary : BASE_COLORS.border,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <Text style={{ fontSize: 14 }}>{bt.emoji}</Text>
-                <Text style={{
-                  fontFamily: 'Inter_400Regular',
-                  fontSize: 13,
-                  color: active ? BASE_COLORS.background : BASE_COLORS.textSecondary,
-                }}>
-                  {bt.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        {/* Design style */}
-        <Text style={{
-          fontFamily: 'Inter_400Regular',
-          fontSize: 12,
-          color: BASE_COLORS.textDim,
-          marginBottom: 10,
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-        }}>
-          Design style
-        </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingRight: 8 }}
-          style={{ marginHorizontal: -20, paddingHorizontal: 20 }}
-        >
-          {DESIGN_STYLES.map((ds) => {
-            const active = selectedStyle === ds.id;
-            return (
-              <Pressable
-                key={ds.id}
-                onPress={() => setSelectedStyle(ds.id)}
-                style={{
-                  height: 44,
-                  paddingHorizontal: 16,
-                  borderRadius: 50,
-                  backgroundColor: active ? BASE_COLORS.textPrimary : BASE_COLORS.surface,
-                  borderWidth: 1,
-                  borderColor: active ? BASE_COLORS.textPrimary : BASE_COLORS.border,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <Text style={{ fontSize: 13 }}>{ds.icon}</Text>
-                <Text style={{
-                  fontFamily: 'Inter_400Regular',
-                  fontSize: 13,
-                  color: active ? BASE_COLORS.background : BASE_COLORS.textSecondary,
-                }}>
-                  {ds.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </ScrollView>
-
-      {/* Voice waveform — above input bar */}
-      {isRecording && (
-        <View style={{
-          position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 118 : 100,
-          left: 16, right: 16,
-          backgroundColor: BASE_COLORS.surface,
-          borderRadius: 20,
-          borderWidth: 1,
-          borderColor: BASE_COLORS.border,
-          paddingVertical: 12,
-          paddingHorizontal: 20,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-        }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            {[bar1Style, bar2Style, bar3Style, bar4Style].map((animStyle, i) => (
-              <Animated.View
-                key={i}
-                style={[{
-                  width: 3,
-                  borderRadius: 2,
-                  backgroundColor: BASE_COLORS.textPrimary,
-                }, animStyle]}
-              />
-            ))}
           </View>
-          <Text style={{
-            fontFamily: 'Inter_400Regular',
-            fontSize: 13,
-            color: BASE_COLORS.textSecondary,
-          }}>
-            Listening...
-          </Text>
-        </View>
-      )}
+        </KeyboardAvoidingView>
+      </Animated.View>
 
-      {/* Input bar — fixed at bottom */}
-      <View style={{
-        position: 'absolute',
-        bottom: Platform.OS === 'ios' ? 34 : 16,
-        left: 16, right: 16,
-      }}>
-        <View style={{
-          backgroundColor: BASE_COLORS.surface,
-          borderRadius: 30,
-          borderWidth: 1,
-          borderColor: BASE_COLORS.border,
-          paddingVertical: 8,
-          paddingHorizontal: 8,
-          flexDirection: 'row',
-          alignItems: 'flex-end',
-          gap: 6,
-        }}>
-          {/* + extras button */}
-          <Pressable
-            onPress={() => setShowExtras(true)}
-            style={{
-              width: 36, height: 36,
-              borderRadius: 18,
-              backgroundColor: BASE_COLORS.surfaceHigh,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 2,
-            }}
-          >
-            <Text style={{
-              color: BASE_COLORS.textSecondary,
-              fontSize: 20,
-              lineHeight: 22,
-              includeFontPadding: false,
-            }}>
-              +
-            </Text>
-          </Pressable>
-
-          {/* Text input */}
-          <TextInput
-            multiline
-            value={textInput}
-            onChangeText={setTextInput}
-            placeholder="Describe your space..."
-            placeholderTextColor={BASE_COLORS.textSecondary}
-            style={{
-              flex: 1,
-              fontFamily: 'Inter_400Regular',
-              fontSize: 15,
-              color: BASE_COLORS.textPrimary,
-              maxHeight: 100,
-              paddingTop: 8,
-              paddingBottom: 8,
-            }}
-          />
-
-          {/* Microphone */}
-          <Pressable
-            onPress={handleMicPress}
-            style={{
-              width: 40, height: 40,
-              borderRadius: 20,
-              backgroundColor: isRecording ? BASE_COLORS.error : BASE_COLORS.surfaceHigh,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 2,
-            }}
-          >
-            <Text style={{ fontSize: 17, lineHeight: 20 }}>🎤</Text>
-          </Pressable>
-
-          {/* Generate */}
-          <Pressable
-            onPress={() => { void handleGenerate(); }}
-            disabled={!inputActive}
-            style={{
-              width: 40, height: 40,
-              borderRadius: 20,
-              backgroundColor: inputActive ? BASE_COLORS.textPrimary : BASE_COLORS.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 2,
-            }}
-          >
-            <Text style={{
-              color: inputActive ? BASE_COLORS.background : BASE_COLORS.textDim,
-              fontSize: 18,
-              lineHeight: 22,
-              fontWeight: '600',
-            }}>
-              ↑
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Extras sheet */}
+      {/* ── Extras sheet ─────────────────────────────────────────────────── */}
       <Modal
         visible={showExtras}
         transparent
@@ -787,58 +792,51 @@ export function GenerationScreen() {
         onRequestClose={() => setShowExtras(false)}
       >
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ flex: 1, backgroundColor: DS.colors.overlay }}
           onPress={() => setShowExtras(false)}
         >
           <View style={{
-            position: 'absolute',
-            bottom: 0, left: 0, right: 0,
-            backgroundColor: BASE_COLORS.surface,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            padding: 24,
-            gap: 10,
+            position:             'absolute',
+            bottom:               0, left: 0, right: 0,
+            backgroundColor:      DS.colors.surface,
+            borderTopLeftRadius:  DS.radius.modal,
+            borderTopRightRadius: DS.radius.modal,
+            padding:              DS.spacing.lg,
+            gap:                  DS.spacing.sm,
           }}>
-            {/* Drag handle */}
             <View style={{
-              width: 36, height: 4,
-              borderRadius: 2,
-              backgroundColor: BASE_COLORS.border,
-              alignSelf: 'center',
-              marginBottom: 8,
+              width:           36, height: 4,
+              borderRadius:    2,
+              backgroundColor: DS.colors.border,
+              alignSelf:       'center',
+              marginBottom:    DS.spacing.sm,
             }} />
 
             {([
               { icon: '📷', label: 'Upload reference image' },
-              { icon: '📐', label: 'Set plot size' },
-              { icon: '🛋️', label: 'Furniture style' },
-              { icon: '🌿', label: 'Garden preferences' },
+              { icon: '📐', label: 'Set plot size'          },
+              { icon: '🛋️', label: 'Furniture style'        },
+              { icon: '🌿', label: 'Garden preferences'     },
             ] as const).map((item) => (
               <Pressable
                 key={item.label}
                 onPress={() => setShowExtras(false)}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  backgroundColor: BASE_COLORS.surfaceHigh,
-                  borderRadius: 50,
-                  paddingVertical: 14,
-                  paddingHorizontal: 20,
+                  flexDirection:   'row',
+                  alignItems:      'center',
+                  gap:             DS.spacing.md,
+                  backgroundColor: DS.colors.surfaceHigh,
+                  borderRadius:    DS.radius.oval,
+                  paddingVertical: DS.spacing.md,
+                  paddingHorizontal: DS.spacing.lg,
                 }}
               >
                 <Text style={{ fontSize: 18 }}>{item.icon}</Text>
-                <Text style={{
-                  fontFamily: 'Inter_400Regular',
-                  fontSize: 15,
-                  color: BASE_COLORS.textPrimary,
-                }}>
-                  {item.label}
-                </Text>
+                <ArchText variant="body">{item.label}</ArchText>
               </Pressable>
             ))}
 
-            <View style={{ height: Platform.OS === 'ios' ? 24 : 8 }} />
+            <View style={{ height: Platform.OS === 'ios' ? DS.spacing.lg : DS.spacing.sm }} />
           </View>
         </Pressable>
       </Modal>
