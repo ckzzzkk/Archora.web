@@ -46,6 +46,7 @@ import { SketchLoader }       from '../../components/common/SketchLoader';
 import { FloatingCard }       from '../../components/common/FloatingCard';
 import { DS }                 from '../../theme/designSystem';
 import { supabase }           from '../../utils/supabaseClient';
+import { useAuthStore }       from '../../stores/authStore';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData }      from '../../types/blueprint';
 import type { GenerationPayload }  from '../../types/generation';
@@ -322,6 +323,8 @@ export function GenerationScreen() {
   const navigation = useNavigation<Nav>();
   const { success: hapticSuccess, error: hapticError } = useHaptics();
   const loadBlueprint = useBlueprintStore((s) => s.actions.loadBlueprint);
+
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const isMounted   = useRef(true);
   const isCancelled = useRef(false);
@@ -682,8 +685,33 @@ export function GenerationScreen() {
           </View>
         )}
 
+        {/* ── Sign-in gate (unauthenticated) ───────────────────────────── */}
+        {!isAuthenticated && (
+          <View style={{
+            position:          'absolute',
+            bottom:            Platform.OS === 'ios' ? 34 : 16,
+            left:              DS.spacing.md,
+            right:             DS.spacing.md,
+            backgroundColor:   DS.colors.surface,
+            borderRadius:      DS.radius.button,
+            borderWidth:       1,
+            borderColor:       DS.colors.borderLight,
+            padding:           DS.spacing.md,
+            alignItems:        'center',
+            gap:               DS.spacing.sm,
+          }}>
+            <ArchText variant="caption" align="center">Sign in to create designs</ArchText>
+            <OvalButton
+              label="Sign In"
+              variant="filled"
+              size="small"
+              onPress={() => navigation.navigate('Auth')}
+            />
+          </View>
+        )}
+
         {/* ── Floating input bar ────────────────────────────────────────── */}
-        <KeyboardAvoidingView
+        {isAuthenticated && <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{
             position: 'absolute',
@@ -790,7 +818,7 @@ export function GenerationScreen() {
               </Text>
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingView>}
       </Animated.View>
 
       {/* ── Extras sheet ─────────────────────────────────────────────────── */}

@@ -466,26 +466,17 @@ serve(async (req) => {
     let user;
     try {
       user = await getAuthUser(req);
-    } catch (authError) {
-      const msg = authError instanceof Error
-        ? authError.message
-        : typeof authError === 'string'
-          ? authError
-          : 'Auth failed';
-      console.error('Auth error:', msg);
+    } catch (authErr) {
+      console.error('Auth failed:', authErr instanceof Response ? authErr.status : String(authErr));
+      if (authErr instanceof Response) {
+        // getAuthUser threw a pre-built Response — return it directly with CORS headers
+        const h = new Headers(authErr.headers);
+        for (const [k, v] of Object.entries(corsHeaders)) h.set(k, v);
+        return new Response(authErr.body, { status: authErr.status, headers: h });
+      }
       return new Response(
-        JSON.stringify({
-          error: 'Authentication required',
-          code: 'AUTH_REQUIRED',
-          detail: msg,
-        }),
-        {
-          status: 401,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        },
+        JSON.stringify({ error: 'Authentication required', code: 'AUTH_REQUIRED' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
@@ -625,9 +616,20 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
   } catch (error) {
     console.error('Raw error type:', typeof error);
     console.error('Raw error value:', String(error));
-    const msg = error instanceof Error
-      ? error.message
-      : JSON.stringify(error);
+    if (error instanceof Response) {
+      console.error('Auth response status:', error.status);
+      const h = new Headers(error.headers);
+      for (const [k, v] of Object.entries(corsHeaders)) h.set(k, v);
+      return new Response(error.body, { status: error.status, headers: h });
+    }
+    let msg = 'Unknown error';
+    if (error instanceof Error) {
+      msg = error.message;
+    } else if (typeof error === 'string') {
+      msg = error;
+    } else {
+      try { msg = JSON.stringify(error); } catch { msg = String(error); }
+    }
     console.error('AI generate error:', msg);
     return new Response(
       JSON.stringify({
