@@ -467,17 +467,15 @@ serve(async (req) => {
     try {
       user = await getAuthUser(req);
     } catch (authErr) {
-      console.error('Auth failed:', authErr instanceof Response ? authErr.status : String(authErr));
+      console.error('Auth error type:', (authErr as { constructor?: { name?: string } })?.constructor?.name);
+      console.error('Auth error:', authErr instanceof Response ? `Response ${authErr.status}` : String(authErr));
       if (authErr instanceof Response) {
-        // getAuthUser threw a pre-built Response — return it directly with CORS headers
-        const h = new Headers(authErr.headers);
-        for (const [k, v] of Object.entries(corsHeaders)) h.set(k, v);
-        return new Response(authErr.body, { status: authErr.status, headers: h });
+        return new Response(
+          JSON.stringify({ error: 'Please sign in to generate designs', code: 'AUTH_REQUIRED' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
       }
-      return new Response(
-        JSON.stringify({ error: 'Authentication required', code: 'AUTH_REQUIRED' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      throw authErr;
     }
 
     // Rate limit: 10 AI requests per hour
@@ -566,21 +564,26 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
       content: Array<{ type: string; text: string }>;
       usage?: { input_tokens?: number; output_tokens?: number };
     };
-    const rawText = claudeData.content[0]?.text ?? '';
+    const rawText = claudeData.content?.[0]?.text;
+
+    if (!rawText) {
+      throw new Error('Empty response from AI');
+    }
 
     let blueprintData: unknown;
     try {
       blueprintData = JSON.parse(rawText);
     } catch {
-      // Try to extract JSON from response
+      console.error('Failed to parse blueprint:', rawText.substring(0, 200));
+      // Try to extract JSON from markdown-wrapped response
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        return addCors(Errors.upstream('AI returned invalid JSON'));
+        throw new Error('AI returned invalid JSON');
       }
       try {
         blueprintData = JSON.parse(jsonMatch[0]);
       } catch {
-        return addCors(Errors.upstream('AI returned invalid JSON'));
+        throw new Error('AI returned invalid JSON');
       }
     }
 
