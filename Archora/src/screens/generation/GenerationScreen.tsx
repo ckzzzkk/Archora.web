@@ -45,6 +45,7 @@ import { WaveformVisualizer } from '../../components/common/WaveformVisualizer';
 import { SketchLoader }       from '../../components/common/SketchLoader';
 import { FloatingCard }       from '../../components/common/FloatingCard';
 import { DS }                 from '../../theme/designSystem';
+import { supabase }           from '../../utils/supabaseClient';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData }      from '../../types/blueprint';
 import type { GenerationPayload }  from '../../types/generation';
@@ -400,6 +401,13 @@ export function GenerationScreen() {
     if (!textInput.trim()) return;
     isCancelled.current = false;
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      setErrorCode('AUTH_ERROR');
+      setScreenState('error');
+      return;
+    }
+
     // Fade out idle content
     idleOpacity.value = withTiming(0, { duration: 300 }, () => {
       runOnJS(setScreenState)('generating');
@@ -420,6 +428,7 @@ export function GenerationScreen() {
       idleOpacity.value = 1; // reset for next time
     } catch (e) {
       if (isCancelled.current || !isMounted.current) return;
+      console.error('Generation failed:', JSON.stringify(e, null, 2));
       hapticError();
       setErrorCode((e as { code?: string }).code ?? 'UNKNOWN');
       setScreenState('error');

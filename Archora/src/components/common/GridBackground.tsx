@@ -1,49 +1,52 @@
 import React from 'react';
-import { Dimensions } from 'react-native';
-import Svg, { Line } from 'react-native-svg';
-import { DS } from '../../theme/designSystem';
+import { View, Dimensions } from 'react-native';
 
 const { width: W, height: H } = Dimensions.get('window');
 const STEP = 32;
 
-const hLines = Math.ceil(H / STEP) + 1;
-const vLines = Math.ceil(W / STEP) + 1;
-
 /**
  * Subtle architectural graph-paper grid.
  * Position: absolute, fills screen, non-interactive.
- * Render once — no props — memoized for zero re-render cost.
+ * Uses Views instead of SVG to avoid Android compositing tint.
  */
 export const GridBackground = React.memo(function GridBackground() {
+  const hLines = Math.ceil(H / STEP) + 1;
+  const vLines = Math.ceil(W / STEP) + 1;
+
   return (
-    <Svg
-      width={W}
-      height={H}
-      style={{ position: 'absolute', top: 0, left: 0 }}
+    <View
       pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top: 0, left: 0,
+        width: W, height: H,
+        backgroundColor: 'transparent',
+      }}
     >
       {Array.from({ length: hLines }).map((_, i) => (
-        <Line
+        <View
           key={`h${i}`}
-          x1={0}
-          y1={i * STEP}
-          x2={W}
-          y2={i * STEP}
-          stroke={DS.colors.gridLine}
-          strokeWidth={1}
+          style={{
+            position: 'absolute',
+            top: i * STEP,
+            left: 0, right: 0,
+            height: 1,
+            backgroundColor: '#2A2A2A',
+          }}
         />
       ))}
       {Array.from({ length: vLines }).map((_, i) => (
-        <Line
+        <View
           key={`v${i}`}
-          x1={i * STEP}
-          y1={0}
-          x2={i * STEP}
-          y2={H}
-          stroke={DS.colors.gridLine}
-          strokeWidth={1}
+          style={{
+            position: 'absolute',
+            left: i * STEP,
+            top: 0, bottom: 0,
+            width: 1,
+            backgroundColor: '#2A2A2A',
+          }}
         />
       ))}
-    </Svg>
+    </View>
   );
 });
