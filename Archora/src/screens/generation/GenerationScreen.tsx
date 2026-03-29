@@ -18,6 +18,7 @@ import {
   Platform,
   Dimensions,
   KeyboardAvoidingView,
+  FlatList,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -27,6 +28,7 @@ import Animated, {
   useAnimatedStyle,
   runOnJS,
   Easing,
+  FadeInDown,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -53,6 +55,14 @@ import type { GenerationPayload }  from '../../types/generation';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type ScreenState = 'idle' | 'generating' | 'success' | 'error';
+type ConversationStep = 0 | 1 | 2 | 3 | 4;
+
+interface ChatMessage {
+  id: string;
+  role: 'aria' | 'user';
+  text: string;
+  component?: React.ReactNode;
+}
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -75,6 +85,12 @@ const DESIGN_STYLES = [
   { id: 'tropical',     label: 'Tropical'   },
   { id: 'classic',      label: 'Classic'    },
 ];
+
+const ARIA_QUESTIONS: Record<number, string> = {
+  0: "Hi! I'm ARIA, your AI architect. What would you like to design today?",
+  1: "Great choice! And what style are you going for?",
+  2: "Perfect. Add any details below and when you're ready, hit generate.",
+};
 
 const PROMPT_CHIPS = [
   'Modern family home',
@@ -317,6 +333,133 @@ function BlueprintPreview({ blueprint }: { blueprint: BlueprintData }) {
   );
 }
 
+/** Three bouncing dots — ARIA is typing */
+function TypingDots() {
+  const y0 = useSharedValue(0);
+  const y1 = useSharedValue(0);
+  const y2 = useSharedValue(0);
+
+  useEffect(() => {
+    const animate = (val: ReturnType<typeof useSharedValue<number>>, delay: number) => {
+      val.value = withRepeat(
+        withSequence(
+          withTiming(0,  { duration: delay }),
+          withTiming(-4, { duration: 300, easing: Easing.inOut(Easing.quad) }),
+          withTiming(0,  { duration: 300, easing: Easing.inOut(Easing.quad) }),
+        ),
+        -1,
+        false,
+      );
+    };
+    animate(y0, 0);
+    animate(y1, 150);
+    animate(y2, 300);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const s0 = useAnimatedStyle(() => ({ transform: [{ translateY: y0.value }] }));
+  const s1 = useAnimatedStyle(() => ({ transform: [{ translateY: y1.value }] }));
+  const s2 = useAnimatedStyle(() => ({ transform: [{ translateY: y2.value }] }));
+
+  const dotStyle = {
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: DS.colors.primaryDim,
+    marginHorizontal: 2,
+  };
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}>
+      <Animated.View style={[dotStyle, s0]} />
+      <Animated.View style={[dotStyle, s1]} />
+      <Animated.View style={[dotStyle, s2]} />
+    </View>
+  );
+}
+
+/** 32px ARIA avatar with mini compass rose */
+function ARIAAvatar() {
+  return (
+    <View style={{
+      width: 32, height: 32,
+      borderRadius: 16,
+      backgroundColor: DS.colors.surface,
+      borderWidth: 1,
+      borderColor: DS.colors.borderLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <Svg width={16} height={16} viewBox="0 0 16 16">
+        <Path d="M8 2 L6.5 8 L8 7 L9.5 8 Z" fill={DS.colors.primary} />
+        <Path d="M8 14 L6.5 8 L8 9 L9.5 8 Z" fill={DS.colors.primaryDim} />
+        <Path d="M2 8 L8 6.5 L7 8 L8 9.5 Z" fill={DS.colors.primaryDim} />
+        <Path d="M14 8 L8 6.5 L9 8 L8 9.5 Z" fill={DS.colors.primaryDim} />
+      </Svg>
+    </View>
+  );
+}
+
+/** Renders a single chat bubble (aria = left, user = right) */
+function ChatBubble({ message }: { message: ChatMessage }) {
+  const isAria = message.role === 'aria';
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(200)}
+      style={{
+        flexDirection: isAria ? 'row' : 'row-reverse',
+        alignItems: 'flex-end',
+        gap: DS.spacing.sm,
+        marginBottom: DS.spacing.md,
+      }}
+    >
+      {isAria && <ARIAAvatar />}
+      <View
+        style={{
+          maxWidth: '78%',
+          backgroundColor: isAria ? DS.colors.surface : DS.colors.surfaceHigh,
+          borderRadius: 20,
+          borderBottomLeftRadius: isAria ? 4 : 20,
+          borderBottomRightRadius: isAria ? 20 : 4,
+          padding: DS.spacing.md,
+          borderWidth: 1,
+          borderColor: DS.colors.borderLight,
+        }}
+      >
+        <ArchText variant="body">{message.text}</ArchText>
+        {message.component != null && (
+          <View style={{ marginTop: DS.spacing.sm }}>{message.component}</View>
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
+/** ARIA typing indicator bubble */
+function TypingIndicator() {
+  return (
+    <Animated.View
+      entering={FadeInDown.duration(150)}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        gap: DS.spacing.sm,
+        marginBottom: DS.spacing.md,
+      }}
+    >
+      <ARIAAvatar />
+      <View style={{
+        backgroundColor: DS.colors.surface,
+        borderRadius: 20,
+        borderBottomLeftRadius: 4,
+        padding: DS.spacing.md,
+        borderWidth: 1,
+        borderColor: DS.colors.borderLight,
+      }}>
+        <TypingDots />
+      </View>
+    </Animated.View>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export function GenerationScreen() {
@@ -346,6 +489,12 @@ export function GenerationScreen() {
   const [errorCode,    setErrorCode]    = useState('');
   const [result,       setResult]       = useState<BlueprintData | null>(null);
 
+  // Conversation state
+  const [conversationStep, setConversationStep] = useState<ConversationStep>(0);
+  const [chatMessages,     setChatMessages]     = useState<ChatMessage[]>([]);
+  const [isTyping,         setIsTyping]         = useState(false);
+  const chatScrollRef = useRef<FlatList<ChatMessage>>(null);
+
   // Idle ↔ generating fade
   const idleOpacity = useSharedValue(1);
   const idleStyle   = useAnimatedStyle(() => ({ opacity: idleOpacity.value }));
@@ -359,6 +508,17 @@ export function GenerationScreen() {
     }, 2800);
     return () => clearInterval(interval);
   }, [screenState]);
+
+  // ARIA introduction on mount
+  useEffect(() => {
+    setIsTyping(true);
+    const t = setTimeout(() => {
+      setIsTyping(false);
+      setChatMessages([{ id: 'a0', role: 'aria', text: ARIA_QUESTIONS[0] }]);
+    }, 1200);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Voice ────────────────────────────────────────────────────────────────
   const startRecording = async () => {
@@ -452,7 +612,46 @@ export function GenerationScreen() {
     setLoadingPhase(0);
     setScreenState('idle');
     idleOpacity.value = 1;
+    // Reset conversation
+    setConversationStep(0);
+    setChatMessages([]);
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      setChatMessages([{ id: 'a0r', role: 'aria', text: ARIA_QUESTIONS[0] }]);
+    }, 1200);
   }, [idleOpacity]);
+
+  const addAriaMessage = useCallback((id: string, step: ConversationStep) => {
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      setChatMessages((prev) => [...prev, {
+        id,
+        role: 'aria' as const,
+        text: ARIA_QUESTIONS[step] ?? '',
+      }]);
+      setConversationStep(step);
+    }, 800);
+  }, []);
+
+  const handleBuildingTypeSelect = useCallback((type: GenerationPayload['buildingType'], label: string) => {
+    setSelectedType(type);
+    setChatMessages((prev) => [...prev, { id: `u${Date.now()}`, role: 'user' as const, text: label }]);
+    if (conversationStep === 0) {
+      addAriaMessage('a1', 1);
+    }
+  }, [conversationStep, addAriaMessage]);
+
+  const handleStyleSelect = useCallback((styleId: string, label: string) => {
+    setSelectedStyle(styleId);
+    setChatMessages((prev) => [...prev, { id: `u${Date.now()}`, role: 'user' as const, text: label }]);
+    if (conversationStep === 1) {
+      addAriaMessage('a2', 2);
+    }
+  }, [conversationStep, addAriaMessage]);
+
+  const canGenerate = conversationStep >= 1 && textInput.trim().length > 0;
 
   const inputActive = textInput.trim().length > 0;
 
@@ -584,84 +783,63 @@ export function GenerationScreen() {
       <GridBackground />
 
       <Animated.View style={[{ flex: 1 }, idleStyle]}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
+        {/* Chat messages */}
+        <FlatList
+          ref={chatScrollRef}
+          data={chatMessages}
+          keyExtractor={(m) => m.id}
+          style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingTop:        56,
-            paddingBottom:     180,
+            paddingTop: 60,
+            paddingBottom: 180,
             paddingHorizontal: DS.spacing.md,
           }}
           keyboardShouldPersistTaps="handled"
-        >
-          {/* ── Logo + tagline ─────────────────────────────────────────── */}
-          <View style={{ alignItems: 'center', marginBottom: DS.spacing.xl }}>
-            <LogoMark />
-            <View style={{ height: DS.spacing.sm }} />
-            <ArchText variant="caption" align="center">
-              Design Without Limits
-            </ArchText>
-          </View>
-
-          {/* ── Prompt chips ──────────────────────────────────────────── */}
-          <ArchText variant="caption" style={{ marginBottom: DS.spacing.sm, marginLeft: DS.spacing.xs }}>
-            Start with...
-          </ArchText>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: DS.spacing.sm, paddingRight: DS.spacing.sm }}
-            style={{ marginBottom: DS.spacing.xl, marginHorizontal: -DS.spacing.md, paddingHorizontal: DS.spacing.md }}
-          >
-            {PROMPT_CHIPS.map((chip) => (
-              <OvalChip
-                key={chip}
-                label={chip}
-                onPress={() => setTextInput(chip)}
-              />
-            ))}
-          </ScrollView>
-
-          {/* ── Building type ─────────────────────────────────────────── */}
-          <ArchText variant="caption" style={{ marginBottom: DS.spacing.sm, marginLeft: DS.spacing.xs }}>
-            What are we designing?
-          </ArchText>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: DS.spacing.sm, paddingRight: DS.spacing.sm }}
-            style={{ marginBottom: DS.spacing.lg, marginHorizontal: -DS.spacing.md, paddingHorizontal: DS.spacing.md }}
-          >
-            {BUILDING_TYPES.map((bt) => (
-              <OvalChip
-                key={bt.id}
-                label={bt.label}
-                icon={bt.emoji}
-                selected={selectedType === bt.id}
-                onPress={() => setSelectedType(bt.id)}
-              />
-            ))}
-          </ScrollView>
-
-          {/* ── Design style ──────────────────────────────────────────── */}
-          <ArchText variant="caption" style={{ marginBottom: DS.spacing.sm, marginLeft: DS.spacing.xs }}>
-            Design style
-          </ArchText>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: DS.spacing.sm, paddingRight: DS.spacing.sm }}
-            style={{ marginHorizontal: -DS.spacing.md, paddingHorizontal: DS.spacing.md }}
-          >
-            {DESIGN_STYLES.map((ds) => (
-              <OvalChip
-                key={ds.id}
-                label={ds.label}
-                selected={selectedStyle === ds.id}
-                onPress={() => setSelectedStyle(ds.id)}
-              />
-            ))}
-          </ScrollView>
-        </ScrollView>
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => chatScrollRef.current?.scrollToEnd({ animated: true })}
+          renderItem={({ item }) => <ChatBubble message={item} />}
+          ListHeaderComponent={
+            <View style={{ alignItems: 'center', marginBottom: DS.spacing.lg }}>
+              <LogoMark />
+            </View>
+          }
+          ListFooterComponent={
+            <>
+              {isTyping && <TypingIndicator />}
+              {/* Step 0: building type chips */}
+              {conversationStep === 0 && !isTyping && (
+                <Animated.View entering={FadeInDown.duration(200)}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: DS.spacing.xs, marginBottom: DS.spacing.md, marginLeft: 40 }}>
+                    {BUILDING_TYPES.map((bt) => (
+                      <OvalChip
+                        key={bt.id}
+                        label={bt.label}
+                        icon={bt.emoji}
+                        selected={false}
+                        onPress={() => handleBuildingTypeSelect(bt.id, bt.label)}
+                      />
+                    ))}
+                  </View>
+                </Animated.View>
+              )}
+              {/* Step 1: style chips */}
+              {conversationStep === 1 && !isTyping && (
+                <Animated.View entering={FadeInDown.duration(200)}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: DS.spacing.xs, marginBottom: DS.spacing.md, marginLeft: 40 }}>
+                    {DESIGN_STYLES.map((ds) => (
+                      <OvalChip
+                        key={ds.id}
+                        label={ds.label}
+                        selected={selectedStyle === ds.id}
+                        onPress={() => handleStyleSelect(ds.id, ds.label)}
+                      />
+                    ))}
+                  </View>
+                </Animated.View>
+              )}
+            </>
+          }
+        />
 
         {/* ── Voice waveform ────────────────────────────────────────────── */}
         {isRecording && (
@@ -712,14 +890,16 @@ export function GenerationScreen() {
 
         {/* ── Floating input bar ────────────────────────────────────────── */}
         {isAuthenticated && <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'android' ? 90 : 0}
           style={{
             position: 'absolute',
-            bottom:   Platform.OS === 'ios' ? 34 : 16,
-            left:     DS.spacing.md,
-            right:    DS.spacing.md,
+            bottom:   0,
+            left:     0,
+            right:    0,
           }}
         >
+          <View style={{ marginHorizontal: DS.spacing.md, marginBottom: Platform.OS === 'ios' ? 34 : 16 }}>
           <View style={[
             DS.shadow.large,
             {
@@ -761,7 +941,7 @@ export function GenerationScreen() {
               multiline
               value={textInput}
               onChangeText={setTextInput}
-              placeholder="Describe your dream space..."
+              placeholder="Add details about your design..."
               placeholderTextColor={DS.colors.primaryGhost}
               style={{
                 flex:               1,
@@ -793,22 +973,22 @@ export function GenerationScreen() {
               </Pressable>
             </View>
 
-            {/* Generate */}
+            {/* Generate — enabled after step 1 + some text */}
             <Pressable
               onPress={() => { void handleGenerate(); }}
-              disabled={!inputActive}
+              disabled={!canGenerate}
               style={{
                 width:           40,
                 height:          40,
                 borderRadius:    20,
-                backgroundColor: inputActive ? DS.colors.primary : DS.colors.border,
+                backgroundColor: canGenerate ? DS.colors.primary : DS.colors.border,
                 alignItems:      'center',
                 justifyContent:  'center',
                 marginBottom:    2,
               }}
             >
               <Text style={{
-                color:              inputActive ? DS.colors.background : DS.colors.primaryGhost,
+                color:              canGenerate ? DS.colors.background : DS.colors.primaryGhost,
                 fontSize:           19,
                 fontWeight:         '600',
                 lineHeight:         22,
@@ -817,6 +997,7 @@ export function GenerationScreen() {
                 ↑
               </Text>
             </Pressable>
+          </View>
           </View>
         </KeyboardAvoidingView>}
       </Animated.View>

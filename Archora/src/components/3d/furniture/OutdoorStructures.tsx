@@ -406,7 +406,7 @@ export function OutdoorLightPost({ position, rotation, dimensions, color = '#707
       {/* Bulb glow */}
       <mesh position={[0, h * 0.94, 0]}>
         <sphereGeometry args={[w * 1.2, 8, 6]} />
-        <meshStandardMaterial color="#FFE0A0" emissive="#FFC060" emissiveIntensity={0.8} roughness={0.5} metalness={0} />
+        <meshStandardMaterial color="#C8C8C8" emissive="#555555" emissiveIntensity={0.8} roughness={0.5} metalness={0} />
       </mesh>
       {selected && (
         <mesh position={[0, h * 0.5, 0]}>

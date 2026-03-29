@@ -31,10 +31,9 @@ const CIRCUMFERENCE = 135;
 const ICONS: Record<string, (color: string) => React.ReactElement> = {
   Dashboard: (color) => (
     <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Rect x="3" y="3" width="8" height="8" rx="1.5" stroke={color} strokeWidth="1.8" fill="none" />
-      <Rect x="13" y="3" width="8" height="8" rx="1.5" stroke={color} strokeWidth="1.8" fill="none" />
-      <Rect x="3" y="13" width="8" height="8" rx="1.5" stroke={color} strokeWidth="1.8" fill="none" />
-      <Rect x="13" y="13" width="8" height="8" rx="1.5" stroke={color} strokeWidth="1.8" fill="none" />
+      <Path d="M3 11 L12 3 L21 11" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M5 9.5 V21 H19 V9.5" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M9 21 V15 H15 V21" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   ),
   Feed: (color) => (

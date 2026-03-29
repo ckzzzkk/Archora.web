@@ -24,6 +24,9 @@ export const aiService = {
     roomCount?: number;
   }): Promise<BlueprintData> {
     const headers = await getAuthHeader();
+    console.log('generateFloorPlan params:', JSON.stringify(params));
+    console.log('generateFloorPlan supabase URL:', SUPABASE_URL);
+    console.log('generateFloorPlan has auth:', !!headers.Authorization);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -36,6 +39,12 @@ export const aiService = {
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
+
+      console.log('generateFloorPlan response status:', response.status);
+      if (!response.ok) {
+        const errorText = await response.clone().text();
+        console.error('generateFloorPlan error response:', errorText);
+      }
 
       if (response.status === 503) {
         const body = await response.json() as { error?: string };
