@@ -897,6 +897,7 @@ export function GenerationScreen() {
             bottom:   0,
             left:     0,
             right:    0,
+            zIndex:   100,
           }}
         >
           <View style={{ marginHorizontal: DS.spacing.md, marginBottom: Platform.OS === 'ios' ? 34 : 16 }}>
