@@ -463,7 +463,31 @@ serve(async (req) => {
   if (corsResponse) return corsResponse;
 
   try {
-    const user = await getAuthUser(req);
+    let user;
+    try {
+      user = await getAuthUser(req);
+    } catch (authError) {
+      const msg = authError instanceof Error
+        ? authError.message
+        : typeof authError === 'string'
+          ? authError
+          : 'Auth failed';
+      console.error('Auth error:', msg);
+      return new Response(
+        JSON.stringify({
+          error: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+          detail: msg,
+        }),
+        {
+          status: 401,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+    }
 
     // Rate limit: 10 AI requests per hour
     const rateLimitOk = await checkRateLimit(`ai:${user.id}`, 10, 3600);
@@ -599,6 +623,8 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
+    console.error('Raw error type:', typeof error);
+    console.error('Raw error value:', String(error));
     const msg = error instanceof Error
       ? error.message
       : JSON.stringify(error);
