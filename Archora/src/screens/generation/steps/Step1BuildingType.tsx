@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { DS } from '../../../theme/designSystem';
+import { ArchText } from '../../../components/common/ArchText';
+import { View,  Pressable } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../../theme/colors';
+
 import type { GenerationPayload } from '../../../types/generation';
 
 type BuildingType = GenerationPayload['buildingType'];
@@ -23,16 +25,16 @@ interface Props {
 export function Step1BuildingType({ selected, onSelect }: Props) {
   return (
     <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: 20, flex: 1 }}>
-      <Text
+      <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',
           fontSize: 24,
-          color: BASE_COLORS.textPrimary,
+          color: DS.colors.primary,
           marginBottom: 24,
         }}
       >
         What are we designing?
-      </Text>
+      </ArchText>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
         {TYPES.map((t) => {
@@ -43,24 +45,24 @@ export function Step1BuildingType({ selected, onSelect }: Props) {
               onPress={() => onSelect(t.key)}
               style={{
                 width: '47%',
-                backgroundColor: BASE_COLORS.surface,
+                backgroundColor: DS.colors.surface,
                 borderRadius: 24,
                 paddingVertical: 20,
                 alignItems: 'center',
                 borderWidth: isActive ? 2 : 1,
-                borderColor: isActive ? BASE_COLORS.textPrimary : BASE_COLORS.border,
+                borderColor: isActive ? DS.colors.primary : DS.colors.border,
               }}
             >
-              <Text style={{ fontSize: 32, marginBottom: 8 }}>{t.emoji}</Text>
-              <Text
+              <ArchText variant="body" style={{ fontSize: 32, marginBottom: 8 }}>{t.emoji}</ArchText>
+              <ArchText variant="body"
                 style={{
                   fontFamily: 'Inter_500Medium',
                   fontSize: 14,
-                  color: BASE_COLORS.textPrimary,
+                  color: DS.colors.primary,
                 }}
               >
                 {t.label}
-              </Text>
+              </ArchText>
             </Pressable>
           );
         })}

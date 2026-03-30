@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TextInput,
   Pressable,
@@ -12,21 +11,22 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  withDelay,
+  Easing,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path, Circle } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
-import { BASE_COLORS, withAlpha } from '../../theme/colors';
 import { FeedCard } from '../../components/social/FeedCard';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { ArchText } from '../../components/common/ArchText';
+import { OvalButton } from '../../components/common/OvalButton';
 import { useFeed } from '../../hooks/useFeed';
-import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
-import { useScreenSlideIn } from '../../hooks/useScreenSlideIn';
-import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import { useUIStore } from '../../stores/uiStore';
+import { DS } from '../../theme/designSystem';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -48,241 +48,81 @@ const CHIPS: ChipConfig[] = [
   { label: 'New', trendingOrNew: 'new' },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FeedHeader
-// ─────────────────────────────────────────────────────────────────────────────
-function FeedHeader({
-  onToggleSearch,
-  onNotificationPress,
-  colors,
-}: {
-  onToggleSearch: () => void;
-  onNotificationPress: () => void;
-  colors: { primary: string };
-}) {
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <HeaderLogoMark size={32} />
-        <Text
-          style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
-            fontSize: 28,
-            color: BASE_COLORS.textPrimary,
-            marginLeft: 10,
-          }}
-        >
-          Inspo
-        </Text>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Pressable
-          onPress={onToggleSearch}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: BASE_COLORS.surface,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Svg width={18} height={18} viewBox="0 0 24 24">
-            <Path
-              d="M21 21L15 15M17 11C17 14.3137 14.3137 17 11 17C7.68629 17 5 14.3137 5 11C5 7.68629 7.68629 5 11 5C14.3137 5 17 7.68629 17 11Z"
-              stroke={BASE_COLORS.textSecondary}
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </Svg>
-        </Pressable>
-        <Pressable
-          onPress={onNotificationPress}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: BASE_COLORS.surface,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 18 }}>🔔</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// StoriesRow
-// ─────────────────────────────────────────────────────────────────────────────
-const PLACEHOLDER_STORIES = [
-  { id: 'your_story', name: 'Your Story', isOwn: true },
-] as const;
-
-function StoriesRow() {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        gap: 12,
-      }}
-    >
-      {PLACEHOLDER_STORIES.map((story) => (
-        <Pressable key={story.id} style={{ alignItems: 'center', gap: 4 }}>
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              backgroundColor: BASE_COLORS.surface,
-              borderWidth: story.isOwn ? 0 : 2,
-              borderColor: BASE_COLORS.textPrimary,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 24 }}>+</Text>
-          </View>
-          <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 10 }}>
-            Your Story
-          </Text>
-        </Pressable>
-      ))}
-    </ScrollView>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FilterChipsRow
-// ─────────────────────────────────────────────────────────────────────────────
+// ── FilterChipsRow ─────────────────────────────────────────────────────────────
 function FilterChipsRow({
   activeChip,
   onChipPress,
-  colors,
 }: {
   activeChip: string;
   onChipPress: (chip: ChipConfig) => void;
-  colors: { primary: string };
 }) {
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{
-        paddingHorizontal: 16,
-        paddingBottom: 12,
-        gap: 8,
+        paddingHorizontal: DS.spacing.lg,
+        paddingBottom: DS.spacing.sm,
+        gap: DS.spacing.xs,
       }}
     >
-      {CHIPS.map((chip) => (
-        <Pressable
-          key={chip.label}
-          onPress={() => onChipPress(chip)}
-          style={{
-            paddingHorizontal: 14,
-            paddingVertical: 6,
-            borderRadius: 999,
-            borderWidth: 1.5,
-            borderColor:
-              activeChip === chip.label ? colors.primary : BASE_COLORS.border,
-            backgroundColor:
-              activeChip === chip.label ? withAlpha(colors.primary, 0.12) : 'transparent',
-          }}
-        >
-          <Text
+      {CHIPS.map((chip) => {
+        const active = activeChip === chip.label;
+        return (
+          <Pressable
+            key={chip.label}
+            onPress={() => onChipPress(chip)}
             style={{
-              fontFamily: 'Inter_500Medium',
-              fontSize: 12,
-              color:
-                activeChip === chip.label
-                  ? colors.primary
-                  : BASE_COLORS.textSecondary,
+              paddingHorizontal: 14,
+              paddingVertical: 6,
+              borderRadius: 999,
+              borderWidth: 1.5,
+              borderColor: active ? DS.colors.primary : DS.colors.border,
+              backgroundColor: active ? 'rgba(200,200,200,0.12)' : 'transparent',
             }}
           >
-            {chip.label}
-          </Text>
-        </Pressable>
-      ))}
+            <ArchText variant="body" style={{
+              fontFamily: DS.font.medium,
+              fontSize: 12,
+              color: active ? DS.colors.primary : DS.colors.primaryDim,
+            }}>
+              {chip.label}
+            </ArchText>
+          </Pressable>
+        );
+      })}
     </ScrollView>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FeedEmptyState
-// ─────────────────────────────────────────────────────────────────────────────
+// ── EmptyState ─────────────────────────────────────────────────────────────────
 function FeedEmptyState() {
   const navigation = useNavigation<Nav>();
   return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 40,
-      }}
-    >
-      <Text
-        style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
-          fontSize: 22,
-          color: BASE_COLORS.textPrimary,
-          textAlign: 'center',
-          marginBottom: 8,
-        }}
-      >
-        No designs yet.
-      </Text>
-      <Text
-        style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
-          fontSize: 15,
-          color: BASE_COLORS.textSecondary,
-          textAlign: 'center',
-          marginBottom: 32,
-        }}
-      >
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+      {/* Drafting compass SVG */}
+      <Svg width={64} height={64} viewBox="0 0 48 48" style={{ marginBottom: DS.spacing.md }}>
+        <Circle cx="24" cy="24" r="20" stroke={DS.colors.border} strokeWidth="1.5" fill="none" />
+        <Path d="M24 8 L22 20 L26 20 Z" stroke={DS.colors.primaryGhost} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
+        <Path d="M24 40 L22 28 L26 28 Z" stroke={DS.colors.primaryGhost} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
+        <Circle cx="24" cy="24" r="3" stroke={DS.colors.primaryDim} strokeWidth="1.2" fill="none" />
+      </Svg>
+      <ArchText variant="heading" style={{ fontSize: 22, textAlign: 'center', marginBottom: DS.spacing.xs }}>
+        No designs yet
+      </ArchText>
+      <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: DS.spacing.xl }}>
         Be the first to share your blueprint.
-      </Text>
-      <Pressable
+      </ArchText>
+      <OvalButton
+        label="Create a Design"
+        variant="filled"
         onPress={() => navigation.navigate('Generation')}
-        style={{
-          backgroundColor: BASE_COLORS.textPrimary,
-          paddingHorizontal: 32,
-          paddingVertical: 14,
-          borderRadius: 50,
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: 'Inter_500Medium',
-            fontSize: 16,
-            color: BASE_COLORS.background,
-          }}
-        >
-          Create a Design
-        </Text>
-      </Pressable>
+      />
     </View>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MasonryItem wrapper — FlashList numColumns gives each item flex:1 in a row,
-// we alternate height via index to get the masonry feel.
-// ─────────────────────────────────────────────────────────────────────────────
+// ── MasonryItem ────────────────────────────────────────────────────────────────
 interface MasonryItemProps {
   item: import('../../types').Template;
   index: number;
@@ -290,7 +130,6 @@ interface MasonryItemProps {
 }
 
 function MasonryItem({ item, index, onPress }: MasonryItemProps) {
-  // Alternate: even items 200px, odd items 260px
   const height = index % 2 === 0 ? 200 : 260;
   return (
     <FeedCard
@@ -302,14 +141,11 @@ function MasonryItem({ item, index, onPress }: MasonryItemProps) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FeedScreen
-// ─────────────────────────────────────────────────────────────────────────────
+// ── FeedScreen ─────────────────────────────────────────────────────────────────
 export function FeedScreen() {
   const navigation = useNavigation<Nav>();
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { light } = useHaptics();
-  const slideStyle = useScreenSlideIn();
   const showToast = useUIStore((s) => s.actions.showToast);
 
   const {
@@ -329,8 +165,24 @@ export function FeedScreen() {
   const [searchText, setSearchText] = useState('');
   const [activeChip, setActiveChip] = useState('All');
 
-  const searchBarHeight = useSharedValue(0);
+  // Entry animations
+  const headerOp = useSharedValue(0);
+  const headerY  = useSharedValue(-16);
+  const bodyOp   = useSharedValue(0);
 
+  React.useEffect(() => {
+    const ease = Easing.out(Easing.cubic);
+    headerOp.value = withTiming(1, { duration: 300, easing: ease });
+    headerY.value  = withTiming(0, { duration: 300, easing: ease });
+    bodyOp.value   = withDelay(150, withTiming(1, { duration: 300, easing: ease }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const headerStyle = useAnimatedStyle(() => ({ opacity: headerOp.value, transform: [{ translateY: headerY.value }] }));
+  const bodyStyle   = useAnimatedStyle(() => ({ opacity: bodyOp.value }));
+
+  // Search bar collapse
+  const searchBarHeight = useSharedValue(0);
   const searchBarStyle = useAnimatedStyle(() => ({
     height: searchBarHeight.value,
     overflow: 'hidden',
@@ -340,192 +192,179 @@ export function FeedScreen() {
     light();
     const next = !searchVisible;
     setSearchVisible(next);
-    searchBarHeight.value = withSpring(next ? 44 : 0, {
-      damping: 16,
-      stiffness: 200,
-    });
+    searchBarHeight.value = withSpring(next ? 52 : 0, { damping: 16, stiffness: 200 });
     if (!next) {
       setSearchText('');
       setFilter({ ...filter, search: undefined });
     }
   }, [searchVisible, searchBarHeight, light, filter, setFilter]);
 
-  const handleChip = useCallback(
-    (chip: ChipConfig) => {
-      light();
-      setActiveChip(chip.label);
-      setFilter({
-        buildingType: chip.buildingType,
-        trendingOrNew: chip.trendingOrNew,
-        search: searchText || undefined,
-      });
-    },
-    [light, setFilter, searchText],
-  );
+  const handleChip = useCallback((chip: ChipConfig) => {
+    light();
+    setActiveChip(chip.label);
+    setFilter({
+      buildingType: chip.buildingType,
+      trendingOrNew: chip.trendingOrNew,
+      search: searchText || undefined,
+    });
+  }, [light, setFilter, searchText]);
 
-  const handleSearch = useCallback(
-    (text: string) => {
-      setSearchText(text);
-      setFilter({ ...filter, search: text || undefined });
-    },
-    [filter, setFilter],
-  );
+  const handleSearch = useCallback((text: string) => {
+    setSearchText(text);
+    setFilter({ ...filter, search: text || undefined });
+  }, [filter, setFilter]);
 
-  const handleItemPress = useCallback(
-    (templateId: string) => {
-      navigation.navigate('TemplateDetail', { templateId });
-    },
-    [navigation],
-  );
+  const handleItemPress = useCallback((templateId: string) => {
+    navigation.navigate('TemplateDetail', { templateId });
+  }, [navigation]);
 
   const handleEndReached = useCallback(() => {
     if (hasMore && !isFetchingMore) void fetchMore();
   }, [hasMore, isFetchingMore, fetchMore]);
 
-  const renderItem = useCallback(
-    ({
-      item,
-      index,
-    }: {
-      item: import('../../types').Template;
-      index: number;
-    }) => <MasonryItem item={item} index={index} onPress={handleItemPress} />,
+  const renderItem = useCallback(({
+    item, index,
+  }: { item: import('../../types').Template; index: number }) =>
+    <MasonryItem item={item} index={index} onPress={handleItemPress} />,
     [handleItemPress],
   );
 
-  const keyExtractor = useCallback(
-    (item: import('../../types').Template) => item.id,
-    [],
-  );
+  const keyExtractor = useCallback((item: import('../../types').Template) => item.id, []);
 
   return (
-    <Animated.View
-      style={[
-        { flex: 1, backgroundColor: BASE_COLORS.background },
-        slideStyle,
-      ]}
-    >
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        {/* Header */}
-        <FeedHeader
-          onToggleSearch={toggleSearch}
-          onNotificationPress={() => showToast('Notifications coming soon')}
-          colors={colors}
-        />
-
-        {/* Search bar */}
-        <Animated.View
-          style={[searchBarStyle, { paddingHorizontal: 20, marginBottom: 4 }]}
-        >
-          <TextInput
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholder="Search designs..."
-            placeholderTextColor={BASE_COLORS.textDim}
-            autoFocus={searchVisible}
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+      {/* ── Header ── */}
+      <Animated.View style={[{
+        paddingTop: insets.top + 16,
+        paddingHorizontal: DS.spacing.lg,
+        paddingBottom: DS.spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }, headerStyle]}>
+        <ArchText variant="heading" style={{ fontSize: 28 }}>Inspo</ArchText>
+        <View style={{ flexDirection: 'row', gap: DS.spacing.xs }}>
+          {/* Search */}
+          <Pressable
+            onPress={toggleSearch}
             style={{
-              fontFamily: 'JetBrainsMono_400Regular',
-              fontSize: 14,
-              color: BASE_COLORS.textPrimary,
-              borderBottomWidth: 1.5,
-              borderBottomColor: colors.primary,
-              paddingVertical: 8,
-              height: 44,
+              width: 40, height: 40, borderRadius: 20,
+              backgroundColor: searchVisible ? DS.colors.primary : DS.colors.surface,
+              alignItems: 'center', justifyContent: 'center',
             }}
-          />
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24">
+              <Path
+                d="M21 21L15 15M17 11C17 14.3137 14.3137 17 11 17C7.68629 17 5 14.3137 5 11C5 7.68629 7.68629 5 11 5C14.3137 5 17 7.68629 17 11Z"
+                stroke={searchVisible ? DS.colors.background : DS.colors.primaryDim}
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </Svg>
+          </Pressable>
+          {/* Bell */}
+          <Pressable
+            onPress={() => showToast('Notifications coming soon')}
+            style={{
+              width: 40, height: 40, borderRadius: 20,
+              backgroundColor: DS.colors.surface,
+              alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24">
+              <Path
+                d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"
+                stroke={DS.colors.primaryDim}
+                strokeWidth="1.8"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </Pressable>
+        </View>
+      </Animated.View>
+
+      <Animated.View style={bodyStyle}>
+        {/* ── Search bar ── */}
+        <Animated.View style={[searchBarStyle, { paddingHorizontal: DS.spacing.lg, marginBottom: DS.spacing.xs }]}>
+          <View style={{
+            height: 44,
+            backgroundColor: DS.colors.surface,
+            borderRadius: 22,
+            paddingHorizontal: DS.spacing.md,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <Svg width={14} height={14} viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+              <Path
+                d="M21 21L15 15M17 11C17 14.3137 14.3137 17 11 17C7.68629 17 5 14.3137 5 11C5 7.68629 7.68629 5 11 5C14.3137 5 17 7.68629 17 11Z"
+                stroke={DS.colors.primaryGhost}
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </Svg>
+            <TextInput
+              value={searchText}
+              onChangeText={handleSearch}
+              placeholder="Search designs..."
+              placeholderTextColor={DS.colors.primaryGhost}
+              autoFocus={searchVisible}
+              style={{
+                flex: 1,
+                fontFamily: DS.font.regular,
+                fontSize: DS.fontSize.sm,
+                color: DS.colors.primary,
+              }}
+            />
+          </View>
         </Animated.View>
 
-        {/* Stories row */}
-        <StoriesRow />
+        {/* ── Filter chips ── */}
+        <FilterChipsRow activeChip={activeChip} onChipPress={handleChip} />
+      </Animated.View>
 
-        {/* Filter chips */}
-        <FilterChipsRow
-          activeChip={activeChip}
-          onChipPress={handleChip}
-          colors={colors}
+      {/* ── Content ── */}
+      {isLoading ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <CompassRoseLoader size="medium" />
+        </View>
+      ) : loadError ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+          <ArchText variant="heading" style={{ fontSize: 20, textAlign: 'center', marginBottom: DS.spacing.md }}>
+            Couldn&apos;t load designs
+          </ArchText>
+          <OvalButton label="Retry" variant="outline" onPress={() => { void refresh(); }} />
+        </View>
+      ) : templates.length === 0 ? (
+        <FeedEmptyState />
+      ) : (
+        <FlashList
+          data={templates}
+          numColumns={2}
+          // @ts-expect-error -- FlashList v2 prop not in types
+          estimatedItemSize={230}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => { void refresh(); }}
+              tintColor={DS.colors.primary}
+            />
+          }
+          style={{ padding: 8 }}
+          ListFooterComponent={
+            isFetchingMore ? (
+              <View style={{ padding: DS.spacing.md, alignItems: 'center' }}>
+                <CompassRoseLoader size="small" />
+              </View>
+            ) : null
+          }
         />
-
-        {/* Content */}
-        {isLoading ? (
-          <View
-            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
-          >
-            <CompassRoseLoader size="medium" />
-          </View>
-        ) : loadError ? (
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 40,
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: 'ArchitectsDaughter_400Regular',
-                fontSize: 20,
-                color: BASE_COLORS.textPrimary,
-                textAlign: 'center',
-                marginBottom: 16,
-              }}
-            >
-              Couldn&apos;t load designs
-            </Text>
-            <Pressable
-              onPress={() => {
-                void refresh();
-              }}
-              style={{
-                backgroundColor: BASE_COLORS.textPrimary,
-                paddingHorizontal: 24,
-                paddingVertical: 12,
-                borderRadius: 50,
-              }}
-            >
-              <Text
-                style={{
-                  fontFamily: 'Inter_500Medium',
-                  fontSize: 14,
-                  color: BASE_COLORS.background,
-                }}
-              >
-                Retry
-              </Text>
-            </Pressable>
-          </View>
-        ) : templates.length === 0 ? (
-          <FeedEmptyState />
-        ) : (
-          <FlashList
-            data={templates}
-            numColumns={2}
-            // @ts-expect-error -- FlashList v2 prop not in types
-            estimatedItemSize={230}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            onEndReached={handleEndReached}
-            onEndReachedThreshold={0.5}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={() => {
-                  void refresh();
-                }}
-                tintColor={colors.primary}
-              />
-            }
-            style={{ padding: 8 }}
-            ListFooterComponent={
-              isFetchingMore ? (
-                <View style={{ padding: 16, alignItems: 'center' }}>
-                  <CompassRoseLoader size="small" />
-                </View>
-              ) : null
-            }
-          />
-        )}
-      </SafeAreaView>
-    </Animated.View>
+      )}
+    </View>
   );
 }

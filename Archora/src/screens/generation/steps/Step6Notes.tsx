@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, Pressable, Alert } from 'react-native';
+import { DS } from '../../../theme/designSystem';
+import { ArchText } from '../../../components/common/ArchText';
+import { View,  TextInput, Pressable, Alert } from 'react-native';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated';
 import { Audio } from 'expo-av';
-import { BASE_COLORS } from '../../../theme/colors';
+
 import { aiService } from '../../../services/aiService';
 import { CompassRoseLoader } from '../../../components/common/CompassRoseLoader';
 
@@ -92,50 +94,50 @@ export function Step6Notes({ notes, transcript, onNotesChange, onTranscriptAppen
 
   return (
     <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: 20, flex: 1 }}>
-      <Text
+      <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',
           fontSize: 24,
-          color: BASE_COLORS.textPrimary,
+          color: DS.colors.primary,
           marginBottom: 24,
         }}
       >
         Anything else to tell me?
-      </Text>
+      </ArchText>
 
       <TextInput
         value={notes}
         onChangeText={(t) => onNotesChange(t.slice(0, MAX_CHARS))}
         placeholder="North facing windows, open plan kitchen flowing to garden..."
-        placeholderTextColor={BASE_COLORS.textDim}
+        placeholderTextColor={DS.colors.primaryGhost}
         multiline
         style={{
-          backgroundColor: BASE_COLORS.surface,
+          backgroundColor: DS.colors.surface,
           borderRadius: 24,
           paddingHorizontal: 20,
           paddingVertical: 16,
           fontFamily: 'Inter_400Regular',
           fontSize: 15,
-          color: BASE_COLORS.textPrimary,
+          color: DS.colors.primary,
           borderWidth: 1,
-          borderColor: BASE_COLORS.border,
+          borderColor: DS.colors.border,
           minHeight: 120,
           textAlignVertical: 'top',
           marginBottom: 8,
         }}
       />
 
-      <Text
+      <ArchText variant="body"
         style={{
           fontFamily: 'JetBrainsMono_400Regular',
           fontSize: 11,
-          color: BASE_COLORS.textDim,
+          color: DS.colors.primaryGhost,
           textAlign: 'right',
           marginBottom: 20,
         }}
       >
         {notes.length}/{MAX_CHARS}
-      </Text>
+      </ArchText>
 
       <View style={{ alignItems: 'center', marginBottom: 24 }}>
         {isTranscribing ? (
@@ -148,46 +150,46 @@ export function Step6Notes({ notes, transcript, onNotesChange, onTranscriptAppen
                 width: 56,
                 height: 56,
                 borderRadius: 28,
-                backgroundColor: isRecording ? BASE_COLORS.error : BASE_COLORS.surface,
+                backgroundColor: isRecording ? DS.colors.error : DS.colors.surface,
                 borderWidth: 2,
-                borderColor: isRecording ? BASE_COLORS.error : BASE_COLORS.border,
+                borderColor: isRecording ? DS.colors.error : DS.colors.border,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ fontSize: 24 }}>{'\u{1F3A4}'}</Text>
+              <ArchText variant="body" style={{ fontSize: 24 }}>{'\u{1F3A4}'}</ArchText>
             </Pressable>
           </Animated.View>
         )}
         {isRecording && (
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.error, marginTop: 8 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.error, marginTop: 8 }}>
             Recording... tap to stop
-          </Text>
+          </ArchText>
         )}
       </View>
 
       {transcript ? (
-        <View style={{ backgroundColor: BASE_COLORS.surface, borderRadius: 12, padding: 12, marginBottom: 16 }}>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, marginBottom: 4 }}>
+        <View style={{ backgroundColor: DS.colors.surface, borderRadius: 12, padding: 12, marginBottom: 16 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryGhost, marginBottom: 4 }}>
             Transcript:
-          </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary }}>
+          </ArchText>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim }}>
             {transcript}
-          </Text>
+          </ArchText>
         </View>
       ) : null}
 
       <Pressable
         onPress={onNext}
         style={{
-          backgroundColor: BASE_COLORS.textPrimary,
+          backgroundColor: DS.colors.primary,
           borderRadius: 50,
           paddingVertical: 16,
           alignItems: 'center',
           marginTop: 'auto',
         }}
       >
-        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: BASE_COLORS.background }}>Next</Text>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>Next</ArchText>
       </Pressable>
     </Animated.View>
   );

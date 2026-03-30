@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Image, Alert } from 'react-native';
+import { DS } from '../../../theme/designSystem';
+import { ArchText } from '../../../components/common/ArchText';
+import { View,  Pressable, Image, Alert } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { BASE_COLORS } from '../../../theme/colors';
+
 import { aiService } from '../../../services/aiService';
 import { useAuthStore } from '../../../stores/authStore';
 import { useTierGate } from '../../../hooks/useTierGate';
@@ -64,16 +66,16 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
 
   return (
     <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: 20, flex: 1 }}>
-      <Text
+      <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',
           fontSize: 24,
-          color: BASE_COLORS.textPrimary,
+          color: DS.colors.primary,
           marginBottom: 24,
         }}
       >
         Any inspiration images?
-      </Text>
+      </ArchText>
 
       {localUri || referenceImageUrl ? (
         <Pressable onPress={pickImage} style={{ marginBottom: 20 }}>
@@ -94,7 +96,7 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
           style={{
             borderRadius: 24,
             borderWidth: 2,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
             borderStyle: 'dashed',
             height: 180,
             alignItems: 'center',
@@ -106,32 +108,32 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
             <CompassRoseLoader size="medium" />
           ) : (
             <>
-              <Text style={{ fontSize: 32, marginBottom: 8 }}>{'\u{1F4F7}'}</Text>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: BASE_COLORS.textSecondary }}>
+              <ArchText variant="body" style={{ fontSize: 32, marginBottom: 8 }}>{'\u{1F4F7}'}</ArchText>
+              <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: DS.colors.primaryDim }}>
                 Upload a photo
-              </Text>
+              </ArchText>
             </>
           )}
         </Pressable>
       )}
 
       <Pressable onPress={onSkip} style={{ alignSelf: 'center', marginBottom: 24 }}>
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary, textDecorationLine: 'underline' }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, textDecorationLine: 'underline' }}>
           Skip this step
-        </Text>
+        </ArchText>
       </Pressable>
 
       {(referenceImageUrl || localUri) && !uploading && (
         <Pressable
           onPress={onNext}
           style={{
-            backgroundColor: BASE_COLORS.textPrimary,
+            backgroundColor: DS.colors.primary,
             borderRadius: 50,
             paddingVertical: 16,
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: BASE_COLORS.background }}>Next</Text>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>Next</ArchText>
         </Pressable>
       )}
     </Animated.View>

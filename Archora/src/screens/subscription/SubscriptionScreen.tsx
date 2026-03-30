@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  Pressable,
   ScrollView,
-  SafeAreaView,
+  Pressable,
   Alert,
   Linking,
 } from 'react-native';
-import {
+import Animated, {
   useSharedValue,
   withSpring,
+  useAnimatedStyle,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { subscriptionService } from '../../services/subscriptionService';
-import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/authStore';
-import { BASE_COLORS } from '../../theme/colors';
+import { ArchText } from '../../components/common/ArchText';
+import { OvalButton } from '../../components/common/OvalButton';
+import { ScreenHeader } from '../../components/common/ScreenHeader';
+import { DS } from '../../theme/designSystem';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { SubscriptionTier } from '../../types';
@@ -27,280 +28,190 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Subscription'>;
 type BillingInterval = 'monthly' | 'annual';
 
 const PRICES: Record<Exclude<SubscriptionTier, 'starter'>, { monthly: number; annual: number; annualTotal: number }> = {
-  creator: { monthly: 14.99, annual: 11.99, annualTotal: 143.90 },
-  pro: { monthly: 24.99, annual: 19.99, annualTotal: 239.90 },
-  architect: { monthly: 39.99, annual: 31.99, annualTotal: 383.90 },
+  creator:   { monthly: 14.99, annual: 11.99, annualTotal: 143.90  },
+  pro:       { monthly: 24.99, annual: 19.99, annualTotal: 239.90  },
+  architect: { monthly: 39.99, annual: 31.99, annualTotal: 383.90  },
 };
 
 const FEATURES = [
-  {
-    label: 'Projects',
-    starter: String(TIER_LIMITS.starter.maxProjects),
-    creator: String(TIER_LIMITS.creator.maxProjects),
-    pro: String(TIER_LIMITS.pro.maxProjects),
-    architect: 'Unlimited',
-  },
-  {
-    label: 'Rooms per project',
-    starter: String(TIER_LIMITS.starter.maxRoomsPerProject),
-    creator: String(TIER_LIMITS.creator.maxRoomsPerProject),
-    pro: String(TIER_LIMITS.pro.maxRoomsPerProject),
-    architect: 'Unlimited',
-  },
-  {
-    label: 'Furniture per room',
-    starter: String(TIER_LIMITS.starter.maxFurniturePerRoom),
-    creator: String(TIER_LIMITS.creator.maxFurniturePerRoom),
-    pro: String(TIER_LIMITS.pro.maxFurniturePerRoom),
-    architect: 'Unlimited',
-  },
-  {
-    label: 'AI generations / mo',
-    starter: String(TIER_LIMITS.starter.aiGenerationsPerMonth),
-    creator: String(TIER_LIMITS.creator.aiGenerationsPerMonth),
-    pro: String(TIER_LIMITS.pro.aiGenerationsPerMonth),
-    architect: 'Unlimited',
-  },
-  {
-    label: 'Daily edit time',
-    starter: '45 min',
-    creator: 'Unlimited',
-    pro: 'Unlimited',
-    architect: 'Unlimited',
-  },
-  {
-    label: 'Undo steps',
-    starter: String(TIER_LIMITS.starter.maxUndoSteps),
-    creator: String(TIER_LIMITS.creator.maxUndoSteps),
-    pro: String(TIER_LIMITS.pro.maxUndoSteps),
-    architect: 'Unlimited',
-  },
-  {
-    label: 'Auto-save',
-    starter: '✗',
-    creator: '✓',
-    pro: '✓',
-    architect: '✓',
-  },
-  {
-    label: 'Design styles',
-    starter: String((TIER_LIMITS.starter.availableStyles as string[]).length),
-    creator: '12',
-    pro: '12',
-    architect: '12',
-  },
-  {
-    label: 'AR placement',
-    starter: '✗',
-    creator: `${TIER_LIMITS.creator.arSessionsPerMonth}/mo`,
-    pro: 'Unlimited',
-    architect: 'Unlimited',
-  },
-  {
-    label: 'Export designs',
-    starter: `${TIER_LIMITS.starter.exportsPerMonth}/mo`,
-    creator: `${TIER_LIMITS.creator.exportsPerMonth}/mo`,
-    pro: 'Unlimited',
-    architect: 'Unlimited',
-  },
-  {
-    label: 'First-person view',
-    starter: '✗',
-    creator: '✓',
-    pro: '✓',
-    architect: '✓',
-  },
-  {
-    label: 'Publish templates',
-    starter: '✗',
-    creator: String(TIER_LIMITS.creator.maxPublishedTemplates),
-    pro: 'Unlimited',
-    architect: 'Unlimited',
-  },
-  {
-    label: 'Template revenue share',
-    starter: '✗',
-    creator: `${Math.round(TIER_LIMITS.creator.templateRevenueShare * 100)}%`,
-    pro: `${Math.round(TIER_LIMITS.pro.templateRevenueShare * 100)}%`,
-    architect: `${Math.round(TIER_LIMITS.architect.templateRevenueShare * 100)}%`,
-  },
-  {
-    label: 'VIP support',
-    starter: '✗',
-    creator: '✗',
-    pro: '✗',
-    architect: '✓',
-  },
+  { label: 'Projects',               starter: String(TIER_LIMITS.starter.maxProjects),                              creator: String(TIER_LIMITS.creator.maxProjects),                              pro: String(TIER_LIMITS.pro.maxProjects),                    architect: '∞'          },
+  { label: 'Rooms / project',        starter: String(TIER_LIMITS.starter.maxRoomsPerProject),                       creator: String(TIER_LIMITS.creator.maxRoomsPerProject),                       pro: String(TIER_LIMITS.pro.maxRoomsPerProject),              architect: '∞'          },
+  { label: 'Furniture / room',       starter: String(TIER_LIMITS.starter.maxFurniturePerRoom),                      creator: String(TIER_LIMITS.creator.maxFurniturePerRoom),                      pro: String(TIER_LIMITS.pro.maxFurniturePerRoom),             architect: '∞'          },
+  { label: 'AI generations / mo',    starter: String(TIER_LIMITS.starter.aiGenerationsPerMonth),                    creator: String(TIER_LIMITS.creator.aiGenerationsPerMonth),                    pro: String(TIER_LIMITS.pro.aiGenerationsPerMonth),           architect: '∞'          },
+  { label: 'Daily edit time',        starter: '45 min',                                                              creator: '∞',                                                                   pro: '∞',                                                    architect: '∞'          },
+  { label: 'Undo steps',             starter: String(TIER_LIMITS.starter.maxUndoSteps),                             creator: String(TIER_LIMITS.creator.maxUndoSteps),                             pro: String(TIER_LIMITS.pro.maxUndoSteps),                    architect: '∞'          },
+  { label: 'Auto-save',              starter: '–',                                                                   creator: '✓',                                                                   pro: '✓',                                                    architect: '✓'          },
+  { label: 'Design styles',          starter: String((TIER_LIMITS.starter.availableStyles as string[]).length),     creator: '12',                                                                  pro: '12',                                                   architect: '12'         },
+  { label: 'AR placement',           starter: '–',                                                                   creator: `${TIER_LIMITS.creator.arSessionsPerMonth}/mo`,                       pro: '∞',                                                    architect: '∞'          },
+  { label: 'Exports / mo',           starter: `${TIER_LIMITS.starter.exportsPerMonth}`,                             creator: `${TIER_LIMITS.creator.exportsPerMonth}`,                             pro: '∞',                                                    architect: '∞'          },
+  { label: 'Publish templates',      starter: '–',                                                                   creator: String(TIER_LIMITS.creator.maxPublishedTemplates),                    pro: '∞',                                                    architect: '∞'          },
+  { label: 'Revenue share',          starter: '–',                                                                   creator: `${Math.round(TIER_LIMITS.creator.templateRevenueShare * 100)}%`,     pro: `${Math.round(TIER_LIMITS.pro.templateRevenueShare * 100)}%`,   architect: `${Math.round(TIER_LIMITS.architect.templateRevenueShare * 100)}%` },
+  { label: 'VIP support',            starter: '–',                                                                   creator: '–',                                                                   pro: '–',                                                    architect: '✓'          },
 ];
 
-interface StarterCardProps {
-  isCurrentTier: boolean;
-  disabled?: boolean;
-}
+const TIER_ACCENT: Record<Exclude<SubscriptionTier, 'starter'>, string> = {
+  creator:   DS.colors.primary,
+  pro:       DS.colors.success,
+  architect: DS.colors.warning,
+};
 
-function StarterCard({ isCurrentTier }: StarterCardProps) {
+const TIER_LABEL: Record<Exclude<SubscriptionTier, 'starter'>, string> = {
+  creator:   'Creator',
+  pro:       'Pro',
+  architect: 'Architect',
+};
+
+const TIER_PERKS: Record<Exclude<SubscriptionTier, 'starter'>, string[]> = {
+  creator:   [`${TIER_LIMITS.creator.maxProjects} projects`, `${TIER_LIMITS.creator.aiGenerationsPerMonth} AI designs/mo`, `${TIER_LIMITS.creator.arSessionsPerMonth} AR sessions`, 'Auto-save', '12 design styles'],
+  pro:       ['50 projects', '500 AI designs/mo', 'Unlimited AR', 'Custom textures', 'AI image reference'],
+  architect: ['Unlimited everything', 'Custom AI furniture', 'CAD export', '70% template revenue', 'VIP support'],
+};
+
+// ── StarterCard ────────────────────────────────────────────────────────────────
+function StarterCard({ isCurrent }: { isCurrent: boolean }) {
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: isCurrentTier ? 2 : 1,
-        borderColor: isCurrentTier ? BASE_COLORS.textPrimary : BASE_COLORS.border,
-        backgroundColor: BASE_COLORS.surfaceHigh,
-        marginBottom: 16,
-        overflow: 'hidden',
-      }}
-    >
-      {isCurrentTier && (
-        <View style={{ backgroundColor: BASE_COLORS.textPrimary, paddingVertical: 6, alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: BASE_COLORS.background }}>
-            YOUR CURRENT PLAN
-          </Text>
+    <View style={{
+      borderRadius: 20,
+      borderWidth: isCurrent ? 2 : 1,
+      borderColor: isCurrent ? DS.colors.primary : DS.colors.border,
+      backgroundColor: DS.colors.surface,
+      marginBottom: DS.spacing.md,
+      overflow: 'hidden',
+    }}>
+      {isCurrent && (
+        <View style={{ backgroundColor: DS.colors.primary, paddingVertical: 6, alignItems: 'center' }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 11, color: DS.colors.background, letterSpacing: 1.5 }}>
+            CURRENT PLAN
+          </ArchText>
         </View>
       )}
-
-      <View style={{ padding: 24 }}>
-        <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: BASE_COLORS.textPrimary, marginBottom: 4 }}>
-          Starter
-        </Text>
-
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 12 }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 36, color: BASE_COLORS.textPrimary }}>
-            Free
-          </Text>
-        </View>
-
-        <View style={{ marginBottom: 20, gap: 8 }}>
-          {['3 projects', '10 AI generations/mo', '3 design styles'].map((perk) => (
+      <View style={{ padding: DS.spacing.lg }}>
+        <ArchText variant="heading" style={{ fontSize: 22, marginBottom: DS.spacing.xs }}>Starter</ArchText>
+        <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 36, color: DS.colors.primary, marginBottom: DS.spacing.md }}>
+          Free
+        </ArchText>
+        <View style={{ gap: DS.spacing.xs, marginBottom: DS.spacing.md }}>
+          {['3 projects', '10 AI designs/mo', '3 design styles'].map((perk) => (
             <View key={perk} style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ color: BASE_COLORS.textDim, marginRight: 8, fontSize: 14 }}>✓</Text>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary }}>
-                {perk}
-              </Text>
+              <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryGhost, marginRight: 8 }}>✓</ArchText>
+              <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryDim }}>{perk}</ArchText>
             </View>
           ))}
         </View>
-
-        <View
-          style={{
-            backgroundColor: BASE_COLORS.border,
-            borderRadius: 12,
-            paddingVertical: 14,
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: BASE_COLORS.textDim }}>
-            {isCurrentTier ? 'Current Plan' : "You're on Free"}
-          </Text>
+        <View style={{ backgroundColor: DS.colors.border, borderRadius: 50, paddingVertical: 14, alignItems: 'center' }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.medium, fontSize: 14, color: DS.colors.primaryGhost }}>
+            {isCurrent ? 'Current Plan' : "You're on Free"}
+          </ArchText>
         </View>
       </View>
     </View>
   );
 }
 
-interface TierCardProps {
+// ── TierCard ───────────────────────────────────────────────────────────────────
+function TierCard({
+  tier, billing, isCurrent, isHighlighted, onUpgrade, disabled,
+}: {
   tier: Exclude<SubscriptionTier, 'starter'>;
-  billingInterval: BillingInterval;
-  isCurrentTier: boolean;
+  billing: BillingInterval;
+  isCurrent: boolean;
   isHighlighted: boolean;
-  onUpgrade: (tier: Exclude<SubscriptionTier, 'starter'>) => void;
-  disabled?: boolean;
-}
-
-function TierCard({ tier, billingInterval, isCurrentTier, isHighlighted, onUpgrade, disabled }: TierCardProps) {
-  const { colors } = useTheme();
+  onUpgrade: (t: Exclude<SubscriptionTier, 'starter'>) => void;
+  disabled: boolean;
+}) {
   const price = PRICES[tier];
-  const displayPrice = billingInterval === 'annual' ? price.annual : price.monthly;
-  const label = tier === 'creator' ? 'Creator' : tier === 'pro' ? 'Pro' : 'Architect';
-  const accentColor = tier === 'architect' ? BASE_COLORS.warning : tier === 'pro' ? BASE_COLORS.success : colors.primary;
-
-  const perks = tier === 'creator'
-    ? [`${TIER_LIMITS.creator.maxProjects} projects`, `${TIER_LIMITS.creator.aiGenerationsPerMonth} AI generations/mo`, `${TIER_LIMITS.creator.arSessionsPerMonth} AR sessions`, 'Auto-save', '12 design styles']
-    : tier === 'pro'
-    ? ['50 projects', '500 AI generations/mo', 'Unlimited AR', 'Custom textures', '12 design styles']
-    : ['Unlimited everything', 'Unlimited AR', 'Custom furniture AI', 'Template revenue 80%', 'VIP support'];
+  const accent = TIER_ACCENT[tier];
+  const displayPrice = billing === 'annual' ? price.annual : price.monthly;
+  const perks = TIER_PERKS[tier];
+  const label = TIER_LABEL[tier];
 
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: isHighlighted ? 2 : 1,
-        borderColor: isHighlighted ? accentColor : BASE_COLORS.border,
-        backgroundColor: BASE_COLORS.surfaceHigh,
-        marginBottom: 16,
-        overflow: 'hidden',
-      }}
-    >
-      {/* Badge */}
+    <View style={{
+      borderRadius: 20,
+      borderWidth: isHighlighted ? 2 : 1,
+      borderColor: isHighlighted ? accent : DS.colors.border,
+      backgroundColor: DS.colors.surface,
+      marginBottom: DS.spacing.md,
+      overflow: 'hidden',
+    }}>
       {isHighlighted && (
-        <View style={{ backgroundColor: accentColor, paddingVertical: 6, alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: BASE_COLORS.background }}>
+        <View style={{ backgroundColor: accent, paddingVertical: 6, alignItems: 'center' }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 11, color: DS.colors.background, letterSpacing: 1.5 }}>
             {tier === 'creator' ? 'MOST POPULAR' : 'PROFESSIONAL'}
-          </Text>
+          </ArchText>
+        </View>
+      )}
+      {isCurrent && !isHighlighted && (
+        <View style={{ backgroundColor: DS.colors.border, paddingVertical: 6, alignItems: 'center' }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 11, color: DS.colors.primaryDim, letterSpacing: 1.5 }}>
+            CURRENT PLAN
+          </ArchText>
         </View>
       )}
 
-      <View style={{ padding: 24 }}>
-        <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: BASE_COLORS.textPrimary, marginBottom: 4 }}>
-          {label}
-        </Text>
+      <View style={{ padding: DS.spacing.lg }}>
+        <ArchText variant="heading" style={{ fontSize: 22, marginBottom: DS.spacing.xs }}>{label}</ArchText>
 
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 4 }}>
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 36, color: accentColor }}>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: DS.spacing.xs }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 36, color: accent }}>
             ${displayPrice.toFixed(2)}
-          </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim, marginLeft: 4 }}>
-            /mo
-          </Text>
+          </ArchText>
+          <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryGhost, marginLeft: 4 }}>/mo</ArchText>
         </View>
 
-        {billingInterval === 'annual' && (
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, marginBottom: 16 }}>
+        {billing === 'annual' && (
+          <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim, marginBottom: DS.spacing.md }}>
             ${price.annualTotal.toFixed(2)} billed annually · Save 20%
-          </Text>
+          </ArchText>
         )}
 
-        <View style={{ marginTop: billingInterval === 'monthly' ? 12 : 0, marginBottom: 20, gap: 8 }}>
+        <View style={{ gap: DS.spacing.xs, marginTop: billing === 'monthly' ? DS.spacing.sm : 0, marginBottom: DS.spacing.md }}>
           {perks.map((perk) => (
             <View key={perk} style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ color: accentColor, marginRight: 8, fontSize: 14 }}>✓</Text>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary }}>
-                {perk}
-              </Text>
+              <ArchText variant="body" style={{ fontSize: 13, color: accent, marginRight: 8 }}>✓</ArchText>
+              <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryDim }}>{perk}</ArchText>
             </View>
           ))}
         </View>
 
         <Pressable
-          onPress={() => !isCurrentTier && onUpgrade(tier)}
-          disabled={disabled || isCurrentTier}
+          onPress={() => !isCurrent && onUpgrade(tier)}
+          disabled={disabled || isCurrent}
           style={{
-            backgroundColor: isCurrentTier ? BASE_COLORS.border : accentColor,
-            borderRadius: 12,
+            backgroundColor: isCurrent ? DS.colors.border : accent,
+            borderRadius: 50,
             paddingVertical: 14,
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: isCurrentTier ? BASE_COLORS.textDim : BASE_COLORS.background }}>
-            {isCurrentTier ? 'Current Plan' : `Upgrade to ${label}`}
-          </Text>
+          <ArchText variant="body" style={{
+            fontFamily: DS.font.bold,
+            fontSize: 15,
+            color: isCurrent ? DS.colors.primaryGhost : DS.colors.background,
+          }}>
+            {isCurrent ? 'Current Plan' : `Upgrade to ${label}`}
+          </ArchText>
         </Pressable>
       </View>
     </View>
   );
 }
 
+// ── SubscriptionScreen ─────────────────────────────────────────────────────────
 export function SubscriptionScreen({ navigation }: Props) {
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [billing, setBilling] = useState<BillingInterval>('monthly');
   const [isLoading, setIsLoading] = useState(false);
   const user = useAuthStore((s) => s.user);
   const tier = user?.subscriptionTier ?? 'starter';
 
-  const toggleX = useSharedValue(0);
+  // Billing toggle animation
+  const pillX = useSharedValue(0);
+  const pillStyle = useAnimatedStyle(() => ({ transform: [{ translateX: pillX.value }] }));
 
   const handleBillingToggle = (interval: BillingInterval) => {
     setBilling(interval);
-    toggleX.value = withSpring(interval === 'annual' ? 100 : 0, { damping: 20, stiffness: 300 });
+    pillX.value = withSpring(interval === 'annual' ? 1 : 0, { damping: 20, stiffness: 300 });
   };
 
   const handleUpgrade = async (newTier: Exclude<SubscriptionTier, 'starter'>) => {
@@ -314,7 +225,6 @@ export function SubscriptionScreen({ navigation }: Props) {
       const { url } = await subscriptionService.createCheckout(newTier, billing);
       if (url) await Linking.openURL(url);
     } catch (err) {
-      console.error('[checkout error]', err);
       Alert.alert('Error', err instanceof Error ? err.message : 'Could not start checkout');
     } finally {
       setIsLoading(false);
@@ -326,152 +236,158 @@ export function SubscriptionScreen({ navigation }: Props) {
     try {
       const { url } = await subscriptionService.getPortalUrl();
       if (url) await Linking.openURL(url);
-    } catch (err) {
-      console.error('[portal error]', err);
+    } catch {
       Alert.alert('Error', 'Could not open subscription management');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+      <ScreenHeader
+        title="Upgrade ASORIA"
+        onBack={() => navigation.goBack()}
+      />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: DS.spacing.lg, paddingBottom: 48 }}
       >
-        {/* Header */}
-        <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 8 }}>
-          <Pressable onPress={() => navigation.goBack()} style={{ marginBottom: 16 }}>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textDim }}>
-              ← Back
-            </Text>
-          </Pressable>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 32, color: BASE_COLORS.textPrimary }}>
-            Upgrade ASORIA
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-            <View style={{ backgroundColor: colors.primary + '33', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10 }}>
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: colors.primary }}>
-                Current: {tier.charAt(0).toUpperCase() + tier.slice(1)}
-              </Text>
-            </View>
+        {/* Current tier badge */}
+        <View style={{ flexDirection: 'row', marginBottom: DS.spacing.xl }}>
+          <View style={{
+            paddingHorizontal: DS.spacing.md,
+            paddingVertical: DS.spacing.xs,
+            borderRadius: 50,
+            borderWidth: 1,
+            borderColor: DS.colors.border,
+          }}>
+            <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryDim, letterSpacing: 1 }}>
+              {tierLabel.toUpperCase()}
+            </ArchText>
           </View>
         </View>
 
         {/* Billing toggle */}
-        <View style={{ paddingHorizontal: 24, marginVertical: 20 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ flexDirection: 'row', backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 30, padding: 4, borderWidth: 1, borderColor: BASE_COLORS.border }}>
-              <Pressable
-                onPress={() => handleBillingToggle('monthly')}
-                style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 26, backgroundColor: billing === 'monthly' ? BASE_COLORS.textPrimary : 'transparent' }}
-              >
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: billing === 'monthly' ? BASE_COLORS.background : BASE_COLORS.textDim }}>
-                  Monthly
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleBillingToggle('annual')}
-                style={{ paddingHorizontal: 24, paddingVertical: 10, borderRadius: 26, backgroundColor: billing === 'annual' ? BASE_COLORS.textPrimary : 'transparent', flexDirection: 'row', alignItems: 'center', gap: 6 }}
-              >
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: billing === 'annual' ? BASE_COLORS.background : BASE_COLORS.textDim }}>
-                  Annual
-                </Text>
-                <View style={{ backgroundColor: BASE_COLORS.success, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9, color: BASE_COLORS.textPrimary }}>SAVE 20%</Text>
-                </View>
-              </Pressable>
-            </View>
+        <View style={{ alignItems: 'center', marginBottom: DS.spacing.xl }}>
+          <View style={{
+            flexDirection: 'row',
+            backgroundColor: DS.colors.surface,
+            borderRadius: 50,
+            padding: 4,
+            borderWidth: 1,
+            borderColor: DS.colors.border,
+          }}>
+            <Pressable
+              onPress={() => handleBillingToggle('monthly')}
+              style={{
+                paddingHorizontal: DS.spacing.lg,
+                paddingVertical: DS.spacing.sm,
+                borderRadius: 50,
+                backgroundColor: billing === 'monthly' ? DS.colors.primary : 'transparent',
+              }}
+            >
+              <ArchText variant="body" style={{
+                fontFamily: DS.font.medium,
+                fontSize: 14,
+                color: billing === 'monthly' ? DS.colors.background : DS.colors.primaryDim,
+              }}>
+                Monthly
+              </ArchText>
+            </Pressable>
+            <Pressable
+              onPress={() => handleBillingToggle('annual')}
+              style={{
+                paddingHorizontal: DS.spacing.lg,
+                paddingVertical: DS.spacing.sm,
+                borderRadius: 50,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: DS.spacing.xs,
+                backgroundColor: billing === 'annual' ? DS.colors.primary : 'transparent',
+              }}
+            >
+              <ArchText variant="body" style={{
+                fontFamily: DS.font.medium,
+                fontSize: 14,
+                color: billing === 'annual' ? DS.colors.background : DS.colors.primaryDim,
+              }}>
+                Annual
+              </ArchText>
+              <View style={{ backgroundColor: DS.colors.success, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 50 }}>
+                <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 9, color: DS.colors.background }}>
+                  SAVE 20%
+                </ArchText>
+              </View>
+            </Pressable>
           </View>
         </View>
 
         {/* Tier cards */}
-        <View style={{ paddingHorizontal: 24 }}>
-          <StarterCard isCurrentTier={tier === 'starter'} disabled={isLoading} />
-          <TierCard
-            tier="creator"
-            billingInterval={billing}
-            isCurrentTier={tier === 'creator'}
-            isHighlighted={true}
-            onUpgrade={handleUpgrade}
-            disabled={isLoading}
-          />
-          <TierCard
-            tier="pro"
-            billingInterval={billing}
-            isCurrentTier={tier === 'pro'}
-            isHighlighted={false}
-            onUpgrade={handleUpgrade}
-            disabled={isLoading}
-          />
-          <TierCard
-            tier="architect"
-            billingInterval={billing}
-            isCurrentTier={tier === 'architect'}
-            isHighlighted={false}
-            onUpgrade={handleUpgrade}
-            disabled={isLoading}
-          />
-        </View>
+        <StarterCard isCurrent={tier === 'starter'} />
+        <TierCard tier="creator"   billing={billing} isCurrent={tier === 'creator'}   isHighlighted onUpgrade={handleUpgrade}   disabled={isLoading} />
+        <TierCard tier="pro"       billing={billing} isCurrent={tier === 'pro'}       isHighlighted={false} onUpgrade={handleUpgrade} disabled={isLoading} />
+        <TierCard tier="architect" billing={billing} isCurrent={tier === 'architect'} isHighlighted={false} onUpgrade={handleUpgrade} disabled={isLoading} />
 
-        {/* Manage subscription (shown for paying users) */}
+        {/* Manage subscription for paying users */}
         {tier !== 'starter' && (
-          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-            <Pressable
+          <View style={{ marginBottom: DS.spacing.lg }}>
+            <OvalButton
+              label={isLoading ? 'Loading…' : 'Manage Subscription'}
+              variant="outline"
+              fullWidth
               onPress={() => { void handleManageSubscription(); }}
-              disabled={isLoading}
-              style={{
-                borderWidth: 1,
-                borderColor: BASE_COLORS.border,
-                borderRadius: 12,
-                paddingVertical: 14,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>
-                Manage Subscription
-              </Text>
-            </Pressable>
+            />
           </View>
         )}
 
         {/* Feature comparison table */}
-        <View style={{ marginHorizontal: 24 }}>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: BASE_COLORS.textPrimary, marginBottom: 12 }}>
-            Compare Plans
-          </Text>
+        <ArchText variant="heading" style={{ fontSize: 18, marginBottom: DS.spacing.sm }}>
+          Compare Plans
+        </ArchText>
 
-          {/* Table header */}
-          <View style={{ flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border }}>
-            <Text style={{ flex: 2, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: BASE_COLORS.textDim }}>FEATURE</Text>
-            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: BASE_COLORS.textDim, textAlign: 'center' }}>FREE</Text>
-            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: colors.primary, textAlign: 'center' }}>CREATOR</Text>
-            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: BASE_COLORS.success, textAlign: 'center' }}>PRO</Text>
-            <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 10, color: BASE_COLORS.warning, textAlign: 'center' }}>ARCH</Text>
-          </View>
-
-          {FEATURES.map((row, i) => (
-            <View
-              key={row.label}
-              style={{
-                flexDirection: 'row',
-                paddingVertical: 10,
-                borderBottomWidth: 1,
-                borderBottomColor: BASE_COLORS.border + '44',
-                backgroundColor: i % 2 === 0 ? 'transparent' : BASE_COLORS.surfaceHigh + '55',
-              }}
-            >
-              <Text style={{ flex: 2, fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.textSecondary }}>{row.label}</Text>
-              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.textDim, textAlign: 'center' }}>{row.starter}</Text>
-              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.primary, textAlign: 'center' }}>{row.creator}</Text>
-              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.success, textAlign: 'center' }}>{row.pro}</Text>
-              <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.warning, textAlign: 'center' }}>{row.architect}</Text>
-            </View>
-          ))}
+        {/* Table header */}
+        <View style={{
+          flexDirection: 'row',
+          paddingVertical: DS.spacing.sm,
+          borderBottomWidth: 1,
+          borderBottomColor: DS.colors.border,
+          marginBottom: DS.spacing.xs,
+        }}>
+          <ArchText variant="body" style={{ flex: 2, fontFamily: DS.font.medium, fontSize: 10, color: DS.colors.primaryGhost, letterSpacing: 1, textTransform: 'uppercase' }}>Feature</ArchText>
+          <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.primaryGhost, textAlign: 'center' }}>FREE</ArchText>
+          <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.primary, textAlign: 'center' }}>CRTV</ArchText>
+          <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.success, textAlign: 'center' }}>PRO</ArchText>
+          <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.warning, textAlign: 'center' }}>ARCH</ArchText>
         </View>
-      </ScrollView>
 
-    </SafeAreaView>
+        {FEATURES.map((row, i) => (
+          <View
+            key={row.label}
+            style={{
+              flexDirection: 'row',
+              paddingVertical: DS.spacing.sm,
+              borderBottomWidth: 1,
+              borderBottomColor: i % 2 === 0 ? DS.colors.border : 'transparent',
+              backgroundColor: i % 2 !== 0 ? '#FFFFFF06' : 'transparent',
+            }}
+          >
+            <ArchText variant="body" style={{ flex: 2, fontSize: 11, color: DS.colors.primaryDim }}>{row.label}</ArchText>
+            <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, textAlign: 'center' }}>{row.starter}</ArchText>
+            <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primary, textAlign: 'center' }}>{row.creator}</ArchText>
+            <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.success, textAlign: 'center' }}>{row.pro}</ArchText>
+            <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.warning, textAlign: 'center' }}>{row.architect}</ArchText>
+          </View>
+        ))}
+
+        <View style={{ height: DS.spacing.xl }} />
+        <ArchText variant="body" style={{ textAlign: 'center', fontSize: 11, color: DS.colors.primaryGhost }}>
+          All plans include 7-day free trial · Cancel anytime
+        </ArchText>
+      </ScrollView>
+    </View>
   );
 }

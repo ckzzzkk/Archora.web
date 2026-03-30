@@ -6,12 +6,13 @@ import { DS } from '../../theme/designSystem';
 type Variant = 'heading' | 'body' | 'mono' | 'label' | 'caption';
 
 interface Props {
-  children:  string | React.ReactNode;
-  variant:   Variant;
-  size?:     keyof typeof DS.fontSize;
-  color?:    string;
-  align?:    'left' | 'center' | 'right';
-  style?:    TextStyle;
+  children:     string | React.ReactNode;
+  variant:      Variant;
+  size?:        keyof typeof DS.fontSize;
+  color?:       string;
+  align?:       'left' | 'center' | 'right';
+  style?:       TextStyle;
+  numberOfLines?: number;
 }
 
 const VARIANT_DEFAULTS: Record<Variant, {
@@ -48,11 +49,12 @@ const VARIANT_DEFAULTS: Record<Variant, {
   },
 };
 
-export function ArchText({ children, variant, size, color, align = 'left', style }: Props) {
+export function ArchText({ children, variant, size, color, align = 'left', style, numberOfLines }: Props) {
   const defaults = VARIANT_DEFAULTS[variant];
 
   return (
     <Text
+      numberOfLines={numberOfLines}
       style={[
         {
           fontFamily:         defaults.fontFamily,

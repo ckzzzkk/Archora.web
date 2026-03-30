@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, Pressable, Image } from 'react-native';
+import { DS } from '../../../theme/designSystem';
+import { ArchText } from '../../../components/common/ArchText';
+import { View,  Pressable, Image } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../../theme/colors';
+
 import { DESIGN_STYLES } from '../../../data/designStyles';
 import type { GenerationPayload } from '../../../types/generation';
 import type { BlueprintData } from '../../../types/blueprint';
@@ -26,20 +28,20 @@ export function Step7Review({ payload, result, onGenerate }: Props) {
 
   return (
     <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: 20, flex: 1 }}>
-      <Text
+      <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',
           fontSize: 24,
-          color: BASE_COLORS.textPrimary,
+          color: DS.colors.primary,
           marginBottom: 24,
         }}
       >
         Review your brief
-      </Text>
+      </ArchText>
 
       <View
         style={{
-          backgroundColor: BASE_COLORS.surface,
+          backgroundColor: DS.colors.surface,
           borderRadius: 24,
           padding: 16,
           marginBottom: 32,
@@ -47,26 +49,26 @@ export function Step7Review({ payload, result, onGenerate }: Props) {
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text style={{ fontSize: 24 }}>{TYPE_EMOJI[payload.buildingType] ?? '\u{1F3E0}'}</Text>
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: BASE_COLORS.textPrimary, textTransform: 'capitalize' }}>
+          <ArchText variant="body" style={{ fontSize: 24 }}>{TYPE_EMOJI[payload.buildingType] ?? '\u{1F3E0}'}</ArchText>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.primary, textTransform: 'capitalize' }}>
             {payload.buildingType}
-          </Text>
+          </ArchText>
         </View>
 
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
           {payload.plotSize} {payload.plotUnit === 'm2' ? 'm\u00B2' : 'ft\u00B2'}
-        </Text>
+        </ArchText>
 
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
           {payload.bedrooms} bed {'\u00B7'} {payload.bathrooms} bath {'\u00B7'} {payload.livingAreas} living
-        </Text>
+        </ArchText>
 
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
           Style: {styleName}
-        </Text>
+        </ArchText>
 
         {(payload.hasGarage || payload.hasGarden || payload.hasPool || payload.hasHomeOffice || payload.hasUtilityRoom) && (
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost }}>
             {[
               payload.hasGarage && 'Garage',
               payload.hasGarden && 'Garden',
@@ -74,7 +76,7 @@ export function Step7Review({ payload, result, onGenerate }: Props) {
               payload.hasHomeOffice && 'Office',
               payload.hasUtilityRoom && 'Utility',
             ].filter(Boolean).join(' \u00B7 ')}
-          </Text>
+          </ArchText>
         )}
 
         {payload.referenceImageUrl && (
@@ -86,30 +88,30 @@ export function Step7Review({ payload, result, onGenerate }: Props) {
         )}
 
         {payload.additionalNotes ? (
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim, fontStyle: 'italic' }} numberOfLines={3}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, fontStyle: 'italic' }} numberOfLines={3}>
             &ldquo;{payload.additionalNotes}&rdquo;
-          </Text>
+          </ArchText>
         ) : null}
       </View>
 
       {result && (
-        <Text
+        <ArchText variant="body"
           style={{
             fontFamily: 'Inter_400Regular',
             fontSize: 13,
-            color: BASE_COLORS.textDim,
+            color: DS.colors.primaryGhost,
             textAlign: 'center',
             marginBottom: 12,
           }}
         >
           Previous design loaded — generating will replace it
-        </Text>
+        </ArchText>
       )}
 
       <Pressable
         onPress={onGenerate}
         style={{
-          backgroundColor: BASE_COLORS.textPrimary,
+          backgroundColor: DS.colors.primary,
           borderRadius: 50,
           paddingVertical: 18,
           alignItems: 'center',
@@ -117,15 +119,15 @@ export function Step7Review({ payload, result, onGenerate }: Props) {
           justifyContent: 'center',
         }}
       >
-        <Text
+        <ArchText variant="body"
           style={{
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 18,
-            color: BASE_COLORS.background,
+            color: DS.colors.background,
           }}
         >
           Create My Design
-        </Text>
+        </ArchText>
       </Pressable>
     </Animated.View>
   );
