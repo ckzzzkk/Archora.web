@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { supabase } from '../utils/supabaseClient';
+import { Storage } from '../utils/storage';
 import type { User, SubscriptionTier } from '../types';
 
 const REFRESH_TOKEN_KEY = 'asoria_refresh_token';
@@ -14,6 +15,8 @@ interface AuthState {
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (email: string, password: string, displayName: string) => Promise<void>;
     signOut: () => Promise<void>;
+    signInWithGoogle: () => Promise<void>;
+    deleteAccount: () => Promise<void>;
     refreshSession: () => Promise<boolean>;
     loadSession: () => Promise<void>;
     updateUser: (updates: Partial<User>) => void;
@@ -79,9 +82,44 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     signOut: async () => {
+      Storage.clearAll();
       await supabase.auth.signOut();
       await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
       set({ user: null, accessToken: null, isAuthenticated: false });
+    },
+
+    signInWithGoogle: async () => {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'asoria://auth/callback',
+          skipBrowserRedirect: false,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        const { Linking } = require('react-native');
+        await Linking.openURL(data.url);
+      }
+    },
+
+    deleteAccount: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not signed in');
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+      const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+      const res = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: supabaseAnonKey,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) throw new Error('Could not delete account');
+      Storage.clearAll();
+      await supabase.auth.signOut();
+      set({ user: null, isAuthenticated: false, accessToken: null });
     },
 
     refreshSession: async () => {
@@ -130,6 +168,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
   },
 }));
+
+export const clearAllUserData = async (): Promise<void> => {
+  Storage.clearAll();
+  await supabase.auth.signOut();
+};
 
 function mapDbUser(row: Record<string, unknown>): User {
   return {

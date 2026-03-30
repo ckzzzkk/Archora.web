@@ -185,32 +185,15 @@ function FABButton() {
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+        elevation: 20,
       }}
     >
       <Animated.View style={fabStyle}>
-        <Svg width={28} height={28} viewBox="0 0 56 56">
-          {/* Compass rose in dark color on light FAB */}
-          <Path
-            d={`M ${c} ${c - r * 0.3} L ${c - r * 0.15} ${c - r * 0.9} L ${c} ${c - r} L ${c + r * 0.15} ${c - r * 0.9} Z`}
-            fill={BASE_COLORS.background}
-          />
-          <Path
-            d={`M ${c} ${c + r * 0.3} L ${c - r * 0.15} ${c + r * 0.9} L ${c} ${c + r} L ${c + r * 0.15} ${c + r * 0.9} Z`}
-            fill={BASE_COLORS.background} opacity={0.5}
-          />
-          <Path
-            d={`M ${c + r * 0.3} ${c} L ${c + r * 0.9} ${c - r * 0.15} L ${c + r} ${c} L ${c + r * 0.9} ${c + r * 0.15} Z`}
-            fill={BASE_COLORS.background} opacity={0.5}
-          />
-          <Path
-            d={`M ${c - r * 0.3} ${c} L ${c - r * 0.9} ${c - r * 0.15} L ${c - r} ${c} L ${c - r * 0.9} ${c + r * 0.15} Z`}
-            fill={BASE_COLORS.background} opacity={0.5}
-          />
-          <Circle cx={c} cy={c} r={2} fill={BASE_COLORS.background} />
+        <Svg width={22} height={22} viewBox="0 0 24 24">
+          <Path d="M12 5v14M5 12h14" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" />
         </Svg>
       </Animated.View>
     </Pressable>
@@ -239,14 +222,14 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     <View
       style={{
         position: 'absolute',
-        bottom: Math.max(insets.bottom, 8) + 16,
+        bottom: Math.max(insets.bottom, 16) + 8,
         left: 24,
         right: 24,
         height: 64,
         borderRadius: 32,
         backgroundColor: BASE_COLORS.background,
         borderWidth: 1,
-        borderColor: BASE_COLORS.border,
+        borderColor: '#2A2A2A',
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 8,

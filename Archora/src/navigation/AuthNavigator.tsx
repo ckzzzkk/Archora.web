@@ -14,7 +14,7 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 export function AuthNavigator() {
   return (
     <Stack.Navigator
-      screenOptions={{ headerShown: false, animation: 'fade' }}
+      screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 200, contentStyle: { backgroundColor: '#1A1A1A' } }}
       initialRouteName="Welcome"
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />

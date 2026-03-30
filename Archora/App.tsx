@@ -1,7 +1,8 @@
 import 'react-native-gesture-handler';
 import './src/styles/global.css';
 import React, { useEffect, useState } from 'react';
-import { StatusBar, InteractionManager, Linking } from 'react-native';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { InteractionManager, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
@@ -21,6 +22,7 @@ import {
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { useAuthStore } from './src/stores/authStore';
+import { supabase } from './src/utils/supabaseClient';
 
 // React Navigation linking config — maps deep link paths to screens.
 // Cast to any: RootStackParamList types Auth as undefined (no nested params),
@@ -77,6 +79,16 @@ export default function App() {
       if (url.startsWith('asoria://subscription-success')) {
         // Reload user session to pick up updated subscription tier from Stripe webhook
         void loadSession();
+      } else if (url.includes('auth/callback')) {
+        void (async () => {
+          const code = new URL(url).searchParams.get('code');
+          if (code) {
+            const { data } = await supabase.auth.exchangeCodeForSession(code);
+            if (data?.session) {
+              useAuthStore.getState().actions.refreshSession();
+            }
+          }
+        })();
       }
       // asoria://reset-password is handled by the linking config above via NavigationContainer
     };
@@ -93,7 +105,7 @@ export default function App() {
   if (!splashDone) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+        <ExpoStatusBar style="light" backgroundColor="#1A1A1A" />
         <SplashScreen appReady={appReady} onComplete={() => setSplashDone(true)} />
       </GestureHandlerRootView>
     );
@@ -101,7 +113,7 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+      <ExpoStatusBar style="light" backgroundColor="#1A1A1A" />
       <NavigationContainer linking={linking}>
         <RootNavigator />
       </NavigationContainer>

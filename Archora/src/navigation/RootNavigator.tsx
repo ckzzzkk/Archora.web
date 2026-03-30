@@ -38,6 +38,10 @@ const OnboardingQuizScreen = lazyScreen(() =>
   import('../screens/auth/OnboardingQuizScreen')
     .then((m) => ({ default: m.OnboardingQuizScreen })));
 
+const OnboardingScreen = lazyScreen(() =>
+  import('../screens/onboarding/OnboardingScreen')
+    .then((m) => ({ default: m.OnboardingScreen })));
+
 const HelpFAQScreen = lazyScreen(() =>
   import('../screens/account/HelpFAQScreen')
     .then((m) => ({ default: m.HelpFAQScreen })));
@@ -66,6 +70,7 @@ function QuizCheckLoadingScreen() {
 
 export function RootNavigator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
   // null = still checking, false = quiz pending, true = quiz done
   const [quizDone, setQuizDone] = useState<boolean | null>(null);
 
@@ -78,8 +83,27 @@ export function RootNavigator() {
     }
   }, [isAuthenticated]);
 
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
+        <CompassRoseLoader size="large" />
+      </View>
+    );
+  }
+
+  // Show onboarding slides after first sign-up, before the quiz
+  const onboardingSeen = Storage.getString('onboarding_seen');
+  if (isAuthenticated && onboardingSeen == null) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 200, contentStyle: { backgroundColor: '#1A1A1A' } }}>
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        <Stack.Screen name="Main" component={MainNavigator} />
+      </Stack.Navigator>
+    );
+  }
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 200, contentStyle: { backgroundColor: '#1A1A1A' } }}>
       {!isAuthenticated ? (
         <Stack.Screen name="Auth" component={AuthNavigator} />
       ) : quizDone === null ? (

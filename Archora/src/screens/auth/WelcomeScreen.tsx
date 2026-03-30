@@ -1,164 +1,185 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, Dimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withDelay,
-  Easing,
-} from 'react-native-reanimated';
-import Svg, { Path, Circle, Text as SvgText } from 'react-native-svg';
+import { View, Pressable, Platform } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
+import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GridBackground } from '../../components/common/GridBackground';
+import { OvalButton } from '../../components/common/OvalButton';
+import { ArchText } from '../../components/common/ArchText';
+import { DS } from '../../theme/designSystem';
+import { useAuthStore } from '../../stores/authStore';
 import type { AuthStackParamList } from '../../navigation/types';
-import { useTheme } from '../../hooks/useTheme';
-import { useHaptics } from '../../hooks/useHaptics';
-import { BASE_COLORS } from '../../theme/colors';
 
-const { width, height } = Dimensions.get('window');
-
-type Nav = NativeStackNavigationProp<AuthStackParamList, 'Welcome'>;
-
-// Simplified famous floor plan silhouette paths (Fallingwater-inspired)
-function FloorPlanSilhouette({ x, y, opacity }: { x: number; y: number; opacity: number }) {
+function CompassLogo() {
   return (
-    <Svg width={120} height={80} style={{ position: 'absolute', left: x, top: y, opacity }}>
-      <Path
-        d="M5 40 H50 V20 H90 V40 H115 V60 H5 Z M50 20 V5 H75 V20"
-        stroke={BASE_COLORS.textPrimary}
-        strokeWidth="0.8"
-        fill="none"
-      />
-      <Path d="M20 40 V60 M35 40 V60 M65 40 V60 M80 20 V40" stroke={BASE_COLORS.textPrimary} strokeWidth="0.5" fill="none" />
+    <Svg width={64} height={64} viewBox="0 0 64 64">
+      {/* Outer circle */}
+      <Circle cx="32" cy="32" r="28" stroke="#F0EDE8" strokeWidth="1" fill="none" />
+      {/* The A letterform */}
+      <Path d="M32 14 L18 50 M32 14 L46 50" stroke="#F0EDE8" strokeWidth="2" fill="none" strokeLinecap="round" />
+      {/* A crossbar */}
+      <Path d="M22 40 L42 40" stroke="#F0EDE8" strokeWidth="2" strokeLinecap="round" />
+      {/* NSEW tick marks */}
+      <Line x1="32" y1="4"  x2="32" y2="10" stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" />
+      <Line x1="32" y1="54" x2="32" y2="60" stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" />
+      <Line x1="4"  y1="32" x2="10" y2="32" stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" />
+      <Line x1="54" y1="32" x2="60" y2="32" stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24">
+      <Path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+      <Path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <Path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC04" />
+      <Path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
     </Svg>
   );
 }
 
 export function WelcomeScreen() {
-  const navigation = useNavigation<Nav>();
-  const { colors } = useTheme();
-  const { light } = useHaptics();
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const insets = useSafeAreaInsets();
+  const { signInWithGoogle } = useAuthStore((s) => s.actions);
 
-  const bgOpacity = useSharedValue(0);
-  const logoOpacity = useSharedValue(0);
-  const logoY = useSharedValue(20);
-  const taglineOpacity = useSharedValue(0);
-  const buttonsY = useSharedValue(60);
-  const buttonsOpacity = useSharedValue(0);
+  // Entry animations
+  const logoOp = useSharedValue(0);
+  const logoY  = useSharedValue(20);
+  const titleOp = useSharedValue(0);
+  const titleY  = useSharedValue(16);
+  const sepOp   = useSharedValue(0);
+  const subOp   = useSharedValue(0);
+  const subY    = useSharedValue(10);
+  const btnsOp  = useSharedValue(0);
+  const btnsY   = useSharedValue(16);
 
   useEffect(() => {
-    bgOpacity.value = withTiming(1, { duration: 600 });
-    logoOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
-    logoY.value = withDelay(400, withSpring(0, { damping: 18 }));
-    taglineOpacity.value = withDelay(900, withTiming(1, { duration: 500 }));
-    buttonsY.value = withDelay(1100, withSpring(0, { damping: 16, stiffness: 120 }));
-    buttonsOpacity.value = withDelay(1100, withTiming(1, { duration: 400 }));
+    const ease = Easing.out(Easing.cubic);
+    logoOp.value  = withDelay(0,   withTiming(1, { duration: 500, easing: ease }));
+    logoY.value   = withDelay(0,   withTiming(0, { duration: 500, easing: ease }));
+    titleOp.value = withDelay(200, withTiming(1, { duration: 400, easing: ease }));
+    titleY.value  = withDelay(200, withTiming(0, { duration: 400, easing: ease }));
+    sepOp.value   = withDelay(350, withTiming(1, { duration: 300, easing: ease }));
+    subOp.value   = withDelay(450, withTiming(1, { duration: 400, easing: ease }));
+    subY.value    = withDelay(450, withTiming(0, { duration: 400, easing: ease }));
+    btnsOp.value  = withDelay(600, withTiming(1, { duration: 400, easing: ease }));
+    btnsY.value   = withDelay(600, withTiming(0, { duration: 400, easing: ease }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const bgStyle = useAnimatedStyle(() => ({ opacity: bgOpacity.value }));
-  const logoStyle = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
-    transform: [{ translateY: logoY.value }],
-  }));
-  const taglineStyle = useAnimatedStyle(() => ({ opacity: taglineOpacity.value }));
-  const buttonsStyle = useAnimatedStyle(() => ({
-    opacity: buttonsOpacity.value,
-    transform: [{ translateY: buttonsY.value }],
-  }));
+  const logoStyle   = useAnimatedStyle(() => ({ opacity: logoOp.value, transform: [{ translateY: logoY.value }] }));
+  const titleStyle  = useAnimatedStyle(() => ({ opacity: titleOp.value, transform: [{ translateY: titleY.value }] }));
+  const sepStyle    = useAnimatedStyle(() => ({ opacity: sepOp.value }));
+  const subStyle    = useAnimatedStyle(() => ({ opacity: subOp.value, transform: [{ translateY: subY.value }] }));
+  const btnsStyle   = useAnimatedStyle(() => ({ opacity: btnsOp.value, transform: [{ translateY: btnsY.value }] }));
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch {
+      // Error handled by auth store
+    }
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
-      {/* Floor plan silhouettes at 0.04 opacity */}
-      <Animated.View style={[{ position: 'absolute', inset: 0 }, bgStyle]}>
-        {[
-          { x: -10, y: 80 }, { x: 140, y: 40 }, { x: -20, y: 200 },
-          { x: 200, y: 160 }, { x: 60, y: 320 }, { x: -30, y: 420 },
-          { x: 220, y: 380 }, { x: 100, y: 500 }, { x: -15, y: 580 },
-          { x: 200, y: 540 }, { x: 50, y: 680 },
-        ].map((pos, i) => (
-          <FloorPlanSilhouette key={i} x={pos.x} y={pos.y} opacity={0.04} />
-        ))}
-      </Animated.View>
-
-      {/* Compass rose decoration top-right */}
-      <View style={{ position: 'absolute', top: 60, right: 20, opacity: 0.3 }}>
-        <Svg width={40} height={40} viewBox="0 0 40 40">
-          <Circle cx={20} cy={20} r={18} stroke={colors.primary} strokeWidth={1} fill="none" />
-          <Path d="M20 2 L22 16 L20 20 L18 16 Z" fill={colors.primary} />
-          <Path d="M20 38 L22 24 L20 20 L18 24 Z" fill={colors.primary} opacity={0.5} />
-          <Path d="M2 20 L16 18 L20 20 L16 22 Z" fill={colors.primary} opacity={0.5} />
-          <Path d="M38 20 L24 18 L20 20 L24 22 Z" fill={colors.primary} opacity={0.5} />
-        </Svg>
-      </View>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+      <GridBackground />
 
       {/* Center content */}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-        <Animated.View style={logoStyle}>
-          <Text
-            style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
-              fontSize: 52,
-              color: BASE_COLORS.textPrimary,
-              letterSpacing: 6,
-              textAlign: 'center',
-            }}
-          >
-            ASORIA
-          </Text>
-          {/* Underline */}
-          <View style={{ height: 1.5, backgroundColor: colors.primary, marginTop: 6, opacity: 0.6 }} />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Animated.View style={[{ alignItems: 'center' }, logoStyle]}>
+          <CompassLogo />
         </Animated.View>
 
-        <Animated.View style={[taglineStyle, { marginTop: 20 }]}>
-          <Text
-            style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 15,
-              color: BASE_COLORS.textSecondary,
-              textAlign: 'center',
-              letterSpacing: 0.5,
-            }}
+        <Animated.View style={[{ alignItems: 'center', marginTop: DS.spacing.md }, titleStyle]}>
+          <ArchText
+            variant="heading"
+            style={{ fontSize: 48, letterSpacing: 10, color: DS.colors.primary }}
+          >
+            ASORIA
+          </ArchText>
+        </Animated.View>
+
+        <Animated.View style={[{ marginVertical: DS.spacing.md }, sepStyle]}>
+          <View style={{ width: 120, height: 1, backgroundColor: DS.colors.border }} />
+        </Animated.View>
+
+        <Animated.View style={[{ paddingHorizontal: 40 }, subStyle]}>
+          <ArchText
+            variant="body"
+            style={{ fontSize: DS.fontSize.md, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 22 }}
           >
             Describe it. Build it. Walk through it.
-          </Text>
+          </ArchText>
         </Animated.View>
       </View>
 
       {/* Bottom buttons */}
-      <Animated.View style={[buttonsStyle, { paddingHorizontal: 32, paddingBottom: 60, gap: 16 }]}>
+      <Animated.View
+        style={[
+          {
+            paddingHorizontal: DS.spacing.lg,
+            paddingBottom: Math.max(insets.bottom, DS.spacing.lg) + DS.spacing.lg,
+            gap: DS.spacing.sm,
+          },
+          btnsStyle,
+        ]}
+      >
+        <OvalButton
+          label="Sign In"
+          variant="filled"
+          fullWidth
+          onPress={() => navigation.navigate('Login')}
+        />
+        <OvalButton
+          label="Create Account"
+          variant="outline"
+          fullWidth
+          onPress={() => navigation.navigate('SignUp')}
+        />
+
+        {/* OR divider */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.sm, marginVertical: 4 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#2A2A2A' }} />
+          <ArchText variant="caption" style={{ color: DS.colors.primaryGhost, fontSize: 13 }}>or</ArchText>
+          <View style={{ flex: 1, height: 1, backgroundColor: '#2A2A2A' }} />
+        </View>
+
+        {/* Google button */}
         <Pressable
-          onPress={() => { light(); navigation.navigate('Onboarding'); }}
+          onPress={() => { void handleGoogleSignIn(); }}
           style={{
-            backgroundColor: colors.primary,
-            borderRadius: 24,
-            paddingVertical: 16,
+            height: 52,
+            borderRadius: 50,
+            backgroundColor: DS.colors.surface,
+            borderWidth: 1,
+            borderColor: DS.colors.border,
+            flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'center',
+            gap: DS.spacing.sm,
           }}
         >
-          <Text style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
-            fontSize: 17,
-            color: BASE_COLORS.background,
-            letterSpacing: 0.5,
-          }}>
-            Start Building
-          </Text>
+          <GoogleIcon />
+          <ArchText
+            variant="body"
+            style={{ fontFamily: 'Inter_500Medium', fontSize: DS.fontSize.md, color: DS.colors.primary }}
+          >
+            Continue with Google
+          </ArchText>
         </Pressable>
 
-        <Pressable
-          onPress={() => { light(); navigation.navigate('Login'); }}
-          style={{ alignItems: 'center', paddingVertical: 12 }}
+        {/* Terms */}
+        <ArchText
+          variant="caption"
+          style={{ fontSize: 12, color: DS.colors.primaryGhost, textAlign: 'center', marginTop: 4 }}
         >
-          <Text style={{
-            fontFamily: 'Inter_400Regular',
-            fontSize: 15,
-            color: BASE_COLORS.textSecondary,
-            textDecorationLine: 'underline',
-          }}>
-            I Have an Account
-          </Text>
-        </Pressable>
+          {'By continuing you agree to our Terms of Service and Privacy Policy'}
+        </ArchText>
       </Animated.View>
     </View>
   );

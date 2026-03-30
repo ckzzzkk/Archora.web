@@ -3,6 +3,7 @@
     "name": "Asoria",
     "slug": "asoria",
     "version": "1.0.0",
+    "backgroundColor": "#1A1A1A",
     "scheme": "asoria",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -32,6 +33,7 @@
       },
       "package": "com.asoria.app",
       "versionCode": 1,
+      "softwareKeyboardLayoutMode": "pan",
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",

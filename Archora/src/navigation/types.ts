@@ -23,6 +23,7 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  Onboarding: undefined;
   OnboardingQuiz: undefined;
   QuizCheckLoading: undefined;
   // Workspace and Generation are modals from root stack
@@ -55,6 +56,7 @@ export type SketchScreenProps      = CompositeScreenProps<BottomTabScreenProps<M
 export type WorkspaceScreenProps         = NativeStackScreenProps<RootStackParamList, 'Workspace'>;
 export type GenerationScreenProps        = NativeStackScreenProps<RootStackParamList, 'Generation'>;
 export type OnboardingQuizScreenProps    = NativeStackScreenProps<RootStackParamList, 'OnboardingQuiz'>;
+export type RootOnboardingScreenProps   = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 export type PublishTemplateScreenProps   = NativeStackScreenProps<RootStackParamList, 'PublishTemplate'>;
 export type PurchaseTemplateScreenProps  = NativeStackScreenProps<RootStackParamList, 'PurchaseTemplate'>;
 export type HelpFAQScreenProps           = NativeStackScreenProps<RootStackParamList, 'HelpFAQ'>;
