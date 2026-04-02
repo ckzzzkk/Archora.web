@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useRef } from 'react';
 import { View, Text, Pressable, Alert } from 'react-native';
 import Animated, {
@@ -12,7 +13,6 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useGyroscope } from '../../hooks/useGyroscope';
-import { BASE_COLORS } from '../../theme/colors';
 import type { Project } from '../../types';
 
 interface Props {
@@ -70,7 +70,7 @@ function BlueprintThumbnail({ projectId, colors }: { projectId: string; colors: 
         {/* Door arc */}
         <Path d="M60 65 Q70 65 70 55" stroke={colors.primary} strokeWidth="0.8" fill="none" strokeDasharray="2 2" />
         {/* Window breaks */}
-        <Path d="M55 10 H75" stroke={BASE_COLORS.surfaceHigh} strokeWidth="2" />
+        <Path d="M55 10 H75" stroke={DS.colors.surfaceHigh} strokeWidth="2" />
         <Path d="M55 10 H75" stroke={colors.primary} strokeWidth="0.8" strokeDasharray="3 2" />
       </Svg>
     </View>
@@ -136,11 +136,11 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
         onLongPress={handleLongPress}
         onPressOut={handlePressOut}
         style={{
-          backgroundColor: BASE_COLORS.surface,
+          backgroundColor: DS.colors.surface,
           borderRadius: 20,
           overflow: 'hidden',
           borderWidth: 1,
-          borderColor: BASE_COLORS.border,
+          borderColor: DS.colors.border,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.4,
@@ -165,7 +165,7 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
               style={{
                 fontFamily: 'ArchitectsDaughter_400Regular',
                 fontSize: 15,
-                color: BASE_COLORS.textPrimary,
+                color: DS.colors.primary,
                 flex: 1,
               }}
             >
@@ -175,7 +175,7 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
               onPress={() => { light(); setMenuOpen(!menuOpen); }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={{ color: BASE_COLORS.textDim, fontSize: 18, lineHeight: 18 }}>⋯</Text>
+              <Text style={{ color: DS.colors.primaryGhost, fontSize: 18, lineHeight: 18 }}>⋯</Text>
             </Pressable>
           </View>
 
@@ -184,7 +184,7 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
             alignSelf: 'flex-start',
             paddingHorizontal: 8,
             paddingVertical: 3,
-            backgroundColor: BASE_COLORS.surfaceHigh,
+            backgroundColor: DS.colors.surfaceHigh,
             borderRadius: 50,
             marginTop: 6,
           }}>
@@ -202,7 +202,7 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
           <Text style={{
             fontFamily: 'Inter_400Regular',
             fontSize: 11,
-            color: BASE_COLORS.textDim,
+            color: DS.colors.primaryGhost,
             marginTop: 8,
           }}>
             {formatDate(project.updatedAt)}
@@ -215,10 +215,10 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
             position: 'absolute',
             top: 8,
             right: 8,
-            backgroundColor: BASE_COLORS.surfaceHigh,
+            backgroundColor: DS.colors.surfaceHigh,
             borderRadius: 8,
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
             zIndex: 10,
             minWidth: 120,
             shadowColor: '#000',
@@ -229,9 +229,9 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
           }}>
             <Pressable
               onPress={() => { setMenuOpen(false); onRename(); }}
-              style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border }}
+              style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: DS.colors.border }}
             >
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textPrimary }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primary }}>
                 Rename
               </Text>
             </Pressable>
@@ -245,7 +245,7 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
               }}
               style={{ padding: 12 }}
             >
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.error }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.error }}>
                 Delete
               </Text>
             </Pressable>

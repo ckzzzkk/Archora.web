@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, PanResponder, Pressable } from 'react-native';
 import { Canvas, useFrame, useThree } from '@react-three/fiber/native';
@@ -8,7 +9,6 @@ import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useUIStore } from '../../stores/uiStore';
 import { useTierGate } from '../../hooks/useTierGate';
-import { BASE_COLORS } from '../../theme/colors';
 import { computeFirstPersonPreset, DEFAULT_LIGHTING } from '../../utils/procedural/sceneHelpers';
 import { getFloorLabel } from '../../utils/floorHelpers';
 import { resolveCollision } from '../../utils/collisionDetection';
@@ -212,8 +212,8 @@ export function InHouseView({ onExit }: InHouseViewProps) {
 
   if (!blueprint) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: BASE_COLORS.background }}>
-        <Text style={{ color: BASE_COLORS.textDim, fontFamily: 'Inter_400Regular' }}>No blueprint loaded</Text>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.colors.background }}>
+        <Text style={{ color: DS.colors.primaryGhost, fontFamily: 'Inter_400Regular' }}>No blueprint loaded</Text>
       </View>
     );
   }
@@ -272,12 +272,12 @@ export function InHouseView({ onExit }: InHouseViewProps) {
           position: 'absolute',
           top: 16,
           left: 16,
-          backgroundColor: BASE_COLORS.surface + 'CC',
+          backgroundColor: DS.colors.surface + 'CC',
           borderRadius: 8,
           paddingHorizontal: 10,
           paddingVertical: 5,
           borderWidth: 1,
-          borderColor: BASE_COLORS.border,
+          borderColor: DS.colors.border,
         }}
         pointerEvents="none"
       >
@@ -300,15 +300,15 @@ export function InHouseView({ onExit }: InHouseViewProps) {
         >
           <View
             style={{
-              backgroundColor: BASE_COLORS.surface + 'CC',
+              backgroundColor: DS.colors.surface + 'CC',
               borderRadius: 8,
               paddingHorizontal: 12,
               paddingVertical: 5,
               borderWidth: 1,
-              borderColor: BASE_COLORS.border,
+              borderColor: DS.colors.border,
             }}
           >
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 13, color: BASE_COLORS.textPrimary }}>
+            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 13, color: DS.colors.primary }}>
               {currentRoomName}
             </Text>
           </View>
@@ -320,16 +320,16 @@ export function InHouseView({ onExit }: InHouseViewProps) {
         {onExit && (
           <TouchableOpacity
             onPress={onExit}
-            style={{ backgroundColor: BASE_COLORS.surface + 'CC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: BASE_COLORS.border }}
+            style={{ backgroundColor: DS.colors.surface + 'CC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: DS.colors.border }}
           >
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textSecondary }}>EXIT ✕</Text>
+            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryDim }}>EXIT ✕</Text>
           </TouchableOpacity>
         )}
 
         {/* Day/Night cycle */}
         <TouchableOpacity
           onPress={cycleTime}
-          style={{ backgroundColor: BASE_COLORS.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: BASE_COLORS.border }}
+          style={{ backgroundColor: DS.colors.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: DS.colors.border }}
         >
           <Text style={{ fontSize: 16 }}>{TIME_LABELS[timeOfDay]}</Text>
         </TouchableOpacity>
@@ -343,9 +343,9 @@ export function InHouseView({ onExit }: InHouseViewProps) {
             }
             if (tourActive) stopTour(); else startCinematicTour();
           }}
-          style={{ backgroundColor: BASE_COLORS.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: cinematicTourAllowed ? BASE_COLORS.border : BASE_COLORS.border + '50' }}
+          style={{ backgroundColor: DS.colors.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: cinematicTourAllowed ? DS.colors.border : DS.colors.border + '50' }}
         >
-          <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: tourActive ? colors.primary : cinematicTourAllowed ? BASE_COLORS.textSecondary : BASE_COLORS.textDim }}>
+          <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: tourActive ? colors.primary : cinematicTourAllowed ? DS.colors.primaryDim : DS.colors.primaryGhost }}>
             {cinematicTourAllowed ? (tourActive ? '⏹ STOP' : '▶ TOUR') : '🔒 TOUR'}
           </Text>
         </TouchableOpacity>
@@ -354,7 +354,7 @@ export function InHouseView({ onExit }: InHouseViewProps) {
         {videoExportAllowed && (
           <TouchableOpacity
             onPress={() => showToast('Video export coming soon', 'info')}
-            style={{ backgroundColor: BASE_COLORS.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: BASE_COLORS.border }}
+            style={{ backgroundColor: DS.colors.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: DS.colors.border }}
           >
             {/* VIDEO EXPORT STUB
              * Requires additional packages: react-native-view-shot + ffmpeg-kit-react-native
@@ -364,7 +364,7 @@ export function InHouseView({ onExit }: InHouseViewProps) {
              *   2) Encode frames to MP4 via ffmpeg-kit
              *   3) Save via expo-media-library
              */}
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: BASE_COLORS.textDim }}>
+            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: DS.colors.primaryGhost }}>
               ⬇ VIDEO
             </Text>
           </TouchableOpacity>
@@ -393,20 +393,20 @@ export function InHouseView({ onExit }: InHouseViewProps) {
             bottom: 40,
             left: 160,
             right: 16,
-            backgroundColor: BASE_COLORS.surface + 'EE',
+            backgroundColor: DS.colors.surface + 'EE',
             borderRadius: 12,
             padding: 14,
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
           }}
         >
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>
+          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 14, color: DS.colors.primary }}>
             {selectedObject.name}
           </Text>
-          <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textSecondary, marginTop: 2 }}>
+          <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryDim, marginTop: 2 }}>
             {selectedObject.info}
           </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: BASE_COLORS.textDim, marginTop: 4 }}>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: DS.colors.primaryGhost, marginTop: 4 }}>
             Tap to dismiss
           </Text>
         </Pressable>

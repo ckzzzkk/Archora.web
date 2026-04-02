@@ -1,6 +1,6 @@
+import { DS } from '../../theme/designSystem';
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { BASE_COLORS } from '../../theme/colors';
 
 interface Props {
   children: ReactNode;
@@ -42,20 +42,20 @@ export class ErrorBoundary extends Component<Props, State> {
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: BASE_COLORS.background,
+            backgroundColor: DS.colors.background,
             padding: 24,
           }}
         >
-          <Text style={{ fontSize: 16, color: BASE_COLORS.error, marginBottom: 8, textAlign: 'center' }}>
+          <Text style={{ fontSize: 16, color: DS.colors.error, marginBottom: 8, textAlign: 'center' }}>
             Something went wrong
           </Text>
           {__DEV__ && (
-            <Text style={{ fontSize: 11, color: BASE_COLORS.textSecondary, textAlign: 'center', marginBottom: 8 }}>
+            <Text style={{ fontSize: 11, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: 8 }}>
               {this.state.error?.message ?? 'Unknown error'}
             </Text>
           )}
           {__DEV__ && (
-            <Text style={{ fontSize: 10, color: BASE_COLORS.textDim, textAlign: 'center', marginBottom: 20 }}>
+            <Text style={{ fontSize: 10, color: DS.colors.primaryGhost, textAlign: 'center', marginBottom: 20 }}>
               {this.state.error?.stack?.slice(0, 400) ?? ''}
             </Text>
           )}
@@ -63,13 +63,13 @@ export class ErrorBoundary extends Component<Props, State> {
             onPress={this.reset}
             style={{
               borderWidth: 1,
-              borderColor: BASE_COLORS.border,
+              borderColor: DS.colors.border,
               borderRadius: 50,
               paddingHorizontal: 24,
               paddingVertical: 10,
             }}
           >
-            <Text style={{ color: BASE_COLORS.textPrimary }}>Try again</Text>
+            <Text style={{ color: DS.colors.primary }}>Try again</Text>
           </Pressable>
         </View>
       );

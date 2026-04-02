@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useCallback, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { View, Dimensions } from 'react-native';
 import {
@@ -27,7 +28,6 @@ import { useDimensions } from '../../hooks/useDimensions';
 import { clipboard } from '../../utils/clipboard';
 import { FurnitureContextMenu } from './FurnitureContextMenu';
 import { ErrorBoundary } from '../common/ErrorBoundary';
-import { BASE_COLORS } from '../../theme/colors';
 import {
   PIXELS_PER_METRE,
   metreToPixel,
@@ -286,7 +286,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
     return (
       <View style={{
         width: SCREEN_W, height: CANVAS_H,
-        backgroundColor: BASE_COLORS.surface,
+        backgroundColor: DS.colors.surface,
         alignItems: 'center', justifyContent: 'center',
       }} />
     );
@@ -386,7 +386,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                   <Path
                     key={`rf_${room.id}`}
                     path={roomPath}
-                    color={isSmall ? BASE_COLORS.error : colors.primary}
+                    color={isSmall ? DS.colors.error : colors.primary}
                     opacity={0.08}
                     style="fill"
                   />
@@ -405,7 +405,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                     x={cx - 40}
                     y={cy}
                     text={label}
-                    color={warning ? BASE_COLORS.error : colors.primaryDim}
+                    color={warning ? DS.colors.error : colors.primaryDim}
                     font={roomFont}
                   />
                 );
@@ -423,7 +423,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                     key={wall.id}
                     p1={{ x: x1, y: y1 }}
                     p2={{ x: x2, y: y2 }}
-                    color={isSelected ? colors.primary : BASE_COLORS.textPrimary}
+                    color={isSelected ? colors.primary : DS.colors.primary}
                     strokeWidth={isSelected ? 4 : 3}
                     opacity={isSelected ? 1 : 0.9}
                   />
@@ -464,10 +464,10 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
 
                 return (
                   <Group key={dim.id}>
-                    <Line p1={{ x: sx, y: sy }} p2={{ x: ex, y: ey }} color={BASE_COLORS.textSecondary} strokeWidth={0.5} />
-                    <Path path={arrowPath1} color={BASE_COLORS.textSecondary} style="fill" />
-                    <Path path={arrowPath2} color={BASE_COLORS.textSecondary} style="fill" />
-                    {dimFont && <SkiaText x={mx - 16} y={my - 4} text={dim.displayText} color={BASE_COLORS.textSecondary} font={dimFont} />}
+                    <Line p1={{ x: sx, y: sy }} p2={{ x: ex, y: ey }} color={DS.colors.primaryDim} strokeWidth={0.5} />
+                    <Path path={arrowPath1} color={DS.colors.primaryDim} style="fill" />
+                    <Path path={arrowPath2} color={DS.colors.primaryDim} style="fill" />
+                    {dimFont && <SkiaText x={mx - 16} y={my - 4} text={dim.displayText} color={DS.colors.primaryDim} font={dimFont} />}
                   </Group>
                 );
               })}
@@ -481,7 +481,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 const y2 = toPixelY(preview.end.y);
                 const mx = (x1 + x2) / 2;
                 const my = (y1 + y2) / 2;
-                const previewColor = preview.isValid ? colors.primary : BASE_COLORS.error;
+                const previewColor = preview.isValid ? colors.primary : DS.colors.error;
 
                 const previewPath = Skia.Path.Make();
                 previewPath.moveTo(x1, y1);
@@ -588,12 +588,12 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 measPath.lineTo(bx, by);
                 return (
                   <Group>
-                    <Path path={measPath} color={BASE_COLORS.warning} strokeWidth={1.5} style="stroke">
+                    <Path path={measPath} color={DS.colors.warning} strokeWidth={1.5} style="stroke">
                       <DashPathEffect intervals={[6, 3]} />
                     </Path>
-                    <Circle cx={ax} cy={ay} r={4} color={BASE_COLORS.warning} />
-                    <Circle cx={bx} cy={by} r={4} color={BASE_COLORS.warning} />
-                    {dimFont && <SkiaText x={(ax + bx) / 2 - 16} y={(ay + by) / 2 - 8} text={label} color={BASE_COLORS.warning} font={dimFont} />}
+                    <Circle cx={ax} cy={ay} r={4} color={DS.colors.warning} />
+                    <Circle cx={bx} cy={by} r={4} color={DS.colors.warning} />
+                    {dimFont && <SkiaText x={(ax + bx) / 2 - 16} y={(ay + by) / 2 - 8} text={label} color={DS.colors.warning} font={dimFont} />}
                   </Group>
                 );
               })()}

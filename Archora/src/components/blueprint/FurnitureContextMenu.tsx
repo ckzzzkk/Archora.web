@@ -1,7 +1,7 @@
+import { DS } from '../../theme/designSystem';
 import React, { useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../theme/colors';
 import type { FurniturePiece } from '../../types/blueprint';
 
 interface Props {
@@ -65,10 +65,10 @@ export function FurnitureContextMenu({ visible, position, item, onCopy, onCut, o
             position: 'absolute',
             left: Math.min(position.x, 280),
             top: Math.max(position.y - 180, 10),
-            backgroundColor: BASE_COLORS.surfaceHigh,
+            backgroundColor: DS.colors.surfaceHigh,
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
             overflow: 'hidden',
             shadowColor: '#000',
             shadowOpacity: 0.4,
@@ -79,8 +79,8 @@ export function FurnitureContextMenu({ visible, position, item, onCopy, onCut, o
           },
         ]}
       >
-        <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border }}>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: BASE_COLORS.textSecondary }} numberOfLines={1}>
+        <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: DS.colors.border }}>
+          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: DS.colors.primaryDim }} numberOfLines={1}>
             {item.name}
           </Text>
         </View>
@@ -98,13 +98,13 @@ export function FurnitureContextMenu({ visible, position, item, onCopy, onCut, o
               paddingHorizontal: 14,
               paddingVertical: 11,
               gap: 10,
-              backgroundColor: pressed ? BASE_COLORS.textPrimary + '10' : 'transparent',
+              backgroundColor: pressed ? DS.colors.primary + '10' : 'transparent',
             })}
           >
-            <Text style={{ fontSize: 14, color: 'danger' in menuItem && menuItem.danger ? '#E05555' : BASE_COLORS.textSecondary, width: 18 }}>
+            <Text style={{ fontSize: 14, color: 'danger' in menuItem && menuItem.danger ? '#E05555' : DS.colors.primaryDim, width: 18 }}>
               {menuItem.icon}
             </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: 'danger' in menuItem && menuItem.danger ? '#E05555' : BASE_COLORS.textPrimary }}>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: 'danger' in menuItem && menuItem.danger ? '#E05555' : DS.colors.primary }}>
               {menuItem.label}
             </Text>
           </Pressable>

@@ -1,3 +1,4 @@
+import { DS } from '../theme/designSystem';
 import React, { useEffect, useRef } from 'react';
 import { View, Pressable, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +17,6 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../hooks/useTheme';
 import { useHaptics } from '../hooks/useHaptics';
-import { BASE_COLORS } from '../theme/colors';
 import type { RootStackParamList } from './types';
 import { useTabDirection } from './TabDirectionContext';
 
@@ -111,7 +111,7 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
     transform: [{ scaleX: pillScale.value }],
   }));
 
-  const iconColor = isFocused ? BASE_COLORS.textPrimary : BASE_COLORS.textDim;
+  const iconColor = isFocused ? DS.colors.primary : DS.colors.primaryGhost;
   const iconRenderer = ICONS[route.name];
 
   return (
@@ -137,7 +137,7 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
         <Svg width={48} height={48} viewBox="0 0 48 48">
           <AnimatedPath
             d={WOBBLY_PATH}
-            stroke={BASE_COLORS.textPrimary}
+            stroke={DS.colors.primary}
             strokeWidth={1.5}
             fill="none"
             strokeDasharray={CIRCUMFERENCE}
@@ -181,7 +181,7 @@ function FABButton() {
       style={{
         width: 48, height: 48,
         borderRadius: 24,
-        backgroundColor: BASE_COLORS.textPrimary,
+        backgroundColor: DS.colors.primary,
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',
@@ -227,7 +227,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         right: 24,
         height: 64,
         borderRadius: 32,
-        backgroundColor: BASE_COLORS.background,
+        backgroundColor: DS.colors.background,
         borderWidth: 1,
         borderColor: '#2A2A2A',
         flexDirection: 'row',

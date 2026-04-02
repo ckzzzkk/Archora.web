@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
@@ -57,19 +58,19 @@ function ARPlaceModeContent() {
           position: 'absolute', top: 130, left: 0, right: 0, alignItems: 'center',
         }, pulseStyle]}>
           <View style={{
-            backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 50,
+            backgroundColor: withAlpha(DS.colors.surface, 0.85), borderRadius: 50,
             paddingHorizontal: 20, paddingVertical: 10,
-            borderWidth: 1, borderColor: BASE_COLORS.border,
+            borderWidth: 1, borderColor: DS.colors.border,
           }}>
-            <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 14 }}>Surface detected — tap to place furniture</Text>
+            <Text style={{ color: DS.colors.primary, fontSize: 14 }}>Surface detected — tap to place furniture</Text>
           </View>
         </Animated.View>
       )}
 
       {!surfaceDetected && (
         <View style={{ position: 'absolute', top: 130, left: 20, right: 20, alignItems: 'center' }}>
-          <View style={{ backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 50, paddingHorizontal: 20, paddingVertical: 10 }}>
-            <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 14 }}>Point camera at a flat surface</Text>
+          <View style={{ backgroundColor: withAlpha(DS.colors.surface, 0.85), borderRadius: 50, paddingHorizontal: 20, paddingVertical: 10 }}>
+            <Text style={{ color: DS.colors.primaryDim, fontSize: 14 }}>Point camera at a flat surface</Text>
           </View>
         </View>
       )}
@@ -78,10 +79,10 @@ function ARPlaceModeContent() {
       {placedItems.map((item, i) => (
         <View key={i} style={{
           position: 'absolute', left: item.x, top: item.y,
-          backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 8,
-          padding: 8, borderWidth: 1, borderColor: BASE_COLORS.border,
+          backgroundColor: withAlpha(DS.colors.surface, 0.85), borderRadius: 8,
+          padding: 8, borderWidth: 1, borderColor: DS.colors.border,
         }}>
-          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 12 }}>{item.label}</Text>
+          <Text style={{ color: DS.colors.primary, fontSize: 12 }}>{item.label}</Text>
         </View>
       ))}
     </Pressable>

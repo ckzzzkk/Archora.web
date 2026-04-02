@@ -1,8 +1,8 @@
+import { DS } from '../../theme/designSystem';
 import React from 'react';
 import { View, Text, Pressable, Modal } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import Svg, { Path, Line, Rect } from 'react-native-svg';
-import { BASE_COLORS } from '../../theme/colors';
 import type { StaircaseType } from '../../types/blueprint';
 
 interface Props {
@@ -76,21 +76,21 @@ function OptionCard({
             width: 90,
             height: 110,
             borderRadius: 14,
-            backgroundColor: BASE_COLORS.surfaceHigh,
+            backgroundColor: DS.colors.surfaceHigh,
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
             alignItems: 'center',
             justifyContent: 'center',
             marginHorizontal: 6,
           },
         ]}
       >
-        <StaircaseIcon type={type} color={BASE_COLORS.textSecondary} />
+        <StaircaseIcon type={type} color={DS.colors.primaryDim} />
         <Text
           style={{
             fontFamily: 'Inter_400Regular',
             fontSize: 11,
-            color: BASE_COLORS.textSecondary,
+            color: DS.colors.primaryDim,
             marginTop: 8,
             textAlign: 'center',
           }}
@@ -112,19 +112,19 @@ export function StaircasePromptSheet({ visible, floorCount, onSelect, onAddEleva
         <Pressable onPress={(e) => e.stopPropagation()}>
           <View
             style={{
-              backgroundColor: BASE_COLORS.surface,
+              backgroundColor: DS.colors.surface,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
               padding: 24,
               borderTopWidth: 1,
-              borderColor: BASE_COLORS.border,
+              borderColor: DS.colors.border,
             }}
           >
             <Text
               style={{
                 fontFamily: 'ArchitectsDaughter_400Regular',
                 fontSize: 20,
-                color: BASE_COLORS.textPrimary,
+                color: DS.colors.primary,
                 textAlign: 'center',
                 marginBottom: 6,
               }}
@@ -135,7 +135,7 @@ export function StaircasePromptSheet({ visible, floorCount, onSelect, onAddEleva
               style={{
                 fontFamily: 'Inter_400Regular',
                 fontSize: 13,
-                color: BASE_COLORS.textSecondary,
+                color: DS.colors.primaryDim,
                 textAlign: 'center',
                 marginBottom: 24,
               }}
@@ -153,16 +153,16 @@ export function StaircasePromptSheet({ visible, floorCount, onSelect, onAddEleva
               <Pressable
                 onPress={onAddElevator}
                 style={{
-                  backgroundColor: BASE_COLORS.surfaceHigh,
+                  backgroundColor: DS.colors.surfaceHigh,
                   borderRadius: 12,
                   paddingVertical: 12,
                   alignItems: 'center',
                   marginBottom: 12,
                   borderWidth: 1,
-                  borderColor: BASE_COLORS.border,
+                  borderColor: DS.colors.border,
                 }}
               >
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary }}>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim }}>
                   + Add Elevator Shaft
                 </Text>
               </Pressable>
@@ -172,7 +172,7 @@ export function StaircasePromptSheet({ visible, floorCount, onSelect, onAddEleva
               onPress={onDismiss}
               style={{ alignItems: 'center', paddingVertical: 12 }}
             >
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost }}>
                 Skip for now
               </Text>
             </Pressable>

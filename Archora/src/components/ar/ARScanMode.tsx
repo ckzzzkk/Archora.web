@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useRef } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BASE_COLORS, withAlpha } from '../../theme/colors';
@@ -47,10 +48,10 @@ export function ARScanMode() {
       {!scanComplete && (
         <View style={{
           position: 'absolute', top: 120, left: 20, right: 20,
-          backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 50,
+          backgroundColor: withAlpha(DS.colors.surface, 0.85), borderRadius: 50,
           paddingHorizontal: 20, paddingVertical: 10, alignItems: 'center',
         }}>
-          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 14 }}>
+          <Text style={{ color: DS.colors.primary, fontSize: 14 }}>
             {isScanning ? `Scanning... ${frames.length}/10 frames captured` : 'Walk slowly around the room to scan it'}
           </Text>
         </View>
@@ -64,12 +65,12 @@ export function ARScanMode() {
             position: 'absolute',
             top: 200 + i * 60,
             left: 40 + (i % 2) * 120,
-            backgroundColor: withAlpha(BASE_COLORS.surface, 0.8),
+            backgroundColor: withAlpha(DS.colors.surface, 0.8),
             borderRadius: 50, paddingHorizontal: 12, paddingVertical: 6,
-            borderWidth: 1, borderColor: BASE_COLORS.border,
+            borderWidth: 1, borderColor: DS.colors.border,
           }}
         >
-          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 12 }}>{label}</Text>
+          <Text style={{ color: DS.colors.primary, fontSize: 12 }}>{label}</Text>
         </View>
       ))}
 
@@ -80,12 +81,12 @@ export function ARScanMode() {
             onPress={isScanning ? () => stopScan() : startScan}
             style={{
               width: 72, height: 72, borderRadius: 36,
-              backgroundColor: isScanning ? BASE_COLORS.error : BASE_COLORS.textPrimary,
+              backgroundColor: isScanning ? DS.colors.error : DS.colors.primary,
               alignItems: 'center', justifyContent: 'center',
-              borderWidth: 3, borderColor: withAlpha(BASE_COLORS.textPrimary, 0.3),
+              borderWidth: 3, borderColor: withAlpha(DS.colors.primary, 0.3),
             }}
           >
-            <Text style={{ color: BASE_COLORS.background, fontSize: 13, fontWeight: '600' }}>
+            <Text style={{ color: DS.colors.background, fontSize: 13, fontWeight: '600' }}>
               {isScanning ? 'Stop' : 'Scan'}
             </Text>
           </Pressable>
@@ -96,20 +97,20 @@ export function ARScanMode() {
       {scanComplete && (
         <View style={{ position: 'absolute', bottom: 60, left: 20, right: 20, gap: 12 }}>
           <Pressable style={{
-            backgroundColor: BASE_COLORS.textPrimary, borderRadius: 50,
+            backgroundColor: DS.colors.primary, borderRadius: 50,
             paddingVertical: 14, alignItems: 'center',
           }}>
-            <Text style={{ color: BASE_COLORS.background, fontWeight: '600', fontSize: 16 }}>Import to Studio</Text>
+            <Text style={{ color: DS.colors.background, fontWeight: '600', fontSize: 16 }}>Import to Studio</Text>
           </Pressable>
           <Pressable
             onPress={() => { setScanComplete(false); setFrames([]); setDetectedLabels([]); }}
             style={{
               backgroundColor: 'transparent', borderRadius: 50,
               paddingVertical: 14, alignItems: 'center',
-              borderWidth: 1, borderColor: BASE_COLORS.border,
+              borderWidth: 1, borderColor: DS.colors.border,
             }}
           >
-            <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 16 }}>Scan Again</Text>
+            <Text style={{ color: DS.colors.primary, fontSize: 16 }}>Scan Again</Text>
           </Pressable>
         </View>
       )}

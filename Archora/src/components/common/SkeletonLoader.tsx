@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useEffect } from 'react';
 import { View, ViewStyle } from 'react-native';
 import Animated, {
@@ -8,7 +9,6 @@ import Animated, {
   interpolateColor,
   Easing,
 } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../theme/colors';
 
 interface SkeletonProps {
   width?: number | `${number}%`;
@@ -32,7 +32,7 @@ function SkeletonItem({ width = '100%', height = 16, borderRadius = 6, style }: 
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [BASE_COLORS.surface, BASE_COLORS.surfaceHigh],
+      [DS.colors.surface, DS.colors.surfaceHigh],
     ),
   }));
 
@@ -56,11 +56,11 @@ interface SkeletonLoaderProps {
 export function SkeletonLoader({ rows = 3, showAvatar = false, cardStyle = false }: SkeletonLoaderProps) {
   const wrap: ViewStyle = cardStyle
     ? {
-        backgroundColor: BASE_COLORS.surface,
+        backgroundColor: DS.colors.surface,
         borderRadius: 12,
         padding: 16,
         borderWidth: 1,
-        borderColor: BASE_COLORS.border,
+        borderColor: DS.colors.border,
         marginBottom: 12,
       }
     : { marginBottom: 12 };

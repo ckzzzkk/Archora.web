@@ -1,8 +1,8 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { TextInput, View, Text, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolateColor } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
-import { BASE_COLORS } from '../../theme/colors';
 
 interface InputProps {
   value: string;
@@ -57,8 +57,8 @@ export function Input({
 
   const borderStyle = useAnimatedStyle(() => ({
     borderColor: error
-      ? BASE_COLORS.error
-      : interpolateColor(focusAnim.value, [0, 1], [BASE_COLORS.border, colors.primary]),
+      ? DS.colors.error
+      : interpolateColor(focusAnim.value, [0, 1], [DS.colors.border, colors.primary]),
   }));
 
   return (
@@ -66,7 +66,7 @@ export function Input({
       {label ? (
         <Text
           className="text-xs font-medium tracking-widest uppercase mb-1"
-          style={{ color: BASE_COLORS.textSecondary, fontFamily: 'JetBrainsMono_400Regular' }}
+          style={{ color: DS.colors.primaryDim, fontFamily: 'JetBrainsMono_400Regular' }}
         >
           {label}
         </Text>
@@ -78,7 +78,7 @@ export function Input({
           {
             borderWidth: 1,
             borderRadius: 6,
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             opacity: editable ? 1 : 0.5,
             flexDirection: 'row',
             alignItems: 'center',
@@ -91,7 +91,7 @@ export function Input({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={BASE_COLORS.textDim}
+          placeholderTextColor={DS.colors.primaryGhost}
           secureTextEntry={secureTextEntry}
           multiline={multiline}
           numberOfLines={numberOfLines}
@@ -105,7 +105,7 @@ export function Input({
           onBlur={handleBlur}
           style={{
             flex: 1,
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             fontFamily: 'Inter_400Regular',
             fontSize: 15,
             paddingHorizontal: 14,
@@ -122,7 +122,7 @@ export function Input({
       {error ? (
         <Text
           className="text-xs mt-1"
-          style={{ color: BASE_COLORS.error, fontFamily: 'Inter_400Regular' }}
+          style={{ color: DS.colors.error, fontFamily: 'Inter_400Regular' }}
         >
           {error}
         </Text>

@@ -1,8 +1,8 @@
+import { DS } from '../../theme/designSystem';
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../theme/colors';
 import { SHADOW } from '../../theme';
 
 interface CardProps {
@@ -40,10 +40,10 @@ export function Card({
 
   const containerStyle = [
     {
-      backgroundColor: BASE_COLORS.surface,
+      backgroundColor: DS.colors.surface,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: BASE_COLORS.border,
+      borderColor: DS.colors.border,
     },
     elevated ? SHADOW.card : undefined,
     padded ? { padding: 16 } : undefined,

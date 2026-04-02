@@ -1,8 +1,8 @@
+import { DS } from '../../theme/designSystem';
 import React from 'react';
 import { View, Text } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Button } from './Button';
-import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 
 interface EmptyStateProps {
@@ -42,7 +42,7 @@ export function EmptyState({ title, subtitle, icon = '◻', actionLabel, onActio
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',
           fontSize: compact ? 16 : 20,
-          color: BASE_COLORS.textPrimary,
+          color: DS.colors.primary,
           textAlign: 'center',
           marginBottom: subtitle ? 8 : 0,
         }}
@@ -55,7 +55,7 @@ export function EmptyState({ title, subtitle, icon = '◻', actionLabel, onActio
           style={{
             fontFamily: 'Inter_400Regular',
             fontSize: 14,
-            color: BASE_COLORS.textSecondary,
+            color: DS.colors.primaryDim,
             textAlign: 'center',
             lineHeight: 20,
             marginBottom: actionLabel ? 24 : 0,

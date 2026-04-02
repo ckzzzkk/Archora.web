@@ -1,7 +1,7 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import type { MaterialType } from '../../types';
@@ -37,7 +37,7 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
           style={{
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 10,
-            color: BASE_COLORS.textSecondary,
+            color: DS.colors.primaryDim,
             letterSpacing: 1.5,
             textTransform: 'uppercase',
             marginBottom: 6,
@@ -51,9 +51,9 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
             borderRadius: 8,
             padding: 10,
           }}
@@ -69,12 +69,12 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
               marginRight: 10,
             }}
           >
-            <Text style={{ fontSize: 14, color: BASE_COLORS.background }}>{selected.pattern}</Text>
+            <Text style={{ fontSize: 14, color: DS.colors.background }}>{selected.pattern}</Text>
           </View>
-          <Text style={{ flex: 1, color: BASE_COLORS.textPrimary, fontFamily: 'Inter_400Regular', fontSize: 14 }}>
+          <Text style={{ flex: 1, color: DS.colors.primary, fontFamily: 'Inter_400Regular', fontSize: 14 }}>
             {selected.label}
           </Text>
-          <Text style={{ color: BASE_COLORS.textDim, fontSize: 12 }}>▾</Text>
+          <Text style={{ color: DS.colors.primaryGhost, fontSize: 12 }}>▾</Text>
         </TouchableOpacity>
       </View>
 
@@ -92,7 +92,7 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             padding: 20,
@@ -103,7 +103,7 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
             style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 18,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               marginBottom: 16,
               textAlign: 'center',
             }}
@@ -124,8 +124,8 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
                     padding: 8,
                     borderRadius: 10,
                     borderWidth: 2,
-                    borderColor: isActive ? colors.primary : BASE_COLORS.border,
-                    backgroundColor: isActive ? colors.primary + '15' : BASE_COLORS.surfaceHigh,
+                    borderColor: isActive ? colors.primary : DS.colors.border,
+                    backgroundColor: isActive ? colors.primary + '15' : DS.colors.surfaceHigh,
                   }}
                 >
                   <View
@@ -139,13 +139,13 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
                       marginBottom: 6,
                     }}
                   >
-                    <Text style={{ fontSize: 20, color: BASE_COLORS.background }}>{mat.pattern}</Text>
+                    <Text style={{ fontSize: 20, color: DS.colors.background }}>{mat.pattern}</Text>
                   </View>
                   <Text
                     style={{
                       fontFamily: 'Inter_400Regular',
                       fontSize: 10,
-                      color: isActive ? colors.primary : BASE_COLORS.textSecondary,
+                      color: isActive ? colors.primary : DS.colors.primaryDim,
                       textAlign: 'center',
                     }}
                   >

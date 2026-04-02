@@ -1,8 +1,8 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, Modal } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { BASE_COLORS } from '../../theme/colors';
 import type { WallTexture, MaterialType, CeilingType } from '../../types/blueprint';
 
 const WALL_TEXTURES: { id: WallTexture; label: string; color: string }[] = [
@@ -71,8 +71,8 @@ type SurfaceTab = 'walls' | 'floors' | 'ceilings';
 function Swatch({ color, label, selected, onPress }: { color: string; label: string; selected: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={{ width: '30%', marginHorizontal: '1.5%', marginBottom: 12, alignItems: 'center' }}>
-      <View style={{ width: 52, height: 52, borderRadius: 10, backgroundColor: color, borderWidth: selected ? 2 : 1, borderColor: selected ? BASE_COLORS.textPrimary : '#444', marginBottom: 4 }} />
-      <Text numberOfLines={2} style={{ fontFamily: 'Inter_400Regular', fontSize: 9, color: selected ? BASE_COLORS.textPrimary : BASE_COLORS.textSecondary, textAlign: 'center' }}>{label}</Text>
+      <View style={{ width: 52, height: 52, borderRadius: 10, backgroundColor: color, borderWidth: selected ? 2 : 1, borderColor: selected ? DS.colors.primary : '#444', marginBottom: 4 }} />
+      <Text numberOfLines={2} style={{ fontFamily: 'Inter_400Regular', fontSize: 9, color: selected ? DS.colors.primary : DS.colors.primaryDim, textAlign: 'center' }}>{label}</Text>
     </Pressable>
   );
 }
@@ -103,20 +103,20 @@ export function SurfacesSheet({ visible, onClose }: Props) {
   return (
     <Modal transparent visible={visible} onRequestClose={onClose} animationType="none">
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={onClose} />
-      <Animated.View style={[sheetStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: 430, backgroundColor: BASE_COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderColor: BASE_COLORS.border }]}>
+      <Animated.View style={[sheetStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: 430, backgroundColor: DS.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderColor: DS.colors.border }]}>
         <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#444' }} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10 }}>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: BASE_COLORS.textPrimary, flex: 1 }}>Surfaces</Text>
-          <Pressable onPress={onClose} style={{ padding: 8 }}><Text style={{ color: BASE_COLORS.textSecondary, fontSize: 18 }}>✕</Text></Pressable>
+          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: DS.colors.primary, flex: 1 }}>Surfaces</Text>
+          <Pressable onPress={onClose} style={{ padding: 8 }}><Text style={{ color: DS.colors.primaryDim, fontSize: 18 }}>✕</Text></Pressable>
         </View>
 
         {/* Tabs */}
         <View style={{ flexDirection: 'row', paddingHorizontal: 20, marginBottom: 12, gap: 8 }}>
           {(['walls', 'floors', 'ceilings'] as SurfaceTab[]).map((t) => (
-            <Pressable key={t} onPress={() => setTab(t)} style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: tab === t ? BASE_COLORS.textPrimary : BASE_COLORS.surfaceHigh, borderWidth: 1, borderColor: tab === t ? BASE_COLORS.textPrimary : BASE_COLORS.border }}>
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, textTransform: 'capitalize', color: tab === t ? BASE_COLORS.background : BASE_COLORS.textSecondary }}>{t}</Text>
+            <Pressable key={t} onPress={() => setTab(t)} style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: tab === t ? DS.colors.primary : DS.colors.surfaceHigh, borderWidth: 1, borderColor: tab === t ? DS.colors.primary : DS.colors.border }}>
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, textTransform: 'capitalize', color: tab === t ? DS.colors.background : DS.colors.primaryDim }}>{t}</Text>
             </Pressable>
           ))}
         </View>
@@ -144,8 +144,8 @@ export function SurfacesSheet({ visible, onClose }: Props) {
             <Pressable key={item.id} onPress={() => {
               const rid = selectedRoom?.id ?? blueprint?.rooms[0]?.id;
               if (rid) actions.setRoomCeiling(rid, item.id);
-            }} style={{ paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: selectedRoom?.ceilingType === item.id ? BASE_COLORS.textPrimary : BASE_COLORS.border, backgroundColor: selectedRoom?.ceilingType === item.id ? BASE_COLORS.textPrimary + '20' : BASE_COLORS.surfaceHigh }}>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: selectedRoom?.ceilingType === item.id ? BASE_COLORS.textPrimary : BASE_COLORS.textSecondary }}>{item.label}</Text>
+            }} style={{ paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: selectedRoom?.ceilingType === item.id ? DS.colors.primary : DS.colors.border, backgroundColor: selectedRoom?.ceilingType === item.id ? DS.colors.primary + '20' : DS.colors.surfaceHigh }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: selectedRoom?.ceilingType === item.id ? DS.colors.primary : DS.colors.primaryDim }}>{item.label}</Text>
             </Pressable>
           ))}
         </ScrollView>

@@ -1,6 +1,6 @@
+import { DS } from '../../../theme/designSystem';
 import React from 'react';
 import type { Vector3D } from '../../../types/blueprint';
-import { BASE_COLORS } from '../../../theme/colors';
 
 interface Props {
   position: Vector3D;
@@ -11,7 +11,7 @@ interface Props {
   isOn?: boolean;
 }
 
-const outline = (selected?: boolean) => selected ? BASE_COLORS.warning : 'transparent';
+const outline = (selected?: boolean) => selected ? DS.colors.warning : 'transparent';
 
 export function FloorLamp({ position, rotation, dimensions, color = '#C0C0C0', selected, isOn = true }: Props) {
   const { x: w, y: h } = dimensions;

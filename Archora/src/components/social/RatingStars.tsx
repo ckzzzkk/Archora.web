@@ -1,8 +1,8 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
-import { BASE_COLORS } from '../../theme/colors';
 import { useHaptics } from '../../hooks/useHaptics';
 import { supabase } from '../../utils/supabaseClient';
 import { useAuthStore } from '../../stores/authStore';
@@ -40,7 +40,7 @@ function Star({
   return (
     <Animated.View style={animStyle}>
       <TouchableOpacity disabled={!onPress} onPress={handlePress} activeOpacity={0.7}>
-        <Text style={{ fontSize: size, color: filled || (partial ?? 0) > 0 ? colors.primary : BASE_COLORS.border }}>
+        <Text style={{ fontSize: size, color: filled || (partial ?? 0) > 0 ? colors.primary : DS.colors.border }}>
           {filled ? '★' : partial && partial > 0 ? '½' : '☆'}
         </Text>
       </TouchableOpacity>
@@ -96,7 +96,7 @@ export function RatingStars({
           style={{
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: size * 0.7,
-            color: BASE_COLORS.textDim,
+            color: DS.colors.primaryGhost,
             marginLeft: 4,
           }}
         >

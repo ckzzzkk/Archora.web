@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BASE_COLORS, withAlpha } from '../../theme/colors';
@@ -41,8 +42,8 @@ function ARMeasureModeContent() {
     >
       {/* Instruction */}
       <View style={{ position: 'absolute', top: 130, left: 0, right: 0, alignItems: 'center' }}>
-        <View style={{ backgroundColor: withAlpha(BASE_COLORS.surface, 0.85), borderRadius: 50, paddingHorizontal: 20, paddingVertical: 10 }}>
-          <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 14 }}>
+        <View style={{ backgroundColor: withAlpha(DS.colors.surface, 0.85), borderRadius: 50, paddingHorizontal: 20, paddingVertical: 10 }}>
+          <Text style={{ color: DS.colors.primaryDim, fontSize: 14 }}>
             {!point1 ? 'Tap to set first point' : !point2 ? 'Tap to set second point' : 'Tap anywhere to reset'}
           </Text>
         </View>
@@ -52,12 +53,12 @@ function ARMeasureModeContent() {
       {point1 && (
         <View style={{ position: 'absolute', left: point1.x - 6, top: point1.y - 6,
           width: 12, height: 12, borderRadius: 6,
-          backgroundColor: BASE_COLORS.textPrimary }} />
+          backgroundColor: DS.colors.primary }} />
       )}
       {point2 && (
         <View style={{ position: 'absolute', left: point2.x - 6, top: point2.y - 6,
           width: 12, height: 12, borderRadius: 6,
-          backgroundColor: BASE_COLORS.textPrimary }} />
+          backgroundColor: DS.colors.primary }} />
       )}
 
       {/* Distance label */}
@@ -66,11 +67,11 @@ function ARMeasureModeContent() {
           position: 'absolute',
           left: (point1.x + point2.x) / 2 - 40,
           top: (point1.y + point2.y) / 2 - 20,
-          backgroundColor: withAlpha(BASE_COLORS.surface, 0.9), borderRadius: 50,
+          backgroundColor: withAlpha(DS.colors.surface, 0.9), borderRadius: 50,
           paddingHorizontal: 12, paddingVertical: 6,
-          borderWidth: 1, borderColor: BASE_COLORS.border,
+          borderWidth: 1, borderColor: DS.colors.border,
         }}>
-          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 14, fontFamily: 'JetBrainsMono_400Regular' }}>
+          <Text style={{ color: DS.colors.primary, fontSize: 14, fontFamily: 'JetBrainsMono_400Regular' }}>
             {distance}m / {Math.round(distance * 3.281 * 10) / 10}ft
           </Text>
         </View>

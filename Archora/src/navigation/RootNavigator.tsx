@@ -1,3 +1,4 @@
+import { DS } from '../theme/designSystem';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -55,14 +56,13 @@ const TermsScreen = lazyScreen(() =>
     .then((m) => ({ default: m.TermsScreen })));
 import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
 import { Storage } from '../utils/storage';
-import { BASE_COLORS } from '../theme/colors';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function QuizCheckLoadingScreen() {
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
       <CompassRoseLoader size="large" />
     </View>
   );
@@ -85,7 +85,7 @@ export function RootNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
         <CompassRoseLoader size="large" />
       </View>
     );

@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
@@ -23,7 +24,6 @@ import {
   unsubscribeFromNotifications,
 } from '../../services/notificationService';
 import { useAuthStore } from '../../stores/authStore';
-import { BASE_COLORS } from '../../theme/colors';
 import type { AppNotification } from '../../types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { RootStackParamList } from '../../navigation/types';
@@ -83,9 +83,9 @@ function NotificationRow({ notification, onPress }: NotificationRowProps) {
         alignItems: 'flex-start',
         paddingVertical: 12,
         paddingHorizontal: 16,
-        backgroundColor: notification.read ? 'transparent' : BASE_COLORS.surfaceHigh,
+        backgroundColor: notification.read ? 'transparent' : DS.colors.surfaceHigh,
         borderBottomWidth: 1,
-        borderBottomColor: BASE_COLORS.border + '55',
+        borderBottomColor: DS.colors.border + '55',
       }}
     >
       <Text style={{ fontSize: 22, marginRight: 12, marginTop: 2 }}>{icon}</Text>
@@ -94,7 +94,7 @@ function NotificationRow({ notification, onPress }: NotificationRowProps) {
           style={{
             fontFamily: notification.read ? 'Inter_400Regular' : 'Inter_600SemiBold',
             fontSize: 13,
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
           }}
         >
           {label}
@@ -105,7 +105,7 @@ function NotificationRow({ notification, onPress }: NotificationRowProps) {
             style={{
               fontFamily: 'Inter_400Regular',
               fontSize: 12,
-              color: BASE_COLORS.textSecondary,
+              color: DS.colors.primaryDim,
               marginTop: 2,
             }}
           >
@@ -116,7 +116,7 @@ function NotificationRow({ notification, onPress }: NotificationRowProps) {
           style={{
             fontFamily: 'Inter_400Regular',
             fontSize: 11,
-            color: BASE_COLORS.textDim,
+            color: DS.colors.primaryGhost,
             marginTop: 4,
           }}
         >
@@ -129,7 +129,7 @@ function NotificationRow({ notification, onPress }: NotificationRowProps) {
             width: 8,
             height: 8,
             borderRadius: 4,
-            backgroundColor: BASE_COLORS.success,
+            backgroundColor: DS.colors.success,
             marginTop: 6,
           }}
         />
@@ -247,7 +247,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
             left: 0,
             right: 0,
             maxHeight: '60%',
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             borderBottomLeftRadius: 20,
             borderBottomRightRadius: 20,
             overflow: 'hidden',
@@ -268,20 +268,20 @@ export function NotificationPanel({ visible, onClose }: Props) {
             paddingTop: 60,
             paddingBottom: 12,
             borderBottomWidth: 1,
-            borderBottomColor: BASE_COLORS.border,
+            borderBottomColor: DS.colors.border,
           }}
         >
           <Text
             style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 20,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               flex: 1,
             }}
           >
             Notifications
             {unreadCount > 0 && (
-              <Text style={{ color: BASE_COLORS.success, fontSize: 14 }}>  {unreadCount} new</Text>
+              <Text style={{ color: DS.colors.success, fontSize: 14 }}>  {unreadCount} new</Text>
             )}
           </Text>
           {unreadCount > 0 && (
@@ -290,7 +290,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
                 style={{
                   fontFamily: 'Inter_400Regular',
                   fontSize: 12,
-                  color: BASE_COLORS.textSecondary,
+                  color: DS.colors.primaryDim,
                 }}
               >
                 Mark all read
@@ -301,7 +301,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
             <Svg width={20} height={20} viewBox="0 0 24 24">
               <Path
                 d="M5 5 L19 19 M19 5 L5 19"
-                stroke={BASE_COLORS.textSecondary}
+                stroke={DS.colors.primaryDim}
                 strokeWidth="1.8"
                 strokeLinecap="round"
               />
@@ -312,7 +312,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
         {/* List */}
         {loading ? (
           <View style={{ padding: 40, alignItems: 'center' }}>
-            <Text style={{ color: BASE_COLORS.textDim, fontFamily: 'Inter_400Regular' }}>
+            <Text style={{ color: DS.colors.primaryGhost, fontFamily: 'Inter_400Regular' }}>
               Loading…
             </Text>
           </View>
@@ -345,7 +345,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
             <Text style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 16,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               textAlign: 'center',
               marginBottom: 8,
             }}>
@@ -354,7 +354,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
             <Text style={{
               fontFamily: 'Inter_400Regular',
               fontSize: 13,
-              color: BASE_COLORS.textSecondary,
+              color: DS.colors.primaryDim,
               textAlign: 'center',
             }}>
               Likes, saves and follows will appear here

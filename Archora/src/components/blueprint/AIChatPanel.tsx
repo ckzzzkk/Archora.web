@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View, Text, Pressable, TextInput, ScrollView,
@@ -10,7 +11,6 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
-import { BASE_COLORS } from '../../theme/colors';
 import type { ChatMessage } from '../../types/blueprint';
 
 function ChatBubbleIcon({ color }: { color: string }) {
@@ -37,10 +37,10 @@ function SendButton({ onPress, loading }: { onPress: () => void; loading: boolea
   if (loading) return <CompassRoseLoader size="small" />;
 
   return (
-    <Pressable onPress={handlePress} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: BASE_COLORS.textPrimary, alignItems: 'center', justifyContent: 'center' }}>
+    <Pressable onPress={handlePress} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: DS.colors.primary, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={animStyle}>
         <Svg width={18} height={18} viewBox="0 0 20 20">
-          <Path d="M10 2 L11.5 7 L17 7 L12.5 10.5 L14 16 L10 13 L6 16 L7.5 10.5 L3 7 L8.5 7 Z" fill={BASE_COLORS.background} />
+          <Path d="M10 2 L11.5 7 L17 7 L12.5 10.5 L14 16 L10 13 L6 16 L7.5 10.5 L3 7 L8.5 7 Z" fill={DS.colors.background} />
         </Svg>
       </Animated.View>
     </Pressable>
@@ -51,10 +51,10 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.role === 'user';
   return (
     <View style={{ alignSelf: isUser ? 'flex-end' : 'flex-start', maxWidth: '80%', marginBottom: 8 }}>
-      <View style={{ backgroundColor: isUser ? BASE_COLORS.surfaceHigh : '#333', borderRadius: 16, borderBottomRightRadius: isUser ? 4 : 16, borderBottomLeftRadius: isUser ? 16 : 4, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: isUser ? BASE_COLORS.textPrimary + '30' : '#444' }}>
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textPrimary, lineHeight: 18 }}>{msg.content}</Text>
+      <View style={{ backgroundColor: isUser ? DS.colors.surfaceHigh : '#333', borderRadius: 16, borderBottomRightRadius: isUser ? 4 : 16, borderBottomLeftRadius: isUser ? 16 : 4, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: isUser ? DS.colors.primary + '30' : '#444' }}>
+        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primary, lineHeight: 18 }}>{msg.content}</Text>
       </View>
-      <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 9, color: BASE_COLORS.textDim, marginTop: 2, alignSelf: isUser ? 'flex-end' : 'flex-start', paddingHorizontal: 4 }}>
+      <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 9, color: DS.colors.primaryGhost, marginTop: 2, alignSelf: isUser ? 'flex-end' : 'flex-start', paddingHorizontal: 4 }}>
         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
       </Text>
     </View>
@@ -108,23 +108,23 @@ export function AIChatPanel({ visible, onToggle }: Props) {
     <>
       {/* Floating bubble */}
       {!visible && (
-        <Pressable onPress={onToggle} style={{ position: 'absolute', bottom: 110, right: 20, width: 52, height: 52, borderRadius: 26, backgroundColor: BASE_COLORS.surface, borderWidth: 1, borderColor: BASE_COLORS.textPrimary + '60', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 }}>
-          <ChatBubbleIcon color={BASE_COLORS.textPrimary} />
+        <Pressable onPress={onToggle} style={{ position: 'absolute', bottom: 110, right: 20, width: 52, height: 52, borderRadius: 26, backgroundColor: DS.colors.surface, borderWidth: 1, borderColor: DS.colors.primary + '60', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 }}>
+          <ChatBubbleIcon color={DS.colors.primary} />
         </Pressable>
       )}
 
       {/* Panel */}
       {visible && (
-        <Animated.View style={[panelStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: 380, backgroundColor: BASE_COLORS.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderTopWidth: 1, borderColor: BASE_COLORS.border }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border }}>
-            <ChatBubbleIcon color={BASE_COLORS.textPrimary} />
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.textPrimary, marginLeft: 8, flex: 1 }}>AI Blueprint Editor</Text>
-            <Pressable onPress={onToggle} style={{ padding: 8 }}><Text style={{ color: BASE_COLORS.textSecondary, fontSize: 18 }}>✕</Text></Pressable>
+        <Animated.View style={[panelStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: 380, backgroundColor: DS.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderTopWidth: 1, borderColor: DS.colors.border }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: DS.colors.border }}>
+            <ChatBubbleIcon color={DS.colors.primary} />
+            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primary, marginLeft: 8, flex: 1 }}>AI Blueprint Editor</Text>
+            <Pressable onPress={onToggle} style={{ padding: 8 }}><Text style={{ color: DS.colors.primaryDim, fontSize: 18 }}>✕</Text></Pressable>
           </View>
 
           <ScrollView ref={scrollRef} style={{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }} showsVerticalScrollIndicator={false} onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
             {recentMessages.length === 0 && (
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim, textAlign: 'center', marginTop: 20 }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, textAlign: 'center', marginTop: 20 }}>
                 Ask me to edit your blueprint.{'\n'}e.g. "add a window on the north wall"
               </Text>
             )}
@@ -133,12 +133,12 @@ export function AIChatPanel({ visible, onToggle }: Props) {
           </ScrollView>
 
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: BASE_COLORS.border, gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: DS.colors.border, gap: 10 }}>
               <TextInput
                 value={input} onChangeText={setInput}
-                placeholder="Describe your edit..." placeholderTextColor={BASE_COLORS.textDim}
+                placeholder="Describe your edit..." placeholderTextColor={DS.colors.primaryGhost}
                 multiline
-                style={{ flex: 1, backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary, maxHeight: 80, borderWidth: 1, borderColor: BASE_COLORS.border }}
+                style={{ flex: 1, backgroundColor: DS.colors.surfaceHigh, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primary, maxHeight: 80, borderWidth: 1, borderColor: DS.colors.border }}
               />
               <SendButton onPress={() => { void sendMessage(); }} loading={isLoading} />
             </View>

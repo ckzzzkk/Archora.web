@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import Animated, {
@@ -7,7 +8,6 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
-import { BASE_COLORS } from '../../theme/colors';
 import type { Wall, Room, FurniturePiece } from '../../types';
 
 export function ObjectInspector() {
@@ -61,18 +61,18 @@ export function ObjectInspector() {
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: BASE_COLORS.surfaceHigh,
+          backgroundColor: DS.colors.surfaceHigh,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
           borderTopWidth: 1,
-          borderTopColor: BASE_COLORS.border,
+          borderTopColor: DS.colors.border,
           padding: 20,
           paddingBottom: 40,
           minHeight: 200,
         },
       ]}>
         {/* Drag handle */}
-        <View style={{ width: 36, height: 4, backgroundColor: BASE_COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
+        <View style={{ width: 36, height: 4, backgroundColor: DS.colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
 
         {/* Object name */}
         <View style={{
@@ -86,7 +86,7 @@ export function ObjectInspector() {
           <Text style={{
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 11,
-            color: BASE_COLORS.background,
+            color: DS.colors.background,
             textTransform: 'uppercase',
             letterSpacing: 1,
           }}>
@@ -96,27 +96,27 @@ export function ObjectInspector() {
 
         {wall && (
           <View style={{ gap: 12 }}>
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: BASE_COLORS.textPrimary }}>
+            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary }}>
               Wall
             </Text>
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, marginBottom: 4 }}>START X</Text>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>{wall.start.x.toFixed(2)}m</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost, marginBottom: 4 }}>START X</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: DS.colors.primary }}>{wall.start.x.toFixed(2)}m</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, marginBottom: 4 }}>START Y</Text>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>{wall.start.y.toFixed(2)}m</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost, marginBottom: 4 }}>START Y</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: DS.colors.primary }}>{wall.start.y.toFixed(2)}m</Text>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, marginBottom: 4 }}>HEIGHT</Text>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>{wall.height.toFixed(1)}m</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost, marginBottom: 4 }}>HEIGHT</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: DS.colors.primary }}>{wall.height.toFixed(1)}m</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, marginBottom: 4 }}>THICKNESS</Text>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>{wall.thickness.toFixed(2)}m</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost, marginBottom: 4 }}>THICKNESS</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: DS.colors.primary }}>{wall.thickness.toFixed(2)}m</Text>
               </View>
             </View>
           </View>
@@ -124,38 +124,38 @@ export function ObjectInspector() {
 
         {room && (
           <View style={{ gap: 12 }}>
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: BASE_COLORS.textPrimary }}>
+            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary }}>
               {room.name}
             </Text>
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, marginBottom: 4 }}>AREA</Text>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>{room.area.toFixed(1)}m²</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost, marginBottom: 4 }}>AREA</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: DS.colors.primary }}>{room.area.toFixed(1)}m²</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, marginBottom: 4 }}>CEILING</Text>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>{room.ceilingHeight.toFixed(1)}m</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost, marginBottom: 4 }}>CEILING</Text>
+                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: DS.colors.primary }}>{room.ceilingHeight.toFixed(1)}m</Text>
               </View>
             </View>
             <View>
-              <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, marginBottom: 4 }}>FLOOR MATERIAL</Text>
-              <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary, textTransform: 'capitalize' }}>{room.floorMaterial.replace(/_/g, ' ')}</Text>
+              <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost, marginBottom: 4 }}>FLOOR MATERIAL</Text>
+              <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: DS.colors.primary, textTransform: 'capitalize' }}>{room.floorMaterial.replace(/_/g, ' ')}</Text>
             </View>
           </View>
         )}
 
         {furniture && (
           <View style={{ gap: 12 }}>
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: BASE_COLORS.textPrimary }}>
+            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary }}>
               {furniture.name}
             </Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               {(['x', 'y', 'z'] as const).map((axis) => (
                 <View key={axis} style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim, marginBottom: 4 }}>
+                  <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost, marginBottom: 4 }}>
                     {axis.toUpperCase()} DIM
                   </Text>
-                  <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary }}>
+                  <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: DS.colors.primary }}>
                     {furniture.dimensions[axis].toFixed(2)}m
                   </Text>
                 </View>
@@ -174,13 +174,13 @@ export function ObjectInspector() {
             gap: 8,
             paddingVertical: 12,
             paddingHorizontal: 16,
-            backgroundColor: `${BASE_COLORS.error}15`,
+            backgroundColor: `${DS.colors.error}15`,
             borderRadius: 8,
             borderWidth: 1,
-            borderColor: `${BASE_COLORS.error}40`,
+            borderColor: `${DS.colors.error}40`,
           }}
         >
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: BASE_COLORS.error }}>
+          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: DS.colors.error }}>
             Delete Object
           </Text>
         </Pressable>

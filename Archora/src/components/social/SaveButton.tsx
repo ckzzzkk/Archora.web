@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { Pressable, Text } from 'react-native';
 import Animated, {
@@ -9,7 +10,6 @@ import Animated, {
 import { useHaptics } from '../../hooks/useHaptics';
 import { useAuthStore } from '../../stores/authStore';
 import { inspoService } from '../../services/inspoService';
-import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 
 interface SaveButtonProps {
@@ -61,7 +61,7 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
   return (
     <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center' }}>
       <Animated.View style={animStyle}>
-        <Text style={{ fontSize: 16, color: saved ? colors.primary : BASE_COLORS.textDim }}>
+        <Text style={{ fontSize: 16, color: saved ? colors.primary : DS.colors.primaryGhost }}>
           {saved ? '⊸' : '⊹'}
         </Text>
       </Animated.View>
@@ -69,7 +69,7 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
         style={{
           fontFamily: 'JetBrainsMono_400Regular',
           fontSize: 12,
-          color: saved ? colors.primary : BASE_COLORS.textDim,
+          color: saved ? colors.primary : DS.colors.primaryGhost,
           marginLeft: 4,
         }}
       >

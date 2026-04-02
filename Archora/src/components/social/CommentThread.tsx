@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -5,7 +6,6 @@ import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 import { EmptyState } from '../common/EmptyState';
-import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { supabase } from '../../utils/supabaseClient';
@@ -25,7 +25,7 @@ function CommentItem({ comment, depth = 0, onReply }: CommentItemProps) {
   if (comment.isDeleted) {
     return (
       <View style={{ marginLeft: depth * 20, marginBottom: 8, opacity: 0.4 }}>
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim, fontStyle: 'italic' }}>
+        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, fontStyle: 'italic' }}>
           [deleted]
         </Text>
       </View>
@@ -51,7 +51,7 @@ function CommentItem({ comment, depth = 0, onReply }: CommentItemProps) {
           {comment.authorAvatarUrl ? (
             <Image source={{ uri: comment.authorAvatarUrl }} style={{ width: 32, height: 32, borderRadius: 16 }} />
           ) : (
-            <Text style={{ color: BASE_COLORS.background, fontSize: 13, fontFamily: 'Inter_400Regular' }}>
+            <Text style={{ color: DS.colors.background, fontSize: 13, fontFamily: 'Inter_400Regular' }}>
               {comment.authorDisplayName?.[0]?.toUpperCase() ?? '?'}
             </Text>
           )}
@@ -59,15 +59,15 @@ function CommentItem({ comment, depth = 0, onReply }: CommentItemProps) {
 
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 3 }}>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textPrimary, fontWeight: '600' }}>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primary, fontWeight: '600' }}>
               {comment.authorDisplayName}
             </Text>
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: BASE_COLORS.textDim, marginLeft: 6 }}>
+            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: DS.colors.primaryGhost, marginLeft: 6 }}>
               {new Date(comment.createdAt).toLocaleDateString()}
             </Text>
           </View>
 
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary, lineHeight: 20 }}>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, lineHeight: 20 }}>
             {comment.body}
           </Text>
 
@@ -77,7 +77,7 @@ function CommentItem({ comment, depth = 0, onReply }: CommentItemProps) {
               onPress={() => onReply?.(comment.id, comment.authorDisplayName)}
               style={{ marginTop: 4 }}
             >
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryGhost }}>
                 Reply
               </Text>
             </TouchableOpacity>
@@ -92,7 +92,7 @@ function CommentItem({ comment, depth = 0, onReply }: CommentItemProps) {
             onPress={() => setShowReplies((v) => !v)}
             style={{ marginLeft: 42, marginTop: 6 }}
           >
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim }}>
+            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost }}>
               {showReplies ? '▾' : '▸'} {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
             </Text>
           </TouchableOpacity>
@@ -163,7 +163,7 @@ export function CommentThread({ templateId, comments, loading = false, onComment
           style={{
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 16,
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             marginBottom: 16,
           }}
         >
@@ -183,14 +183,14 @@ export function CommentThread({ templateId, comments, loading = false, onComment
         )}
 
         {isAuthenticated ? (
-          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: BASE_COLORS.border, paddingTop: 16 }}>
+          <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: DS.colors.border, paddingTop: 16 }}>
             {replyTo ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim }}>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryGhost }}>
                   Replying to {replyTo.name}
                 </Text>
                 <TouchableOpacity onPress={() => setReplyTo(null)} style={{ marginLeft: 8 }}>
-                  <Text style={{ color: BASE_COLORS.textDim }}>✕</Text>
+                  <Text style={{ color: DS.colors.primaryGhost }}>✕</Text>
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -209,7 +209,7 @@ export function CommentThread({ templateId, comments, loading = false, onComment
             />
           </View>
         ) : (
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim, textAlign: 'center', marginTop: 16 }}>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, textAlign: 'center', marginTop: 16 }}>
             Sign in to leave a comment
           </Text>
         )}

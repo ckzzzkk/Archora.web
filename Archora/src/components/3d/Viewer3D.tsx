@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Canvas } from '@react-three/fiber/native';
@@ -8,7 +9,6 @@ import { EmptyState } from '../common/EmptyState';
 import { use3DScene } from '../../hooks/use3DScene';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useTheme } from '../../hooks/useTheme';
-import { BASE_COLORS } from '../../theme/colors';
 import { DEFAULT_LIGHTING, gridDimensions } from '../../utils/procedural/sceneHelpers';
 
 interface Viewer3DProps {
@@ -71,7 +71,7 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Canvas
         {...({ frameloop: 'always' } as any)}
@@ -86,7 +86,7 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
         {showGrid ? (
           <Grid
             args={[grid.size, grid.divisions]}
-            cellColor={BASE_COLORS.border}
+            cellColor={DS.colors.border}
             sectionColor={colors.primaryDim}
           />
         ) : null}
@@ -129,19 +129,19 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
               key={label}
               onPress={onPress}
               style={{
-                backgroundColor: BASE_COLORS.surface + 'CC',
+                backgroundColor: DS.colors.surface + 'CC',
                 borderRadius: 6,
                 paddingHorizontal: 10,
                 paddingVertical: 6,
                 borderWidth: 1,
-                borderColor: BASE_COLORS.border,
+                borderColor: DS.colors.border,
               }}
             >
               <Text
                 style={{
                   fontFamily: 'JetBrainsMono_400Regular',
                   fontSize: 10,
-                  color: BASE_COLORS.textSecondary,
+                  color: DS.colors.primaryDim,
                 }}
               >
                 {label}

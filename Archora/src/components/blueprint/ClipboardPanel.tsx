@@ -1,7 +1,7 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../theme/colors';
 import { clipboard } from '../../utils/clipboard';
 import type { ClipboardItem } from '../../utils/clipboard';
 
@@ -80,34 +80,34 @@ export function ClipboardPanel({ visible, onClose, onPaste }: Props) {
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             borderTopWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
             paddingBottom: 24,
             maxHeight: 380,
           },
         ]}
       >
         {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border }}>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.textPrimary, flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: DS.colors.border }}>
+          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primary, flex: 1 }}>
             Clipboard
           </Text>
           {items.length > 0 && (
             <Pressable onPress={handleClear} style={{ marginRight: 12 }}>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim }}>Clear all</Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryGhost }}>Clear all</Text>
             </Pressable>
           )}
           <Pressable onPress={onClose}>
-            <Text style={{ fontSize: 16, color: BASE_COLORS.textDim }}>✕</Text>
+            <Text style={{ fontSize: 16, color: DS.colors.primaryGhost }}>✕</Text>
           </Pressable>
         </View>
 
         {items.length === 0 ? (
           <View style={{ alignItems: 'center', paddingVertical: 32 }}>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim }}>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost }}>
               Nothing copied yet
             </Text>
           </View>
@@ -119,33 +119,33 @@ export function ClipboardPanel({ visible, onClose, onPaste }: Props) {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: BASE_COLORS.surfaceHigh,
+                  backgroundColor: DS.colors.surfaceHigh,
                   borderRadius: 10,
                   borderWidth: 1,
-                  borderColor: BASE_COLORS.border,
+                  borderColor: DS.colors.border,
                   padding: 12,
                   gap: 12,
                 }}
               >
-                <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: BASE_COLORS.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: BASE_COLORS.border }}>
-                  <Text style={{ fontSize: 16, color: BASE_COLORS.textSecondary }}>{TYPE_ICONS[item.type]}</Text>
+                <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: DS.colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: DS.colors.border }}>
+                  <Text style={{ fontSize: 16, color: DS.colors.primaryDim }}>{TYPE_ICONS[item.type]}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: BASE_COLORS.textPrimary }}>
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: DS.colors.primary }}>
                     {TYPE_LABELS[item.type]}
                   </Text>
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.textDim }}>
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: DS.colors.primaryGhost }}>
                     {relativeTime(item.timestamp)}
                   </Text>
                 </View>
                 <Pressable
                   onPress={() => { onPaste(item); onClose(); }}
-                  style={{ backgroundColor: BASE_COLORS.textPrimary + '20', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+                  style={{ backgroundColor: DS.colors.primary + '20', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
                 >
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: BASE_COLORS.textPrimary }}>Paste</Text>
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: DS.colors.primary }}>Paste</Text>
                 </Pressable>
                 <Pressable onPress={() => handleRemove(item.id)} style={{ padding: 4 }}>
-                  <Text style={{ fontSize: 14, color: BASE_COLORS.textDim }}>✕</Text>
+                  <Text style={{ fontSize: 14, color: DS.colors.primaryGhost }}>✕</Text>
                 </Pressable>
               </View>
             ))}

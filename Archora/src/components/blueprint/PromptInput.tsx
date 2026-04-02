@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Keyboard, Platform } from 'react-native';
 import Animated, {
@@ -8,7 +9,6 @@ import Animated, {
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
-import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { CompassRoseLoader } from '../common/CompassRoseLoader';
@@ -57,10 +57,10 @@ export function PromptInput({ onGenerate, onVoiceInput, isGenerating = false }: 
       style={[
         containerStyle,
         {
-          backgroundColor: BASE_COLORS.surface,
+          backgroundColor: DS.colors.surface,
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: expanded ? colors.primary : BASE_COLORS.border,
+          borderColor: expanded ? colors.primary : DS.colors.border,
           overflow: 'hidden',
           marginHorizontal: 16,
           marginBottom: 8,
@@ -73,12 +73,12 @@ export function PromptInput({ onGenerate, onVoiceInput, isGenerating = false }: 
           value={prompt}
           onChangeText={setPrompt}
           placeholder={expanded ? 'Describe your building in detail…' : 'Generate with AI…'}
-          placeholderTextColor={BASE_COLORS.textDim}
+          placeholderTextColor={DS.colors.primaryGhost}
           multiline={expanded}
           onFocus={handleExpand}
           style={{
             flex: 1,
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             fontFamily: 'Inter_400Regular',
             fontSize: 14,
             paddingHorizontal: 8,
@@ -100,13 +100,13 @@ export function PromptInput({ onGenerate, onVoiceInput, isGenerating = false }: 
                 width: 36,
                 height: 36,
                 borderRadius: 18,
-                backgroundColor: BASE_COLORS.surfaceHigh,
+                backgroundColor: DS.colors.surfaceHigh,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 6,
               }}
             >
-              <Text style={{ fontSize: 16, color: audioGate.allowed ? colors.primary : BASE_COLORS.textDim }}>
+              <Text style={{ fontSize: 16, color: audioGate.allowed ? colors.primary : DS.colors.primaryGhost }}>
                 ♪
               </Text>
             </TouchableOpacity>
@@ -129,7 +129,7 @@ export function PromptInput({ onGenerate, onVoiceInput, isGenerating = false }: 
           {isGenerating ? (
             <CompassRoseLoader size="small" />
           ) : (
-            <Text style={{ fontSize: expanded ? 14 : 16, color: BASE_COLORS.background }}>
+            <Text style={{ fontSize: expanded ? 14 : 16, color: DS.colors.background }}>
               {expanded ? '↑' : '✦'}
             </Text>
           )}
@@ -141,7 +141,7 @@ export function PromptInput({ onGenerate, onVoiceInput, isGenerating = false }: 
           onPress={handleCollapse}
           style={{ position: 'absolute', top: 8, right: 8 }}
         >
-          <Text style={{ color: BASE_COLORS.textDim, fontSize: 12 }}>✕</Text>
+          <Text style={{ color: DS.colors.primaryGhost, fontSize: 12 }}>✕</Text>
         </TouchableOpacity>
       ) : null}
     </Animated.View>

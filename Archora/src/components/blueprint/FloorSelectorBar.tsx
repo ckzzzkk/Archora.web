@@ -1,10 +1,10 @@
+import { DS } from '../../theme/designSystem';
 import React, { useRef } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTierGate } from '../../hooks/useTierGate';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import { useAuthStore } from '../../stores/authStore';
-import { BASE_COLORS } from '../../theme/colors';
 import type { FloorData } from '../../types/blueprint';
 
 interface Props {
@@ -50,9 +50,9 @@ function FloorPill({
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: 6,
-            backgroundColor: active ? BASE_COLORS.textPrimary + '20' : BASE_COLORS.surfaceHigh,
+            backgroundColor: active ? DS.colors.primary + '20' : DS.colors.surfaceHigh,
             borderWidth: 1,
-            borderColor: active ? BASE_COLORS.textPrimary : BASE_COLORS.border,
+            borderColor: active ? DS.colors.primary : DS.colors.border,
           },
         ]}
       >
@@ -60,7 +60,7 @@ function FloorPill({
           style={{
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 12,
-            color: active ? BASE_COLORS.textPrimary : BASE_COLORS.textDim,
+            color: active ? DS.colors.primary : DS.colors.primaryGhost,
           }}
         >
           {floor.label}
@@ -102,9 +102,9 @@ export function FloorSelectorBar({
   return (
     <View
       style={{
-        backgroundColor: BASE_COLORS.surface,
+        backgroundColor: DS.colors.surface,
         borderBottomWidth: 1,
-        borderBottomColor: BASE_COLORS.border,
+        borderBottomColor: DS.colors.border,
         paddingVertical: 8,
       }}
     >
@@ -117,7 +117,7 @@ export function FloorSelectorBar({
           style={{
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 9,
-            color: BASE_COLORS.textDim,
+            color: DS.colors.primaryGhost,
             marginRight: 10,
             textTransform: 'uppercase',
             letterSpacing: 1,
@@ -143,9 +143,9 @@ export function FloorSelectorBar({
             width: 36,
             height: 36,
             borderRadius: 10,
-            backgroundColor: BASE_COLORS.surfaceHigh,
+            backgroundColor: DS.colors.surfaceHigh,
             borderWidth: 1,
-            borderColor: canAddFloor ? BASE_COLORS.border : BASE_COLORS.border + '60',
+            borderColor: canAddFloor ? DS.colors.border : DS.colors.border + '60',
             borderStyle: 'dashed',
             alignItems: 'center',
             justifyContent: 'center',
@@ -154,7 +154,7 @@ export function FloorSelectorBar({
           <Text
             style={{
               fontSize: 16,
-              color: canAddFloor ? BASE_COLORS.textSecondary : BASE_COLORS.textDim,
+              color: canAddFloor ? DS.colors.primaryDim : DS.colors.primaryGhost,
             }}
           >
             {canAddFloor ? '+' : '🔒'}
@@ -179,10 +179,10 @@ export function FloorSelectorBar({
               position: 'absolute',
               top: 8,
               left: 16 + contextFloorIndex * 58,
-              backgroundColor: BASE_COLORS.surfaceHigh,
+              backgroundColor: DS.colors.surfaceHigh,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: BASE_COLORS.border,
+              borderColor: DS.colors.border,
               padding: 4,
               zIndex: 100,
               shadowColor: '#000',
@@ -198,7 +198,7 @@ export function FloorSelectorBar({
                 setContextFloorIndex(null);
               }}
             >
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textPrimary }}>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primary }}>
                 Copy Floor
               </Text>
             </Pressable>

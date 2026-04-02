@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BASE_COLORS, withAlpha } from '../../theme/colors';
@@ -28,11 +29,11 @@ export function ARModeSelector({ current, onChange }: Props) {
           onPress={() => onChange(key)}
           style={{
             paddingHorizontal: 20, paddingVertical: 8, borderRadius: 50,
-            backgroundColor: current === key ? BASE_COLORS.textPrimary : withAlpha(BASE_COLORS.surface, 0.8),
-            borderWidth: 1, borderColor: BASE_COLORS.border,
+            backgroundColor: current === key ? DS.colors.primary : withAlpha(DS.colors.surface, 0.8),
+            borderWidth: 1, borderColor: DS.colors.border,
           }}
         >
-          <Text style={{ color: current === key ? BASE_COLORS.background : BASE_COLORS.textPrimary, fontSize: 14, fontWeight: '500' }}>
+          <Text style={{ color: current === key ? DS.colors.background : DS.colors.primary, fontSize: 14, fontWeight: '500' }}>
             {label}
           </Text>
         </Pressable>

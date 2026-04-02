@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { Pressable, Text } from 'react-native';
 import Animated, {
@@ -9,7 +10,6 @@ import Animated, {
 import { useHaptics } from '../../hooks/useHaptics';
 import { useAuthStore } from '../../stores/authStore';
 import { inspoService } from '../../services/inspoService';
-import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 
 interface LikeButtonProps {
@@ -62,7 +62,7 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
   return (
     <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center' }}>
       <Animated.View style={animStyle}>
-        <Text style={{ fontSize: 16, color: liked ? BASE_COLORS.error : BASE_COLORS.textDim }}>
+        <Text style={{ fontSize: 16, color: liked ? DS.colors.error : DS.colors.primaryGhost }}>
           {liked ? '♥' : '♡'}
         </Text>
       </Animated.View>
@@ -70,7 +70,7 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
         style={{
           fontFamily: 'JetBrainsMono_400Regular',
           fontSize: 12,
-          color: liked ? BASE_COLORS.error : BASE_COLORS.textDim,
+          color: liked ? DS.colors.error : DS.colors.primaryGhost,
           marginLeft: 4,
         }}
       >

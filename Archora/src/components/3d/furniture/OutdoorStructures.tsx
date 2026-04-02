@@ -1,6 +1,6 @@
+import { DS } from '../../../theme/designSystem';
 import React from 'react';
 import type { Vector3D } from '../../../types/blueprint';
-import { BASE_COLORS } from '../../../theme/colors';
 
 interface Props {
   position: Vector3D;
@@ -10,7 +10,7 @@ interface Props {
   selected?: boolean;
 }
 
-const outline = (selected?: boolean) => selected ? BASE_COLORS.warning : 'transparent';
+const outline = (selected?: boolean) => selected ? DS.colors.warning : 'transparent';
 
 export function GardenPath({ position, rotation, dimensions, color = '#A09080', selected }: Props) {
   const { x: w, y: h, z: d } = dimensions;

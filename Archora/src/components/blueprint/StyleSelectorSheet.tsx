@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, Modal, Dimensions } from 'react-native';
 import Animated, {
@@ -11,7 +12,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useHaptics } from '../../hooks/useHaptics';
-import { BASE_COLORS } from '../../theme/colors';
 import { DESIGN_STYLES, isStyleAccessible, STARTER_STYLES } from '../../data/designStyles';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { ArchStyle } from '../../types';
@@ -87,7 +87,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
             left: 0,
             right: 0,
             height: SHEET_H,
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             overflow: 'hidden',
@@ -114,14 +114,14 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
             style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 20,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               flex: 1,
             }}
           >
             Design Style
           </Text>
           <Pressable onPress={onClose} style={{ padding: 8 }}>
-            <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 18 }}>✕</Text>
+            <Text style={{ color: DS.colors.primaryDim, fontSize: 18 }}>✕</Text>
           </Pressable>
         </View>
 
@@ -147,7 +147,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                     borderRadius: 14,
                     overflow: 'hidden',
                     borderWidth: isSelected ? 2 : 1,
-                    borderColor: isSelected ? BASE_COLORS.warning : BASE_COLORS.border,
+                    borderColor: isSelected ? DS.colors.warning : DS.colors.border,
                     opacity: accessible ? 1 : 0.6,
                   }}
                 >
@@ -169,7 +169,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                   <View
                     style={{
                       padding: 10,
-                      backgroundColor: BASE_COLORS.surfaceHigh,
+                      backgroundColor: DS.colors.surfaceHigh,
                     }}
                   >
                     <View
@@ -183,7 +183,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                         style={{
                           fontFamily: 'ArchitectsDaughter_400Regular',
                           fontSize: 13,
-                          color: BASE_COLORS.textPrimary,
+                          color: DS.colors.primary,
                         }}
                       >
                         {style.name}
@@ -192,7 +192,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                         <Text style={{ fontSize: 12 }}>🔒</Text>
                       )}
                       {isSelected && accessible && (
-                        <Text style={{ fontSize: 12, color: BASE_COLORS.warning }}>✓</Text>
+                        <Text style={{ fontSize: 12, color: DS.colors.warning }}>✓</Text>
                       )}
                     </View>
                     <Text
@@ -200,7 +200,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                       style={{
                         fontFamily: 'Inter_400Regular',
                         fontSize: 10,
-                        color: BASE_COLORS.textDim,
+                        color: DS.colors.primaryGhost,
                         marginTop: 2,
                       }}
                     >
@@ -222,15 +222,15 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
               left: 0,
               right: 0,
               padding: 20,
-              backgroundColor: BASE_COLORS.surface,
+              backgroundColor: DS.colors.surface,
               borderTopWidth: 1,
-              borderTopColor: BASE_COLORS.border,
+              borderTopColor: DS.colors.border,
             }}
           >
             <Pressable
               onPress={handleApply}
               style={{
-                backgroundColor: BASE_COLORS.textPrimary,
+                backgroundColor: DS.colors.primary,
                 borderRadius: 14,
                 paddingVertical: 14,
                 alignItems: 'center',
@@ -240,7 +240,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                 style={{
                   fontFamily: 'Inter_700Bold',
                   fontSize: 15,
-                  color: BASE_COLORS.background,
+                  color: DS.colors.background,
                 }}
               >
                 Apply{' '}

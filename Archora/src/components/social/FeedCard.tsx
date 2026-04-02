@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useEffect } from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
 import Animated, {
@@ -71,16 +72,16 @@ function FeedCardInner({ template, onPress, index = 0, height = 240 }: FeedCardP
         style={{
           borderRadius: 20,
           overflow: 'hidden',
-          backgroundColor: BASE_COLORS.surface,
+          backgroundColor: DS.colors.surface,
           borderWidth: 1,
-          borderColor: BASE_COLORS.border,
+          borderColor: DS.colors.border,
         }}
       >
         {/* Thumbnail */}
         <View
           style={{
             height: thumbnailHeight,
-            backgroundColor: BASE_COLORS.surfaceHigh,
+            backgroundColor: DS.colors.surfaceHigh,
             overflow: 'hidden',
           }}
         >
@@ -103,7 +104,7 @@ function FeedCardInner({ template, onPress, index = 0, height = 240 }: FeedCardP
               left: 0,
               right: 0,
               height: 48,
-              backgroundColor: withAlpha(BASE_COLORS.background, 0.75),
+              backgroundColor: withAlpha(DS.colors.background, 0.75),
             }}
           />
           {/* Title overlay */}
@@ -116,7 +117,7 @@ function FeedCardInner({ template, onPress, index = 0, height = 240 }: FeedCardP
               right: 10,
               fontSize: 13,
               fontFamily: 'ArchitectsDaughter_400Regular',
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
             }}
           >
             {template.title}
@@ -151,7 +152,7 @@ function FeedCardInner({ template, onPress, index = 0, height = 240 }: FeedCardP
                 style={{ width: 28, height: 28, borderRadius: 14 }}
               />
             ) : (
-              <Text style={{ fontSize: 10, color: BASE_COLORS.background }}>
+              <Text style={{ fontSize: 10, color: DS.colors.background }}>
                 {template.authorDisplayName?.[0]?.toUpperCase() ?? '?'}
               </Text>
             )}
@@ -160,15 +161,15 @@ function FeedCardInner({ template, onPress, index = 0, height = 240 }: FeedCardP
             numberOfLines={1}
             style={{
               fontSize: 11,
-              color: BASE_COLORS.textSecondary,
+              color: DS.colors.primaryDim,
               flex: 1,
             }}
           >
             {template.authorDisplayName}
           </Text>
           {template.tier && template.tier !== 'starter' && template.tier !== 'free' && (
-            <View style={{ backgroundColor: BASE_COLORS.border, borderRadius: 50, paddingHorizontal: 6, paddingVertical: 2 }}>
-              <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 9 }}>
+            <View style={{ backgroundColor: DS.colors.border, borderRadius: 50, paddingHorizontal: 6, paddingVertical: 2 }}>
+              <Text style={{ color: DS.colors.primaryDim, fontSize: 9 }}>
                 {(template.tier as string).toUpperCase()}
               </Text>
             </View>

@@ -1,3 +1,4 @@
+import { DS } from '../../theme/designSystem';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, Pressable, ScrollView, TextInput, Modal, FlatList, Dimensions,
@@ -9,7 +10,6 @@ import Svg, { Rect } from 'react-native-svg';
 import { useTierGate } from '../../hooks/useTierGate';
 import { FURNITURE_DEFAULTS } from '../../utils/procedural/furniture';
 import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
-import { BASE_COLORS } from '../../theme/colors';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 const SHEET_H = SCREEN_H * 0.85;
@@ -51,16 +51,16 @@ function ItemTile({ name, category, onAdd }: ItemTileProps) {
   return (
     <Pressable onPress={handlePress} style={{ width: '31%', marginBottom: 8, marginHorizontal: '1%' }}>
       <Animated.View style={[animStyle, {
-        backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 12, padding: 10,
-        borderWidth: 1, borderColor: BASE_COLORS.border, alignItems: 'center',
+        backgroundColor: DS.colors.surfaceHigh, borderRadius: 12, padding: 10,
+        borderWidth: 1, borderColor: DS.colors.border, alignItems: 'center',
         minHeight: 80, justifyContent: 'space-between',
       }]}>
         <Svg width={36} height={36} viewBox="0 0 36 36">
-          <Rect x="4" y="8" width="28" height="20" rx="2" stroke={BASE_COLORS.textPrimary} strokeWidth="1.2" fill="none" opacity={0.6} />
-          <Rect x="8" y="12" width="8" height="12" rx="1" stroke={BASE_COLORS.textPrimary} strokeWidth="0.8" fill="none" opacity={0.4} />
-          <Rect x="20" y="14" width="8" height="10" rx="1" stroke={BASE_COLORS.textPrimary} strokeWidth="0.8" fill="none" opacity={0.4} />
+          <Rect x="4" y="8" width="28" height="20" rx="2" stroke={DS.colors.primary} strokeWidth="1.2" fill="none" opacity={0.6} />
+          <Rect x="8" y="12" width="8" height="12" rx="1" stroke={DS.colors.primary} strokeWidth="0.8" fill="none" opacity={0.4} />
+          <Rect x="20" y="14" width="8" height="10" rx="1" stroke={DS.colors.primary} strokeWidth="0.8" fill="none" opacity={0.4} />
         </Svg>
-        <Text numberOfLines={2} style={{ fontFamily: 'Inter_400Regular', fontSize: 9, color: BASE_COLORS.textSecondary, textAlign: 'center', marginTop: 4 }}>
+        <Text numberOfLines={2} style={{ fontFamily: 'Inter_400Regular', fontSize: 9, color: DS.colors.primaryDim, textAlign: 'center', marginTop: 4 }}>
           {name}
         </Text>
       </Animated.View>
@@ -130,28 +130,28 @@ export function FurnitureLibrarySheet({ visible, onClose, onSelectFurniture }: P
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={onClose} />
       <Animated.View style={[sheetStyle, {
         position: 'absolute', bottom: 0, left: 0, right: 0, height: SHEET_H,
-        backgroundColor: BASE_COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden',
+        backgroundColor: DS.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden',
       }]}>
         <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 6 }}>
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#444' }} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 10 }}>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: BASE_COLORS.textPrimary, flex: 1 }}>Furniture Library</Text>
-          <Pressable onPress={onClose} style={{ padding: 8 }}><Text style={{ color: BASE_COLORS.textSecondary, fontSize: 18 }}>✕</Text></Pressable>
+          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary, flex: 1 }}>Furniture Library</Text>
+          <Pressable onPress={onClose} style={{ padding: 8 }}><Text style={{ color: DS.colors.primaryDim, fontSize: 18 }}>✕</Text></Pressable>
         </View>
         <View style={{ marginHorizontal: 20, marginBottom: 10 }}>
           <TextInput
             value={search} onChangeText={setSearch}
-            placeholder="Search furniture..." placeholderTextColor={BASE_COLORS.textDim}
-            style={{ backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textPrimary, borderWidth: 1, borderColor: BASE_COLORS.border }}
+            placeholder="Search furniture..." placeholderTextColor={DS.colors.primaryGhost}
+            style={{ backgroundColor: DS.colors.surfaceHigh, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primary, borderWidth: 1, borderColor: DS.colors.border }}
           />
         </View>
         <View style={{ flex: 1, flexDirection: 'row' }}>
-          <ScrollView style={{ width: 96, borderRightWidth: 1, borderRightColor: BASE_COLORS.border }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ width: 96, borderRightWidth: 1, borderRightColor: DS.colors.border }} showsVerticalScrollIndicator={false}>
             {CATEGORIES.map((c) => (
-              <Pressable key={c.id} onPress={() => setSelectedCat(c.id)} style={{ paddingVertical: 11, paddingHorizontal: 8, backgroundColor: selectedCat === c.id ? BASE_COLORS.surfaceHigh : 'transparent', borderRightWidth: selectedCat === c.id ? 2 : 0, borderRightColor: BASE_COLORS.textPrimary }}>
+              <Pressable key={c.id} onPress={() => setSelectedCat(c.id)} style={{ paddingVertical: 11, paddingHorizontal: 8, backgroundColor: selectedCat === c.id ? DS.colors.surfaceHigh : 'transparent', borderRightWidth: selectedCat === c.id ? 2 : 0, borderRightColor: DS.colors.primary }}>
                 <Text style={{ fontSize: 15, textAlign: 'center' }}>{c.icon}</Text>
-                <Text numberOfLines={2} style={{ fontFamily: 'Inter_400Regular', fontSize: 8, color: selectedCat === c.id ? BASE_COLORS.textPrimary : BASE_COLORS.textSecondary, textAlign: 'center', marginTop: 3 }}>{c.label}</Text>
+                <Text numberOfLines={2} style={{ fontFamily: 'Inter_400Regular', fontSize: 8, color: selectedCat === c.id ? DS.colors.primary : DS.colors.primaryDim, textAlign: 'center', marginTop: 3 }}>{c.label}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -159,28 +159,28 @@ export function FurnitureLibrarySheet({ visible, onClose, onSelectFurniture }: P
             {selectedCat === 'my_style' ? (
               customFurnitureAllowed ? (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.textSecondary, textAlign: 'center', marginBottom: 8 }}>Your generated pieces{'\n'}appear here</Text>
+                  <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: 8 }}>Your generated pieces{'\n'}appear here</Text>
                   <Text style={{ fontSize: 32 }}>✦</Text>
                 </View>
               ) : (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, gap: 10 }}>
                   <Text style={{ fontSize: 28 }}>🔒</Text>
-                  <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 15, color: BASE_COLORS.textPrimary, textAlign: 'center' }}>Architect Only</Text>
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, textAlign: 'center' }}>Generate custom furniture pieces with AI on the Architect plan.</Text>
+                  <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 15, color: DS.colors.primary, textAlign: 'center' }}>Architect Only</Text>
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryGhost, textAlign: 'center' }}>Generate custom furniture pieces with AI on the Architect plan.</Text>
                 </View>
               )
             ) : selectedCat === 'structural' && !commercialAllowed ? (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, gap: 10 }}>
                 <Text style={{ fontSize: 28 }}>🔒</Text>
-                <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 15, color: BASE_COLORS.textPrimary, textAlign: 'center' }}>Architect Only</Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, textAlign: 'center' }}>Structural elements — columns, beams, fireplaces — require the Architect plan.</Text>
+                <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 15, color: DS.colors.primary, textAlign: 'center' }}>Architect Only</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryGhost, textAlign: 'center' }}>Structural elements — columns, beams, fireplaces — require the Architect plan.</Text>
               </View>
             ) : (
               <FlatList
                 data={items} keyExtractor={(item) => item} numColumns={3}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => <ItemTile name={item} category={selectedCat} onAdd={handleAdd} />}
-                ListEmptyComponent={<View style={{ alignItems: 'center', paddingTop: 40 }}><Text style={{ color: BASE_COLORS.textDim, fontFamily: 'Inter_400Regular' }}>No results</Text></View>}
+                ListEmptyComponent={<View style={{ alignItems: 'center', paddingTop: 40 }}><Text style={{ color: DS.colors.primaryGhost, fontFamily: 'Inter_400Regular' }}>No results</Text></View>}
               />
             )}
           </View>
