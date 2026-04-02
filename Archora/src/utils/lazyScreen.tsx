@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, ComponentType } from 'react';
-import { LogoLoader } from '../components/common/LogoLoader';
+import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
 
 /**
  * Wraps React.lazy + Suspense with a LogoLoader fallback.
@@ -17,7 +17,7 @@ export function lazyScreen<T extends ComponentType<any>>(
 
   function LazyWrapper(props: React.ComponentPropsWithRef<T>) {
     return (
-      <Suspense fallback={<LogoLoader />}>
+      <Suspense fallback={<CompassRoseLoader />}>
         <LazyComponent {...(props as any)} />
       </Suspense>
     );

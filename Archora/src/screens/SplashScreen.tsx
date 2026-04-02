@@ -10,7 +10,7 @@ import Animated, {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
-import { LogoLoader } from '../components/common/LogoLoader';
+import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
 
 
 const ASORIA = 'ASORIA'.split('');
@@ -75,7 +75,7 @@ export function SplashScreen({ appReady, onComplete }: Props) {
       ]}
     >
       {/* Logo draw-in animation */}
-      <LogoLoader size="large" />
+      <CompassRoseLoader size="large" />
 
       {/* ASORIA letter-by-letter */}
       <View style={{ flexDirection: 'row', marginTop: 28 }}>

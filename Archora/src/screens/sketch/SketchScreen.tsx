@@ -24,8 +24,6 @@ import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useHaptics } from '../../hooks/useHaptics';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../../components/common/ArchText';
-import { useScreenSlideIn } from '../../hooks/useScreenSlideIn';
-import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData, Wall, Room, RoomType, Vector2D } from '../../types/blueprint';
@@ -365,8 +363,6 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
 export function SketchScreen() {
   const navigation = useNavigation<Nav>();
   const { light, medium } = useHaptics();
-  const slideStyle = useScreenSlideIn();
-
   const [mode, setMode] = useState<SketchMode>('draw');
   const [tool, setTool] = useState<DrawTool>('wall');
   const [walls, setWalls] = useState<SketchWall[]>([]);
@@ -584,13 +580,12 @@ export function SketchScreen() {
   ];
 
   return (
-    <Animated.View style={[{ flex: 1, backgroundColor: DS.colors.background }, slideStyle]}>
+    <Animated.View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         {/* Header */}
         <Animated.View style={[headerAnimStyle, { paddingHorizontal: 20, paddingVertical: 14 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <HeaderLogoMark size={32} />
-            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary, marginLeft: 10 }}>
+            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary }}>
               Sketch
             </ArchText>
           </View>
