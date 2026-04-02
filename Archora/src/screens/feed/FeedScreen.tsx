@@ -48,7 +48,6 @@ const CHIPS: ChipConfig[] = [
   { label: 'New', trendingOrNew: 'new' },
 ];
 
-// ── FilterChipsRow ─────────────────────────────────────────────────────────────
 function FilterChipsRow({
   activeChip,
   onChipPress,
@@ -95,7 +94,6 @@ function FilterChipsRow({
   );
 }
 
-// ── EmptyState ─────────────────────────────────────────────────────────────────
 function FeedEmptyState() {
   const navigation = useNavigation<Nav>();
   return (
@@ -122,7 +120,6 @@ function FeedEmptyState() {
   );
 }
 
-// ── MasonryItem ────────────────────────────────────────────────────────────────
 interface MasonryItemProps {
   item: import('../../types').Template;
   index: number;
@@ -141,7 +138,6 @@ function MasonryItem({ item, index, onPress }: MasonryItemProps) {
   );
 }
 
-// ── FeedScreen ─────────────────────────────────────────────────────────────────
 export function FeedScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();

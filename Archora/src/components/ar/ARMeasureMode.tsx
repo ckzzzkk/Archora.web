@@ -80,7 +80,6 @@ function MeasureTabBar({ active, onChange }: { active: MeasureTab; onChange: (t:
   );
 }
 
-// ── Wall measure mode (original single-segment) ────────────────────────────
 
 function WallMeasure() {
   const [point1, setPoint1] = useState<Point | null>(null);
@@ -220,7 +219,6 @@ function WallMeasure() {
   );
 }
 
-// ── Room corner-to-corner tracing mode ────────────────────────────────────
 
 function dist(a: Point, b: Point) {
   return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
@@ -466,7 +464,6 @@ function RoomMeasure() {
   );
 }
 
-// ── Root content with tab switcher ────────────────────────────────────────
 
 function ARMeasureModeContent() {
   const [tab, setTab] = useState<MeasureTab>('wall');

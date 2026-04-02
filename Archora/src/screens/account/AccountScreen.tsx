@@ -21,7 +21,6 @@ import type { RootStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-// ── Section label ─────────────────────────────────────────────────────────
 function SectionLabel({ title }: { title: string }) {
   return (
     <ArchText variant="body" style={{
@@ -39,7 +38,6 @@ function SectionLabel({ title }: { title: string }) {
   );
 }
 
-// ── Row ───────────────────────────────────────────────────────────────────
 function SettingsRow({
   label,
   value,
@@ -91,7 +89,6 @@ function SettingsRow({
   );
 }
 
-// ── Card wrapper ──────────────────────────────────────────────────────────
 function SettingsCard({ children, danger = false }: { children: React.ReactNode; danger?: boolean }) {
   return (
     <View style={{
@@ -104,7 +101,6 @@ function SettingsCard({ children, danger = false }: { children: React.ReactNode;
   );
 }
 
-// ── AccountScreen ─────────────────────────────────────────────────────────
 export function AccountScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();

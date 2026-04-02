@@ -1,5 +1,4 @@
 import { supabase } from '../utils/supabaseClient';
-import * as SecureStore from 'expo-secure-store';
 import type { BlueprintData } from '../types';
 import type { GenerationPayload } from '../types/generation';
 
@@ -24,9 +23,6 @@ export const aiService = {
     roomCount?: number;
   }): Promise<BlueprintData> {
     const headers = await getAuthHeader();
-    console.log('generateFloorPlan params:', JSON.stringify(params));
-    console.log('generateFloorPlan supabase URL:', SUPABASE_URL);
-    console.log('generateFloorPlan has auth:', !!headers.Authorization);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -39,12 +35,6 @@ export const aiService = {
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
-
-      console.log('generateFloorPlan response status:', response.status);
-      if (!response.ok) {
-        const errorText = await response.clone().text();
-        console.error('generateFloorPlan error response:', errorText);
-      }
 
       if (response.status === 503) {
         const body = await response.json() as { error?: string };
@@ -86,74 +76,89 @@ export const aiService = {
     prompt: string;
     blueprint: BlueprintData;
   }): Promise<{ message: string; blueprint?: BlueprintData }> {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-edit-blueprint`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(params),
-    });
-    if (!response.ok) throw new Error('AI blueprint edit failed');
-    return response.json() as Promise<{ message: string; blueprint?: BlueprintData }>;
+    try {
+      const headers = await getAuthHeader();
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-edit-blueprint`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(params),
+      });
+      if (!response.ok) throw new Error('AI blueprint edit failed');
+      return response.json() as Promise<{ message: string; blueprint?: BlueprintData }>;
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('Blueprint edit failed');
+    }
   },
 
   async upsertUserPreferences(userId: string, payload: Partial<GenerationPayload>): Promise<void> {
-    await supabase.from('user_ai_preferences').upsert({
-      user_id: userId,
-      building_type: payload.buildingType,
-      style_id: payload.style,
-      plot_size: payload.plotSize,
-      plot_unit: payload.plotUnit ?? 'm2',
-      bedrooms: payload.bedrooms,
-      bathrooms: payload.bathrooms,
-      has_pool: payload.hasPool ?? false,
-      has_garden: payload.hasGarden ?? false,
-      has_garage: payload.hasGarage ?? false,
-      has_home_office: payload.hasHomeOffice ?? false,
-      has_utility_room: payload.hasUtilityRoom ?? false,
-      last_used_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' });
+    try {
+      await supabase.from('user_ai_preferences').upsert({
+        user_id: userId,
+        building_type: payload.buildingType,
+        style_id: payload.style,
+        plot_size: payload.plotSize,
+        plot_unit: payload.plotUnit ?? 'm2',
+        bedrooms: payload.bedrooms,
+        bathrooms: payload.bathrooms,
+        has_pool: payload.hasPool ?? false,
+        has_garden: payload.hasGarden ?? false,
+        has_garage: payload.hasGarage ?? false,
+        has_home_office: payload.hasHomeOffice ?? false,
+        has_utility_room: payload.hasUtilityRoom ?? false,
+        last_used_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+    } catch {
+      throw new Error('Failed to save preferences');
+    }
   },
 
   async uploadReferenceImage(userId: string, uri: string): Promise<string | null> {
-    const path = `${userId}/${Date.now()}.jpg`;
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    const { error } = await supabase.storage.from('reference-images').upload(path, blob, {
-      upsert: true,
-      contentType: 'image/jpeg',
-    });
-    if (error) return null;
-    const { data } = supabase.storage.from('reference-images').getPublicUrl(path);
-    return data.publicUrl;
+    try {
+      const path = `${userId}/${Date.now()}.jpg`;
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const { error } = await supabase.storage.from('reference-images').upload(path, blob, {
+        upsert: true,
+        contentType: 'image/jpeg',
+      });
+      if (error) return null;
+      const { data } = supabase.storage.from('reference-images').getPublicUrl(path);
+      return data.publicUrl;
+    } catch {
+      return null;
+    }
   },
 
   async transcribeAudio(audioUri: string): Promise<string> {
-    const headers = await getAuthHeader();
-    delete headers['Content-Type']; // FormData sets its own
+    try {
+      const headers = await getAuthHeader();
+      delete headers['Content-Type']; // FormData sets its own
 
-    const formData = new FormData();
-    formData.append('audio', {
-      uri: audioUri,
-      type: 'audio/m4a',
-      name: 'audio.m4a',
-    } as unknown as Blob);
+      const formData = new FormData();
+      formData.append('audio', {
+        uri: audioUri,
+        type: 'audio/m4a',
+        name: 'audio.m4a',
+      } as unknown as Blob);
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/transcribe`, {
-      method: 'POST',
-      headers: { 'apikey': SUPABASE_ANON_KEY, Authorization: headers.Authorization ?? '' },
-      body: formData,
-    });
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/transcribe`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_ANON_KEY, Authorization: headers.Authorization ?? '' },
+        body: formData,
+      });
 
-    if (!response.ok) throw new Error('Transcription failed');
+      if (!response.ok) throw new Error('Transcription failed');
 
-    const data = await response.json() as { transcript?: string; fallback?: string };
+      const data = await response.json() as { transcript?: string; fallback?: string };
 
-    if (data.fallback === 'device_speech') {
-      // Signal to caller to show manual text input
-      throw Object.assign(new Error('device_speech'), { code: 'DEVICE_SPEECH_FALLBACK' });
+      if (data.fallback === 'device_speech') {
+        throw Object.assign(new Error('device_speech'), { code: 'DEVICE_SPEECH_FALLBACK' });
+      }
+
+      return data.transcript ?? '';
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('Transcription failed');
     }
-
-    return data.transcript ?? '';
   },
 };
 

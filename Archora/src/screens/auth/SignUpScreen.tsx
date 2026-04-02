@@ -17,7 +17,6 @@ import { DS } from '../../theme/designSystem';
 import { useAuthStore } from '../../stores/authStore';
 import type { AuthStackParamList } from '../../navigation/types';
 
-// ─── Icon helpers ─────────────────────────────────────────────────────────────
 
 function GoogleIcon() {
   return (
@@ -70,7 +69,6 @@ function EyeIcon({ visible }: { visible: boolean }) {
   );
 }
 
-// ─── SignUpScreen ─────────────────────────────────────────────────────────────
 
 export function SignUpScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();

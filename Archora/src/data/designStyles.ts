@@ -145,7 +145,6 @@ export const DESIGN_STYLES: DesignStyle[] = [
     previewGradient: ['#E8D0B0', '#607090'],
     primaryWallColour: '#F0E8E0',
   },
-  // ── New 12-style set additions ────────────────────────────────
   {
     id: 'japandi',
     name: 'Japandi',

@@ -8,7 +8,6 @@ import { ArchText } from '../common/ArchText';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
 
-// ── Constants ────────────────────────────────────────────────────────────────
 
 const WALL_PHASES = ['Front', 'Left', 'Back', 'Right'] as const;
 type WallPhase = typeof WALL_PHASES[number];
@@ -34,7 +33,6 @@ interface DetectedObject {
   h: number; // height metres
 }
 
-// ── Pulsing scan ring ────────────────────────────────────────────────────────
 
 function ScanRing({ active }: { active: boolean }) {
   const scale = useSharedValue(1);
@@ -70,7 +68,6 @@ function ScanRing({ active }: { active: boolean }) {
   );
 }
 
-// ── Overhead floor-plan mini map showing scanned walls ────────────────────────
 
 function FloorPlanMiniMap({ completedWalls, activeWall }: {
   completedWalls: WallPhase[];
@@ -134,7 +131,6 @@ function FloorPlanMiniMap({ completedWalls, activeWall }: {
   );
 }
 
-// ── Object overhead footprint SVG rendering ──────────────────────────────────
 
 function ObjectFootprint({ obj }: { obj: DetectedObject }) {
   // Normalise to a 40×40 box
@@ -156,7 +152,6 @@ function ObjectFootprint({ obj }: { obj: DetectedObject }) {
   );
 }
 
-// ── Detected object card ──────────────────────────────────────────────────────
 
 function ObjectCard({ obj, index }: { obj: DetectedObject; index: number }) {
   const opacity = useSharedValue(0);
@@ -191,7 +186,6 @@ function ObjectCard({ obj, index }: { obj: DetectedObject; index: number }) {
   );
 }
 
-// ── Wall scan phase UI ────────────────────────────────────────────────────────
 
 function WallScanPhase({
   phase,
@@ -268,7 +262,6 @@ function WallScanPhase({
   );
 }
 
-// ── Main export wrapper ───────────────────────────────────────────────────────
 
 export function ARScanMode() {
   return (
@@ -278,7 +271,6 @@ export function ARScanMode() {
   );
 }
 
-// ── Scan state machine ────────────────────────────────────────────────────────
 
 type ScanStage = 'idle' | 'wall_scan' | 'object_scan' | 'complete';
 
@@ -297,7 +289,6 @@ function ARScanModeContent() {
     width: `${objectProgress.value}%` as any,
   }));
 
-  // ── Start wall scan for current wall ──────────────────────────────────────
   const startWallTimer = (idx: number) => {
     setWallProgress(0);
     const tickMs = (WALL_SCAN_SECONDS * 1000) / 100;

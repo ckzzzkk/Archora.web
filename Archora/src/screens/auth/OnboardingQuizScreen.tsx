@@ -36,7 +36,6 @@ const { width } = Dimensions.get('window');
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-// ─── Question definitions ────────────────────────────────────────────────────
 
 type QuizAnswers = {
   buildingType: string;
@@ -116,7 +115,6 @@ const BUDGET_MIN = 0;
 const BUDGET_MAX = 500000;
 const BUDGET_STEP = 10000;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatBudget(val: number): string {
   if (val >= 500000) return '£500k+';
@@ -159,7 +157,6 @@ function buildQuizPrompt(answers: QuizAnswers): string {
   return `A ${styles} ${type} for ${household} with ${budget}, prioritising ${priority}. Create a complete floor plan that reflects this vision.`;
 }
 
-// ─── SelectionCard ────────────────────────────────────────────────────────────
 
 function SelectionCard({
   label,
@@ -218,7 +215,6 @@ function SelectionCard({
   );
 }
 
-// ─── BudgetSlider ─────────────────────────────────────────────────────────────
 
 function BudgetSlider({
   value,
@@ -332,7 +328,6 @@ function BudgetSlider({
   );
 }
 
-// ─── LoadingOverlay ────────────────────────────────────────────────────────────
 
 function LoadingOverlay() {
   const [lineIndex, setLineIndex] = useState(0);
@@ -381,7 +376,6 @@ function LoadingOverlay() {
   );
 }
 
-// ─── Main screen ───────────────────────────────────────────────────────────────
 
 export function OnboardingQuizScreen() {
   const navigation = useNavigation<Nav>();

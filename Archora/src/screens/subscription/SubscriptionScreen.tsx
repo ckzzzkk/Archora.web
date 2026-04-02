@@ -67,7 +67,6 @@ const TIER_PERKS: Record<Exclude<SubscriptionTier, 'starter'>, string[]> = {
   architect: ['Unlimited everything', 'Custom AI furniture', 'CAD export', '70% template revenue', 'VIP support'],
 };
 
-// ── StarterCard ────────────────────────────────────────────────────────────────
 function StarterCard({ isCurrent }: { isCurrent: boolean }) {
   return (
     <View style={{
@@ -108,7 +107,6 @@ function StarterCard({ isCurrent }: { isCurrent: boolean }) {
   );
 }
 
-// ── TierCard ───────────────────────────────────────────────────────────────────
 function TierCard({
   tier, billing, isCurrent, isHighlighted, onUpgrade, disabled,
 }: {
@@ -197,7 +195,6 @@ function TierCard({
   );
 }
 
-// ── SubscriptionScreen ─────────────────────────────────────────────────────────
 export function SubscriptionScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [billing, setBilling] = useState<BillingInterval>('monthly');

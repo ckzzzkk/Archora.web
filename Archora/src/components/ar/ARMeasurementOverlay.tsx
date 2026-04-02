@@ -6,7 +6,6 @@ import { ArchText } from '../common/ArchText';
 
 interface Point { x: number; y: number; }
 
-// ── Crosshair targeting reticle ───────────────────────────────────────────────
 
 interface CrosshairProps {
   x: number;
@@ -32,7 +31,6 @@ export function Crosshair({ x, y }: CrosshairProps) {
   );
 }
 
-// ── Anchor pin at placed point ────────────────────────────────────────────────
 
 interface AnchorPinProps {
   x: number;
@@ -66,7 +64,6 @@ export function AnchorPin({ x, y, label, isFirst }: AnchorPinProps) {
   );
 }
 
-// ── Measurement line with distance badge ─────────────────────────────────────
 
 interface MeasurementLineProps {
   p1: Point;
@@ -124,7 +121,6 @@ export function MeasurementLine({ p1, p2, distance, isClosed }: MeasurementLineP
   );
 }
 
-// ── Proximity ring for closing room ───────────────────────────────────────────
 
 interface ProximityRingProps {
   x: number;
@@ -151,7 +147,6 @@ export function ProximityRing({ x, y, radius }: ProximityRingProps) {
   );
 }
 
-// ── Floor plan mini-map ──────────────────────────────────────────────────────
 
 interface FloorPlanMiniMapProps {
   points: Point[];

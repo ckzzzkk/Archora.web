@@ -200,7 +200,6 @@ export function ARResultScreen({
   );
 }
 
-// ── Stat Card Component ──────────────────────────────────────────────────────
 
 interface StatCardProps {
   label: string;
@@ -236,7 +235,6 @@ function StatCard({ label, value, accent }: StatCardProps) {
   );
 }
 
-// ── Floor Plan Preview Component ─────────────────────────────────────────────
 
 interface FloorPlanPreviewProps {
   walls: Array<{

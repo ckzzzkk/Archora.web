@@ -262,7 +262,6 @@ function ARPhotoModeContent() {
   );
 }
 
-// ── Capture Button Component ─────────────────────────────────────────────────
 
 interface CaptureButtonProps {
   onPress: () => void;
@@ -315,7 +314,6 @@ function CaptureButton({ onPress }: CaptureButtonProps) {
   );
 }
 
-// ── Wall Direction Guide Component ───────────────────────────────────────────
 
 interface WallDirectionGuideProps {
   current: WallDirection;
@@ -402,7 +400,6 @@ function WallDirectionGuide({ current, captures }: WallDirectionGuideProps) {
   );
 }
 
-// ── Photo Thumbnail Component ─────────────────────────────────────────────────
 
 interface PhotoThumbnailProps {
   uri: string;

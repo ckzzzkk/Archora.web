@@ -40,7 +40,6 @@ export type FurnitureType =
   | 'steps' | 'retaining_wall'
   // Outdoor — accessories
   | 'letterbox' | 'gate_post' | 'outdoor_light_post' | 'bicycle_storage'
-  // ── Lighting ─────────────────────────────────────────────────
   | 'floor_lamp' | 'pendant_light';
 
 export interface ProceduralConfig {
@@ -62,7 +61,6 @@ export interface FurnitureDefault {
 
 // Default dimensions for each furniture type (in metres)
 export const FURNITURE_DEFAULTS: Record<FurnitureType, FurnitureDefault> = {
-  // ── Original pieces ──────────────────────────────────────────
   sofa:                  { w: 2.0, h: 0.85, d: 0.9,  color: '#8A7A6A', category: 'sofa',     outdoor: false },
   chair:                 { w: 0.7, h: 0.95, d: 0.7,  color: '#8A7A6A', category: 'chair',    outdoor: false },
   dining_table:          { w: 1.6, h: 0.75, d: 0.9,  color: '#9A7850', category: 'table',    outdoor: false },
@@ -80,24 +78,20 @@ export const FURNITURE_DEFAULTS: Record<FurnitureType, FurnitureDefault> = {
   bathtub:               { w: 0.75, h: 0.6, d: 1.7,  color: '#E8E8E8', category: 'bathroom', outdoor: false },
   toilet:                { w: 0.4, h: 0.8,  d: 0.65, color: '#E8E8E8', category: 'bathroom', outdoor: false },
 
-  // ── Sofas / Seating ──────────────────────────────────────────
   curved_sofa:           { w: 2.4, h: 0.85, d: 1.1,  color: '#8A7A6A', category: 'sofa',     outdoor: false },
   l_sofa:                { w: 2.8, h: 0.85, d: 2.0,  color: '#8A7A6A', category: 'sofa',     outdoor: false },
   sectional_sofa:        { w: 3.2, h: 0.85, d: 1.9,  color: '#8A7A6A', category: 'sofa',     outdoor: false },
   bar_stool:             { w: 0.4, h: 0.95, d: 0.4,  color: '#6A4828', category: 'chair',    outdoor: false },
 
-  // ── Tables ────────────────────────────────────────────────────
   round_dining_table:    { w: 1.2, h: 0.75, d: 1.2,  color: '#9A7850', category: 'table',    outdoor: false },
   oval_dining_table:     { w: 2.0, h: 0.75, d: 1.1,  color: '#9A7850', category: 'table',    outdoor: false },
 
-  // ── Beds ──────────────────────────────────────────────────────
   king_bed:              { w: 2.0, h: 0.55, d: 2.2,  color: '#D0C8B8', category: 'bed',      outdoor: false },
   platform_bed:          { w: 1.6, h: 0.35, d: 2.1,  color: '#5A4030', category: 'bed',      outdoor: false },
   bunk_bed:              { w: 1.0, h: 1.7,  d: 2.1,  color: '#9A7850', category: 'bed',      outdoor: false },
   crib:                  { w: 0.7, h: 0.9,  d: 1.3,  color: '#FFFFFF', category: 'bed',      outdoor: false },
   toddler_bed:           { w: 0.7, h: 0.45, d: 1.6,  color: '#FFFFFF', category: 'bed',      outdoor: false },
 
-  // ── Storage / Office ─────────────────────────────────────────
   walk_in_wardrobe:      { w: 2.4, h: 2.2,  d: 0.6,  color: '#C0B8A8', category: 'storage',  outdoor: false },
   full_wall_bookcase:    { w: 3.0, h: 2.4,  d: 0.35, color: '#9A7850', category: 'storage',  outdoor: false },
   home_office_desk:      { w: 1.8, h: 0.75, d: 0.8,  color: '#A08060', category: 'desk',     outdoor: false },
@@ -106,28 +100,22 @@ export const FURNITURE_DEFAULTS: Record<FurnitureType, FurnitureDefault> = {
   vanity_desk:           { w: 1.0, h: 1.5,  d: 0.5,  color: '#D8D0C8', category: 'desk',     outdoor: false },
   changing_table:        { w: 0.9, h: 0.95, d: 0.6,  color: '#FFFFFF', category: 'baby',     outdoor: false },
 
-  // ── Living / Media ────────────────────────────────────────────
   tv_media_unit:         { w: 2.0, h: 0.5,  d: 0.45, color: '#4A3830', category: 'storage',  outdoor: false },
   floating_tv_shelf:     { w: 1.5, h: 0.15, d: 0.3,  color: '#4A3830', category: 'storage',  outdoor: false },
   room_divider:          { w: 1.8, h: 1.8,  d: 0.05, color: '#B8A890', category: 'decor',    outdoor: false },
   fireplace_unit:        { w: 1.5, h: 1.2,  d: 0.4,  color: '#808080', category: 'decor',    outdoor: false },
   electric_fireplace:    { w: 1.2, h: 0.6,  d: 0.15, color: '#303030', category: 'decor',    outdoor: false },
 
-  // ── Bar ───────────────────────────────────────────────────────
   bar_unit:              { w: 1.8, h: 1.1,  d: 0.5,  color: '#8A6840', category: 'bar',      outdoor: false },
 
-  // ── Bathroom ─────────────────────────────────────────────────
   freestanding_bath:     { w: 0.8, h: 0.6,  d: 1.75, color: '#F5F5F5', category: 'bathroom', outdoor: false },
   corner_bath:           { w: 1.3, h: 0.55, d: 1.3,  color: '#F5F5F5', category: 'bathroom', outdoor: false },
 
-  // ── Stairs ────────────────────────────────────────────────────
   spiral_staircase:      { w: 1.4, h: 2.8,  d: 1.4,  color: '#A08060', category: 'stairs',   outdoor: false },
   l_staircase:           { w: 1.0, h: 2.8,  d: 3.0,  color: '#C0B8A8', category: 'stairs',   outdoor: false },
 
-  // ── Kitchen ───────────────────────────────────────────────────
   kitchen_island_seating: { w: 1.8, h: 0.9, d: 0.9,  color: '#D8D0C0', category: 'kitchen',  outdoor: false },
 
-  // ── Outdoor Seating / Lounging ────────────────────────────────
   garden_sofa_set:       { w: 2.2, h: 0.85, d: 1.8,  color: '#8A9080', category: 'outdoor',  outdoor: true  },
   sun_lounger:           { w: 0.75, h: 0.4, d: 2.0,  color: '#D8C8A0', category: 'outdoor',  outdoor: true  },
   garden_dining_set:     { w: 2.0, h: 0.75, d: 2.0,  color: '#6A5040', category: 'outdoor',  outdoor: true  },
@@ -136,7 +124,6 @@ export const FURNITURE_DEFAULTS: Record<FurnitureType, FurnitureDefault> = {
   trampoline:            { w: 3.5, h: 0.8,  d: 3.5,  color: '#1A1A1A', category: 'outdoor',  outdoor: true  },
   sandpit:               { w: 2.0, h: 0.3,  d: 2.0,  color: '#D8C090', category: 'outdoor',  outdoor: true  },
 
-  // ── Outdoor Structures ────────────────────────────────────────
   parasol:               { w: 3.0, h: 2.8,  d: 3.0,  color: '#E8D0A0', category: 'outdoor',  outdoor: true  },
   outdoor_kitchen:       { w: 2.4, h: 0.9,  d: 0.8,  color: '#808080', category: 'outdoor',  outdoor: true  },
   pergola:               { w: 4.0, h: 2.5,  d: 3.0,  color: '#C0A870', category: 'outdoor',  outdoor: true  },
@@ -144,14 +131,12 @@ export const FURNITURE_DEFAULTS: Record<FurnitureType, FurnitureDefault> = {
   swimming_pool:         { w: 4.0, h: 0.15, d: 8.0,  color: '#4090C0', category: 'outdoor',  outdoor: true  },
   hot_tub:               { w: 2.0, h: 0.9,  d: 2.0,  color: '#6090A0', category: 'outdoor',  outdoor: true  },
 
-  // ── Outdoor Planters / Garden ─────────────────────────────────
   planter_large:         { w: 0.6, h: 0.8,  d: 0.6,  color: '#7A6050', category: 'outdoor',  outdoor: true  },
   planter_small:         { w: 0.3, h: 0.4,  d: 0.3,  color: '#7A6050', category: 'outdoor',  outdoor: true  },
   raised_garden_bed:     { w: 1.2, h: 0.6,  d: 0.6,  color: '#6A4830', category: 'outdoor',  outdoor: true  },
   water_feature:         { w: 1.2, h: 0.8,  d: 1.2,  color: '#608090', category: 'outdoor',  outdoor: true  },
   fountain:              { w: 1.0, h: 1.2,  d: 1.0,  color: '#708890', category: 'outdoor',  outdoor: true  },
 
-  // ── Outdoor Hard Landscaping ──────────────────────────────────
   garden_path:           { w: 1.0, h: 0.05, d: 3.0,  color: '#A09080', category: 'landscaping', outdoor: true },
   driveway:              { w: 3.0, h: 0.05, d: 6.0,  color: '#808080', category: 'landscaping', outdoor: true },
   garage_door:           { w: 2.4, h: 2.1,  d: 0.05, color: '#C0C0C0', category: 'landscaping', outdoor: true },
@@ -162,13 +147,11 @@ export const FURNITURE_DEFAULTS: Record<FurnitureType, FurnitureDefault> = {
   steps:                 { w: 1.2, h: 0.6,  d: 0.9,  color: '#A09080', category: 'landscaping', outdoor: true },
   retaining_wall:        { w: 4.0, h: 0.9,  d: 0.3,  color: '#909080', category: 'landscaping', outdoor: true },
 
-  // ── Outdoor Accessories ───────────────────────────────────────
   letterbox:             { w: 0.3, h: 0.4,  d: 0.2,  color: '#C8C0B0', category: 'outdoor',  outdoor: true  },
   gate_post:             { w: 0.15, h: 1.5, d: 0.15, color: '#808080', category: 'outdoor',  outdoor: true  },
   outdoor_light_post:    { w: 0.1, h: 3.0,  d: 0.1,  color: '#707070', category: 'outdoor',  outdoor: true  },
   bicycle_storage:       { w: 1.2, h: 1.5,  d: 0.6,  color: '#707878', category: 'outdoor',  outdoor: true  },
 
-  // ── Lighting ─────────────────────────────────────────────────
   floor_lamp:            { w: 0.4, h: 1.7,  d: 0.4,  color: '#C0C0C0', category: 'lighting', outdoor: false },
   pendant_light:         { w: 0.5, h: 1.2,  d: 0.5,  color: '#B0A030', category: 'lighting', outdoor: false },
 };

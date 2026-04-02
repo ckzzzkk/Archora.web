@@ -1,12 +1,3 @@
-/**
- * GenerationScreen — ASORIA AI design interview.
- * Three states: idle (input) → generating → success
- *
- * Design intent: architect's black drafting desk.
- * Every element references the physical act of sketching on paper.
- * The grid behind everything is graph paper. Ovals everywhere.
- * Animations are tactile — weight, spring, deliberate pacing.
- */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -66,7 +57,6 @@ interface ChatMessage {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// ─── Data ────────────────────────────────────────────────────────────────────
 
 const BUILDING_TYPES: Array<{ id: GenerationPayload['buildingType']; emoji: string; label: string }> = [
   { id: 'house',      emoji: '🏠', label: 'House'  },
@@ -120,7 +110,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   AI_NOT_CONFIGURED:'AI features are coming soon',
 };
 
-// ─── Sub-components ────────────────────────────────────────────────────────
 
 /** Animated compass A logo mark with gentle pulse */
 function LogoMark() {
@@ -460,7 +449,6 @@ function TypingIndicator() {
   );
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export function GenerationScreen() {
   const navigation = useNavigation<Nav>();
@@ -520,7 +508,6 @@ export function GenerationScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Voice ────────────────────────────────────────────────────────────────
   const startRecording = async () => {
     try {
       const { granted } = await Audio.requestPermissionsAsync();
@@ -559,7 +546,6 @@ export function GenerationScreen() {
     else             { void startRecording(); }
   };
 
-  // ── Generation ───────────────────────────────────────────────────────────
   const handleGenerate = async () => {
     if (!textInput.trim()) return;
     isCancelled.current = false;
@@ -591,7 +577,7 @@ export function GenerationScreen() {
       idleOpacity.value = 1; // reset for next time
     } catch (e) {
       if (isCancelled.current || !isMounted.current) return;
-      console.error('Generation failed:', JSON.stringify(e, null, 2));
+      if (__DEV__) console.error('Generation failed:', e);
       hapticError();
       setErrorCode((e as { code?: string }).code ?? 'UNKNOWN');
       setScreenState('error');
@@ -655,7 +641,6 @@ export function GenerationScreen() {
 
   const inputActive = textInput.trim().length > 0;
 
-  // ── Generating state ─────────────────────────────────────────────────────
   if (screenState === 'generating') {
     return (
       <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
@@ -689,7 +674,6 @@ export function GenerationScreen() {
     );
   }
 
-  // ── Success state ─────────────────────────────────────────────────────────
   if (screenState === 'success' && result) {
     const roomCount = result.rooms?.length ?? 0;
     const totalArea = result.metadata?.totalArea;
@@ -749,7 +733,6 @@ export function GenerationScreen() {
     );
   }
 
-  // ── Error state ───────────────────────────────────────────────────────────
   if (screenState === 'error') {
     const msg = ERROR_MESSAGES[errorCode] ?? 'Something went wrong — please try again';
     return (
@@ -777,7 +760,6 @@ export function GenerationScreen() {
     );
   }
 
-  // ── Idle state ────────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       <GridBackground />

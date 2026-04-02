@@ -14,7 +14,6 @@ import { getFloorLabel } from '../../utils/floorHelpers';
 import { resolveCollision } from '../../utils/collisionDetection';
 import type { BlueprintData, Room } from '../../types/blueprint';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 type TimeOfDay = 'dawn' | 'day' | 'dusk' | 'night';
 
@@ -35,7 +34,6 @@ const LIGHTING_PRESETS: Record<TimeOfDay, LightingPreset> = {
 const TIME_CYCLE: TimeOfDay[] = ['dawn', 'day', 'dusk', 'night'];
 const TIME_LABELS: Record<TimeOfDay, string> = { dawn: '🌅', day: '☀️', dusk: '🌇', night: '🌙' };
 
-// ─── First-person camera controller ──────────────────────────────────────────
 
 interface CameraControllerProps {
   yaw: React.MutableRefObject<number>;
@@ -93,7 +91,6 @@ function FirstPersonCamera({ yaw, pitch, velocity, walls, onRoomChange, rooms }:
   return null;
 }
 
-// ─── Cinematic tour ──────────────────────────────────────────────────────────
 
 interface TourWaypoint {
   x: number;
@@ -115,7 +112,6 @@ function computeTourPath(blueprint: BlueprintData): TourWaypoint[] {
   });
 }
 
-// ─── Main component ──────────────────────────────────────────────────────────
 
 interface InHouseViewProps {
   onExit?: () => void;

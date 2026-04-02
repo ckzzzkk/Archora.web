@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, ScrollView } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
 import { useCameraDevice, Camera } from 'react-native-vision-camera';
@@ -14,8 +14,14 @@ import { ARBackButton } from '../../components/ar/ARBackButton';
 import { ARScanMode } from '../../components/ar/ARScanMode';
 import { ARPlaceMode } from '../../components/ar/ARPlaceMode';
 import { ARMeasureMode } from '../../components/ar/ARMeasureMode';
+import { ARManualMeasureMode } from '../../components/ar/ARManualMeasureMode';
+import { ARDepthScanMode } from '../../components/ar/ARDepthScanMode';
+import { ARPhotoMode } from '../../components/ar/ARPhotoMode';
+import { useARCapabilities } from '../../hooks/useARCore';
+import { OvalButton } from '../../components/common/OvalButton';
 
-// ── Entry instruction card shown before camera opens ─────────────────────────
+type ScanMode = 'entry' | 'manual' | 'depth' | 'photo' | 'place' | 'measure';
+
 
 const MODE_INFO: Record<ARMode, { title: string; desc: string; tip: string }> = {
   scan: {
@@ -35,149 +41,76 @@ const MODE_INFO: Record<ARMode, { title: string; desc: string; tip: string }> = 
   },
 };
 
-function RoomScanIllustration() {
-  return (
-    <Svg width={100} height={80} viewBox="0 0 100 80">
-      {/* Room walls */}
-      <Rect x="10" y="10" width="80" height="60" rx="3" stroke={DS.colors.border} strokeWidth="1.5" fill="none" strokeDasharray="4 3" />
-      {/* Floor */}
-      <Line x1="10" y1="55" x2="90" y2="55" stroke={DS.colors.border} strokeWidth="1" />
-      {/* Person / phone walking */}
-      <Circle cx="50" cy="35" r="5" stroke={DS.colors.primary} strokeWidth="1.5" fill="none" />
-      <Line x1="50" y1="40" x2="50" y2="52" stroke={DS.colors.primary} strokeWidth="1.5" strokeLinecap="round" />
-      <Path d="M44 46 L50 44 L56 46" stroke={DS.colors.primary} strokeWidth="1.5" strokeLinecap="round" fill="none" />
-      <Line x1="46" y1="52" x2="50" y2="56" stroke={DS.colors.primary} strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="54" y1="52" x2="50" y2="56" stroke={DS.colors.primary} strokeWidth="1.5" strokeLinecap="round" />
-      {/* Scan arc */}
-      <Path d="M30 35 Q50 15 70 35" stroke={DS.colors.primaryDim} strokeWidth="1" fill="none" strokeDasharray="3 3" />
-      {/* Corner brackets */}
-      <Path d="M10 22 L10 10 L22 10" stroke={DS.colors.primary} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      <Path d="M78 10 L90 10 L90 22" stroke={DS.colors.primary} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-    </Svg>
-  );
+
+interface ScanModeCardProps {
+  title: string;
+  description: string;
+  available: boolean;
+  requires?: string;
+  onPress: () => void;
+  delay?: number;
 }
 
-function FurniturePlaceIllustration() {
-  return (
-    <Svg width={100} height={80} viewBox="0 0 100 80">
-      {/* Floor plane in perspective */}
-      <Path d="M10 65 L50 40 L90 65" stroke={DS.colors.border} strokeWidth="1.5" fill="none" strokeDasharray="4 3" />
-      <Path d="M25 70 L50 50 L75 70" stroke={DS.colors.border} strokeWidth="1" fill="none" strokeDasharray="3 4" opacity="0.5" />
-      {/* Furniture silhouette (sofa) */}
-      <Rect x="32" y="48" width="36" height="16" rx="4" stroke={DS.colors.primary} strokeWidth="1.5" fill="none" />
-      <Rect x="35" y="44" width="10" height="8" rx="2" stroke={DS.colors.primary} strokeWidth="1" fill="none" />
-      <Rect x="55" y="44" width="10" height="8" rx="2" stroke={DS.colors.primary} strokeWidth="1" fill="none" />
-      {/* Placement cursor */}
-      <Circle cx="50" cy="56" r="3" stroke={DS.colors.primary} strokeWidth="1.5" fill="none" />
-    </Svg>
-  );
-}
-
-function MeasureIllustration() {
-  return (
-    <Svg width={100} height={80} viewBox="0 0 100 80">
-      {/* Wall */}
-      <Line x1="20" y1="10" x2="20" y2="70" stroke={DS.colors.border} strokeWidth="2" />
-      <Line x1="80" y1="10" x2="80" y2="70" stroke={DS.colors.border} strokeWidth="2" />
-      {/* Measurement line */}
-      <Line x1="20" y1="40" x2="80" y2="40" stroke={DS.colors.primary} strokeWidth="1.5" strokeDasharray="5 3" />
-      {/* End caps */}
-      <Line x1="20" y1="35" x2="20" y2="45" stroke={DS.colors.primary} strokeWidth="2" strokeLinecap="round" />
-      <Line x1="80" y1="35" x2="80" y2="45" stroke={DS.colors.primary} strokeWidth="2" strokeLinecap="round" />
-      {/* Distance badge */}
-      <Rect x="35" y="33" width="30" height="14" rx="7" stroke={DS.colors.primary} strokeWidth="1" fill="none" />
-      <Line x1="42" y1="40" x2="42" y2="40" stroke={DS.colors.primary} strokeWidth="1" />
-      {/* Anchor dots */}
-      <Circle cx="20" cy="40" r="3" stroke={DS.colors.primary} strokeWidth="1.5" fill="none" />
-      <Circle cx="80" cy="40" r="3" stroke={DS.colors.primary} strokeWidth="1.5" fill="none" />
-    </Svg>
-  );
-}
-
-const ILLUSTRATIONS: Record<ARMode, React.ReactNode> = {
-  scan:    <RoomScanIllustration />,
-  place:   <FurniturePlaceIllustration />,
-  measure: <MeasureIllustration />,
-};
-
-function EntryCard({ mode, onStart }: { mode: ARMode; onStart: () => void }) {
-  const insets = useSafeAreaInsets();
-  const info = MODE_INFO[mode];
-
+function ScanModeCard({ title, description, available, requires, onPress, delay = 0 }: ScanModeCardProps) {
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(16);
+  const translateY = useSharedValue(20);
 
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: 300 });
-    translateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.quad) });
-  }, [mode, opacity, translateY]);
+    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+    translateY.value = withDelay(delay, withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }));
+  }, [delay, opacity, translateY]);
 
-  const cardStyle = useAnimatedStyle(() => ({
+  const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],
   }));
 
   return (
-    <View style={{ flex: 1, backgroundColor: DS.colors.background, paddingTop: insets.top + 16, paddingHorizontal: 24, paddingBottom: insets.bottom + 24 }}>
-      {/* Back button */}
-      <ARBackButton onPress={() => {}} />
-
-      <Animated.View style={[{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20 }, cardStyle]}>
-        {/* Illustration */}
-        <View style={{
-          width: 140, height: 120,
-          backgroundColor: DS.colors.surface, borderRadius: 24,
-          borderWidth: 1, borderColor: DS.colors.border,
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          {ILLUSTRATIONS[mode]}
-        </View>
-
-        {/* Title + desc */}
-        <ArchText variant="body" style={{
-          fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 26,
-          color: DS.colors.primary, textAlign: 'center',
-        }}>
-          {info.title}
-        </ArchText>
-
-        <ArchText variant="body" style={{
-          fontFamily: 'Inter_400Regular', fontSize: 15,
-          color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 24,
-        }}>
-          {info.desc}
-        </ArchText>
-
-        {/* Tip */}
-        <View style={{ backgroundColor: DS.colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: DS.colors.border, width: '100%' }}>
-          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, lineHeight: 20 }}>
-            💡  {info.tip}
+    <Animated.View style={[animatedStyle, { width: '100%' }]}>
+      <Pressable
+        onPress={available ? onPress : undefined}
+        style={{
+          backgroundColor: available ? DS.colors.surface : 'rgba(34,34,34,0.5)',
+          borderRadius: DS.radius.card,
+          padding: 20,
+          borderWidth: 1,
+          borderColor: available ? DS.colors.border : DS.colors.primaryGhost,
+          opacity: available ? 1 : 0.6,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: DS.colors.primary }}>
+            {title}
           </ArchText>
+          {!available && requires && (
+            <View style={{ backgroundColor: DS.colors.warning + '20', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.warning }}>
+                Requires {requires}
+              </ArchText>
+            </View>
+          )}
         </View>
-
-        {/* Start button */}
-        <Pressable
-          onPress={onStart}
-          style={{ backgroundColor: DS.colors.primary, borderRadius: 50, paddingVertical: 16, paddingHorizontal: 40, width: '100%', alignItems: 'center', marginTop: 8 }}
-        >
-          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: DS.colors.background }}>
-            Open Camera
-          </ArchText>
-        </Pressable>
-      </Animated.View>
-    </View>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim, lineHeight: 20 }}>
+          {description}
+        </ArchText>
+      </Pressable>
+    </Animated.View>
   );
 }
 
-// ── Main AR screen ────────────────────────────────────────────────────────────
 
 export function ARScanScreen() {
   const [mode, setMode] = useState<ARMode>('scan');
-  const [cameraOpen, setCameraOpen] = useState(false);
+  const [scanMode, setScanMode] = useState<ScanMode>('entry');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const device = useCameraDevice('back');
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
+  const { support, isLoading: isLoadingCapabilities } = useARCapabilities();
+
+  const hasDepthAPI = support?.hasDepthAPI ?? false;
+  const hasARCore = support?.hasARCore ?? false;
 
   useEffect(() => {
     Camera.requestCameraPermission().then(status => {
@@ -185,10 +118,18 @@ export function ARScanScreen() {
     });
   }, []);
 
-  // Reset camera view when mode changes
+  // Reset when mode changes
   const handleModeChange = (newMode: ARMode) => {
-    setCameraOpen(false);
+    setScanMode('entry');
     setMode(newMode);
+  };
+
+  const handleSelectScanMode = (selected: ScanMode) => {
+    setScanMode(selected);
+  };
+
+  const handleBackToEntry = () => {
+    setScanMode('entry');
   };
 
   if (hasPermission === null) {
@@ -215,32 +156,99 @@ export function ARScanScreen() {
     );
   }
 
-  // Entry instruction card (before camera opens)
-  if (!cameraOpen) {
+  // Entry screen - mode selection
+  if (scanMode === 'entry') {
     return (
-      <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
-        {/* Mode selector always visible at top */}
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}>
+        {/* Header */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 28, color: DS.colors.primary, marginBottom: 8 }}>
+            AR Scan
+          </ArchText>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim }}>
+            Choose a scanning method to capture your room
+          </ArchText>
+        </View>
+
+        {/* Mode selector */}
         <ARModeSelector current={mode} onChange={handleModeChange} />
+
+        {/* Back button */}
         <ARBackButton onPress={() => navigation.goBack()} />
-        <EntryCard mode={mode} onStart={() => setCameraOpen(true)} />
+
+        {/* Scan mode options */}
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 40, gap: 16 }}>
+          {mode === 'scan' && (
+            <>
+              <ScanModeCard
+                title="Manual Measure"
+                description="Tap corners to measure your room wall by wall. Works on all Android devices."
+                available={hasARCore}
+                onPress={() => handleSelectScanMode('manual')}
+                delay={0}
+              />
+              <ScanModeCard
+                title="Auto Depth Scan"
+                description="Walk around and let ARCore automatically detect walls using Depth API."
+                available={hasARCore && hasDepthAPI}
+                requires={hasDepthAPI ? undefined : 'Depth API'}
+                onPress={() => handleSelectScanMode('depth')}
+                delay={100}
+              />
+              <ScanModeCard
+                title="Photo Analysis"
+                description="Take photos of each wall and let AI analyze dimensions. Works on all devices."
+                available={true}
+                onPress={() => handleSelectScanMode('photo')}
+                delay={200}
+              />
+            </>
+          )}
+
+          {mode === 'place' && (
+            <ScanModeCard
+              title="Furniture Placement"
+              description="Place furniture in your space using surface detection."
+              available={hasARCore}
+              onPress={() => handleSelectScanMode('place')}
+            />
+          )}
+
+          {mode === 'measure' && (
+            <ScanModeCard
+              title="Measure Mode"
+              description="Measure distances between points in your space."
+              available={hasARCore}
+              onPress={() => handleSelectScanMode('measure')}
+            />
+          )}
+        </ScrollView>
       </View>
     );
   }
 
-  // Live camera view
+  // Live camera view with selected mode
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <Camera
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         device={device}
         isActive={isFocused}
-        photo={false}
+        photo={mode === 'scan' && scanMode === 'photo'}
       />
+
+      {/* Mode selector at top */}
       <ARModeSelector current={mode} onChange={handleModeChange} />
-      <ARBackButton onPress={() => setCameraOpen(false)} />
-      {mode === 'scan'    && <ARScanMode />}
-      {mode === 'place'   && <ARPlaceMode />}
-      {mode === 'measure' && <ARMeasureMode />}
+
+      {/* Back button */}
+      <ARBackButton onPress={handleBackToEntry} />
+
+      {/* Render the appropriate mode */}
+      {scanMode === 'manual' && <ARManualMeasureMode />}
+      {scanMode === 'depth' && <ARDepthScanMode />}
+      {scanMode === 'photo' && <ARPhotoMode />}
+      {scanMode === 'place' && <ARPlaceMode />}
+      {scanMode === 'measure' && <ARMeasureMode />}
     </View>
   );
 }

@@ -39,7 +39,6 @@ const BUILDING_TYPES: { key: BuildingType; label: string }[] = [
   { key: 'villa',     label: 'Villa' },
 ];
 
-// ── NewProjectModal ─────────────────────────────────────────────────────────
 function NewProjectModal({
   visible,
   onClose,
@@ -138,7 +137,6 @@ function NewProjectModal({
   );
 }
 
-// ── StatCard ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, limit }: { label: string; value: number; limit: number }) {
   const fillPct = useSharedValue(0);
 
@@ -172,7 +170,6 @@ function StatCard({ label, value, limit }: { label: string; value: number; limit
   );
 }
 
-// ── EmptyState ───────────────────────────────────────────────────────────────
 function EmptyState({ onPress }: { onPress: () => void }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: DS.spacing.xl }}>
@@ -197,7 +194,6 @@ function EmptyState({ onPress }: { onPress: () => void }) {
   );
 }
 
-// ── ProjectCard ──────────────────────────────────────────────────────────────
 function InlineProjectCard({
   project,
   onPress,
@@ -253,7 +249,6 @@ function InlineProjectCard({
   );
 }
 
-// ── DashboardScreen ──────────────────────────────────────────────────────────
 export function DashboardScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();

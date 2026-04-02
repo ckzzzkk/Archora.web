@@ -76,19 +76,16 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   const { colors } = useTheme();
   const { light } = useHaptics();
 
-  // ── Skia canvas ref (for image export) ───────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const skiaCanvasRef = useRef<any>(null);
   useImperativeHandle(ref, () => ({
     makeImageSnapshot: () => skiaCanvasRef.current?.makeImageSnapshot?.() as { encodeToBase64: () => string } | undefined,
   }));
 
-  // ── Fonts ────────────────────────────────────────────────────────────────
   // Using null for now (fonts loaded via useFonts at app level)
   const dimFont = useFont(null, 10);
   const roomFont = useFont(null, 12);
 
-  // ── Module hooks ─────────────────────────────────────────────────────────
   const wallDrawing = useWallDrawing();
   const placement = useFurniturePlacement(onFurniturePlaced);
   useRoomDetection();
@@ -101,7 +98,6 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
     placement.setPendingPlacement(pendingFurniturePlacement ?? null);
   }
 
-  // ── Local UI state ────────────────────────────────────────────────────────
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     position: { x: 0, y: 0 },
@@ -111,7 +107,6 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   // Measure tool: stores tapped points
   const [measurePoints, setMeasurePoints] = useState<{ x: number; y: number }[]>([]);
 
-  // ── Pan/zoom shared values ────────────────────────────────────────────────
   const scale = useSharedValue(1);
   const offsetX = useSharedValue(SCREEN_W / 2);
   const offsetY = useSharedValue(CANVAS_H / 2);
@@ -126,7 +121,6 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   offsetX.addListener(1, (v) => { offsetXRef.current = v; });
   offsetY.addListener(2, (v) => { offsetYRef.current = v; });
 
-  // ── Context menu helpers ──────────────────────────────────────────────────
   const showContextMenu = useCallback(
     (item: FurniturePiece, screenX: number, screenY: number) => {
       setContextMenu({ visible: true, position: { x: screenX, y: screenY }, item });
@@ -137,7 +131,6 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
     setContextMenu((prev) => ({ ...prev, visible: false }));
   }, []);
 
-  // ── Measure tool tap handler ──────────────────────────────────────────────
   const handleMeasureTap = useCallback((mx: number, my: number) => {
     setMeasurePoints((pts) => {
       if (pts.length >= 2) return [{ x: mx, y: my }]; // reset on 3rd tap
@@ -146,7 +139,6 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
     light();
   }, [light]);
 
-  // ── Gestures ─────────────────────────────────────────────────────────────
   const pinchGesture = Gesture.Pinch()
     .onStart(() => { savedScale.value = scale.value; })
     .onUpdate((e) => {
@@ -292,7 +284,6 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
     );
   }
 
-  // ── Handlers for context menu ─────────────────────────────────────────────
   const handleCopy = () => {
     if (!contextMenu.item) return;
     clipboard.push({
@@ -305,7 +296,6 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   const handleCut = () => { handleCopy(); if (contextMenu.item) deleteFurniture(contextMenu.item.id); };
   const handleDelete = () => { if (contextMenu.item) deleteFurniture(contextMenu.item.id); };
 
-  // ── Render helpers ────────────────────────────────────────────────────────
   const ox = offsetX.value;
   const oy = offsetY.value;
   const sc = 1; // canvas group uses scale=1; pan/zoom via offset only (Skia group transform for perf)
