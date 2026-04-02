@@ -2,7 +2,7 @@ import React, { Suspense, lazy, ComponentType } from 'react';
 import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
 
 /**
- * Wraps React.lazy + Suspense with a LogoLoader fallback.
+ * Wraps React.lazy + Suspense with a CompassRoseLoader fallback.
  * Designed for named exports — callers map to { default } in the factory.
  *
  * Usage:

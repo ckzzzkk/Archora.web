@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Canvas } from '@react-three/fiber/native';
 import { OrbitControls, Grid, Sky } from '@react-three/drei/native';
 import { ProceduralBuilding } from './ProceduralBuilding';
-import { LogoLoader } from '../common/LogoLoader';
+import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { EmptyState } from '../common/EmptyState';
 import { use3DScene } from '../../hooks/use3DScene';
 import { useBlueprintStore } from '../../stores/blueprintStore';

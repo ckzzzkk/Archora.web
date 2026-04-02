@@ -7,7 +7,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
-import { LogoLoader } from '../common/LogoLoader';
+import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
 import { BASE_COLORS } from '../../theme/colors';
@@ -34,7 +34,7 @@ function SendButton({ onPress, loading }: { onPress: () => void; loading: boolea
     onPress();
   };
 
-  if (loading) return <LogoLoader size="small" />;
+  if (loading) return <CompassRoseLoader size="small" />;
 
   return (
     <Pressable onPress={handlePress} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: BASE_COLORS.textPrimary, alignItems: 'center', justifyContent: 'center' }}>
@@ -129,7 +129,7 @@ export function AIChatPanel({ visible, onToggle }: Props) {
               </Text>
             )}
             {recentMessages.map((msg) => <MessageBubble key={msg.id} msg={msg} />)}
-            {isLoading && <View style={{ alignSelf: 'flex-start', marginBottom: 8 }}><LogoLoader size="small" /></View>}
+            {isLoading && <View style={{ alignSelf: 'flex-start', marginBottom: 8 }}><CompassRoseLoader size="small" /></View>}
           </ScrollView>
 
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>

@@ -5,7 +5,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
-import { LogoLoader } from './LogoLoader';
+import { CompassRoseLoader } from './CompassRoseLoader';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -80,7 +80,7 @@ export function Button({
       disabled={disabled || loading}
     >
       {loading ? (
-        <LogoLoader size="small" />
+        <CompassRoseLoader size="small" />
       ) : (
         <Text style={{
           color: textColor,

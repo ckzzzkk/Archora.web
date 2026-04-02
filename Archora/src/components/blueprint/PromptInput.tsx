@@ -11,7 +11,7 @@ import Animated, {
 import { BASE_COLORS } from '../../theme/colors';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
-import { LogoLoader } from '../common/LogoLoader';
+import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { useTierGate } from '../../hooks/useTierGate';
 import { TierGate } from '../common/TierGate';
 
@@ -127,7 +127,7 @@ export function PromptInput({ onGenerate, onVoiceInput, isGenerating = false }: 
           }}
         >
           {isGenerating ? (
-            <LogoLoader size="small" />
+            <CompassRoseLoader size="small" />
           ) : (
             <Text style={{ fontSize: expanded ? 14 : 16, color: BASE_COLORS.background }}>
               {expanded ? '↑' : '✦'}
