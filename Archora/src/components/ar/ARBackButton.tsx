@@ -1,25 +1,37 @@
-import { DS } from '../../theme/designSystem';
 import React from 'react';
-import { Pressable, Text } from 'react-native';
-import { BASE_COLORS, withAlpha } from '../../theme/colors';
+import { Pressable } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DS } from '../../theme/designSystem';
 
 interface Props {
   onPress: () => void;
 }
 
 export function ARBackButton({ onPress }: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
     <Pressable
       onPress={onPress}
       style={{
-        position: 'absolute', top: 56, left: 20,
-        width: 40, height: 40, borderRadius: 20,
-        backgroundColor: withAlpha(DS.colors.surface, 0.85),
-        borderWidth: 1, borderColor: DS.colors.border,
-        alignItems: 'center', justifyContent: 'center',
+        position: 'absolute',
+        top: insets.top + 8,
+        left: 16,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(34,34,34,0.85)',
+        borderWidth: 1,
+        borderColor: DS.colors.border,
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
-      <Text style={{ color: DS.colors.primary, fontSize: 20 }}>←</Text>
+      <Svg width={20} height={20} viewBox="0 0 24 24">
+        <Path d="M19 12H5" stroke={DS.colors.primary} strokeWidth="2" strokeLinecap="round" />
+        <Path d="M10 7L5 12L10 17" stroke={DS.colors.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </Svg>
     </Pressable>
   );
 }
