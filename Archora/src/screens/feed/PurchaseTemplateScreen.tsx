@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
 import {
-  View, Text, Image, ScrollView, Pressable, Dimensions, Linking, Alert,
+  View, Image, ScrollView, Pressable, Dimensions, Linking, Alert,
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withSequence,
@@ -11,10 +13,10 @@ import type { PurchaseTemplateScreenProps } from '../../navigation/types';
 import { inspoService } from '../../services/inspoService';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
-import { useTheme } from '../../hooks/useTheme';
+
 import { useHaptics } from '../../hooks/useHaptics';
 import { supabase } from '../../utils/supabaseClient';
-import { BASE_COLORS } from '../../theme/colors';
+
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import type { Template } from '../../types';
 
@@ -53,7 +55,7 @@ function StarIcon({ filled, color }: { filled: boolean; color: string }) {
 
 export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateScreenProps) {
   const { templateId } = route.params;
-  const { colors } = useTheme();
+  
   const { medium } = useHaptics();
   const user = useAuthStore((s) => s.user);
   const showToast = useUIStore((s) => s.actions.showToast);
@@ -119,7 +121,7 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
         <CompassRoseLoader size="large" />
       </View>
     );
@@ -127,10 +129,10 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
 
   if (!template) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: BASE_COLORS.textSecondary }}>Template not found</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: DS.colors.primaryDim }}>Template not found</ArchText>
         <Pressable onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: colors.primary }}>Go Back</Text>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primary }}>Go Back</ArchText>
         </Pressable>
       </SafeAreaView>
     );
@@ -140,7 +142,7 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
   const stars = Math.round(template.avgRating);
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       {/* Hero image */}
       <Animated.View style={[{ height: HERO_H, overflow: 'hidden' }, heroStyle]}>
         {template.thumbnailUrl ? (
@@ -149,8 +151,8 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
             style={{ width: SCREEN_W, height: HERO_H, resizeMode: 'cover' }}
           />
         ) : (
-          <View style={{ width: SCREEN_W, height: HERO_H, backgroundColor: BASE_COLORS.surface, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: BASE_COLORS.textDim }}>No preview</Text>
+          <View style={{ width: SCREEN_W, height: HERO_H, backgroundColor: DS.colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+            <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: DS.colors.primaryGhost }}>No preview</ArchText>
           </View>
         )}
         {/* Gradient overlay + back button */}
@@ -177,57 +179,57 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
       <Animated.View style={[{ flex: 1 }, contentStyle]}>
         <ScrollView contentContainerStyle={{ padding: 20 }} showsVerticalScrollIndicator={false}>
           {/* Title row */}
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: BASE_COLORS.textPrimary, marginBottom: 4 }}>
+          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: DS.colors.primary, marginBottom: 4 }}>
             {template.title}
-          </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary, marginBottom: 10 }}>
+          </ArchText>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, marginBottom: 10 }}>
             by {template.authorDisplayName}
-          </Text>
+          </ArchText>
 
           {/* Rating row */}
           {template.ratingCount > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 16 }}>
               {[1, 2, 3, 4, 5].map((n) => (
-                <StarIcon key={n} filled={n <= stars} color={colors.primary} />
+                <StarIcon key={n} filled={n <= stars} color={DS.colors.primary} />
               ))}
-              <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 12, color: BASE_COLORS.textDim, marginLeft: 4 }}>
+              <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 12, color: DS.colors.primaryGhost, marginLeft: 4 }}>
                 ({template.ratingCount})
-              </Text>
+              </ArchText>
             </View>
           )}
 
           {/* Price */}
           {!isFree && (
             <View style={{ marginBottom: 20 }}>
-              <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 32, color: BASE_COLORS.textPrimary }}>
+              <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 32, color: DS.colors.primary }}>
                 ${template.price.toFixed(2)}
-              </Text>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim, marginTop: 2 }}>
+              </ArchText>
+              <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, marginTop: 2 }}>
                 One-time purchase — yours forever
-              </Text>
+              </ArchText>
             </View>
           )}
 
           {/* What you get */}
-          <View style={{ backgroundColor: BASE_COLORS.surface, borderRadius: 12, padding: 16, marginBottom: 20 }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: BASE_COLORS.textPrimary, marginBottom: 12 }}>
+          <View style={{ backgroundColor: DS.colors.surface, borderRadius: 12, padding: 16, marginBottom: 20 }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: DS.colors.primary, marginBottom: 12 }}>
               What you get
-            </Text>
+            </ArchText>
             {WHAT_YOU_GET.map((item, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-                <Text style={{ color: colors.primary, fontSize: 14, lineHeight: 20 }}>•</Text>
-                <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary, lineHeight: 20 }}>
+                <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 14, lineHeight: 20 }}>•</ArchText>
+                <ArchText variant="body" style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim, lineHeight: 20 }}>
                   {item}
-                </Text>
+                </ArchText>
               </View>
             ))}
           </View>
 
           {/* Description */}
           {template.description ? (
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary, lineHeight: 22, marginBottom: 24 }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, lineHeight: 22, marginBottom: 24 }}>
               {template.description}
-            </Text>
+            </ArchText>
           ) : null}
 
           {/* CTA button */}
@@ -236,7 +238,7 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
               onPress={isFree ? handleFree : handleBuy}
               disabled={purchasing}
               style={{
-                backgroundColor: purchasing ? BASE_COLORS.border : colors.primary,
+                backgroundColor: purchasing ? DS.colors.border : DS.colors.primary,
                 borderRadius: 50,
                 paddingVertical: 18,
                 alignItems: 'center',
@@ -246,17 +248,17 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
               {purchasing ? (
                 <CompassRoseLoader size="small" />
               ) : (
-                <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: BASE_COLORS.background }}>
+                <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: DS.colors.background }}>
                   {isFree ? 'Use This Template' : `Buy for $${template.price.toFixed(2)}`}
-                </Text>
+                </ArchText>
               )}
             </Pressable>
           </Animated.View>
 
           {!isFree && (
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, textAlign: 'center', marginBottom: 24 }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryGhost, textAlign: 'center', marginBottom: 24 }}>
               Secure payment via Stripe. No subscription required.
-            </Text>
+            </ArchText>
           )}
         </ScrollView>
       </Animated.View>

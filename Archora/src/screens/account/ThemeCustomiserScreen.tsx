@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Pressable, ScrollView } from 'react-native';
+import { ArchText } from '../../components/common/ArchText';
 import { useTheme } from '../../hooks/useTheme';
 import { COLOR_THEMES, type ThemeName } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -13,17 +14,17 @@ export function ThemeCustomiserScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ padding: 24, paddingTop: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 28, color: colors.textPrimary }}>
+        <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 28, color: colors.textPrimary }}>
           Your Style
-        </Text>
+        </ArchText>
         <Pressable onPress={() => navigation.goBack()}>
-          <Text style={{ color: colors.textDim, fontFamily: 'Inter_400Regular' }}>Done</Text>
+          <ArchText variant="body" style={{ color: colors.textDim, fontFamily: 'Inter_400Regular' }}>Done</ArchText>
         </Pressable>
       </View>
       <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
-        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: colors.textSecondary, letterSpacing: 1, textTransform: 'uppercase' }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: colors.textSecondary, letterSpacing: 1, textTransform: 'uppercase' }}>
           Colour Theme
-        </Text>
+        </ArchText>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
           {(Object.keys(COLOR_THEMES) as ThemeName[]).map((name) => {
             const theme = COLOR_THEMES[name];
@@ -46,9 +47,9 @@ export function ThemeCustomiserScreen({ navigation }: Props) {
                   borderWidth: isActive ? 3 : 1.5,
                   borderColor: isActive ? colors.textPrimary : colors.border,
                 }} />
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.textSecondary }}>
+                <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: colors.textSecondary }}>
                   {theme.label}
-                </Text>
+                </ArchText>
               </Pressable>
             );
           })}

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Linking } from 'react-native';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
+import { View, Pressable, ScrollView, TextInput, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { BASE_COLORS } from '../../theme/colors';
+
 
 const FAQ_SECTIONS = [
   {
@@ -81,7 +83,7 @@ export function HelpFAQScreen() {
   })).filter((s) => s.questions.length > 0);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: DS.colors.background }}>
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 }}>
         <Pressable
@@ -90,41 +92,41 @@ export function HelpFAQScreen() {
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             alignItems: 'center',
             justifyContent: 'center',
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
           }}
         >
-          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 18 }}>←</Text>
+          <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 18 }}>←</ArchText>
         </Pressable>
-        <Text
+        <ArchText variant="body"
           style={{
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             fontSize: 24,
             fontFamily: 'ArchitectsDaughter_400Regular',
             flex: 1,
           }}
         >
           Help & FAQ
-        </Text>
+        </ArchText>
       </View>
 
       {/* Search */}
       <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
         <TextInput
           style={{
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             borderRadius: 50,
             paddingHorizontal: 20,
             paddingVertical: 12,
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
           }}
           placeholder="Search questions..."
-          placeholderTextColor={BASE_COLORS.textDim}
+          placeholderTextColor={DS.colors.primaryGhost}
           value={search}
           onChangeText={setSearch}
         />
@@ -136,19 +138,19 @@ export function HelpFAQScreen() {
           <View key={section.category} style={{ marginBottom: 24 }}>
             <View
               style={{
-                backgroundColor: BASE_COLORS.surface,
+                backgroundColor: DS.colors.surface,
                 borderRadius: 50,
                 alignSelf: 'flex-start',
                 paddingHorizontal: 16,
                 paddingVertical: 6,
                 marginBottom: 12,
                 borderWidth: 1,
-                borderColor: BASE_COLORS.border,
+                borderColor: DS.colors.border,
               }}
             >
-              <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 13, fontWeight: '600' }}>
+              <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 13, fontWeight: '600' }}>
                 {section.category}
-              </Text>
+              </ArchText>
             </View>
             {section.questions.map((item) => (
               <Pressable
@@ -161,28 +163,28 @@ export function HelpFAQScreen() {
                   )
                 }
                 style={{
-                  backgroundColor: BASE_COLORS.surface,
-                  borderRadius: 16,
+                  backgroundColor: DS.colors.surface,
+                  borderRadius: 50,
                   padding: 16,
                   marginBottom: 8,
                   borderWidth: 1,
-                  borderColor: BASE_COLORS.border,
+                  borderColor: DS.colors.border,
                 }}
               >
-                <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 15, fontWeight: '500' }}>
+                <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 15, fontWeight: '500' }}>
                   {item.q}
-                </Text>
+                </ArchText>
                 {expandedQuestion === item.q && (
-                  <Text
+                  <ArchText variant="body"
                     style={{
-                      color: BASE_COLORS.textSecondary,
+                      color: DS.colors.primaryDim,
                       fontSize: 14,
                       lineHeight: 22,
                       marginTop: 8,
                     }}
                   >
                     {item.a}
-                  </Text>
+                  </ArchText>
                 )}
               </Pressable>
             ))}
@@ -191,19 +193,19 @@ export function HelpFAQScreen() {
       </ScrollView>
 
       {/* Contact support */}
-      <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: BASE_COLORS.border }}>
+      <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: DS.colors.border }}>
         <Pressable
           onPress={() => { void Linking.openURL('mailto:support@asoria.app'); }}
           style={{
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             borderRadius: 50,
             paddingVertical: 14,
             alignItems: 'center',
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
           }}
         >
-          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 15 }}>Contact Support</Text>
+          <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 15 }}>Contact Support</ArchText>
         </Pressable>
       </View>
     </SafeAreaView>

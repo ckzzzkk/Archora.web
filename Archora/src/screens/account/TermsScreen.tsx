@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
+import { View, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { BASE_COLORS } from '../../theme/colors';
+
 
 const TERMS_SECTIONS = [
   {
@@ -29,7 +31,7 @@ export function TermsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: DS.colors.background }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 }}>
         <Pressable
           onPress={() => navigation.goBack()}
@@ -37,25 +39,25 @@ export function TermsScreen() {
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: BASE_COLORS.surface,
+            backgroundColor: DS.colors.surface,
             alignItems: 'center',
             justifyContent: 'center',
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
           }}
         >
-          <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 18 }}>←</Text>
+          <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 18 }}>←</ArchText>
         </Pressable>
-        <Text
+        <ArchText variant="body"
           style={{
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             fontSize: 24,
             fontFamily: 'ArchitectsDaughter_400Regular',
             flex: 1,
           }}
         >
           Terms of Service
-        </Text>
+        </ArchText>
       </View>
       {/* Sticky disclaimer — OUTSIDE ScrollView */}
       <View
@@ -64,57 +66,57 @@ export function TermsScreen() {
           backgroundColor: '#3A1A1A',
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: BASE_COLORS.error,
+          borderColor: DS.colors.error,
           padding: 16,
           margin: 16,
           marginBottom: 0,
         }}
       >
-        <Text
+        <ArchText variant="body"
           style={{
-            color: BASE_COLORS.error,
+            color: DS.colors.error,
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 14,
           }}
         >
           IMPORTANT NOTICE
-        </Text>
-        <Text
-          style={{ color: BASE_COLORS.textPrimary, fontSize: 13, lineHeight: 20, marginTop: 8 }}
+        </ArchText>
+        <ArchText variant="body"
+          style={{ color: DS.colors.primary, fontSize: 13, lineHeight: 20, marginTop: 8 }}
         >
           ASORIA is a creative design tool for exploration and inspiration only. Designs generated
           are NOT suitable for actual construction without review by a qualified architect or
           structural engineer. ASORIA does not provide professional architectural advice or
           services.
-        </Text>
+        </ArchText>
       </View>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={{ padding: 20 }}>
-          <Text
+          <ArchText variant="body"
             style={{
-              color: BASE_COLORS.textDim,
+              color: DS.colors.primaryGhost,
               fontSize: 12,
               fontFamily: 'JetBrainsMono_400Regular',
               marginBottom: 24,
             }}
           >
             Last updated: 26 March 2026
-          </Text>
+          </ArchText>
           {TERMS_SECTIONS.map((section) => (
             <View key={section.title} style={{ marginBottom: 28 }}>
-              <Text
+              <ArchText variant="body"
                 style={{
-                  color: BASE_COLORS.textPrimary,
+                  color: DS.colors.primary,
                   fontSize: 18,
                   fontFamily: 'ArchitectsDaughter_400Regular',
                   marginBottom: 8,
                 }}
               >
                 {section.title}
-              </Text>
-              <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 15, lineHeight: 24 }}>
+              </ArchText>
+              <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 15, lineHeight: 24 }}>
                 {section.body}
-              </Text>
+              </ArchText>
             </View>
           ))}
         </View>

@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
+import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import {
-  View, Text, Pressable, KeyboardAvoidingView, Platform,
+  View, Pressable, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -17,8 +20,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { supabase } from '../../utils/supabaseClient';
-import { BASE_COLORS } from '../../theme/colors';
-import { LogoLoader } from '../../components/common/LogoLoader';
+
+
 import type { AuthStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'EmailVerification'>;
@@ -66,14 +69,14 @@ function EnvelopeAnimation() {
       {/* Letter peeking out */}
       <Animated.View style={letterStyle}>
         <Svg width={48} height={32} viewBox="0 0 48 32">
-          <Rect x={4} y={4} width={40} height={28} rx={2} fill={BASE_COLORS.surface} stroke="#C8C8C8" strokeWidth={1.5} />
+          <Rect x={4} y={4} width={40} height={28} rx={2} fill={DS.colors.surface} stroke="#C8C8C8" strokeWidth={1.5} />
           <Path d="M4 8 L24 20 L44 8" stroke="#C8C8C8" strokeWidth={1.5} fill="none" strokeLinecap="round" />
         </Svg>
       </Animated.View>
       {/* Envelope body */}
       <Svg width={80} height={60} viewBox="0 0 80 60">
         {/* Envelope body */}
-        <Rect x={2} y={18} width={76} height={40} rx={4} fill={BASE_COLORS.surfaceHigh} stroke="#C8C8C8" strokeWidth={1.5} />
+        <Rect x={2} y={18} width={76} height={40} rx={4} fill={DS.colors.surfaceHigh} stroke="#C8C8C8" strokeWidth={1.5} />
         {/* Flap */}
         <Path d="M2 18 L40 44 L78 18" stroke="#C8C8C8" strokeWidth={1.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         {/* Bottom seam */}
@@ -157,7 +160,7 @@ export function EmailVerificationScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -166,26 +169,26 @@ export function EmailVerificationScreen() {
           <EnvelopeAnimation />
 
           <Animated.View style={[titleStyle, { alignItems: 'center', width: '100%' }]}>
-            <Text style={{
+            <ArchText variant="body" style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 32,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               textAlign: 'center',
               marginBottom: 12,
             }}>
               Check your inbox
-            </Text>
-            <Text style={{
+            </ArchText>
+            <ArchText variant="body" style={{
               fontFamily: 'Inter_400Regular',
               fontSize: 15,
-              color: BASE_COLORS.textSecondary,
+              color: DS.colors.primaryDim,
               textAlign: 'center',
               lineHeight: 22,
               marginBottom: 40,
             }}>
               We sent a verification link to{'\n'}
-              <Text style={{ color: BASE_COLORS.textPrimary }}>{email}</Text>
-            </Text>
+              <ArchText variant="body" style={{ color: DS.colors.primary }}>{email}</ArchText>
+            </ArchText>
           </Animated.View>
 
           <Animated.View style={[bodyStyle, { width: '100%', gap: 12 }]}>
@@ -194,30 +197,30 @@ export function EmailVerificationScreen() {
               onPress={() => { void handleResend(); }}
               disabled={cooldown > 0 || resending}
               style={{
-                backgroundColor: cooldown > 0 || resending ? BASE_COLORS.border : '#C8C8C8',
-                borderRadius: 16,
+                backgroundColor: cooldown > 0 || resending ? DS.colors.border : '#C8C8C8',
+                borderRadius: 50,
                 height: 52,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
               {resending ? (
-                <LogoLoader size="small" />
+                <CompassRoseLoader size="small" />
               ) : (
-                <Text style={{
+                <ArchText variant="body" style={{
                   fontFamily: 'Inter_700Bold',
                   fontSize: 15,
-                  color: cooldown > 0 ? BASE_COLORS.textDim : BASE_COLORS.background,
+                  color: cooldown > 0 ? DS.colors.primaryGhost : DS.colors.background,
                 }}>
                   {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend email'}
-                </Text>
+                </ArchText>
               )}
             </Pressable>
 
             {resendError ? (
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.error, textAlign: 'center' }}>
+              <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.error, textAlign: 'center' }}>
                 {resendError}
-              </Text>
+              </ArchText>
             ) : null}
 
             {/* Already verified link */}
@@ -225,10 +228,10 @@ export function EmailVerificationScreen() {
               onPress={() => navigation.navigate('Login')}
               style={{ alignItems: 'center', marginTop: 8 }}
             >
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>
+              <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
                 Already verified?{' '}
-                <Text style={{ color: BASE_COLORS.textPrimary, textDecorationLine: 'underline' }}>Sign in</Text>
-              </Text>
+                <ArchText variant="body" style={{ color: DS.colors.primary, textDecorationLine: 'underline' }}>Sign in</ArchText>
+              </ArchText>
             </Pressable>
           </Animated.View>
         </View>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
 import {
-  View, Text, ScrollView, TextInput, Pressable, Alert, KeyboardAvoidingView, Platform,
+  View, ScrollView, TextInput, Pressable, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming, withSequence,
@@ -12,10 +14,10 @@ import { inspoService } from '../../services/inspoService';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useTierGate } from '../../hooks/useTierGate';
-import { useTheme } from '../../hooks/useTheme';
+
 import { useHaptics } from '../../hooks/useHaptics';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
-import { BASE_COLORS } from '../../theme/colors';
+
 
 const BUILDING_TYPES = ['house', 'apartment', 'office', 'studio', 'other'] as const;
 const STYLES = ['minimalist', 'modern', 'rustic', 'industrial', 'scandinavian', 'bohemian', 'art_deco', 'coastal', 'traditional', 'mid_century', 'japandi', 'eclectic'] as const;
@@ -30,7 +32,7 @@ function BackArrow({ color }: { color: string }) {
 }
 
 function ChipButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const { colors } = useTheme();
+  
   return (
     <Pressable
       onPress={onPress}
@@ -39,27 +41,27 @@ function ChipButton({ label, active, onPress }: { label: string; active: boolean
         paddingVertical: 7,
         borderRadius: 20,
         borderWidth: 1.5,
-        borderColor: active ? colors.primary : BASE_COLORS.border,
-        backgroundColor: active ? `${colors.primary}22` : 'transparent',
+        borderColor: active ? DS.colors.primary : DS.colors.border,
+        backgroundColor: active ? `${DS.colors.primary}22` : 'transparent',
         marginRight: 8,
         marginBottom: 8,
       }}
     >
-      <Text style={{
+      <ArchText variant="body" style={{
         fontFamily: 'Inter_500Medium',
         fontSize: 13,
-        color: active ? colors.primary : BASE_COLORS.textSecondary,
+        color: active ? DS.colors.primary : DS.colors.primaryDim,
         textTransform: 'capitalize',
       }}>
         {label.replace(/_/g, ' ')}
-      </Text>
+      </ArchText>
     </Pressable>
   );
 }
 
 export function PublishTemplateScreen({ navigation, route }: PublishTemplateScreenProps) {
   const { projectId } = route.params;
-  const { colors } = useTheme();
+  
   const { medium, light } = useHaptics();
   const user = useAuthStore((s) => s.user);
   const showToast = useUIStore((s) => s.actions.showToast);
@@ -131,24 +133,24 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
 
   if (!canPublish) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: DS.colors.background }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: BASE_COLORS.textPrimary, textAlign: 'center', marginBottom: 12 }}>
+          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary, textAlign: 'center', marginBottom: 12 }}>
             Upgrade to Publish
-          </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: BASE_COLORS.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 28 }}>
+          </ArchText>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 22, marginBottom: 28 }}>
             Publishing templates is available on Creator and Architect plans.
-          </Text>
+          </ArchText>
           <Pressable
             onPress={() => navigation.navigate('Subscription', { feature: 'publishTemplates' })}
-            style={{ backgroundColor: colors.primary, borderRadius: 50, paddingVertical: 14, paddingHorizontal: 32 }}
+            style={{ backgroundColor: DS.colors.primary, borderRadius: 50, paddingVertical: 14, paddingHorizontal: 32 }}
           >
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.background }}>
+            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.background }}>
               View Plans
-            </Text>
+            </ArchText>
           </Pressable>
           <Pressable onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textDim }}>Go Back</Text>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryGhost }}>Go Back</ArchText>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -156,65 +158,65 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: DS.colors.background }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: DS.colors.border }}>
           <Pressable onPress={() => navigation.goBack()} style={{ marginRight: 14 }}>
-            <BackArrow color={BASE_COLORS.textPrimary} />
+            <BackArrow color={DS.colors.primary} />
           </Pressable>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: BASE_COLORS.textPrimary, flex: 1 }}>
+          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary, flex: 1 }}>
             Publish Design
-          </Text>
+          </ArchText>
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
           {/* Name */}
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: BASE_COLORS.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: DS.colors.primaryDim, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>
             Template Name
-          </Text>
+          </ArchText>
           <TextInput
             value={name}
             onChangeText={setName}
             placeholder="My Awesome Design"
-            placeholderTextColor={BASE_COLORS.textDim}
+            placeholderTextColor={DS.colors.primaryGhost}
             maxLength={80}
             style={{
-              backgroundColor: BASE_COLORS.surface,
+              backgroundColor: DS.colors.surface,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: BASE_COLORS.border,
+              borderColor: DS.colors.border,
               paddingHorizontal: 14,
               paddingVertical: 12,
               fontFamily: 'Inter_400Regular',
               fontSize: 15,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               marginBottom: 20,
             }}
           />
 
           {/* Description */}
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: BASE_COLORS.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: DS.colors.primaryDim, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>
             Description (optional)
-          </Text>
+          </ArchText>
           <TextInput
             value={description}
             onChangeText={setDescription}
             placeholder="Describe your design..."
-            placeholderTextColor={BASE_COLORS.textDim}
+            placeholderTextColor={DS.colors.primaryGhost}
             multiline
             numberOfLines={4}
             maxLength={500}
             style={{
-              backgroundColor: BASE_COLORS.surface,
+              backgroundColor: DS.colors.surface,
               borderRadius: 10,
               borderWidth: 1,
-              borderColor: BASE_COLORS.border,
+              borderColor: DS.colors.border,
               paddingHorizontal: 14,
               paddingVertical: 12,
               fontFamily: 'Inter_400Regular',
               fontSize: 15,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               minHeight: 90,
               textAlignVertical: 'top',
               marginBottom: 20,
@@ -222,9 +224,9 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
           />
 
           {/* Building type */}
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: BASE_COLORS.textSecondary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: DS.colors.primaryDim, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
             Building Type
-          </Text>
+          </ArchText>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
             {BUILDING_TYPES.map((t) => (
               <ChipButton key={t} label={t} active={buildingType === t} onPress={() => { light(); setBuildingType(t); }} />
@@ -232,9 +234,9 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
           </View>
 
           {/* Style */}
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: BASE_COLORS.textSecondary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: DS.colors.primaryDim, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
             Style
-          </Text>
+          </ArchText>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 }}>
             {STYLES.map((s) => (
               <ChipButton key={s} label={s} active={style === s} onPress={() => { light(); setStyle(s); }} />
@@ -242,9 +244,9 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
           </View>
 
           {/* Pricing */}
-          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: BASE_COLORS.textSecondary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: DS.colors.primaryDim, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 }}>
             Pricing
-          </Text>
+          </ArchText>
           <View style={{ flexDirection: 'row', gap: 12, marginBottom: isPaid ? 12 : 24 }}>
             {(['free', 'paid'] as const).map((option) => {
               const active = (option === 'paid') === isPaid;
@@ -257,14 +259,14 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
                     paddingVertical: 12,
                     borderRadius: 10,
                     borderWidth: 1.5,
-                    borderColor: active ? colors.primary : BASE_COLORS.border,
-                    backgroundColor: active ? `${colors.primary}18` : 'transparent',
+                    borderColor: active ? DS.colors.primary : DS.colors.border,
+                    backgroundColor: active ? `${DS.colors.primary}18` : 'transparent',
                     alignItems: 'center',
                   }}
                 >
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: active ? colors.primary : BASE_COLORS.textSecondary, textTransform: 'capitalize' }}>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: active ? DS.colors.primary : DS.colors.primaryDim, textTransform: 'capitalize' }}>
                     {option}
-                  </Text>
+                  </ArchText>
                 </Pressable>
               );
             })}
@@ -273,32 +275,31 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
           {isPaid && (
             <View style={{ marginBottom: 20 }}>
               {!isArchitect && (
-                <View style={{ backgroundColor: `${colors.warning ?? '#F59E0B'}18`, borderRadius: 8, padding: 12, marginBottom: 12 }}>
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary }}>
+                <View style={{ backgroundColor: `${DS.colors.warning}18`, borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim }}>
                     Paid templates require an Architect plan.{' '}
-                    <Text
-                      onPress={() => navigation.navigate('Subscription', { feature: 'publishTemplates' })}
-                      style={{ color: colors.primary }}
-                    >
-                      Upgrade
-                    </Text>
-                  </Text>
+                    <Pressable onPress={() => navigation.navigate('Subscription', { feature: 'publishTemplates' })}>
+                      <ArchText variant="body" style={{ color: DS.colors.primary, textDecorationLine: 'underline' }}>
+                        Upgrade
+                      </ArchText>
+                    </Pressable>
+                  </ArchText>
                 </View>
               )}
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: BASE_COLORS.surface, borderRadius: 10, borderWidth: 1, borderColor: BASE_COLORS.border, paddingHorizontal: 14, paddingVertical: 12 }}>
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 16, color: BASE_COLORS.textPrimary, marginRight: 4 }}>$</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: DS.colors.surface, borderRadius: 10, borderWidth: 1, borderColor: DS.colors.border, paddingHorizontal: 14, paddingVertical: 12 }}>
+                <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 16, color: DS.colors.primary, marginRight: 4 }}>$</ArchText>
                 <TextInput
                   value={price}
                   onChangeText={setPrice}
                   keyboardType="decimal-pad"
                   placeholder="4.99"
-                  placeholderTextColor={BASE_COLORS.textDim}
-                  style={{ flex: 1, fontFamily: 'JetBrainsMono_400Regular', fontSize: 16, color: BASE_COLORS.textPrimary }}
+                  placeholderTextColor={DS.colors.primaryGhost}
+                  style={{ flex: 1, fontFamily: 'JetBrainsMono_400Regular', fontSize: 16, color: DS.colors.primary }}
                 />
               </View>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.textDim, marginTop: 6 }}>
+              <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryGhost, marginTop: 6 }}>
                 You earn {isArchitect ? '80%' : '70%'} of each sale
-              </Text>
+              </ArchText>
             </View>
           )}
 
@@ -310,16 +311,16 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
             <View style={{
               width: 20, height: 20, borderRadius: 5,
               borderWidth: 1.5,
-              borderColor: agreed ? colors.primary : BASE_COLORS.border,
-              backgroundColor: agreed ? colors.primary : 'transparent',
+              borderColor: agreed ? DS.colors.primary : DS.colors.border,
+              backgroundColor: agreed ? DS.colors.primary : 'transparent',
               marginTop: 1,
               alignItems: 'center', justifyContent: 'center',
             }}>
-              {agreed && <Text style={{ color: '#fff', fontSize: 13, lineHeight: 14 }}>✓</Text>}
+              {agreed && <ArchText variant="body" style={{ color: '#fff', fontSize: 13, lineHeight: 14 }}>✓</ArchText>}
             </View>
-            <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textSecondary, lineHeight: 20 }}>
+            <ArchText variant="body" style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim, lineHeight: 20 }}>
               I confirm this design is my own original work and I have the right to publish it on Archora. I agree to the community guidelines.
-            </Text>
+            </ArchText>
           </Pressable>
 
           {/* Publish button */}
@@ -328,7 +329,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
               onPress={handlePublish}
               disabled={loading}
               style={{
-                backgroundColor: loading ? BASE_COLORS.border : colors.primary,
+                backgroundColor: loading ? DS.colors.border : DS.colors.primary,
                 borderRadius: 50,
                 paddingVertical: 16,
                 alignItems: 'center',
@@ -338,9 +339,9 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
               {loading ? (
                 <CompassRoseLoader size="small" />
               ) : (
-                <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: BASE_COLORS.background }}>
+                <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: DS.colors.background }}>
                   Publish Template
-                </Text>
+                </ArchText>
               )}
             </Pressable>
           </Animated.View>

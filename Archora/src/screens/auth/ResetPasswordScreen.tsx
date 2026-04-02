@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
+import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import {
-  View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, Linking,
+  View, TextInput, Pressable, KeyboardAvoidingView, Platform, Linking,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -16,8 +19,8 @@ import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../utils/supabaseClient';
-import { BASE_COLORS } from '../../theme/colors';
-import { LogoLoader } from '../../components/common/LogoLoader';
+
+
 import type { AuthStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'ResetPassword'>;
@@ -49,8 +52,8 @@ function PasswordInput({
     interpolateColor(borderProgress.value, [0, 1], ['#333333', '#C8C8C8'])
   );
   const animatedStyle = useAnimatedStyle(() => ({
-    borderColor: error ? BASE_COLORS.error : borderColor.value,
-    borderRadius: 16,
+    borderColor: error ? DS.colors.error : borderColor.value,
+    borderRadius: 50,
     backgroundColor: '#2C2C2C',
     borderWidth: 1.5,
     flexDirection: 'row' as const,
@@ -82,7 +85,7 @@ function PasswordInput({
             flex: 1,
             fontFamily: 'Inter_400Regular',
             fontSize: 15,
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             padding: 0,
           }}
         />
@@ -97,9 +100,9 @@ function PasswordInput({
         </Pressable>
       </Animated.View>
       {error ? (
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.error, marginTop: 6, marginLeft: 4 }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.error, marginTop: 6, marginLeft: 4 }}>
           {error}
-        </Text>
+        </ArchText>
       ) : null}
     </View>
   );
@@ -206,49 +209,49 @@ export function ResetPasswordScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={{ flex: 1, padding: 32, paddingTop: 80 }}>
           <Animated.View style={titleStyle}>
-            <Text style={{
+            <ArchText variant="body" style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 32,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               marginBottom: 10,
             }}>
               New Password
-            </Text>
-            <Text style={{
+            </ArchText>
+            <ArchText variant="body" style={{
               fontFamily: 'Inter_400Regular',
               fontSize: 15,
-              color: BASE_COLORS.textSecondary,
+              color: DS.colors.primaryDim,
               marginBottom: 40,
             }}>
               Choose a strong password for your account
-            </Text>
+            </ArchText>
           </Animated.View>
 
           <Animated.View style={formStyle}>
             {tokenError ? (
               <View style={{ alignItems: 'center', paddingTop: 24 }}>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.error, textAlign: 'center', marginBottom: 24 }}>
+                <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.error, textAlign: 'center', marginBottom: 24 }}>
                   {tokenError}
-                </Text>
+                </ArchText>
                 <Pressable onPress={() => navigation.navigate('ForgotPassword')}>
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
                     Request a new link
-                  </Text>
+                  </ArchText>
                 </Pressable>
               </View>
             ) : !tokenReady ? (
               <View style={{ alignItems: 'center', paddingTop: 48 }}>
-                <LogoLoader size="medium" />
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim, marginTop: 16 }}>
+                <CompassRoseLoader size="medium" />
+                <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, marginTop: 16 }}>
                   Verifying reset link...
-                </Text>
+                </ArchText>
               </View>
             ) : (
               <View style={{ backgroundColor: '#222222', borderRadius: 24, padding: 24, marginHorizontal: 4 }}>
@@ -257,12 +260,12 @@ export function ResetPasswordScreen() {
                 {/* Password strength bar */}
                 {newPassword.length > 0 && (
                   <View style={{ marginTop: -8, marginBottom: 16 }}>
-                    <View style={{ height: 3, backgroundColor: BASE_COLORS.border, borderRadius: 2, marginBottom: 6 }}>
+                    <View style={{ height: 3, backgroundColor: DS.colors.border, borderRadius: 2, marginBottom: 6 }}>
                       <Animated.View style={strengthBarStyle} />
                     </View>
-                    <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: STRENGTH_COLORS[strength.score] }}>
+                    <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: STRENGTH_COLORS[strength.score] }}>
                       {strength.label}
-                    </Text>
+                    </ArchText>
                   </View>
                 )}
 
@@ -275,9 +278,9 @@ export function ResetPasswordScreen() {
 
                 {/* Confirm valid tick */}
                 {passwordsMatch && (
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#7AB87A', marginTop: -8, marginBottom: 12, marginLeft: 4 }}>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#7AB87A', marginTop: -8, marginBottom: 12, marginLeft: 4 }}>
                     ✓ Passwords match
-                  </Text>
+                  </ArchText>
                 )}
 
                 <Animated.View style={[btnStyle, { marginTop: 8 }]}>
@@ -287,19 +290,19 @@ export function ResetPasswordScreen() {
                     onPress={() => { void handleUpdatePassword(); }}
                     disabled={loading || !passwordsMatch}
                     style={{
-                      backgroundColor: loading || !passwordsMatch ? BASE_COLORS.border : '#C8C8C8',
-                      borderRadius: 16,
+                      backgroundColor: loading || !passwordsMatch ? DS.colors.border : '#C8C8C8',
+                      borderRadius: 50,
                       height: 56,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
                     {loading ? (
-                      <LogoLoader size="small" />
+                      <CompassRoseLoader size="small" />
                     ) : (
-                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 16, color: BASE_COLORS.background }}>
+                      <ArchText variant="body" style={{ fontFamily: 'Inter_700Bold', fontSize: 16, color: DS.colors.background }}>
                         Update Password
-                      </Text>
+                      </ArchText>
                     )}
                   </Pressable>
                 </Animated.View>

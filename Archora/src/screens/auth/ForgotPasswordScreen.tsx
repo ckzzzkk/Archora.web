@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
+import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import {
-  View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform,
+  View, TextInput, Pressable, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -18,8 +21,8 @@ import Svg, { Path, Rect } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../utils/supabaseClient';
-import { BASE_COLORS } from '../../theme/colors';
-import { LogoLoader } from '../../components/common/LogoLoader';
+
+
 import type { AuthStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'ForgotPassword'>;
@@ -49,7 +52,7 @@ function SentEnvelope() {
   return (
     <Animated.View style={style}>
       <Svg width={72} height={56} viewBox="0 0 72 56">
-        <Rect x={2} y={2} width={68} height={52} rx={4} fill={BASE_COLORS.surfaceHigh} stroke="#C8C8C8" strokeWidth={1.5} />
+        <Rect x={2} y={2} width={68} height={52} rx={4} fill={DS.colors.surfaceHigh} stroke="#C8C8C8" strokeWidth={1.5} />
         <Path d="M2 8 L36 32 L70 8" stroke="#C8C8C8" strokeWidth={1.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         <Path d="M2 54 L26 36 M70 54 L46 36" stroke="#5A5550" strokeWidth={1} strokeLinecap="round" />
         {/* Checkmark */}
@@ -65,8 +68,8 @@ function EmailInput({ value, onChange, error }: { value: string; onChange: (t: s
     interpolateColor(borderProgress.value, [0, 1], ['#333333', '#C8C8C8'])
   );
   const animatedStyle = useAnimatedStyle(() => ({
-    borderColor: error ? BASE_COLORS.error : borderColor.value,
-    borderRadius: 16,
+    borderColor: error ? DS.colors.error : borderColor.value,
+    borderRadius: 50,
     backgroundColor: '#2C2C2C',
     borderWidth: 1.5,
     flexDirection: 'row' as const,
@@ -95,15 +98,15 @@ function EmailInput({ value, onChange, error }: { value: string; onChange: (t: s
             flex: 1,
             fontFamily: 'Inter_400Regular',
             fontSize: 15,
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             padding: 0,
           }}
         />
       </Animated.View>
       {error ? (
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: BASE_COLORS.error, marginTop: 6, marginLeft: 4 }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.error, marginTop: 6, marginLeft: 4 }}>
           {error}
-        </Text>
+        </ArchText>
       ) : null}
     </View>
   );
@@ -157,77 +160,77 @@ export function ForgotPasswordScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={{ flex: 1, padding: 32, paddingTop: 80 }}>
           <Pressable onPress={() => navigation.goBack()} style={{ marginBottom: 40 }}>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textDim }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryGhost }}>
               ← Back
-            </Text>
+            </ArchText>
           </Pressable>
 
           <Animated.View style={titleStyle}>
-            <Text style={{
+            <ArchText variant="body" style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 32,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               marginBottom: 10,
             }}>
               Reset Password
-            </Text>
-            <Text style={{
+            </ArchText>
+            <ArchText variant="body" style={{
               fontFamily: 'Inter_400Regular',
               fontSize: 15,
-              color: BASE_COLORS.textSecondary,
+              color: DS.colors.primaryDim,
               marginBottom: 40,
               lineHeight: 22,
             }}>
               Enter your email and we{'\u2019'}ll send you a reset link
-            </Text>
+            </ArchText>
           </Animated.View>
 
           <Animated.View style={formStyle}>
             {sent ? (
               <View style={{ alignItems: 'center', paddingTop: 16 }}>
                 <SentEnvelope />
-                <Text style={{
+                <ArchText variant="body" style={{
                   fontFamily: 'ArchitectsDaughter_400Regular',
                   fontSize: 22,
-                  color: BASE_COLORS.textPrimary,
+                  color: DS.colors.primary,
                   textAlign: 'center',
                   marginBottom: 12,
                 }}>
                   Check your inbox
-                </Text>
-                <Text style={{
+                </ArchText>
+                <ArchText variant="body" style={{
                   fontFamily: 'Inter_400Regular',
                   fontSize: 14,
-                  color: BASE_COLORS.textSecondary,
+                  color: DS.colors.primaryDim,
                   textAlign: 'center',
                   marginBottom: 8,
                   lineHeight: 21,
                 }}>
                   Reset instructions sent to{'\n'}
-                  <Text style={{ color: BASE_COLORS.textPrimary }}>{email}</Text>
-                </Text>
-                <Text style={{
+                  <ArchText variant="body" style={{ color: DS.colors.primary }}>{email}</ArchText>
+                </ArchText>
+                <ArchText variant="body" style={{
                   fontFamily: 'Inter_400Regular',
                   fontSize: 12,
-                  color: BASE_COLORS.textDim,
+                  color: DS.colors.primaryGhost,
                   textAlign: 'center',
                   marginBottom: 32,
                   lineHeight: 18,
                 }}>
                   Reset link expires in 1 hour.{'\n'}Check your spam folder if you don{'\u2019'}t see it.
-                </Text>
+                </ArchText>
                 <Pressable onPress={() => navigation.navigate('Login')}>
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary }}>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
                     Back to{' '}
-                    <Text style={{ color: BASE_COLORS.textPrimary, textDecorationLine: 'underline' }}>Sign in</Text>
-                  </Text>
+                    <ArchText variant="body" style={{ color: DS.colors.primary, textDecorationLine: 'underline' }}>Sign in</ArchText>
+                  </ArchText>
                 </Pressable>
               </View>
             ) : (
@@ -241,19 +244,19 @@ export function ForgotPasswordScreen() {
                     onPress={() => { void handleSend(); }}
                     disabled={loading}
                     style={{
-                      backgroundColor: loading ? BASE_COLORS.border : '#C8C8C8',
-                      borderRadius: 16,
+                      backgroundColor: loading ? DS.colors.border : '#C8C8C8',
+                      borderRadius: 50,
                       height: 56,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
                     {loading ? (
-                      <LogoLoader size="small" />
+                      <CompassRoseLoader size="small" />
                     ) : (
-                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 16, color: BASE_COLORS.background }}>
+                      <ArchText variant="body" style={{ fontFamily: 'Inter_700Bold', fontSize: 16, color: DS.colors.background }}>
                         Send Reset Link
-                      </Text>
+                      </ArchText>
                     )}
                   </Pressable>
                 </Animated.View>

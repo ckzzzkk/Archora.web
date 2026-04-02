@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
+import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import {
-  View, Text, Image, ScrollView, Pressable, Dimensions, Alert,
+  View, Image, ScrollView, Pressable, Dimensions, Alert,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -15,10 +18,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { inspoService } from '../../services/inspoService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { useTheme } from '../../hooks/useTheme';
+
 import { useHaptics } from '../../hooks/useHaptics';
-import { BASE_COLORS } from '../../theme/colors';
-import { LogoLoader } from '../../components/common/LogoLoader';
+
+
 import { LikeButton } from '../../components/social/LikeButton';
 import { SaveButton } from '../../components/social/SaveButton';
 import { RatingStars } from '../../components/social/RatingStars';
@@ -46,7 +49,7 @@ function formatDate(dateStr: string): string {
 
 export function TemplateDetailScreen({ navigation, route }: Props) {
   const { templateId } = route.params;
-  const { colors } = useTheme();
+  
   const { medium } = useHaptics();
 
   const [template, setTemplate] = useState<Template | null>(null);
@@ -99,14 +102,14 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
-        <LogoLoader size="large" />
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <CompassRoseLoader size="large" />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       {/* Hero */}
       <View style={{ height: HERO_H, overflow: 'hidden' }}>
         <Animated.View style={[{ width: '100%', height: '100%' }, heroStyle]}>
@@ -117,8 +120,8 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
               resizeMode="cover"
             />
           ) : (
-            <View style={{ flex: 1, backgroundColor: BASE_COLORS.surfaceHigh, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 60, color: colors.primaryDim }}>◻</Text>
+            <View style={{ flex: 1, backgroundColor: DS.colors.surfaceHigh, alignItems: 'center', justifyContent: 'center' }}>
+              <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 60, color: DS.colors.primaryDim }}>◻</ArchText>
             </View>
           )}
         </Animated.View>
@@ -170,7 +173,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
                     width: 40,
                     height: 40,
                     borderRadius: 20,
-                    backgroundColor: colors.primaryDim,
+                    backgroundColor: DS.colors.primaryDim,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: 12,
@@ -182,40 +185,40 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
                       style={{ width: 40, height: 40, borderRadius: 20 }}
                     />
                   ) : (
-                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 16, color: BASE_COLORS.background }}>
+                    <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 16, color: DS.colors.background }}>
                       {template.authorDisplayName?.[0]?.toUpperCase() ?? '?'}
-                    </Text>
+                    </ArchText>
                   )}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: BASE_COLORS.textPrimary }}>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: DS.colors.primary }}>
                     {template.authorDisplayName}
-                  </Text>
-                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: BASE_COLORS.textDim }}>
+                  </ArchText>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: DS.colors.primaryGhost }}>
                     {formatDate(template.createdAt)}
-                  </Text>
+                  </ArchText>
                 </View>
               </View>
 
               {/* Title */}
-              <Text
+              <ArchText variant="body"
                 style={{
                   fontFamily: 'ArchitectsDaughter_400Regular',
                   fontSize: 26,
-                  color: BASE_COLORS.textPrimary,
+                  color: DS.colors.primary,
                   marginBottom: 12,
                 }}
               >
                 {template.title}
-              </Text>
+              </ArchText>
 
               {/* Stats row */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 12 }}>
                 <LikeButton templateId={template.id} likeCount={template.likeCount} isLiked={template.isLiked} />
                 <SaveButton templateId={template.id} saveCount={template.saveCount} isSaved={template.isSaved} />
-                <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: BASE_COLORS.textDim }}>
+                <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryGhost }}>
                   {template.downloadCount} dl
-                </Text>
+                </ArchText>
               </View>
 
               {/* Rating */}
@@ -232,33 +235,33 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
 
               {/* Description */}
               {template.description ? (
-                <Text
+                <ArchText variant="body"
                   style={{
                     fontFamily: 'Inter_400Regular',
                     fontSize: 14,
-                    color: BASE_COLORS.textSecondary,
+                    color: DS.colors.primaryDim,
                     lineHeight: 22,
                     marginBottom: 20,
                   }}
                 >
                   {template.description}
-                </Text>
+                </ArchText>
               ) : null}
 
               {/* Use Template button */}
               <Pressable
                 onPress={handleUse}
                 style={{
-                  backgroundColor: colors.primary,
+                  backgroundColor: DS.colors.primary,
                   borderRadius: 12,
                   paddingVertical: 16,
                   alignItems: 'center',
                   marginBottom: 28,
                 }}
               >
-                <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: BASE_COLORS.background }}>
+                <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: DS.colors.background }}>
                   {template && template.price > 0 ? `Buy for $${template.price.toFixed(2)}` : 'Use This Template'}
-                </Text>
+                </ArchText>
               </Pressable>
 
               {/* Comments */}
