@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useCameraDevice, Camera } from 'react-native-vision-camera';
-import { BASE_COLORS } from '../../theme/colors';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { ARPermissionRequest } from '../../components/ar/ARPermissionRequest';
 import { ARModeSelector } from '../../components/ar/ARModeSelector';
@@ -26,8 +27,8 @@ export function ARScanScreen() {
 
   if (hasPermission === null) {
     return (
-      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: BASE_COLORS.textSecondary }}>Requesting camera permission...</Text>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ArchText variant="body" style={{ color: DS.colors.primaryDim }}>Requesting camera permission...</ArchText>
       </View>
     );
   }
@@ -44,14 +45,14 @@ export function ARScanScreen() {
 
   if (!device) {
     return (
-      <View style={{ flex: 1, backgroundColor: BASE_COLORS.background, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: BASE_COLORS.textSecondary }}>No camera found</Text>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ArchText variant="body" style={{ color: DS.colors.primaryDim }}>No camera found</ArchText>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       <Camera style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} device={device} isActive={isFocused} photo={false} />
       <ARModeSelector current={mode} onChange={setMode} />
       <ARBackButton onPress={() => navigation.goBack()} />

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useReducer } from 'react';
-import { View, Text, Pressable, FlatList, Dimensions, Alert } from 'react-native';
+import { View, Pressable, FlatList, Dimensions, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,9 +21,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
-import { BASE_COLORS } from '../../theme/colors';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
 import { useScreenSlideIn } from '../../hooks/useScreenSlideIn';
 import { HeaderLogoMark } from '../../components/common/HeaderLogoMark';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
@@ -273,10 +273,10 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
       style={{
         flex: 1,
         margin: 8,
-        backgroundColor: BASE_COLORS.surface,
+        backgroundColor: DS.colors.surface,
         borderRadius: 12,
         borderWidth: 1.5,
-        borderColor: BASE_COLORS.border,
+        borderColor: DS.colors.border,
         padding: 14,
         overflow: 'hidden',
       }}
@@ -286,16 +286,16 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
         <DrawingPin color={accentColor} />
       </View>
 
-      <Text
+      <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',
           fontSize: 16,
-          color: BASE_COLORS.textPrimary,
+          color: DS.colors.primary,
           marginBottom: 10,
         }}
       >
         {preset.name}
-      </Text>
+      </ArchText>
 
       {/* Size chips */}
       <View style={{ flexDirection: 'row', gap: 6, marginBottom: 14 }}>
@@ -310,19 +310,19 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
                 paddingVertical: 4,
                 borderRadius: 999,
                 borderWidth: 1.5,
-                borderColor: selectedSize === s ? accentColor : BASE_COLORS.border,
+                borderColor: selectedSize === s ? accentColor : DS.colors.border,
                 backgroundColor: selectedSize === s ? `${accentColor}20` : 'transparent',
               }}
             >
-              <Text
+              <ArchText variant="body"
                 style={{
                   fontFamily: 'JetBrainsMono_400Regular',
                   fontSize: 10,
-                  color: selectedSize === s ? accentColor : BASE_COLORS.textDim,
+                  color: selectedSize === s ? accentColor : DS.colors.primaryGhost,
                 }}
               >
                 {s[0].toUpperCase()} {dims.w}×{dims.h}
-              </Text>
+              </ArchText>
             </Pressable>
           );
         })}
@@ -341,7 +341,7 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: accentColor }}>+ Canvas</Text>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: accentColor }}>+ Canvas</ArchText>
         </Pressable>
         <Pressable
           onPress={() => onSendToWorkspace(preset, selectedSize)}
@@ -353,7 +353,7 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: BASE_COLORS.background }}>→ Workspace</Text>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: DS.colors.background }}>→ Workspace</ArchText>
         </Pressable>
       </View>
     </View>
@@ -364,7 +364,6 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
 
 export function SketchScreen() {
   const navigation = useNavigation<Nav>();
-  const { colors } = useTheme();
   const { light, medium } = useHaptics();
   const slideStyle = useScreenSlideIn();
 
@@ -575,7 +574,7 @@ export function SketchScreen() {
     navigation.navigate('Workspace', undefined);
   }, [medium, navigation]);
 
-  const accentColor = colors.primary;
+  const accentColor = DS.colors.primary;
 
   const TOOLS: { id: DrawTool; label: string }[] = [
     { id: 'wall', label: 'Wall' },
@@ -585,25 +584,25 @@ export function SketchScreen() {
   ];
 
   return (
-    <Animated.View style={[{ flex: 1, backgroundColor: BASE_COLORS.background }, slideStyle]}>
+    <Animated.View style={[{ flex: 1, backgroundColor: DS.colors.background }, slideStyle]}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         {/* Header */}
         <Animated.View style={[headerAnimStyle, { paddingHorizontal: 20, paddingVertical: 14 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <HeaderLogoMark size={32} />
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: BASE_COLORS.textPrimary, marginLeft: 10 }}>
+            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary, marginLeft: 10 }}>
               Sketch
-            </Text>
+            </ArchText>
           </View>
 
           {/* Mode toggle pill */}
           <View style={{
             flexDirection: 'row',
-            backgroundColor: BASE_COLORS.surfaceHigh,
+            backgroundColor: DS.colors.surfaceHigh,
             borderRadius: 999,
             padding: 3,
             borderWidth: 1,
-            borderColor: BASE_COLORS.border,
+            borderColor: DS.colors.border,
             alignSelf: 'flex-start',
           }}>
             {(['draw', 'presets'] as SketchMode[]).map((m) => (
@@ -617,14 +616,14 @@ export function SketchScreen() {
                   backgroundColor: mode === m ? accentColor : 'transparent',
                 }}
               >
-                <Text style={{
+                <ArchText variant="body" style={{
                   fontFamily: 'Inter_500Medium',
                   fontSize: 13,
-                  color: mode === m ? BASE_COLORS.background : BASE_COLORS.textSecondary,
+                  color: mode === m ? DS.colors.background : DS.colors.primaryDim,
                   textTransform: 'capitalize',
                 }}>
                   {m}
-                </Text>
+                </ArchText>
               </Pressable>
             ))}
           </View>
@@ -667,7 +666,7 @@ export function SketchScreen() {
                       y: metreToPixel(w.end.y, skScale.current, skOffsetY.current),
                     }}
                     strokeWidth={3}
-                    color={closedPolygon?.some((cw) => cw.id === w.id) ? accentColor : BASE_COLORS.textPrimary}
+                    color={closedPolygon?.some((cw) => cw.id === w.id) ? accentColor : DS.colors.primary}
                   />
                 ))}
 
@@ -714,11 +713,11 @@ export function SketchScreen() {
                 left: 20,
                 right: 20,
                 flexDirection: 'row',
-                backgroundColor: BASE_COLORS.surfaceHigh,
+                backgroundColor: DS.colors.surfaceHigh,
                 borderRadius: 999,
                 padding: 6,
                 borderWidth: 1,
-                borderColor: BASE_COLORS.border,
+                borderColor: DS.colors.border,
                 alignItems: 'center',
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
@@ -739,18 +738,18 @@ export function SketchScreen() {
                     backgroundColor: tool === t.id ? accentColor : 'transparent',
                   }}
                 >
-                  <Text style={{
+                  <ArchText variant="body" style={{
                     fontFamily: 'Inter_500Medium',
                     fontSize: 12,
-                    color: tool === t.id ? BASE_COLORS.background : BASE_COLORS.textSecondary,
+                    color: tool === t.id ? DS.colors.background : DS.colors.primaryDim,
                   }}>
                     {t.label}
-                  </Text>
+                  </ArchText>
                 </Pressable>
               ))}
 
               {/* Divider */}
-              <View style={{ width: 1, height: 24, backgroundColor: BASE_COLORS.border, marginHorizontal: 4 }} />
+              <View style={{ width: 1, height: 24, backgroundColor: DS.colors.border, marginHorizontal: 4 }} />
 
               {/* Send to Blueprint */}
               <Pressable
@@ -763,9 +762,9 @@ export function SketchScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: BASE_COLORS.background }}>
+                <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: DS.colors.background }}>
                   Send ↗
-                </Text>
+                </ArchText>
               </Pressable>
             </Animated.View>
           </Animated.View>

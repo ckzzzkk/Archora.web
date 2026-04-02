@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Pressable, ScrollView } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, interpolate,
 } from 'react-native-reanimated';
@@ -24,10 +24,10 @@ import { AIAssistantSheet } from '../../components/blueprint/AIAssistantSheet';
 import { SurfacesSheet } from '../../components/blueprint/SurfacesSheet';
 import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
 import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
-import { LogoLoader } from '../../components/common/LogoLoader';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { InHouseView } from '../../components/3d/InHouseView';
-import { BASE_COLORS } from '../../theme/colors';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
 import { randomUUID } from 'expo-crypto';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
@@ -63,9 +63,9 @@ function ToolButton({ tool, active, onPress }: { tool: typeof TOOLS[number]; act
       scale.value = withSpring(0.88, { damping: 10 }, () => { scale.value = withSpring(1, { damping: 14 }); });
       onPress();
     }}>
-      <Animated.View style={[animStyle, { width: 52, height: 52, borderRadius: 20, backgroundColor: active ? BASE_COLORS.textPrimary + '18' : BASE_COLORS.surfaceHigh, borderWidth: 1, borderColor: active ? BASE_COLORS.textPrimary : BASE_COLORS.border, alignItems: 'center', justifyContent: 'center', marginRight: 8 }]}>
-        <Text style={{ fontSize: 18, color: active ? BASE_COLORS.textPrimary : BASE_COLORS.textDim }}>{tool.icon}</Text>
-        <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: active ? BASE_COLORS.textPrimary : BASE_COLORS.textDim, marginTop: 2 }}>{tool.label}</Text>
+      <Animated.View style={[animStyle, { width: 52, height: 52, borderRadius: 20, backgroundColor: active ? DS.colors.primary + '18' : DS.colors.surfaceHigh, borderWidth: 1, borderColor: active ? DS.colors.primary : DS.colors.border, alignItems: 'center', justifyContent: 'center', marginRight: 8 }]}>
+        <ArchText variant="body" style={{ fontSize: 18, color: active ? DS.colors.primary : DS.colors.primaryGhost }}>{tool.icon}</ArchText>
+        <ArchText variant="body" style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: active ? DS.colors.primary : DS.colors.primaryGhost, marginTop: 2 }}>{tool.label}</ArchText>
       </Animated.View>
     </Pressable>
   );
@@ -74,12 +74,12 @@ function ToolButton({ tool, active, onPress }: { tool: typeof TOOLS[number]; act
 function ViewModeToggle({ mode, onSelect }: { mode: ViewMode; onSelect: (m: ViewMode) => void }) {
   const modes: ViewMode[] = ['2D', '3D', 'FirstPerson'];
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: BASE_COLORS.surfaceHigh, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: BASE_COLORS.border }}>
+    <View style={{ flexDirection: 'row', backgroundColor: DS.colors.surfaceHigh, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: DS.colors.border }}>
       {modes.map((m) => (
-        <Pressable key={m} onPress={() => onSelect(m)} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 9, backgroundColor: mode === m ? BASE_COLORS.textPrimary + '20' : 'transparent', borderWidth: mode === m ? 1 : 0, borderColor: mode === m ? BASE_COLORS.textPrimary : 'transparent' }}>
-          <Text style={{ fontSize: 11, fontFamily: 'Inter_500Medium', color: mode === m ? BASE_COLORS.textPrimary : BASE_COLORS.textDim }}>
+        <Pressable key={m} onPress={() => onSelect(m)} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 9, backgroundColor: mode === m ? DS.colors.primary + '20' : 'transparent', borderWidth: mode === m ? 1 : 0, borderColor: mode === m ? DS.colors.primary : 'transparent' }}>
+          <ArchText variant="body" style={{ fontSize: 11, fontFamily: 'Inter_500Medium', color: mode === m ? DS.colors.primary : DS.colors.primaryGhost }}>
             {m === 'FirstPerson' ? '1P' : m}
-          </Text>
+          </ArchText>
         </Pressable>
       ))}
     </View>
@@ -90,16 +90,16 @@ function EmptyBlueprint({ onGenerate }: { onGenerate: () => void }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 }}>
       <Svg width={80} height={80} viewBox="0 0 80 80" style={{ marginBottom: 20, opacity: 0.4 }}>
-        <Rect x="8" y="8" width="64" height="64" rx="4" stroke={BASE_COLORS.textPrimary} strokeWidth="2" fill="none" strokeDasharray="4 4" />
-        <Line x1="8" y1="30" x2="72" y2="30" stroke={BASE_COLORS.textPrimary} strokeWidth="1" strokeDasharray="2 4" />
-        <Line x1="30" y1="8" x2="30" y2="72" stroke={BASE_COLORS.textPrimary} strokeWidth="1" strokeDasharray="2 4" />
+        <Rect x="8" y="8" width="64" height="64" rx="4" stroke={DS.colors.primary} strokeWidth="2" fill="none" strokeDasharray="4 4" />
+        <Line x1="8" y1="30" x2="72" y2="30" stroke={DS.colors.primary} strokeWidth="1" strokeDasharray="2 4" />
+        <Line x1="30" y1="8" x2="30" y2="72" stroke={DS.colors.primary} strokeWidth="1" strokeDasharray="2 4" />
       </Svg>
-      <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: BASE_COLORS.textPrimary, textAlign: 'center', marginBottom: 10 }}>No Blueprint Yet</Text>
-      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 28 }}>
+      <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: DS.colors.primary, textAlign: 'center', marginBottom: 10 }}>No Blueprint Yet</ArchText>
+      <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 20, marginBottom: 28 }}>
         Generate a building with AI, scan a room, or start drawing manually.
-      </Text>
-      <Pressable onPress={onGenerate} style={{ backgroundColor: BASE_COLORS.textPrimary, borderRadius: 50, paddingHorizontal: 24, paddingVertical: 12 }}>
-        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 15, color: BASE_COLORS.background }}>Generate with AI</Text>
+      </ArchText>
+      <Pressable onPress={onGenerate} style={{ backgroundColor: DS.colors.primary, borderRadius: 50, paddingHorizontal: 24, paddingVertical: 12 }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 15, color: DS.colors.background }}>Generate with AI</ArchText>
       </Pressable>
     </View>
   );
@@ -249,19 +249,19 @@ export function BlueprintWorkspaceScreen() {
   }, [showToast]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
-      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border, backgroundColor: BASE_COLORS.surface, gap: 10 }}>
-        <Pressable onPress={() => navigation.goBack()} style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: BASE_COLORS.surfaceHigh, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: BASE_COLORS.border }}>
-          <Text style={{ color: BASE_COLORS.textSecondary, fontSize: 16 }}>✕</Text>
+      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: DS.colors.border, backgroundColor: DS.colors.surface, gap: 10 }}>
+        <Pressable onPress={() => navigation.goBack()} style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: DS.colors.surfaceHigh, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: DS.colors.border }}>
+          <ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: 16 }}>✕</ArchText>
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: BASE_COLORS.textPrimary }} numberOfLines={1}>
+          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primary }} numberOfLines={1}>
             {blueprint?.metadata.style ?? 'Design Studio'}
-          </Text>
+          </ArchText>
           {isDirty && (
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 9, color: BASE_COLORS.textDim, marginTop: 1 }}>unsaved changes</Text>
+            <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 9, color: DS.colors.primaryGhost, marginTop: 1 }}>unsaved changes</ArchText>
           )}
         </View>
         {syncStatus === 'syncing' && (
@@ -271,7 +271,7 @@ export function BlueprintWorkspaceScreen() {
       </View>
 
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
-      <View style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: BASE_COLORS.border, backgroundColor: BASE_COLORS.surface }}>
+      <View style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: DS.colors.border, backgroundColor: DS.colors.surface }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
           {TOOLS.map((tool) => (
             <ToolButton key={tool.id} tool={tool} active={activeTool === tool.id} onPress={() => handleToolPress(tool.id)} />
@@ -284,16 +284,16 @@ export function BlueprintWorkspaceScreen() {
                 width: 52,
                 height: 52,
                 borderRadius: 20,
-                backgroundColor: showStructuralGrid ? BASE_COLORS.textPrimary + '18' : BASE_COLORS.surfaceHigh,
+                backgroundColor: showStructuralGrid ? DS.colors.primary + '18' : DS.colors.surfaceHigh,
                 borderWidth: 1,
-                borderColor: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.border,
+                borderColor: showStructuralGrid ? DS.colors.primary : DS.colors.border,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 8,
               }}
             >
-              <Text style={{ fontSize: 14, color: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.textDim }}>⊞</Text>
-              <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: showStructuralGrid ? BASE_COLORS.textPrimary : BASE_COLORS.textDim, marginTop: 2 }}>GRID</Text>
+              <ArchText variant="body" style={{ fontSize: 14, color: showStructuralGrid ? DS.colors.primary : DS.colors.primaryGhost }}>⊞</ArchText>
+              <ArchText variant="body" style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: showStructuralGrid ? DS.colors.primary : DS.colors.primaryGhost, marginTop: 2 }}>GRID</ArchText>
             </Pressable>
           )}
           {/* Export — available in 2D view with a blueprint loaded */}
@@ -304,16 +304,16 @@ export function BlueprintWorkspaceScreen() {
                 width: 64,
                 height: 52,
                 borderRadius: 20,
-                backgroundColor: BASE_COLORS.surfaceHigh,
+                backgroundColor: DS.colors.surfaceHigh,
                 borderWidth: 1,
-                borderColor: BASE_COLORS.border,
+                borderColor: DS.colors.border,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 8,
               }}
             >
-              <Text style={{ fontSize: 14, color: BASE_COLORS.textDim }}>⤓</Text>
-              <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: BASE_COLORS.textDim, marginTop: 2 }}>EXPORT</Text>
+              <ArchText variant="body" style={{ fontSize: 14, color: DS.colors.primaryGhost }}>⤓</ArchText>
+              <ArchText variant="body" style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: DS.colors.primaryGhost, marginTop: 2 }}>EXPORT</ArchText>
             </Pressable>
           )}
           {/* Publish — Creator+ only, only shown when blueprint has rooms */}
@@ -334,16 +334,16 @@ export function BlueprintWorkspaceScreen() {
                 width: 64,
                 height: 52,
                 borderRadius: 20,
-                backgroundColor: BASE_COLORS.surfaceHigh,
+                backgroundColor: DS.colors.surfaceHigh,
                 borderWidth: 1,
-                borderColor: BASE_COLORS.border,
+                borderColor: DS.colors.border,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 8,
               }}
             >
-              <Text style={{ fontSize: 14, color: BASE_COLORS.textDim }}>⬆</Text>
-              <Text style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: BASE_COLORS.textDim, marginTop: 2 }}>PUBLISH</Text>
+              <ArchText variant="body" style={{ fontSize: 14, color: DS.colors.primaryGhost }}>⬆</ArchText>
+              <ArchText variant="body" style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: DS.colors.primaryGhost, marginTop: 2 }}>PUBLISH</ArchText>
             </Pressable>
           )}
         </ScrollView>
@@ -400,15 +400,15 @@ export function BlueprintWorkspaceScreen() {
               width: 56,
               height: 56,
               borderRadius: 28,
-              backgroundColor: BASE_COLORS.surface,
+              backgroundColor: DS.colors.surface,
               borderWidth: 1,
-              borderColor: BASE_COLORS.border,
+              borderColor: DS.colors.border,
               alignItems: 'center',
               justifyContent: 'center',
             }}
             onPress={() => setAISheetVisible(true)}
           >
-            <Text style={{ color: BASE_COLORS.textPrimary, fontSize: 20 }}>✦</Text>
+            <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 20 }}>✦</ArchText>
           </Pressable>
         )}
         {aiSheetVisible && <AIAssistantSheet onClose={() => setAISheetVisible(false)} />}
@@ -460,30 +460,30 @@ function EditLimitModal() {
       padding: 32,
       zIndex: 999,
     }}>
-      <LogoLoader size="medium" />
-      <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: BASE_COLORS.textPrimary, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
+      <CompassRoseLoader size="large" />
+      <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
         Daily Editing Time Reached
-      </Text>
-      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textSecondary, textAlign: 'center', marginBottom: 8 }}>
+      </ArchText>
+      <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: 8 }}>
         Starter plan includes 45 minutes of editing per day.
-      </Text>
-      <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: BASE_COLORS.textDim, textAlign: 'center', marginBottom: 32 }}>
+      </ArchText>
+      <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: DS.colors.primaryGhost, textAlign: 'center', marginBottom: 32 }}>
         Resets in {hours}h {mins}m
-      </Text>
+      </ArchText>
       <Pressable
         onPress={() => {
           closeModal();
           navigation.navigate('Subscription', { feature: 'Daily Edit Time' });
         }}
-        style={{ backgroundColor: BASE_COLORS.textPrimary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 50, marginBottom: 16, width: '100%', alignItems: 'center' }}
+        style={{ backgroundColor: DS.colors.primary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 50, marginBottom: 16, width: '100%', alignItems: 'center' }}
       >
-        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: BASE_COLORS.background }}>Upgrade Now</Text>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: DS.colors.background }}>Upgrade Now</ArchText>
       </Pressable>
       <Pressable
         onPress={() => { closeModal(); }}
         style={{ paddingVertical: 12 }}
       >
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: BASE_COLORS.textDim }}>Save and Exit</Text>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost }}>Save and Exit</ArchText>
       </Pressable>
     </View>
   );
