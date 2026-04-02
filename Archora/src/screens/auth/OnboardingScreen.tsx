@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, Dimensions, FlatList } from 'react-native';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
+import { View, Pressable, Dimensions, FlatList } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
@@ -11,9 +13,9 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
-import { useTheme } from '../../hooks/useTheme';
+
 import { useHaptics } from '../../hooks/useHaptics';
-import { BASE_COLORS } from '../../theme/colors';
+
 
 const { width, height } = Dimensions.get('window');
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>;
@@ -30,7 +32,7 @@ const SLIDES = [
         <Path d="M80 20 V80 H140" stroke={color} strokeWidth="1.5" fill="none" />
         <Path d="M20 80 H80" stroke={color} strokeWidth="1" strokeDasharray="3 3" fill="none" />
         <Circle cx={140} cy={20} r={12} fill={color} opacity={0.8} />
-        <Path d="M135 20 H145 M140 15 V25" stroke={BASE_COLORS.background} strokeWidth="2" />
+        <Path d="M135 20 H145 M140 15 V25" stroke={DS.colors.background} strokeWidth="2" />
       </Svg>
     ),
   },
@@ -70,7 +72,7 @@ const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<typeof SLIDES
 
 export function OnboardingScreen() {
   const navigation = useNavigation<Nav>();
-  const { colors } = useTheme();
+  
   const { light } = useHaptics();
   const [activeIndex, setActiveIndex] = useState(0);
   const listRef = useRef<FlatList>(null);
@@ -93,15 +95,15 @@ export function OnboardingScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       {/* Skip */}
       <Pressable
         onPress={() => navigation.navigate('SignUp')}
         style={{ position: 'absolute', top: 60, right: 24, zIndex: 10 }}
       >
-        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: BASE_COLORS.textDim }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryGhost }}>
           Skip
-        </Text>
+        </ArchText>
       </Pressable>
 
       <AnimatedFlatList
@@ -118,26 +120,26 @@ export function OnboardingScreen() {
         renderItem={({ item }) => (
           <View style={{ width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 }}>
             <View style={{ marginBottom: 48 }}>
-              {item.icon(colors.primary)}
+              {item.icon(DS.colors.primary)}
             </View>
-            <Text style={{
+            <ArchText variant="body" style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 36,
-              color: BASE_COLORS.textPrimary,
+              color: DS.colors.primary,
               textAlign: 'center',
               marginBottom: 16,
             }}>
               {item.title}
-            </Text>
-            <Text style={{
+            </ArchText>
+            <ArchText variant="body" style={{
               fontFamily: 'Inter_400Regular',
               fontSize: 16,
-              color: BASE_COLORS.textSecondary,
+              color: DS.colors.primaryDim,
               textAlign: 'center',
               lineHeight: 24,
             }}>
               {item.subtitle}
-            </Text>
+            </ArchText>
           </View>
         )}
         keyExtractor={(item) => item.key}
@@ -152,7 +154,7 @@ export function OnboardingScreen() {
               width: i === activeIndex ? 20 : 6,
               height: 6,
               borderRadius: 3,
-              backgroundColor: i === activeIndex ? colors.primary : BASE_COLORS.border,
+              backgroundColor: i === activeIndex ? DS.colors.primary : DS.colors.border,
             }}
           />
         ))}
@@ -163,19 +165,19 @@ export function OnboardingScreen() {
         <Pressable
           onPress={handleNext}
           style={{
-            backgroundColor: colors.primary,
+            backgroundColor: DS.colors.primary,
             borderRadius: 24,
             paddingVertical: 16,
             alignItems: 'center',
           }}
         >
-          <Text style={{
+          <ArchText variant="body" style={{
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 17,
-            color: BASE_COLORS.background,
+            color: DS.colors.background,
           }}>
             {activeIndex === SLIDES.length - 1 ? 'Get Started' : 'Next'}
-          </Text>
+          </ArchText>
         </Pressable>
       </View>
     </View>

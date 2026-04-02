@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { DS } from '../theme/designSystem';
+import { ArchText } from '../components/common/ArchText';
+import { View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,7 +11,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { LogoLoader } from '../components/common/LogoLoader';
-import { BASE_COLORS } from '../theme/colors';
+
 
 const ASORIA = 'ASORIA'.split('');
 
@@ -65,7 +67,7 @@ export function SplashScreen({ appReady, onComplete }: Props) {
       style={[
         {
           flex: 1,
-          backgroundColor: BASE_COLORS.background,
+          backgroundColor: DS.colors.background,
           alignItems: 'center',
           justifyContent: 'center',
         },
@@ -78,17 +80,17 @@ export function SplashScreen({ appReady, onComplete }: Props) {
       {/* ASORIA letter-by-letter */}
       <View style={{ flexDirection: 'row', marginTop: 28 }}>
         {ASORIA.map((letter, i) => (
-          <Text
+          <ArchText variant="body"
             key={i}
             style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 36,
               letterSpacing: 8,
-              color: i < letterCount ? BASE_COLORS.textPrimary : 'transparent',
+              color: i < letterCount ? DS.colors.primary : 'transparent',
             }}
           >
             {letter}
-          </Text>
+          </ArchText>
         ))}
       </View>
 
@@ -98,7 +100,7 @@ export function SplashScreen({ appReady, onComplete }: Props) {
           {
             fontFamily: 'Inter_400Regular',
             fontSize: 14,
-            color: BASE_COLORS.textSecondary,
+            color: DS.colors.primaryDim,
             letterSpacing: 2,
             marginTop: 12,
             textTransform: 'uppercase',

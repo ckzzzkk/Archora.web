@@ -1,7 +1,8 @@
 import React, { useRef, useState, useCallback } from 'react';
+import { DS } from '../../theme/designSystem';
+import { ArchText } from '../../components/common/ArchText';
 import {
   View,
-  Text,
   Pressable,
   Dimensions,
   FlatList,
@@ -22,14 +23,14 @@ import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { useTheme } from '../../hooks/useTheme';
+
 import { useHaptics } from '../../hooks/useHaptics';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
 import { Storage } from '../../utils/storage';
 import { supabase } from '../../utils/supabaseClient';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
-import { BASE_COLORS } from '../../theme/colors';
+
 
 const { width } = Dimensions.get('window');
 
@@ -165,13 +166,11 @@ function SelectionCard({
   selected,
   onPress,
   icon,
-  colors,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
   icon?: (c: string) => React.ReactNode;
-  colors: { primary: string; primaryDim: string };
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -191,29 +190,29 @@ function SelectionCard({
           {
             width: 86,
             height: 86,
-            borderRadius: 16,
+            borderRadius: 50,
             borderWidth: selected ? 2 : 1,
-            borderColor: selected ? colors.primary : BASE_COLORS.border,
-            backgroundColor: selected ? `${colors.primary}18` : BASE_COLORS.surface,
+            borderColor: selected ? DS.colors.primary : DS.colors.border,
+            backgroundColor: selected ? `${DS.colors.primary}18` : DS.colors.surface,
             alignItems: 'center',
             justifyContent: 'center',
             gap: 6,
           },
         ]}
       >
-        {icon && icon(selected ? colors.primary : BASE_COLORS.textDim)}
-        <Text
+        {icon && icon(selected ? DS.colors.primary : DS.colors.primaryGhost)}
+        <ArchText variant="body"
           style={{
             fontFamily: 'Inter_400Regular',
             fontSize: 11,
-            color: selected ? colors.primary : BASE_COLORS.textSecondary,
+            color: selected ? DS.colors.primary : DS.colors.primaryDim,
             textAlign: 'center',
             paddingHorizontal: 4,
           }}
           numberOfLines={2}
         >
           {label}
-        </Text>
+        </ArchText>
       </Animated.View>
     </Pressable>
   );
@@ -224,11 +223,9 @@ function SelectionCard({
 function BudgetSlider({
   value,
   onChange,
-  colors,
 }: {
   value: number;
   onChange: (v: number) => void;
-  colors: { primary: string };
 }) {
   const TRACK_W = width - 80;
   const thumbX = useSharedValue(((value - BUDGET_MIN) / (BUDGET_MAX - BUDGET_MIN)) * TRACK_W);
@@ -259,22 +256,22 @@ function BudgetSlider({
 
   return (
     <View style={{ alignItems: 'center', gap: 16 }}>
-      <Text
+      <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',
           fontSize: 28,
-          color: colors.primary,
+          color: DS.colors.primary,
         }}
       >
         {formatBudget(value)}
-      </Text>
+      </ArchText>
 
       <View style={{ width: TRACK_W, height: 28, justifyContent: 'center' }}>
         {/* Track background */}
         <View
           style={{
             height: 4,
-            backgroundColor: BASE_COLORS.border,
+            backgroundColor: DS.colors.border,
             borderRadius: 2,
             overflow: 'visible',
           }}
@@ -285,7 +282,7 @@ function BudgetSlider({
               fillStyle,
               {
                 height: 4,
-                backgroundColor: colors.primary,
+                backgroundColor: DS.colors.primary,
                 borderRadius: 2,
               },
             ]}
@@ -303,10 +300,10 @@ function BudgetSlider({
                 width: 24,
                 height: 24,
                 borderRadius: 12,
-                backgroundColor: colors.primary,
+                backgroundColor: DS.colors.primary,
                 borderWidth: 3,
-                borderColor: BASE_COLORS.background,
-                shadowColor: colors.primary,
+                borderColor: DS.colors.background,
+                shadowColor: DS.colors.primary,
                 shadowOpacity: 0.4,
                 shadowRadius: 6,
                 elevation: 4,
@@ -319,16 +316,16 @@ function BudgetSlider({
       {/* Labels */}
       <View style={{ flexDirection: 'row', width: TRACK_W, justifyContent: 'space-between' }}>
         {['£0', '£100k', '£250k', '£500k+'].map((lbl) => (
-          <Text
+          <ArchText variant="body"
             key={lbl}
             style={{
               fontFamily: 'Inter_400Regular',
               fontSize: 11,
-              color: BASE_COLORS.textDim,
+              color: DS.colors.primaryGhost,
             }}
           >
             {lbl}
-          </Text>
+          </ArchText>
         ))}
       </View>
     </View>
@@ -337,7 +334,7 @@ function BudgetSlider({
 
 // ─── LoadingOverlay ────────────────────────────────────────────────────────────
 
-function LoadingOverlay({ colors }: { colors: { primary: string } }) {
+function LoadingOverlay() {
   const [lineIndex, setLineIndex] = useState(0);
   const opacity = useSharedValue(1);
   const textOpacity = useSharedValue(1);
@@ -359,7 +356,7 @@ function LoadingOverlay({ colors }: { colors: { primary: string } }) {
       style={{
         position: 'absolute',
         inset: 0,
-        backgroundColor: BASE_COLORS.background,
+        backgroundColor: DS.colors.background,
         alignItems: 'center',
         justifyContent: 'center',
         gap: 24,
@@ -373,7 +370,7 @@ function LoadingOverlay({ colors }: { colors: { primary: string } }) {
           {
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 20,
-            color: BASE_COLORS.textPrimary,
+            color: DS.colors.primary,
             textAlign: 'center',
           },
         ]}
@@ -388,7 +385,7 @@ function LoadingOverlay({ colors }: { colors: { primary: string } }) {
 
 export function OnboardingQuizScreen() {
   const navigation = useNavigation<Nav>();
-  const { colors } = useTheme();
+  
   const { light, medium } = useHaptics();
   const loadBlueprint = useBlueprintStore((s) => s.actions.loadBlueprint);
 
@@ -471,7 +468,7 @@ export function OnboardingQuizScreen() {
   const SLIDES = [
     // Q1 — Building type
     <View key="q1" style={{ width, paddingHorizontal: 32 }}>
-      <Text style={styles.question}>What are you designing?</Text>
+      <ArchText variant="body" style={styles.question}>What are you designing?</ArchText>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 32 }}>
         {BUILDING_TYPE_OPTIONS.map((opt) => (
           <SelectionCard
@@ -480,7 +477,6 @@ export function OnboardingQuizScreen() {
             icon={opt.icon}
             selected={answers.buildingType === opt.key}
             onPress={() => setAnswers((p) => ({ ...p, buildingType: opt.key }))}
-            colors={colors}
           />
         ))}
       </View>
@@ -488,8 +484,8 @@ export function OnboardingQuizScreen() {
 
     // Q2 — Style (multi-select)
     <View key="q2" style={{ width, paddingHorizontal: 32 }}>
-      <Text style={styles.question}>Your style?</Text>
-      <Text style={styles.sub}>Pick all that apply</Text>
+      <ArchText variant="body" style={styles.question}>Your style?</ArchText>
+      <ArchText variant="body" style={styles.sub}>Pick all that apply</ArchText>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 24 }}>
         {STYLE_OPTIONS.map((opt) => (
           <SelectionCard
@@ -497,7 +493,6 @@ export function OnboardingQuizScreen() {
             label={opt.label}
             selected={answers.styles.includes(opt.key)}
             onPress={() => toggleStyle(opt.key)}
-            colors={colors}
           />
         ))}
       </View>
@@ -505,19 +500,18 @@ export function OnboardingQuizScreen() {
 
     // Q3 — Budget slider
     <View key="q3" style={{ width, paddingHorizontal: 32, alignItems: 'center' }}>
-      <Text style={styles.question}>Budget range?</Text>
+      <ArchText variant="body" style={styles.question}>Budget range?</ArchText>
       <View style={{ marginTop: 48 }}>
         <BudgetSlider
           value={answers.budget}
           onChange={(v) => setAnswers((p) => ({ ...p, budget: v }))}
-          colors={colors}
         />
       </View>
     </View>,
 
     // Q4 — Household
     <View key="q4" style={{ width, paddingHorizontal: 32 }}>
-      <Text style={styles.question}>Who lives here?</Text>
+      <ArchText variant="body" style={styles.question}>Who lives here?</ArchText>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 32 }}>
         {HOUSEHOLD_OPTIONS.map((opt) => (
           <SelectionCard
@@ -525,7 +519,6 @@ export function OnboardingQuizScreen() {
             label={opt.label}
             selected={answers.household === opt.key}
             onPress={() => setAnswers((p) => ({ ...p, household: opt.key }))}
-            colors={colors}
           />
         ))}
       </View>
@@ -533,7 +526,7 @@ export function OnboardingQuizScreen() {
 
     // Q5 — Priority
     <View key="q5" style={{ width, paddingHorizontal: 32 }}>
-      <Text style={styles.question}>What matters most?</Text>
+      <ArchText variant="body" style={styles.question}>What matters most?</ArchText>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 32 }}>
         {PRIORITY_OPTIONS.map((opt) => (
           <SelectionCard
@@ -541,7 +534,6 @@ export function OnboardingQuizScreen() {
             label={opt.label}
             selected={answers.priority === opt.key}
             onPress={() => setAnswers((p) => ({ ...p, priority: opt.key }))}
-            colors={colors}
           />
         ))}
       </View>
@@ -551,41 +543,41 @@ export function OnboardingQuizScreen() {
   const ready = canAdvance();
 
   return (
-    <View style={{ flex: 1, backgroundColor: BASE_COLORS.background }}>
+    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       {/* Header */}
       <View style={{ paddingTop: 60, paddingHorizontal: 32, paddingBottom: 8 }}>
-        <Text
+        <ArchText variant="body"
           style={{
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 14,
-            color: BASE_COLORS.textDim,
+            color: DS.colors.primaryGhost,
             letterSpacing: 1.5,
             textTransform: 'uppercase',
           }}
         >
           ASORIA · Personalise
-        </Text>
+        </ArchText>
         {/* Progress bar */}
-        <View style={{ height: 2, backgroundColor: BASE_COLORS.border, borderRadius: 1, marginTop: 12, overflow: 'hidden' }}>
+        <View style={{ height: 2, backgroundColor: DS.colors.border, borderRadius: 1, marginTop: 12, overflow: 'hidden' }}>
           <Animated.View
             style={{
               height: 2,
-              backgroundColor: colors.primary,
+              backgroundColor: DS.colors.primary,
               borderRadius: 1,
               width: `${((currentIndex + 1) / 5) * 100}%`,
             }}
           />
         </View>
-        <Text
+        <ArchText variant="body"
           style={{
             fontFamily: 'Inter_400Regular',
             fontSize: 12,
-            color: BASE_COLORS.textDim,
+            color: DS.colors.primaryGhost,
             marginTop: 6,
           }}
         >
           {currentIndex + 1} of 5
-        </Text>
+        </ArchText>
       </View>
 
       {/* Slides */}
@@ -609,27 +601,27 @@ export function OnboardingQuizScreen() {
           onPress={goNext}
           disabled={!ready || isGenerating}
           style={{
-            backgroundColor: ready ? colors.primary : BASE_COLORS.border,
+            backgroundColor: ready ? DS.colors.primary : DS.colors.border,
             borderRadius: 24,
             paddingVertical: 16,
             alignItems: 'center',
             opacity: ready ? 1 : 0.5,
           }}
         >
-          <Text
+          <ArchText variant="body"
             style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
               fontSize: 17,
-              color: ready ? BASE_COLORS.background : BASE_COLORS.textDim,
+              color: ready ? DS.colors.background : DS.colors.primaryGhost,
             }}
           >
             {currentIndex === 4 ? 'Generate My Space' : 'Next'}
-          </Text>
+          </ArchText>
         </Pressable>
       </View>
 
       {/* Loading overlay */}
-      {isGenerating && <LoadingOverlay colors={colors} />}
+      {isGenerating && <LoadingOverlay />}
     </View>
   );
 }
@@ -638,14 +630,14 @@ const styles = {
   question: {
     fontFamily: 'ArchitectsDaughter_400Regular',
     fontSize: 26,
-    color: BASE_COLORS.textPrimary,
+    color: DS.colors.primary,
     textAlign: 'center' as const,
     lineHeight: 34,
   },
   sub: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    color: BASE_COLORS.textDim,
+    color: DS.colors.primaryGhost,
     textAlign: 'center' as const,
     marginTop: 4,
   },
