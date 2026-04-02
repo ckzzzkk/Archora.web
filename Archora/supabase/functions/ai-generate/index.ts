@@ -339,6 +339,101 @@ TRADITIONAL:
   Central hallway plan
   Reception rooms at front
 
+RUSTIC:
+  Exposed natural materials: timber beams, stone walls, brick
+  Warm earthy palette: terracotta, ochre, forest green
+  Farmhouse kitchen with island and open shelving
+  Large stone fireplace as centrepiece
+  Covered veranda or porch
+  Barn doors on sliding tracks
+
+BOHEMIAN:
+  Eclectic mix of patterns and textures
+  Reading nooks with floor cushions and low seating
+  Open shelving and display surfaces everywhere
+  Plants integrated throughout — hanging, floor, shelves
+  Layered rugs over timber or concrete floors
+  Arched doorways and niched alcoves
+
+ART_DECO:
+  Strong geometric patterns and symmetry
+  Bold colour contrasts: black/gold, navy/brass, emerald/chrome
+  Fan shapes, chevrons, sunburst motifs
+  High gloss surfaces and mirror details
+  Statement entrance hall with geometric floor tiles
+  Wide corridors and formal room proportions
+
+COASTAL:
+  Open plan living maximising ocean/water views
+  Light palette: whites, sandy beiges, ocean blues
+  Covered outdoor living equal in size to indoor
+  Outdoor shower near garden/pool entry
+  Large sliding stacker doors to blur inside/outside
+  Timber decking connecting house to garden
+
+MID_CENTURY:
+  Flat or low pitch roof with deep overhangs
+  Floor-to-ceiling windows at living areas
+  Organic curved furniture forms
+  Connection of interior to exterior at every room
+  Split-level layouts where terrain allows
+  Integrated carport rather than enclosed garage
+
+JAPANDI:
+  Wabi-sabi imperfection and natural materials
+  Neutral palette with warm wood and stone
+  Tokonoma (display alcove) in living or hall
+  Engawa (covered transition space) between inside/outside
+  Minimal furniture — every piece serves a purpose
+  Low platform beds and floor seating options
+
+ECLECTIC:
+  Mix of periods and styles — each room can be different
+  Maximalist layering of objects and art
+  Feature walls with bold wallpaper or paint
+  Mix of lighting: pendants, floor lamps, table lamps, sconces
+  Gallery walls and curated collections
+  Unexpected material combinations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+APARTMENT DESIGN RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When building type is apartment or studio:
+  No external walls for garden access — compensate with large windows and balcony
+  Balcony minimum 1.5m deep, width equal to living room
+  Utility space integrated into kitchen or hall cupboard
+  Bike storage in entrance hall or building store
+  Sound isolation: wet rooms and bedrooms away from party walls
+  Studio: bedroom area defined by shelving unit or curtain track rather than walls
+  Compact kitchen: galley minimum 1.8m wide, island needs 900mm clearance each side
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MULTI-FLOOR BUILDINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Ground floor: entry, kitchen, dining, living, WC, garage, utility
+  First floor: all bedrooms, family bathroom, en-suites, study/office
+  Stairs: minimum 900mm wide, 220mm rise, 220mm going, handrail both sides
+  Stair position: near entrance hall, never blocking room flow
+  Landing: 1000mm × 1000mm minimum at each floor
+  Upstairs corridor: minimum 900mm, maximum 8m without turning
+  Master bedroom always over quietest part of ground floor (garden end)
+  Wet rooms stacked vertically to share soil pipe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUSTAINABLE DESIGN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  South-facing (northern hemisphere) or north-facing (southern hemisphere) living rooms maximise winter sun
+  Overhanging eaves: 600mm stops summer sun, allows low winter sun
+  Cross ventilation: windows on opposing walls in every habitable room
+  Thermal mass: concrete or stone floors in sun-facing rooms store heat
+  Triple glazing on north-facing windows (cold climates)
+  Rainwater harvesting tank in utility/garden
+  EV charging point in garage standard
+  Solar panel zone on south-facing roof slope
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT TO GENERATE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -394,6 +489,22 @@ Apply everything you know.
 Create something genuinely beautiful and liveable.
 A real family will use this as inspiration.
 Make it worthy of that.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANDATORY QUALITY RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+These rules are non-negotiable and must be satisfied in every generation:
+  Never produce a layout where you must walk through a bedroom to reach another room
+  Never place a bathroom door opening directly into a kitchen or dining room
+  Every bedroom must have a window — no windowless bedrooms ever
+  Entry hall must exist — no front door opening directly into living room
+  Every floor needs a WC — minimum half-bath (toilet + basin) on ground floor
+  Kitchen triangle: sink, hob, fridge no more than 6m combined path
+  Utility room must connect to garden and kitchen — not accessible only from living room
+  Master bedroom must have en-suite or exclusive-use bathroom
+  Children's bedrooms grouped together, not separated by adult spaces
+  No bedroom should be between two other rooms (corridor bedrooms)
 
 OUTPUT FORMAT: Return ONLY valid JSON matching this exact TypeScript interface. No markdown, no explanation:
 
