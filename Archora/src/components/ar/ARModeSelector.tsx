@@ -3,6 +3,7 @@ import { View, Pressable } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { ArchText } from '../common/ArchText';
 import { DS } from '../../theme/designSystem';
+import { SUNRISE } from '../../theme/sunrise';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type ARMode = 'scan' | 'place' | 'measure';
@@ -26,15 +27,15 @@ function ModeChip({ mode, active, onPress }: { mode: ARMode; active: boolean; on
         paddingHorizontal: 18,
         paddingVertical: 9,
         borderRadius: 50,
-        backgroundColor: active ? DS.colors.primary : 'rgba(34,34,34,0.85)',
+        backgroundColor: active ? SUNRISE.glass.mediumBg : 'rgba(14, 11, 26, 0.70)',
         borderWidth: 1,
-        borderColor: active ? DS.colors.primary : DS.colors.border,
+        borderColor: active ? SUNRISE.gold : SUNRISE.glass.navBorder,
       }}
     >
       <ArchText variant="body" style={{
         fontFamily: 'Inter_500Medium',
         fontSize: 13,
-        color: active ? DS.colors.background : DS.colors.primary,
+        color: active ? SUNRISE.gold : SUNRISE.inactiveTint,
       }}>
         {MODES.find(m => m.key === mode)?.label ?? mode}
       </ArchText>

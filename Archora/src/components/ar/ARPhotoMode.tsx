@@ -17,6 +17,7 @@ import { OvalButton } from '../common/OvalButton';
 import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { arService } from '../../services/arService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { buildBlueprintFromAR } from '../../utils/ar/arToBlueprintConverter';
@@ -44,6 +45,7 @@ export function ARPhotoMode() {
 
 function ARPhotoModeContent() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const device = useCameraDevice('back');
   const { hasPermission, requestPermission } = useCameraPermission();
   const camera = useRef<Camera>(null);
@@ -200,12 +202,12 @@ function ARPhotoModeContent() {
       {/* Overlay UI */}
       <View style={{ flex: 1, pointerEvents: 'box-none' }}>
         {/* Header */}
-        <View style={{ position: 'absolute', top: 60, left: 20 }}>
+        <View style={{ position: 'absolute', top: insets.top + 16, left: 20 }}>
           <OvalButton label="← Back" onPress={() => navigation.goBack()} variant="outline" size="small" />
         </View>
 
         {/* Progress indicator */}
-        <View style={{ position: 'absolute', top: 60, right: 20 }}>
+        <View style={{ position: 'absolute', top: insets.top + 16, right: 20 }}>
           <View style={{ backgroundColor: 'rgba(26,26,26,0.92)', borderRadius: 50, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: DS.colors.border }}>
             <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 12, color: DS.colors.primary }}>
               {photosTaken}/4
@@ -214,7 +216,7 @@ function ARPhotoModeContent() {
         </View>
 
         {/* Instruction */}
-        <View style={{ position: 'absolute', top: 140, left: 24, right: 24, alignItems: 'center' }}>
+        <View style={{ position: 'absolute', top: insets.top + 64, left: 24, right: 24, alignItems: 'center' }}>
           <View style={{ backgroundColor: 'rgba(34,34,34,0.92)', borderRadius: 50, paddingHorizontal: 24, paddingVertical: 14, borderWidth: 1, borderColor: DS.colors.primary }}>
             <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: DS.colors.primary, textTransform: 'capitalize' }}>
               {currentDirection} Wall
@@ -230,7 +232,7 @@ function ARPhotoModeContent() {
 
         {/* Photo preview strip */}
         {captures.length > 0 && (
-          <View style={{ position: 'absolute', top: 240, right: 16 }}>
+          <View style={{ position: 'absolute', top: insets.top + 160, right: 16 }}>
             {captures.map((capture, index) => (
               <PhotoThumbnail key={index} uri={capture.uri} direction={capture.direction} />
             ))}
@@ -238,7 +240,7 @@ function ARPhotoModeContent() {
         )}
 
         {/* Capture button or Analyze button */}
-        <View style={{ position: 'absolute', bottom: 48, left: 0, right: 0, alignItems: 'center' }}>
+        <View style={{ position: 'absolute', bottom: insets.bottom + 24, left: 0, right: 0, alignItems: 'center' }}>
           {allPhotosTaken ? (
             <OvalButton
               label={isAnalyzing ? 'Analyzing...' : 'Analyze Room'}
@@ -253,7 +255,7 @@ function ARPhotoModeContent() {
 
         {/* Reset button */}
         {captures.length > 0 && (
-          <View style={{ position: 'absolute', bottom: 120, left: 0, right: 0, alignItems: 'center' }}>
+          <View style={{ position: 'absolute', bottom: insets.bottom + 96, left: 0, right: 0, alignItems: 'center' }}>
             <OvalButton label="Start Over" onPress={handleReset} variant="ghost" />
           </View>
         )}

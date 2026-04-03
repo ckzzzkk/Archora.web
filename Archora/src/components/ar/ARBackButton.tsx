@@ -3,6 +3,7 @@ import { Pressable } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DS } from '../../theme/designSystem';
+import { SUNRISE } from '../../theme/sunrise';
 
 interface Props {
   onPress: () => void;
@@ -21,9 +22,9 @@ export function ARBackButton({ onPress }: Props) {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(34,34,34,0.85)',
+        backgroundColor: SUNRISE.glass.prominentBg,
         borderWidth: 1,
-        borderColor: DS.colors.border,
+        borderColor: SUNRISE.glass.prominentBorder,
         alignItems: 'center',
         justifyContent: 'center',
       }}

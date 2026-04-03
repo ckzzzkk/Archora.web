@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import Svg, { Line, Circle, Text as SvgText, Polygon } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../common/ArchText';
 
@@ -154,6 +155,7 @@ interface FloorPlanMiniMapProps {
 }
 
 export function FloorPlanMiniMap({ points, width = 88 }: FloorPlanMiniMapProps) {
+  const insets = useSafeAreaInsets();
   if (points.length < 2) return null;
 
   const SIZE = width - 8;
@@ -181,7 +183,7 @@ export function FloorPlanMiniMap({ points, width = 88 }: FloorPlanMiniMapProps) 
   return (
     <View style={{
       position: 'absolute',
-      top: 160,
+      top: insets.top + 80,
       right: 16,
       width,
       height: width,

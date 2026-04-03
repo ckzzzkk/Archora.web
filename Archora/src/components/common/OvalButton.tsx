@@ -8,8 +8,9 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { DS } from '../../theme/designSystem';
-import { useThemeColors } from '../../hooks/useThemeColors';
+import { SUNRISE } from '../../theme/sunrise';
 
 export type OvalButtonVariant = 'filled' | 'outline' | 'ghost' | 'danger' | 'success';
 export type OvalButtonSize   = 'small' | 'medium' | 'large';
@@ -72,17 +73,7 @@ export function OvalButton({
   const scale = useSharedValue(1);
   const pressOp = useSharedValue(1);
   const { height, ph, fs } = SIZE[size];
-  const C = useThemeColors();
 
-  const VARIANT_STYLE: Record<OvalButtonVariant, { bg: string; border?: string; text: string; borderWidth: number }> = {
-    filled:  { bg: C.primary,     text: C.background,   borderWidth: 0 },
-    outline: { bg: 'transparent', border: C.primary,     text: C.primary,     borderWidth: 2 },
-    ghost:   { bg: 'transparent',                        text: C.primaryDim,  borderWidth: 0 },
-    danger:  { bg: 'transparent', border: C.error,       text: C.error,       borderWidth: 2 },
-    success: { bg: C.success,                            text: C.background,  borderWidth: 0 },
-  };
-
-  const vs = VARIANT_STYLE[variant];
   const isInactive = disabled || loading;
 
   const animStyle = useAnimatedStyle(() => ({
@@ -90,49 +81,100 @@ export function OvalButton({
     opacity: pressOp.value,
   }));
 
+  const handlePressIn = () => {
+    if (!isInactive) {
+      scale.value = withSpring(0.93, { damping: 18, stiffness: 420 });
+      pressOp.value = withTiming(0.82, { duration: 80 });
+    }
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 18, stiffness: 420 });
+    pressOp.value = withTiming(1, { duration: 120 });
+  };
+
+  const contentStyle = {
+    height,
+    paddingHorizontal: ph,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 8,
+  };
+
+  const labelColor = variant === 'filled' || variant === 'success'
+    ? SUNRISE.background
+    : variant === 'danger'
+    ? SUNRISE.rose
+    : SUNRISE.gold;
+
+  if (variant === 'filled') {
+    return (
+      <AnimatedPressable
+        onPress={isInactive ? undefined : onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[
+          animStyle,
+          {
+            borderRadius: DS.radius.oval,
+            overflow: 'hidden',
+            opacity: isInactive ? 0.32 : 1,
+            alignSelf: fullWidth ? 'stretch' : 'flex-start',
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={[SUNRISE.gold, SUNRISE.amber]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[contentStyle, { borderRadius: DS.radius.oval }]}
+        >
+          {loading ? <LoadingDots color={SUNRISE.background} /> : (
+            <>
+              {icon}
+              <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }}>
+                {label}
+              </Text>
+            </>
+          )}
+        </LinearGradient>
+      </AnimatedPressable>
+    );
+  }
+
+  const nonFilledStyle = variant === 'outline'
+    ? { bg: SUNRISE.glass.subtleBg, border: SUNRISE.glass.navBorder, borderWidth: 1 }
+    : variant === 'danger'
+    ? { bg: SUNRISE.glass.subtleBg, border: 'rgba(232, 117, 138, 0.30)', borderWidth: 1 }
+    : variant === 'success'
+    ? { bg: '#7AB87A', border: 'transparent', borderWidth: 0 }
+    : { bg: 'transparent', border: 'transparent', borderWidth: 0 }; // ghost
+
   return (
     <AnimatedPressable
       onPress={isInactive ? undefined : onPress}
-      onPressIn={() => {
-        if (!isInactive) {
-          scale.value = withSpring(0.93, { damping: 18, stiffness: 420 });
-          pressOp.value = withTiming(0.82, { duration: 80 });
-        }
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 18, stiffness: 420 });
-        pressOp.value = withTiming(1, { duration: 120 });
-      }}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       style={[
         animStyle,
         {
-          height,
-          paddingHorizontal: ph,
+          ...contentStyle,
           borderRadius: DS.radius.oval,
-          backgroundColor: vs.bg,
-          borderWidth: vs.borderWidth,
-          borderColor: vs.border ?? 'transparent',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
+          backgroundColor: nonFilledStyle.bg,
+          borderWidth: nonFilledStyle.borderWidth,
+          borderColor: nonFilledStyle.border,
           opacity: isInactive ? 0.32 : 1,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
         },
       ]}
     >
       {loading ? (
-        <LoadingDots color={vs.text} />
+        <LoadingDots color={labelColor} />
       ) : (
         <>
           {icon}
-          <Text style={{
-            fontFamily: DS.font.bold,
-            fontSize: fs,
-            color: vs.text,
-            includeFontPadding: false,
-            letterSpacing: 0.3,
-          }}>
+          <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }}>
             {label}
           </Text>
         </>

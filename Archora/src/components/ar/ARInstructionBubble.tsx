@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCREEN_H = Dimensions.get('window').height;
 import Animated, {
@@ -32,6 +33,7 @@ export function ARInstructionBubble({
   position = 'top',
   step,
 }: ARInstructionBubbleProps) {
+  const insets = useSafeAreaInsets();
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(16);
 
@@ -52,8 +54,8 @@ export function ARInstructionBubble({
   }));
 
   const positionStyle = {
-    top: position === 'top' ? 160 : position === 'center' ? Math.floor(SCREEN_H * 0.4) : undefined,
-    bottom: position === 'bottom' ? 120 : undefined,
+    top: position === 'top' ? insets.top + 80 : position === 'center' ? Math.floor(SCREEN_H * 0.4) : undefined,
+    bottom: position === 'bottom' ? insets.bottom + 96 : undefined,
   };
 
   return (

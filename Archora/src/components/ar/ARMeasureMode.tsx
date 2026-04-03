@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import Svg, { Line, Circle, Path, Text as SvgText, Polygon } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArchText } from '../common/ArchText';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
@@ -47,9 +48,10 @@ function AnchorPin({ x, y, label }: { x: number; y: number; label: string }) {
 
 // Tab switcher at top of measure mode
 function MeasureTabBar({ active, onChange }: { active: MeasureTab; onChange: (t: MeasureTab) => void }) {
+  const insets = useSafeAreaInsets();
   return (
     <View style={{
-      position: 'absolute', top: 100, left: 24, right: 24, alignItems: 'center', zIndex: 20,
+      position: 'absolute', top: insets.top + 20, left: 24, right: 24, alignItems: 'center', zIndex: 20,
     }}>
       <View style={{
         flexDirection: 'row',
@@ -82,6 +84,7 @@ function MeasureTabBar({ active, onChange }: { active: MeasureTab; onChange: (t:
 
 
 function WallMeasure() {
+  const insets = useSafeAreaInsets();
   const [point1, setPoint1] = useState<Point | null>(null);
   const [point2, setPoint2] = useState<Point | null>(null);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
@@ -120,7 +123,7 @@ function WallMeasure() {
       onPress={(e) => handleTap(e.nativeEvent.locationX, e.nativeEvent.locationY)}
     >
       {/* Instruction pill */}
-      <View style={{ position: 'absolute', top: 160, left: 24, right: 24, alignItems: 'center' }}>
+      <View style={{ position: 'absolute', top: insets.top + 80, left: 24, right: 24, alignItems: 'center' }}>
         <View style={{
           backgroundColor: 'rgba(34,34,34,0.9)', borderRadius: 50,
           paddingHorizontal: 20, paddingVertical: 10,
@@ -134,7 +137,7 @@ function WallMeasure() {
 
       {/* Saved measurements list */}
       {measurements.length > 0 && (
-        <View style={{ position: 'absolute', top: 210, left: 24, right: 24, gap: 6 }}>
+        <View style={{ position: 'absolute', top: insets.top + 130, left: 24, right: 24, gap: 6 }}>
           {measurements.map((m, i) => (
             <View key={i} style={{
               flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -190,7 +193,7 @@ function WallMeasure() {
 
       {/* Action buttons */}
       {point1 && point2 && (
-        <View style={{ position: 'absolute', bottom: 48, left: 20, right: 20, gap: 10 }}>
+        <View style={{ position: 'absolute', bottom: insets.bottom + 24, left: 20, right: 20, gap: 10 }}>
           <Pressable
             onPress={saveMeasurement}
             style={{ backgroundColor: DS.colors.primary, borderRadius: 50, paddingVertical: 14, alignItems: 'center' }}
@@ -247,6 +250,7 @@ function midpoint(a: Point, b: Point): Point {
 }
 
 function RoomMiniMap({ corners }: { corners: Point[] }) {
+  const insets = useSafeAreaInsets();
   if (corners.length < 2) return null;
 
   // Find bounding box to normalize into 80×80 preview
@@ -269,7 +273,7 @@ function RoomMiniMap({ corners }: { corners: Point[] }) {
 
   return (
     <View style={{
-      position: 'absolute', top: 160, right: 16,
+      position: 'absolute', top: insets.top + 80, right: 16,
       width: 88, height: 88,
       backgroundColor: 'rgba(26,26,26,0.92)',
       borderRadius: 16, borderWidth: 1, borderColor: DS.colors.border,
@@ -301,6 +305,7 @@ function RoomMiniMap({ corners }: { corners: Point[] }) {
 }
 
 function RoomMeasure() {
+  const insets = useSafeAreaInsets();
   const [corners, setCorners] = useState<Point[]>([]);
   const [closed, setClosed] = useState(false);
 
@@ -341,7 +346,7 @@ function RoomMeasure() {
       onPress={(e) => handleTap(e.nativeEvent.locationX, e.nativeEvent.locationY)}
     >
       {/* Instruction pill */}
-      <View style={{ position: 'absolute', top: 160, left: 24, right: closed ? 112 : 24, alignItems: 'flex-start' }}>
+      <View style={{ position: 'absolute', top: insets.top + 80, left: 24, right: closed ? 112 : 24, alignItems: 'flex-start' }}>
         <View style={{
           backgroundColor: 'rgba(34,34,34,0.9)', borderRadius: 50,
           paddingHorizontal: 20, paddingVertical: 10,
@@ -437,7 +442,7 @@ function RoomMeasure() {
             );
           })()}
 
-          <View style={{ position: 'absolute', bottom: 48, left: 20, right: 20, gap: 10 }}>
+          <View style={{ position: 'absolute', bottom: insets.bottom + 24, left: 20, right: 20, gap: 10 }}>
             <Pressable
               style={{ backgroundColor: DS.colors.primary, borderRadius: 50, paddingVertical: 14, alignItems: 'center' }}
             >

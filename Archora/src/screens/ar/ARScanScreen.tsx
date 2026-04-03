@@ -6,6 +6,7 @@ import { useCameraDevice, Camera } from 'react-native-vision-camera';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DS } from '../../theme/designSystem';
+import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from '../../components/common/ArchText';
 import { ARPermissionRequest } from '../../components/ar/ARPermissionRequest';
 import { ARModeSelector } from '../../components/ar/ARModeSelector';
@@ -70,16 +71,16 @@ function ScanModeCard({ title, description, available, requires, onPress, delay 
       <Pressable
         onPress={available ? onPress : undefined}
         style={{
-          backgroundColor: available ? DS.colors.surface : 'rgba(34,34,34,0.5)',
+          backgroundColor: available ? SUNRISE.glass.subtleBg : 'rgba(14, 11, 26, 0.50)',
           borderRadius: DS.radius.card,
           padding: 20,
           borderWidth: 1,
-          borderColor: available ? DS.colors.border : DS.colors.primaryGhost,
+          borderColor: available ? SUNRISE.goldBorderDim : SUNRISE.glass.subtleBorder,
           opacity: available ? 1 : 0.6,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: DS.colors.primary }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: available ? SUNRISE.gold : SUNRISE.textSecondary }}>
             {title}
           </ArchText>
           {!available && requires && (
@@ -90,7 +91,7 @@ function ScanModeCard({ title, description, available, requires, onPress, delay 
             </View>
           )}
         </View>
-        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim, lineHeight: 20 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary, lineHeight: 20 }}>
           {description}
         </ArchText>
       </Pressable>
@@ -159,13 +160,13 @@ export function ARScanScreen() {
   // Entry screen - mode selection
   if (scanMode === 'entry') {
     return (
-      <View style={{ flex: 1, backgroundColor: DS.colors.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}>
+      <View style={{ flex: 1, backgroundColor: SUNRISE.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}>
         {/* Header */}
         <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 28, color: DS.colors.primary, marginBottom: 8 }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 28, color: SUNRISE.gold, marginBottom: 8 }}>
             AR Scan
           </ArchText>
-          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary }}>
             Choose a scanning method to capture your room
           </ArchText>
         </View>

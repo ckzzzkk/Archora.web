@@ -8,6 +8,7 @@ import Animated, {
   interpolateColor,
 } from 'react-native-reanimated';
 import { DS } from '../../theme/designSystem';
+import { SUNRISE } from '../../theme/sunrise';
 
 interface OvalInputProps {
   value: string;
@@ -47,7 +48,11 @@ export function OvalInput({
   const containerStyle = useAnimatedStyle(() => ({
     borderColor: hasError
       ? DS.colors.error
-      : interpolateColor(focused.value, [0, 1], [DS.colors.border, DS.colors.accent]),
+      : interpolateColor(focused.value, [0, 1], [SUNRISE.violetBorder, SUNRISE.goldBorderFocus]),
+    shadowColor: focused.value > 0 ? SUNRISE.gold : 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: focused.value * 0.25,
+    shadowRadius: 8,
   }));
 
   return (
@@ -57,7 +62,7 @@ export function OvalInput({
           {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: DS.colors.surface,
+            backgroundColor: SUNRISE.glass.subtleBg,
             borderRadius: DS.radius.oval,
             borderWidth: 1,
             height: 52,

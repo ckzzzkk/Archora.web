@@ -1,3 +1,5 @@
+import { SUNRISE } from './sunrise';
+
 /**
  * ASORIA Design System — single source of truth for all visual decisions.
  * Import as: import { DS } from '../../theme/designSystem'
@@ -7,22 +9,22 @@
  */
 export const DS = {
   colors: {
-    background:   '#1A1A1A',
-    surface:      '#222222',
-    surfaceHigh:  '#2C2C2C',
-    surfaceTop:   '#363636',
-    border:       '#333333',
-    borderLight:  '#3D3D3D',
-    primary:      '#F0EDE8',
-    primaryDim:   '#9A9590',
-    primaryGhost: '#5A5550',
-    accent:       '#C8C8C8',
-    accentGlow:   'rgba(200,200,200,0.15)',
+    background:   SUNRISE.background,
+    surface:      SUNRISE.surface,
+    surfaceHigh:  SUNRISE.elevated,
+    surfaceTop:   '#2A2245',
+    border:       SUNRISE.border,
+    borderLight:  'rgba(180, 130, 220, 0.25)',
+    primary:      SUNRISE.gold,
+    primaryDim:   SUNRISE.textSecondary,
+    primaryGhost: SUNRISE.inactiveTint,
+    accent:       SUNRISE.amber,
+    accentGlow:   'rgba(232, 184, 109, 0.15)',
     success:      '#7AB87A',
-    warning:      '#D4A84B',
-    error:        '#C0604A',
+    warning:      SUNRISE.amber,
+    error:        SUNRISE.rose,
     overlay:      'rgba(0,0,0,0.85)',
-    gridLine:     '#252525',
+    gridLine:     '#161026',
   },
 
   radius: {

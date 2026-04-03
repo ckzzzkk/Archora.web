@@ -7,6 +7,7 @@ import { ArchText } from '../common/ArchText';
 import { OvalButton } from '../common/OvalButton';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useARCore } from '../../hooks/useARCore';
 import type { Vector3D } from '../../native/ARCoreModule';
 import { useBlueprintStore } from '../../stores/blueprintStore';
@@ -39,6 +40,7 @@ export function ARManualMeasureMode() {
 
 function ARManualMeasureContent() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { hitTest, startSession, stopSession, distanceBetween, state } = useARCore();
   const [points, setPoints] = useState<PlacedPoint[]>([]);
   const [isSessionStarted, setIsSessionStarted] = useState(false);
@@ -207,7 +209,7 @@ function ARManualMeasureContent() {
         <View
           style={{
             position: 'absolute',
-            top: 200,
+            top: insets.top + 120,
             left: 24,
             right: 24,
             backgroundColor: 'rgba(34,34,34,0.9)',
@@ -274,7 +276,7 @@ function ARManualMeasureContent() {
         <View
           style={{
             position: 'absolute',
-            bottom: 48,
+            bottom: insets.bottom + 24,
             left: 20,
             right: 20,
             gap: 10,
@@ -298,7 +300,7 @@ function ARManualMeasureContent() {
       )}
 
       {/* Back button */}
-      <View style={{ position: 'absolute', top: 60, left: 20 }}>
+      <View style={{ position: 'absolute', top: insets.top + 16, left: 20 }}>
         <OvalButton label="← Back" onPress={handleBack} variant="outline" size="small" />
       </View>
     </Pressable>

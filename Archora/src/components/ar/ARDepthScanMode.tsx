@@ -16,6 +16,7 @@ import { ArchText } from '../common/ArchText';
 import { OvalButton } from '../common/OvalButton';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useARCore, useARPlanes } from '../../hooks/useARCore';
 import type { DetectedPlane } from '../../native/ARCoreModule';
 import { useBlueprintStore } from '../../stores/blueprintStore';
@@ -35,6 +36,7 @@ export function ARDepthScanMode() {
 
 function ARDepthScanContent() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { startSession, stopSession, state } = useARCore();
   const { wallPlanes, floorPlanes, refresh } = useARPlanes();
 
@@ -185,7 +187,7 @@ function ARDepthScanContent() {
         <View
           style={{
             position: 'absolute',
-            top: 200,
+            top: insets.top + 120,
             left: 24,
             right: 24,
             backgroundColor: 'rgba(34,34,34,0.9)',
@@ -221,7 +223,7 @@ function ARDepthScanContent() {
       <View
         style={{
           position: 'absolute',
-          bottom: 48,
+          bottom: insets.bottom + 24,
           left: 20,
           right: 20,
           gap: 10,
@@ -241,7 +243,7 @@ function ARDepthScanContent() {
       </View>
 
       {/* Back button */}
-      <View style={{ position: 'absolute', top: 60, left: 20 }}>
+      <View style={{ position: 'absolute', top: insets.top + 16, left: 20 }}>
         <OvalButton label="← Back" onPress={() => navigation.goBack()} variant="outline" size="small" />
       </View>
     </View>
@@ -308,6 +310,7 @@ interface PlaneMiniMapProps {
 }
 
 function PlaneMiniMap({ planes }: PlaneMiniMapProps) {
+  const insets = useSafeAreaInsets();
   if (planes.length === 0) return null;
 
   const SIZE = 88;
@@ -336,7 +339,7 @@ function PlaneMiniMap({ planes }: PlaneMiniMapProps) {
     <View
       style={{
         position: 'absolute',
-        top: 160,
+        top: insets.top + 80,
         right: 16,
         width: SIZE + 8,
         height: SIZE + 8,

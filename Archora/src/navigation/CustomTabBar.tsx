@@ -1,6 +1,6 @@
-import { DS } from '../theme/designSystem';
+import { SUNRISE } from '../theme/sunrise';
 import React, { useEffect, useRef } from 'react';
-import { View, Pressable, Dimensions } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -11,7 +11,9 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,7 +23,6 @@ import type { RootStackParamList } from './types';
 import { useTabDirection } from './TabDirectionContext';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 // Wobbly imperfect circle path (baked vertex noise) — 48x48 viewBox
 const WOBBLY_PATH = 'M 24 3 C 30 2.5 43 8 44 24 C 45 37 37 45 24 45 C 10 45.5 3 37 3 24 C 2.5 10 10 3.5 24 3 Z';
@@ -77,15 +78,13 @@ interface TabItemProps {
   onPress: () => void;
 }
 
-function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
-  const { colors } = useTheme();
+function TabItem({ route, isFocused, onPress }: TabItemProps) {
   const circleProgress = useSharedValue(isFocused ? 1 : 0);
   const pillOpacity = useSharedValue(isFocused ? 1 : 0);
   const pillScale = useSharedValue(isFocused ? 1 : 0.7);
 
   useEffect(() => {
     if (isFocused) {
-      // Draw circle in 180ms then settle with overshoot
       circleProgress.value = withSequence(
         withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) }),
         withSpring(0.95, { damping: 8, stiffness: 200 }),
@@ -94,7 +93,6 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
       pillOpacity.value = withTiming(1, { duration: 150 });
       pillScale.value = withSpring(1, { damping: 14, stiffness: 280 });
     } else {
-      // Erase circle in 120ms
       circleProgress.value = withTiming(0, { duration: 120 });
       pillOpacity.value = withTiming(0, { duration: 100 });
       pillScale.value = withSpring(0.7, { damping: 14, stiffness: 280 });
@@ -111,7 +109,7 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
     transform: [{ scaleX: pillScale.value }],
   }));
 
-  const iconColor = isFocused ? DS.colors.primary : DS.colors.primaryGhost;
+  const iconColor = isFocused ? SUNRISE.gold : SUNRISE.inactiveTint;
   const iconRenderer = ICONS[route.name];
 
   return (
@@ -125,7 +123,7 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
           {
             position: 'absolute',
             top: 0, left: 4, right: 4, bottom: 0,
-            backgroundColor: 'rgba(255,255,255,0.10)',
+            backgroundColor: 'rgba(232,184,109,0.10)',
             borderRadius: 20,
           },
           pillStyle,
@@ -137,7 +135,7 @@ function TabItem({ route, index, isFocused, onPress }: TabItemProps) {
         <Svg width={48} height={48} viewBox="0 0 48 48">
           <AnimatedPath
             d={WOBBLY_PATH}
-            stroke={DS.colors.primary}
+            stroke={SUNRISE.gold}
             strokeWidth={1.5}
             fill="none"
             strokeDasharray={CIRCUMFERENCE}
@@ -172,36 +170,36 @@ function FABButton() {
     rootNav.navigate('Generation');
   };
 
-  const c = 28;
-  const r = 10;
-
   return (
-    <Pressable
-      onPress={handlePress}
-      style={{
-        width: 48, height: 48,
-        borderRadius: 24,
-        backgroundColor: DS.colors.primary,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
-        shadowRadius: 16,
-        elevation: 20,
-      }}
-    >
-      <Animated.View style={fabStyle}>
-        <Svg width={22} height={22} viewBox="0 0 24 24">
-          <Path d="M12 5v14M5 12h14" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" />
-        </Svg>
-      </Animated.View>
+    <Pressable onPress={handlePress}>
+      <LinearGradient
+        colors={[SUNRISE.gold, SUNRISE.amber]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: SUNRISE.gold,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.4,
+          shadowRadius: 12,
+          elevation: 16,
+        }}
+      >
+        <Animated.View style={fabStyle}>
+          <Svg width={22} height={22} viewBox="0 0 24 24">
+            <Path d="M12 5v14M5 12h14" stroke={SUNRISE.background} strokeWidth="2" strokeLinecap="round" />
+          </Svg>
+        </Animated.View>
+      </LinearGradient>
     </Pressable>
   );
 }
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colors } = useTheme();
   const { medium } = useHaptics();
   const insets = useSafeAreaInsets();
   const { setDirection } = useTabDirection();
@@ -213,7 +211,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
 
   const focusedRoute = state.routes[state.index];
   const focusedOptions = descriptors[focusedRoute.key].options;
-  // Hide the tab bar if the active screen requests it:
   if ((focusedOptions.tabBarStyle as { display?: string } | undefined)?.display === 'none') {
     return null;
   }
@@ -227,48 +224,58 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         right: 24,
         height: 64,
         borderRadius: 32,
-        backgroundColor: DS.colors.background,
+        overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#2A2A2A',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
+        borderColor: SUNRISE.glass.navBorder,
+        shadowColor: SUNRISE.gold,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
         shadowRadius: 16,
-        elevation: 12,
+        elevation: 16,
       }}
     >
-      {state.routes.map((route, index) => {
-        const isFocused = state.index === index;
+      <BlurView
+        intensity={40}
+        tint="dark"
+        style={{
+          flex: 1,
+          backgroundColor: SUNRISE.glass.navBg,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 8,
+        }}
+      >
+        {state.routes.map((route, index) => {
+          const isFocused = state.index === index;
 
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-          if (!isFocused && !event.defaultPrevented) {
-            medium();
-            setDirection(index > prevIndexRef.current ? 'right' : 'left');
-            navigation.navigate(route.name, route.params);
-          }
-        };
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!isFocused && !event.defaultPrevented) {
+              medium();
+              setDirection(index > prevIndexRef.current ? 'right' : 'left');
+              navigation.navigate(route.name, route.params);
+            }
+          };
 
-        return (
-          <TabItem
-            key={route.key}
-            route={route}
-            index={index}
-            isFocused={isFocused}
-            onPress={onPress}
-          />
-        );
-      })}
+          return (
+            <TabItem
+              key={route.key}
+              route={route}
+              index={index}
+              isFocused={isFocused}
+              onPress={onPress}
+            />
+          );
+        })}
 
-      {/* FAB — positioned inside the pill on the right */}
-      <FABButton />
+        {/* FAB — gradient button on the right */}
+        <FABButton />
+      </BlurView>
     </View>
   );
 }
+

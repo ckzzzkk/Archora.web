@@ -4,6 +4,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming,
 } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
+import { SUNRISE } from '../../theme/sunrise';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -24,7 +25,7 @@ export function Toast({ message, title, type = 'info', onDismiss, duration = 300
     success: colors.success,
     error: colors.error,
     warning: colors.warning,
-    info: colors.primary,
+    info: SUNRISE.gold,
   };
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export function Toast({ message, title, type = 'info', onDismiss, duration = 300
             top: 60,
             left: 16,
             right: 16,
-            backgroundColor: colors.surfaceHigh,
+            backgroundColor: SUNRISE.toastBg,
             borderRadius: 12,
             borderLeftWidth: 4,
             borderLeftColor: borderColors[type],
