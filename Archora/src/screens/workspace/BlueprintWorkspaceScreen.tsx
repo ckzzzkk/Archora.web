@@ -266,7 +266,7 @@ export function BlueprintWorkspaceScreen() {
       return;
     }
     try {
-      const projectName = blueprint?.projectName ?? 'My Floor Plan';
+      const projectName = blueprint?.metadata.style ?? 'My Floor Plan';
       await Share.share({
         title: `${projectName} — designed with ASORIA`,
         url: uri,
