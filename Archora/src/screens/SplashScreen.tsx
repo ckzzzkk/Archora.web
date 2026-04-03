@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Dimensions } from 'react-native';
+import { DS } from '../theme/designSystem';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -108,10 +109,12 @@ export function SplashScreen({ appReady, onComplete }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appReady]);
 
+  const svgStroke = DS.colors.primary;
+
   return (
     <Animated.View
       style={[
-        { flex: 1, backgroundColor: '#1A1A1A', alignItems: 'center', justifyContent: 'center' },
+        { flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' },
         screenStyle,
       ]}
     >
@@ -124,27 +127,27 @@ export function SplashScreen({ appReady, onComplete }: Props) {
       >
         <AnimatedCircle
           cx={CX} cy={CY} r={OUTER_R}
-          stroke="#F0EDE8" strokeWidth="1" fill="none"
+          stroke={svgStroke} strokeWidth="1" fill="none"
           strokeDasharray={`${OUTER_CIRC}`}
           animatedProps={outerProps}
           opacity={0.55}
         />
         <AnimatedCircle
           cx={CX} cy={CY} r={INNER_R}
-          stroke="#F0EDE8" strokeWidth="1" fill="none"
+          stroke={svgStroke} strokeWidth="1" fill="none"
           strokeDasharray={`${INNER_CIRC}`}
           animatedProps={innerProps}
           opacity={0.35}
         />
         <AnimatedLine x1={CX} y1={CY} x2={CX} y2={CY}
-          animatedProps={aNProps} stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" opacity={0.9} />
+          animatedProps={aNProps} stroke={svgStroke} strokeWidth="1.5" strokeLinecap="round" opacity={0.9} />
         <AnimatedLine x1={CX} y1={CY} x2={CX} y2={CY}
-          animatedProps={aSProps} stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" opacity={0.45} />
+          animatedProps={aSProps} stroke={svgStroke} strokeWidth="1.5" strokeLinecap="round" opacity={0.45} />
         <AnimatedLine x1={CX} y1={CY} x2={CX} y2={CY}
-          animatedProps={aEProps} stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" opacity={0.45} />
+          animatedProps={aEProps} stroke={svgStroke} strokeWidth="1.5" strokeLinecap="round" opacity={0.45} />
         <AnimatedLine x1={CX} y1={CY} x2={CX} y2={CY}
-          animatedProps={aWProps} stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" opacity={0.45} />
-        <AnimatedCircle cx={CX} cy={CY} r={4.5} fill="#F0EDE8" animatedProps={dotProps} />
+          animatedProps={aWProps} stroke={svgStroke} strokeWidth="1.5" strokeLinecap="round" opacity={0.45} />
+        <AnimatedCircle cx={CX} cy={CY} r={4.5} fill={svgStroke} animatedProps={dotProps} />
       </Svg>
 
       {/* Brand word — slams in */}
@@ -153,7 +156,7 @@ export function SplashScreen({ appReady, onComplete }: Props) {
           style={{
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 46,
-            color: '#F0EDE8',
+            color: DS.colors.primary,
             letterSpacing: 16,
             paddingLeft: 16,
           }}
@@ -168,7 +171,7 @@ export function SplashScreen({ appReady, onComplete }: Props) {
           {
             fontFamily: 'JetBrainsMono_400Regular',
             fontSize: 10,
-            color: '#5A5550',
+            color: DS.colors.primaryDim,
             marginTop: 12,
             textTransform: 'uppercase',
             letterSpacing: 0,
