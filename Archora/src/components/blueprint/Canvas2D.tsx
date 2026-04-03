@@ -1,5 +1,5 @@
 import { DS } from '../../theme/designSystem';
-import React, { useCallback, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useCallback, useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { View, Dimensions } from 'react-native';
 import {
   Canvas,
@@ -19,6 +19,7 @@ import {
   withSpring,
 } from 'react-native-reanimated';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import { useUIStore } from '../../stores/uiStore';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useWallDrawing } from '../../hooks/useWallDrawing';
@@ -90,6 +91,28 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   const placement = useFurniturePlacement(onFurniturePlaced);
   useRoomDetection();
   const dimensionLines = useDimensions();
+  const showToast = useUIStore((s) => s.actions.showToast);
+
+  // Measurement intelligence: warn when a room falls below minimum area
+  const prevRoomCountRef = useRef(0);
+  useEffect(() => {
+    const rooms = blueprint?.rooms ?? [];
+    if (rooms.length > prevRoomCountRef.current) {
+      // A new room was detected — check it
+      const newRoom = rooms[rooms.length - 1];
+      if (newRoom) {
+        const typeKey = newRoom.type ?? '';
+        let minArea: number | null = null;
+        if (typeKey === 'bedroom' && newRoom.area < MIN_BEDROOM_AREA) minArea = MIN_BEDROOM_AREA;
+        else if (typeKey === 'bathroom' && newRoom.area < MIN_BATHROOM_AREA) minArea = MIN_BATHROOM_AREA;
+        else if (newRoom.area < SMALL_ROOM_AREA) minArea = SMALL_ROOM_AREA;
+        if (minArea !== null) {
+          showToast(`${newRoom.name || 'Room'} is ${newRoom.area.toFixed(1)}m² — minimum recommended is ${minArea}m²`, 'warning');
+        }
+      }
+    }
+    prevRoomCountRef.current = rooms.length;
+  }, [blueprint?.rooms, showToast]);
 
   // Sync pending placement with the placement hook
   const prevPendingRef = useRef<FurnitureDef | null | undefined>(undefined);

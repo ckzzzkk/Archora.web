@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, Pressable, ScrollView, Share } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, interpolate,
 } from 'react-native-reanimated';
@@ -224,6 +224,17 @@ export function BlueprintWorkspaceScreen() {
     setShowStaircasePrompt(false);
   }, [blueprint, addElevator]);
 
+  const exportBlueprintToFile = useCallback(async (): Promise<string | null> => {
+    const image = canvasRef.current?.makeImageSnapshot();
+    if (!image) return null;
+    const base64 = image.encodeToBase64();
+    const uri = (FileSystem.documentDirectory ?? '') + `blueprint-${Date.now()}.png`;
+    await FileSystem.writeAsStringAsync(uri, base64, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return uri;
+  }, []);
+
   const exportImage = useCallback(async () => {
     const image = canvasRef.current?.makeImageSnapshot();
     if (!image) {
@@ -247,6 +258,24 @@ export function BlueprintWorkspaceScreen() {
       showToast('Export failed — please try again', 'error');
     }
   }, [showToast]);
+
+  const handleShare = useCallback(async () => {
+    const uri = await exportBlueprintToFile();
+    if (!uri) {
+      showToast('Switch to 2D view to share the floor plan', 'info');
+      return;
+    }
+    try {
+      const projectName = blueprint?.projectName ?? 'My Floor Plan';
+      await Share.share({
+        title: `${projectName} — designed with ASORIA`,
+        url: uri,
+        message: `Check out my floor plan designed with ASORIA! ${projectName}`,
+      });
+    } catch {
+      showToast('Share failed — please try again', 'error');
+    }
+  }, [exportBlueprintToFile, blueprint, showToast]);
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
@@ -314,6 +343,26 @@ export function BlueprintWorkspaceScreen() {
             >
               <ArchText variant="body" style={{ fontSize: 14, color: DS.colors.primaryGhost }}>⤓</ArchText>
               <ArchText variant="body" style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: DS.colors.primaryGhost, marginTop: 2 }}>EXPORT</ArchText>
+            </Pressable>
+          )}
+          {/* Share — available in 2D view with a blueprint loaded */}
+          {blueprint && viewMode === '2D' && (
+            <Pressable
+              onPress={() => { void handleShare(); }}
+              style={{
+                width: 64,
+                height: 52,
+                borderRadius: 20,
+                backgroundColor: DS.colors.surfaceHigh,
+                borderWidth: 1,
+                borderColor: DS.colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 8,
+              }}
+            >
+              <ArchText variant="body" style={{ fontSize: 14, color: DS.colors.primaryGhost }}>⤴</ArchText>
+              <ArchText variant="body" style={{ fontSize: 8, fontFamily: 'Inter_400Regular', color: DS.colors.primaryGhost, marginTop: 2 }}>SHARE</ArchText>
             </Pressable>
           )}
           {/* Publish — Creator+ only, only shown when blueprint has rooms */}
