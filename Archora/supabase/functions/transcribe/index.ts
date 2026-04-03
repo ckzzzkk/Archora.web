@@ -51,11 +51,27 @@ serve(async (req) => {
     whisperForm.append('model', 'whisper-1');
     whisperForm.append('language', 'en');
 
-    const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${openaiKey}` },
-      body: whisperForm,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 50_000);
+
+    let whisperResponse: Response;
+    try {
+      whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: { Authorization: `Bearer ${openaiKey}` },
+        body: whisperForm,
+      });
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
+      console.error('[transcribe]', isTimeout ? 'Request timed out after 50s' : fetchErr);
+      // Return empty transcript rather than failing hard — the user can type manually
+      return new Response(JSON.stringify({ transcript: '', error: 'TRANSCRIPTION_TIMEOUT' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    clearTimeout(timeoutId);
 
     if (!whisperResponse.ok) {
       throw new Error(`Whisper API error: ${whisperResponse.status}`);
