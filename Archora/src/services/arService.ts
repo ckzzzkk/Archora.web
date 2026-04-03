@@ -1,4 +1,6 @@
 import { supabase } from '../utils/supabaseClient';
+import { ARCoreModule } from '../native/ARCoreModule';
+import type { PhotoAnalysisResult } from '../utils/ar/arToBlueprintConverter';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -108,5 +110,26 @@ export const arService = {
         status: r.status as ARScanResult['status'],
       };
     });
+  },
+
+  async analysePhoto(photoBase64: string, wallDirection: 'front' | 'left' | 'back' | 'right'): Promise<PhotoAnalysisResult> {
+    const headers = await getAuthHeader();
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/ar-photo-analyse`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ photoBase64, wallDirection }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json() as { error: string };
+      throw new Error(err.error);
+    }
+
+    return response.json() as Promise<PhotoAnalysisResult>;
+  },
+
+  async getARCapabilities(): Promise<{ hasARCore: boolean; hasDepthAPI: boolean }> {
+    const support = await ARCoreModule.checkSupport();
+    return { hasARCore: support.hasARCore, hasDepthAPI: support.hasDepthAPI };
   },
 };
