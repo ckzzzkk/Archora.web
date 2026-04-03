@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, RefreshControl, Alert,
 } from 'react-native';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withSpring, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence, withSpring, Easing,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle, Line, Rect } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +15,7 @@ import { useProjectStore } from '../../stores/projectStore';
 import type { Project } from '../../types';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useStreak } from '../../hooks/useStreak';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { NotificationPanel } from '../../components/dashboard/NotificationPanel';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
@@ -48,6 +49,7 @@ function NewProjectModal({
   onClose: () => void;
   onCreate: (name: string, type: BuildingType) => void;
 }) {
+  const C = useThemeColors();
   const [name, setName] = useState('');
   const [buildingType, setBuildingType] = useState<BuildingType>('house');
 
@@ -64,39 +66,39 @@ function NewProjectModal({
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Pressable style={{ flex: 1, backgroundColor: DS.colors.overlay }} onPress={onClose} />
+        <Pressable style={{ flex: 1, backgroundColor: C.overlay }} onPress={onClose} />
         <View style={{
-          backgroundColor: DS.colors.surfaceHigh,
+          backgroundColor: C.surfaceHigh,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           padding: 32,
           paddingBottom: 48,
           borderTopWidth: 1,
-          borderTopColor: DS.colors.border,
+          borderTopColor: C.border,
         }}>
-          <ArchText variant="heading" style={{ fontSize: 24, marginBottom: 24 }}>New Project</ArchText>
+          <ArchText variant="heading" style={{ fontSize: 24, color: C.primary, marginBottom: 24 }}>New Project</ArchText>
 
-          <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          <ArchText variant="body" style={{ fontSize: 12, color: C.primaryDim, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
             Project Name
           </ArchText>
           <TextInput
             value={name}
             onChangeText={setName}
             placeholder="My Dream Home"
-            placeholderTextColor={DS.colors.primaryGhost}
+            placeholderTextColor={C.primaryGhost}
             autoFocus
             style={{
               fontFamily: DS.font.regular,
               fontSize: 16,
-              color: DS.colors.primary,
+              color: C.primary,
               borderBottomWidth: 1.5,
-              borderBottomColor: DS.colors.accent,
+              borderBottomColor: C.accent,
               paddingVertical: 10,
               marginBottom: 24,
             }}
           />
 
-          <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          <ArchText variant="body" style={{ fontSize: 12, color: C.primaryDim, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
             Building Type
           </ArchText>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
@@ -109,14 +111,14 @@ function NewProjectModal({
                   paddingVertical: 7,
                   borderRadius: 999,
                   borderWidth: 1.5,
-                  borderColor: buildingType === type.key ? DS.colors.accent : DS.colors.border,
-                  backgroundColor: buildingType === type.key ? `${DS.colors.accent}20` : 'transparent',
+                  borderColor: buildingType === type.key ? C.accent : C.border,
+                  backgroundColor: buildingType === type.key ? `${C.accent}20` : 'transparent',
                 }}
               >
                 <ArchText variant="body" style={{
                   fontFamily: DS.font.medium,
                   fontSize: 13,
-                  color: buildingType === type.key ? DS.colors.accent : DS.colors.primaryDim,
+                  color: buildingType === type.key ? C.accent : C.primaryDim,
                 }}>
                   {type.label}
                 </ArchText>
@@ -138,6 +140,7 @@ function NewProjectModal({
 }
 
 function StatCard({ label, value, limit }: { label: string; value: number; limit: number }) {
+  const C = useThemeColors();
   const fillPct = useSharedValue(0);
 
   useEffect(() => {
@@ -153,38 +156,41 @@ function StatCard({ label, value, limit }: { label: string; value: number; limit
   return (
     <View style={{
       flex: 1,
-      backgroundColor: DS.colors.surface,
+      backgroundColor: C.surface,
       borderRadius: 20,
       padding: DS.spacing.md,
+      borderWidth: 1,
+      borderColor: C.border,
     }}>
-      <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 28, color: DS.colors.primary }}>
+      <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 28, color: C.primary }}>
         {value}
       </ArchText>
-      <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim, marginTop: 2 }}>
+      <ArchText variant="body" style={{ fontSize: 12, color: C.primaryDim, marginTop: 2 }}>
         {label}
       </ArchText>
-      <View style={{ height: 3, borderRadius: 2, backgroundColor: DS.colors.border, marginTop: DS.spacing.sm, overflow: 'hidden' }}>
-        <Animated.View style={[{ height: 3, borderRadius: 2, backgroundColor: DS.colors.accent }, barStyle]} />
+      <View style={{ height: 3, borderRadius: 2, backgroundColor: C.border, marginTop: DS.spacing.sm, overflow: 'hidden' }}>
+        <Animated.View style={[{ height: 3, borderRadius: 2, backgroundColor: C.accent }, barStyle]} />
       </View>
     </View>
   );
 }
 
 function EmptyState({ onPress }: { onPress: () => void }) {
+  const C = useThemeColors();
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: DS.spacing.xl }}>
       <Svg width={120} height={120} viewBox="0 0 120 120">
-        <Rect x="20" y="40" width="80" height="55" rx="4" stroke="#3A3A3A" strokeWidth="1.5" fill="none" />
-        <Line x1="20" y1="60" x2="100" y2="60" stroke="#3A3A3A" strokeWidth="1" />
-        <Line x1="60" y1="40" x2="60" y2="95" stroke="#3A3A3A" strokeWidth="1" />
-        <Path d="M30 50 L50 50 M30 70 L55 70 M30 80 L45 80" stroke="#4A4A4A" strokeWidth="1" strokeLinecap="round" />
-        <Path d="M10 40 L20 40 M100 40 L110 40 M60 25 L60 40" stroke="#3A3A3A" strokeWidth="1.5" strokeLinecap="round" />
-        <Circle cx="60" cy="25" r="5" stroke="#3A3A3A" strokeWidth="1.5" fill="none" />
+        <Rect x="20" y="40" width="80" height="55" rx="4" stroke={C.border} strokeWidth="1.5" fill="none" />
+        <Line x1="20" y1="60" x2="100" y2="60" stroke={C.border} strokeWidth="1" />
+        <Line x1="60" y1="40" x2="60" y2="95" stroke={C.border} strokeWidth="1" />
+        <Path d="M30 50 L50 50 M30 70 L55 70 M30 80 L45 80" stroke={C.borderLight} strokeWidth="1" strokeLinecap="round" />
+        <Path d="M10 40 L20 40 M100 40 L110 40 M60 25 L60 40" stroke={C.border} strokeWidth="1.5" strokeLinecap="round" />
+        <Circle cx="60" cy="25" r="5" stroke={C.border} strokeWidth="1.5" fill="none" />
       </Svg>
-      <ArchText variant="heading" style={{ fontSize: 22, textAlign: 'center', marginTop: DS.spacing.lg }}>
+      <ArchText variant="heading" style={{ fontSize: 22, color: C.primary, textAlign: 'center', marginTop: DS.spacing.lg }}>
         Your first project is waiting
       </ArchText>
-      <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: DS.colors.primaryDim, textAlign: 'center', marginTop: DS.spacing.sm }}>
+      <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, textAlign: 'center', marginTop: DS.spacing.sm }}>
         Tap below to start building
       </ArchText>
       <View style={{ marginTop: DS.spacing.lg }}>
@@ -197,55 +203,80 @@ function EmptyState({ onPress }: { onPress: () => void }) {
 function InlineProjectCard({
   project,
   onPress,
+  index,
 }: {
   project: Project;
   onPress: () => void;
+  index: number;
 }) {
+  const C = useThemeColors();
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(16);
+
+  useEffect(() => {
+    const delay = index * 55;
+    const ease = Easing.out(Easing.cubic);
+    opacity.value = withDelay(delay, withTiming(1, { duration: 320, easing: ease }));
+    translateY.value = withDelay(delay, withTiming(0, { duration: 320, easing: ease }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   const formattedDate = new Date(
     (project as unknown as { updatedAt?: string }).updatedAt ?? (project as unknown as { createdAt?: string }).createdAt ?? Date.now()
   ).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const roomCount = (project as unknown as { blueprint?: { rooms?: unknown[] } }).blueprint?.rooms?.length ?? 0;
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        backgroundColor: DS.colors.surface,
-        borderRadius: 20,
-        marginHorizontal: DS.spacing.lg,
-        marginBottom: DS.spacing.sm,
-        padding: DS.spacing.md,
-      }}
-    >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: DS.spacing.sm }}>
-        <ArchText variant="body" style={{ fontFamily: DS.font.medium, fontSize: DS.fontSize.md, flex: 1 }}>
-          {project.name}
-        </ArchText>
-        <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim }}>{formattedDate}</ArchText>
-      </View>
+    <Animated.View style={animStyle}>
+      <Pressable
+        onPress={onPress}
+        style={{
+          backgroundColor: C.surface,
+          borderRadius: 20,
+          marginHorizontal: DS.spacing.lg,
+          marginBottom: DS.spacing.sm,
+          padding: DS.spacing.md,
+          borderWidth: 1,
+          borderColor: C.border,
+        }}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: DS.spacing.sm }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.medium, fontSize: DS.fontSize.md, color: C.primary, flex: 1 }}>
+            {project.name}
+          </ArchText>
+          <ArchText variant="body" style={{ fontSize: 12, color: C.primaryDim }}>{formattedDate}</ArchText>
+        </View>
 
-      <View style={{
-        height: 80,
-        backgroundColor: DS.colors.background,
-        borderRadius: DS.spacing.sm,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: DS.spacing.sm,
-      }}>
-        <Svg width={80} height={50} viewBox="0 0 80 50">
-          <Rect x="5" y="5" width="70" height="40" rx="2" stroke="#333333" strokeWidth="1" fill="none" />
-          <Line x1="5" y1="25" x2="75" y2="25" stroke="#2A2A2A" strokeWidth="1" />
-          <Line x1="40" y1="5" x2="40" y2="45" stroke="#2A2A2A" strokeWidth="1" />
-        </Svg>
-      </View>
+        <View style={{
+          height: 80,
+          backgroundColor: C.background,
+          borderRadius: DS.spacing.sm,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: DS.spacing.sm,
+          borderWidth: 1,
+          borderColor: C.border,
+        }}>
+          <Svg width={80} height={50} viewBox="0 0 80 50">
+            <Rect x="5" y="5" width="70" height="40" rx="2" stroke={C.border} strokeWidth="1" fill="none" />
+            <Line x1="5" y1="25" x2="75" y2="25" stroke={C.gridLine} strokeWidth="1" />
+            <Line x1="40" y1="5" x2="40" y2="45" stroke={C.gridLine} strokeWidth="1" />
+          </Svg>
+        </View>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim }}>
-          {roomCount} {roomCount === 1 ? 'room' : 'rooms'}
-        </ArchText>
-        <OvalButton label="Open" variant="outline" size="small" onPress={onPress} />
-      </View>
-    </Pressable>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <ArchText variant="body" style={{ fontSize: 12, color: C.primaryDim }}>
+            {roomCount} {roomCount === 1 ? 'room' : 'rooms'}
+          </ArchText>
+          <OvalButton label="Open" variant="outline" size="small" onPress={onPress} />
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -253,6 +284,7 @@ export function DashboardScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { light } = useHaptics();
+  const C = useThemeColors();
   const user = useAuthStore((s) => s.user);
   const userTier = user?.subscriptionTier ?? 'starter';
   const tierLimits = TIER_LIMITS[userTier] ?? TIER_LIMITS.starter;
@@ -309,7 +341,7 @@ export function DashboardScreen() {
 
   if (!user) {
     return (
-      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: C.background, alignItems: 'center', justifyContent: 'center' }}>
         <CompassRoseLoader size="medium" />
       </View>
     );
@@ -320,7 +352,7 @@ export function DashboardScreen() {
 
   const ListHeader = (
     <>
-      {/* ── Header ────────────────────────────────────────────────────────── */}
+      {/* Header */}
       <View style={{
         paddingTop: insets.top + 16,
         paddingHorizontal: DS.spacing.lg,
@@ -330,7 +362,7 @@ export function DashboardScreen() {
         justifyContent: 'space-between',
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.sm }}>
-          <ArchText variant="heading" style={{ fontSize: 24 }}>Your Projects</ArchText>
+          <ArchText variant="heading" style={{ fontSize: 24, color: C.primary }}>Your Projects</ArchText>
           {streakCount > 0 && (
             <Animated.View style={[flameStyle, { flexDirection: 'row', alignItems: 'center' }]}>
               <ArchText variant="body" style={{ fontSize: 18 }}>🔥</ArchText>
@@ -346,37 +378,39 @@ export function DashboardScreen() {
             onPress={handleNewProject}
             style={{
               width: 40, height: 40, borderRadius: 20,
-              backgroundColor: DS.colors.surface,
+              backgroundColor: C.surface,
+              borderWidth: 1, borderColor: C.border,
               alignItems: 'center', justifyContent: 'center',
             }}
           >
             <Svg width={18} height={18} viewBox="0 0 24 24">
-              <Path d="M12 5v14M5 12h14" stroke={DS.colors.primary} strokeWidth="1.8" strokeLinecap="round" />
+              <Path d="M12 5v14M5 12h14" stroke={C.primary} strokeWidth="1.8" strokeLinecap="round" />
             </Svg>
           </Pressable>
           <Pressable
             onPress={() => { light(); setShowNotifications(true); setHasUnread(false); }}
             style={{
               width: 40, height: 40, borderRadius: 20,
-              backgroundColor: DS.colors.surface,
+              backgroundColor: C.surface,
+              borderWidth: 1, borderColor: C.border,
               alignItems: 'center', justifyContent: 'center',
             }}
           >
             <Svg width={18} height={18} viewBox="0 0 24 24">
-              <Path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke={DS.colors.primary} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke={C.primary} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
             {hasUnread && (
               <View style={{
                 position: 'absolute', top: 7, right: 7,
                 width: 8, height: 8, borderRadius: 4,
-                backgroundColor: DS.colors.success,
+                backgroundColor: C.success,
               }} />
             )}
           </Pressable>
         </View>
       </View>
 
-      {/* ── Stats row ─────────────────────────────────────────────────────── */}
+      {/* Stats row */}
       <View style={{ flexDirection: 'row', marginHorizontal: DS.spacing.lg, gap: DS.spacing.sm, marginBottom: DS.spacing.lg }}>
         <StatCard
           label="AI Designs"
@@ -393,7 +427,7 @@ export function DashboardScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: C.background }}>
       {isLoading ? (
         <>
           {ListHeader}
@@ -411,12 +445,13 @@ export function DashboardScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => { void handleRefresh(); }}
-              tintColor={DS.colors.primary}
+              tintColor={C.primary}
             />
           }
-          renderItem={useCallback(({ item }: { item: typeof projects[0] }) => (
+          renderItem={useCallback(({ item, index }: { item: typeof projects[0]; index: number }) => (
             <InlineProjectCard
               project={item}
+              index={index}
               onPress={() => {
                 void actions.delete; // keep reference
                 navigation.navigate('Workspace', { projectId: item.id });

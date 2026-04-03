@@ -16,17 +16,20 @@ import { ArchText } from '../../components/common/ArchText';
 import { authService } from '../../services/authService';
 import { useHaptics } from '../../hooks/useHaptics';
 import { DS } from '../../theme/designSystem';
+import { useThemeColors } from '../../hooks/useThemeColors';
+import { useAppearanceStore } from '../../stores/appearanceStore';
+import type { AppearanceMode } from '../../stores/appearanceStore';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-function SectionLabel({ title }: { title: string }) {
+function SectionLabel({ title, C }: { title: string; C: ReturnType<typeof useThemeColors> }) {
   return (
     <ArchText variant="body" style={{
       fontFamily: DS.font.medium,
       fontSize: 12,
-      color: DS.colors.primaryGhost,
+      color: C.primaryGhost,
       letterSpacing: 1.5,
       textTransform: 'uppercase',
       marginBottom: DS.spacing.sm,
@@ -45,6 +48,7 @@ function SettingsRow({
   last = false,
   danger = false,
   right,
+  C,
 }: {
   label: string;
   value?: string;
@@ -52,6 +56,7 @@ function SettingsRow({
   last?: boolean;
   danger?: boolean;
   right?: React.ReactNode;
+  C: ReturnType<typeof useThemeColors>;
 }) {
   const content = (
     <View style={{
@@ -61,16 +66,16 @@ function SettingsRow({
       alignItems: 'center',
       justifyContent: 'space-between',
     }}>
-      <ArchText variant="body" style={{ fontSize: DS.fontSize.md, color: danger ? DS.colors.error : DS.colors.primary }}>
+      <ArchText variant="body" style={{ fontSize: DS.fontSize.md, color: danger ? C.error : C.primary }}>
         {label}
       </ArchText>
       {right != null ? right : (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.xs }}>
           {value != null && (
-            <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: DS.colors.primaryDim }}>{value}</ArchText>
+            <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim }}>{value}</ArchText>
           )}
           {onPress != null && (
-            <ArchText variant="body" style={{ fontSize: 18, color: DS.colors.primaryGhost }}>›</ArchText>
+            <ArchText variant="body" style={{ fontSize: 18, color: C.primaryGhost }}>›</ArchText>
           )}
         </View>
       )}
@@ -83,20 +88,82 @@ function SettingsRow({
         <Pressable onPress={onPress}>{content}</Pressable>
       ) : content}
       {!last && (
-        <View style={{ height: 1, backgroundColor: '#2A2A2A', marginHorizontal: 20 }} />
+        <View style={{ height: 1, backgroundColor: C.border, marginHorizontal: 20 }} />
       )}
     </View>
   );
 }
 
-function SettingsCard({ children, danger = false }: { children: React.ReactNode; danger?: boolean }) {
+function SettingsCard({ children, danger = false, C }: { children: React.ReactNode; danger?: boolean; C: ReturnType<typeof useThemeColors> }) {
   return (
     <View style={{
-      backgroundColor: danger ? '#C0604A10' : DS.colors.surface,
+      backgroundColor: danger ? `${C.error}15` : C.surface,
       borderRadius: 20,
       overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: danger ? `${C.error}30` : C.border,
     }}>
       {children}
+    </View>
+  );
+}
+
+const APPEARANCE_OPTIONS: { mode: AppearanceMode; label: string }[] = [
+  { mode: 'dark',   label: 'Dark'   },
+  { mode: 'light',  label: 'Light'  },
+  { mode: 'system', label: 'System' },
+];
+
+function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
+  const mode    = useAppearanceStore((s) => s.mode);
+  const setMode = useAppearanceStore((s) => s.setMode);
+
+  return (
+    <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {APPEARANCE_OPTIONS.map(({ mode: m, label }) => {
+          const active = mode === m;
+          return (
+            <Pressable
+              key={m}
+              onPress={() => setMode(m)}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                borderRadius: 50,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: active ? C.primary : 'transparent',
+                borderWidth: 1.5,
+                borderColor: active ? C.primary : C.borderLight,
+              }}
+            >
+              <ArchText
+                variant="body"
+                style={{
+                  fontFamily: DS.font.bold,
+                  fontSize: 13,
+                  color: active ? C.background : C.primaryDim,
+                  letterSpacing: 0.3,
+                }}
+              >
+                {label}
+              </ArchText>
+            </Pressable>
+          );
+        })}
+      </View>
+      <ArchText
+        variant="body"
+        style={{
+          fontSize: 11,
+          color: C.primaryGhost,
+          marginTop: 8,
+          textAlign: 'center',
+        }}
+      >
+        {mode === 'system' ? 'Follows your device appearance setting' : `Always use ${mode} mode`}
+      </ArchText>
     </View>
   );
 }
@@ -105,6 +172,7 @@ export function AccountScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { light, medium } = useHaptics();
+  const C = useThemeColors();
 
   const user = useAuthStore((s) => s.user);
   const authActions = useAuthStore((s) => s.actions);
@@ -146,10 +214,10 @@ export function AccountScreen() {
   const tierLabel = (user.subscriptionTier ?? 'starter').charAt(0).toUpperCase() + (user.subscriptionTier ?? 'starter').slice(1);
 
   const tierBadgeColors = {
-    starter:   { border: DS.colors.border,    text: DS.colors.primaryDim },
-    creator:   { border: '#7AB87A80',          text: DS.colors.success    },
-    pro:       { border: '#C8C8C850',          text: DS.colors.accent     },
-    architect: { border: '#D4A84B80',          text: DS.colors.warning    },
+    starter:   { border: C.border,      text: C.primaryDim },
+    creator:   { border: '#7AB87A80',   text: C.success    },
+    pro:       { border: '#C8C8C850',   text: C.accent     },
+    architect: { border: '#D4A84B80',   text: C.warning    },
   };
   const tierColors = tierBadgeColors[user.subscriptionTier ?? 'starter'] ?? tierBadgeColors.starter;
 
@@ -240,7 +308,7 @@ export function AccountScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+    <View style={{ flex: 1, backgroundColor: C.background }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -248,7 +316,7 @@ export function AccountScreen() {
           paddingBottom: 120,
         }}
       >
-        {/* ── Avatar + name header ───────────────────────────────────────── */}
+        {/* Avatar + name header */}
         <Animated.View style={[{ alignItems: 'center', paddingTop: insets.top + 24, paddingBottom: DS.spacing.xl }, headerStyle]}>
           {/* Avatar */}
           <Pressable
@@ -256,28 +324,30 @@ export function AccountScreen() {
             style={{ position: 'relative', marginBottom: DS.spacing.md }}
           >
             <View style={{
-              width: 84, height: 84, borderRadius: 42,
-              backgroundColor: DS.colors.surface,
+              width: 88, height: 88, borderRadius: 44,
+              backgroundColor: C.surfaceHigh,
               alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden',
+              borderWidth: 2,
+              borderColor: C.border,
             }}>
               {user.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={{ width: 84, height: 84 }} />
+                <Image source={{ uri: user.avatarUrl }} style={{ width: 88, height: 88 }} />
               ) : (
-                <ArchText variant="heading" style={{ fontSize: 32, color: DS.colors.primary }}>{initial}</ArchText>
+                <ArchText variant="heading" style={{ fontSize: 34, color: C.primary }}>{initial}</ArchText>
               )}
             </View>
             {/* Camera badge */}
             <View style={{
               position: 'absolute', bottom: 0, right: 0,
               width: 28, height: 28, borderRadius: 14,
-              backgroundColor: DS.colors.primary,
+              backgroundColor: C.primary,
               alignItems: 'center', justifyContent: 'center',
-              borderWidth: 2, borderColor: DS.colors.background,
+              borderWidth: 2, borderColor: C.background,
             }}>
               <Svg width={14} height={14} viewBox="0 0 24 24">
-                <Path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="#1A1A1A" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                <Circle cx="12" cy="13" r="4" stroke="#1A1A1A" strokeWidth="1.8" fill="none" />
+                <Path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke={C.background} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <Circle cx="12" cy="13" r="4" stroke={C.background} strokeWidth="1.8" fill="none" />
               </Svg>
             </View>
           </Pressable>
@@ -293,9 +363,9 @@ export function AccountScreen() {
               style={{
                 fontFamily: DS.font.heading,
                 fontSize: 24,
-                color: DS.colors.primary,
+                color: C.primary,
                 borderBottomWidth: 1.5,
-                borderBottomColor: DS.colors.accent,
+                borderBottomColor: C.accent,
                 textAlign: 'center',
                 minWidth: 120,
                 paddingBottom: 4,
@@ -304,58 +374,68 @@ export function AccountScreen() {
             />
           ) : (
             <Pressable onPress={() => setEditing(true)} hitSlop={8}>
-              <ArchText variant="heading" style={{ fontSize: 24, marginBottom: DS.spacing.sm }}>{user.displayName ?? 'Unnamed'}</ArchText>
+              <ArchText variant="heading" style={{ fontSize: 24, color: C.primary, marginBottom: DS.spacing.sm }}>{user.displayName ?? 'Unnamed'}</ArchText>
             </Pressable>
           )}
 
-          <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: DS.colors.primaryDim, marginBottom: DS.spacing.sm }}>
+          <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, marginBottom: DS.spacing.sm }}>
             {user.email}
           </ArchText>
 
           {/* Tier badge */}
           <View style={{
-            paddingHorizontal: 12, paddingVertical: 4,
+            paddingHorizontal: 14, paddingVertical: 5,
             borderRadius: 50,
-            borderWidth: 1,
+            borderWidth: 1.5,
             borderColor: tierColors.border,
           }}>
-            <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: tierColors.text, letterSpacing: 1 }}>
+            <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: tierColors.text, letterSpacing: 1.2 }}>
               {tierLabel}
             </ArchText>
           </View>
         </Animated.View>
 
-        {/* ── Settings sections ──────────────────────────────────────────── */}
+        {/* Settings sections */}
         <Animated.View style={bodyStyle}>
 
+          {/* APPEARANCE */}
+          <SectionLabel title="Appearance" C={C} />
+          <SettingsCard C={C}>
+            <AppearanceChips C={C} />
+          </SettingsCard>
+
           {/* SUBSCRIPTION */}
-          <SectionLabel title="Subscription" />
-          <SettingsCard>
+          <SectionLabel title="Subscription" C={C} />
+          <SettingsCard C={C}>
             <SettingsRow
               label="Current Plan"
               value={tierLabel}
+              C={C}
             />
             {user.subscriptionTier !== 'starter' ? (
               <SettingsRow
                 label={portalLoading ? 'Opening…' : 'Manage Subscription'}
                 onPress={() => { medium(); void handleManageSubscription(); }}
                 last
+                C={C}
               />
             ) : (
               <SettingsRow
                 label="Upgrade Plan"
                 onPress={() => { medium(); navigation.navigate('Subscription'); }}
                 last
+                C={C}
               />
             )}
           </SettingsCard>
 
           {/* ACCOUNT */}
-          <SectionLabel title="Account" />
-          <SettingsCard>
+          <SectionLabel title="Account" C={C} />
+          <SettingsCard C={C}>
             <SettingsRow
               label="Edit Profile"
               onPress={() => setEditing(true)}
+              C={C}
             />
             <SettingsRow
               label="Change Password"
@@ -363,58 +443,64 @@ export function AccountScreen() {
                 light();
                 Alert.alert('Change Password', 'A password reset link will be sent to your email.');
               }}
+              C={C}
             />
             <SettingsRow
               label="Export Data"
               onPress={() => { light(); handleExportData(); }}
+              C={C}
             />
             <SettingsRow
               label="Theme"
               onPress={() => { light(); navigation.navigate('ThemeCustomiser'); }}
+              C={C}
             />
             <SettingsRow
               label="Notifications"
               last
+              C={C}
               right={
                 <Switch
                   value={notificationsOn}
                   onValueChange={setNotificationsOn}
-                  trackColor={{ false: DS.colors.border, true: DS.colors.accent }}
-                  thumbColor={notificationsOn ? DS.colors.background : DS.colors.primaryDim}
+                  trackColor={{ false: C.border, true: C.accent }}
+                  thumbColor={notificationsOn ? C.background : C.primaryDim}
                 />
               }
             />
           </SettingsCard>
 
           {/* SUPPORT */}
-          <SectionLabel title="Support" />
-          <SettingsCard>
-            <SettingsRow label="Help & FAQ"        onPress={() => { light(); navigation.navigate('HelpFAQ'); }} />
-            <SettingsRow label="Privacy Policy"    onPress={() => { light(); navigation.navigate('PrivacyPolicy'); }} />
-            <SettingsRow label="Terms of Service"  onPress={() => { light(); navigation.navigate('Terms'); }} />
-            <SettingsRow label="Contact Support"   onPress={() => { light(); void Linking.openURL('mailto:support@asoria.app'); }} last />
+          <SectionLabel title="Support" C={C} />
+          <SettingsCard C={C}>
+            <SettingsRow label="Help & FAQ"        onPress={() => { light(); navigation.navigate('HelpFAQ'); }}         C={C} />
+            <SettingsRow label="Privacy Policy"    onPress={() => { light(); navigation.navigate('PrivacyPolicy'); }}   C={C} />
+            <SettingsRow label="Terms of Service"  onPress={() => { light(); navigation.navigate('Terms'); }}           C={C} />
+            <SettingsRow label="Contact Support"   onPress={() => { light(); void Linking.openURL('mailto:support@asoria.app'); }} last C={C} />
           </SettingsCard>
 
           {/* USAGE */}
-          <SectionLabel title="Usage" />
-          <SettingsCard>
+          <SectionLabel title="Usage" C={C} />
+          <SettingsCard C={C}>
             <SettingsRow
               label="AI Designs"
               value={`${user.aiGenerationsUsed ?? 0} / ${limits.aiGenerationsPerMonth === -1 ? '∞' : limits.aiGenerationsPerMonth}`}
               last={false}
+              C={C}
             />
             <SettingsRow
               label="AR Scans"
               value={`${user.arScansUsed ?? 0} / ${limits.arScansPerMonth === -1 ? '∞' : limits.arScansPerMonth}`}
               last
+              C={C}
             />
           </SettingsCard>
 
           {/* DANGER ZONE */}
-          <SectionLabel title="Danger Zone" />
-          <SettingsCard danger>
-            <SettingsRow label="Sign Out"       danger onPress={handleSignOut} />
-            <SettingsRow label="Delete Account" danger onPress={handleDeleteAccount} last />
+          <SectionLabel title="Danger Zone" C={C} />
+          <SettingsCard danger C={C}>
+            <SettingsRow label="Sign Out"       danger onPress={handleSignOut}       C={C} />
+            <SettingsRow label="Delete Account" danger onPress={handleDeleteAccount} last C={C} />
           </SettingsCard>
 
           {/* DEV only */}
@@ -428,7 +514,7 @@ export function AccountScreen() {
             </View>
           )}
 
-          <ArchText variant="body" style={{ textAlign: 'center', fontSize: 12, color: DS.colors.primaryGhost, marginTop: DS.spacing.xl }}>
+          <ArchText variant="body" style={{ textAlign: 'center', fontSize: 12, color: C.primaryGhost, marginTop: DS.spacing.xl }}>
             ASORIA v1.0.0
           </ArchText>
         </Animated.View>

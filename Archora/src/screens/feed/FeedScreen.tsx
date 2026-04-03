@@ -26,6 +26,7 @@ import { OvalButton } from '../../components/common/OvalButton';
 import { useFeed } from '../../hooks/useFeed';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useUIStore } from '../../stores/uiStore';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { DS } from '../../theme/designSystem';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -55,6 +56,7 @@ function FilterChipsRow({
   activeChip: string;
   onChipPress: (chip: ChipConfig) => void;
 }) {
+  const C = useThemeColors();
   return (
     <ScrollView
       horizontal
@@ -76,14 +78,14 @@ function FilterChipsRow({
               paddingVertical: 6,
               borderRadius: 999,
               borderWidth: 1.5,
-              borderColor: active ? DS.colors.primary : DS.colors.border,
-              backgroundColor: active ? 'rgba(200,200,200,0.12)' : 'transparent',
+              borderColor: active ? C.primary : C.border,
+              backgroundColor: active ? C.accentGlow : 'transparent',
             }}
           >
             <ArchText variant="body" style={{
               fontFamily: DS.font.medium,
               fontSize: 12,
-              color: active ? DS.colors.primary : DS.colors.primaryDim,
+              color: active ? C.primary : C.primaryDim,
             }}>
               {chip.label}
             </ArchText>
@@ -95,20 +97,20 @@ function FilterChipsRow({
 }
 
 function FeedEmptyState() {
+  const C = useThemeColors();
   const navigation = useNavigation<Nav>();
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-      {/* Drafting compass SVG */}
       <Svg width={64} height={64} viewBox="0 0 48 48" style={{ marginBottom: DS.spacing.md }}>
-        <Circle cx="24" cy="24" r="20" stroke={DS.colors.border} strokeWidth="1.5" fill="none" />
-        <Path d="M24 8 L22 20 L26 20 Z" stroke={DS.colors.primaryGhost} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
-        <Path d="M24 40 L22 28 L26 28 Z" stroke={DS.colors.primaryGhost} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
-        <Circle cx="24" cy="24" r="3" stroke={DS.colors.primaryDim} strokeWidth="1.2" fill="none" />
+        <Circle cx="24" cy="24" r="20" stroke={C.border} strokeWidth="1.5" fill="none" />
+        <Path d="M24 8 L22 20 L26 20 Z" stroke={C.primaryGhost} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
+        <Path d="M24 40 L22 28 L26 28 Z" stroke={C.primaryGhost} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
+        <Circle cx="24" cy="24" r="3" stroke={C.primaryDim} strokeWidth="1.2" fill="none" />
       </Svg>
-      <ArchText variant="heading" style={{ fontSize: 22, textAlign: 'center', marginBottom: DS.spacing.xs }}>
+      <ArchText variant="heading" style={{ fontSize: 22, color: C.primary, textAlign: 'center', marginBottom: DS.spacing.xs }}>
         No designs yet
       </ArchText>
-      <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: DS.spacing.xl }}>
+      <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, textAlign: 'center', marginBottom: DS.spacing.xl }}>
         Be the first to share your blueprint.
       </ArchText>
       <OvalButton
@@ -142,6 +144,7 @@ export function FeedScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { light } = useHaptics();
+  const C = useThemeColors();
   const showToast = useUIStore((s) => s.actions.showToast);
 
   const {
@@ -228,8 +231,8 @@ export function FeedScreen() {
   const keyExtractor = useCallback((item: import('../../types').Template) => item.id, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
-      {/* ── Header ── */}
+    <View style={{ flex: 1, backgroundColor: C.background }}>
+      {/* Header */}
       <Animated.View style={[{
         paddingTop: insets.top + 16,
         paddingHorizontal: DS.spacing.lg,
@@ -238,21 +241,22 @@ export function FeedScreen() {
         alignItems: 'center',
         justifyContent: 'space-between',
       }, headerStyle]}>
-        <ArchText variant="heading" style={{ fontSize: 28 }}>Inspo</ArchText>
+        <ArchText variant="heading" style={{ fontSize: 28, color: C.primary }}>Inspo</ArchText>
         <View style={{ flexDirection: 'row', gap: DS.spacing.xs }}>
           {/* Search */}
           <Pressable
             onPress={toggleSearch}
             style={{
               width: 40, height: 40, borderRadius: 20,
-              backgroundColor: searchVisible ? DS.colors.primary : DS.colors.surface,
+              backgroundColor: searchVisible ? C.primary : C.surface,
+              borderWidth: 1, borderColor: C.border,
               alignItems: 'center', justifyContent: 'center',
             }}
           >
             <Svg width={18} height={18} viewBox="0 0 24 24">
               <Path
                 d="M21 21L15 15M17 11C17 14.3137 14.3137 17 11 17C7.68629 17 5 14.3137 5 11C5 7.68629 7.68629 5 11 5C14.3137 5 17 7.68629 17 11Z"
-                stroke={searchVisible ? DS.colors.background : DS.colors.primaryDim}
+                stroke={searchVisible ? C.background : C.primaryDim}
                 strokeWidth="1.8"
                 strokeLinecap="round"
               />
@@ -263,14 +267,15 @@ export function FeedScreen() {
             onPress={() => showToast('Notifications coming soon')}
             style={{
               width: 40, height: 40, borderRadius: 20,
-              backgroundColor: DS.colors.surface,
+              backgroundColor: C.surface,
+              borderWidth: 1, borderColor: C.border,
               alignItems: 'center', justifyContent: 'center',
             }}
           >
             <Svg width={18} height={18} viewBox="0 0 24 24">
               <Path
                 d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"
-                stroke={DS.colors.primaryDim}
+                stroke={C.primaryDim}
                 strokeWidth="1.8"
                 fill="none"
                 strokeLinecap="round"
@@ -282,20 +287,22 @@ export function FeedScreen() {
       </Animated.View>
 
       <Animated.View style={bodyStyle}>
-        {/* ── Search bar ── */}
+        {/* Search bar */}
         <Animated.View style={[searchBarStyle, { paddingHorizontal: DS.spacing.lg, marginBottom: DS.spacing.xs }]}>
           <View style={{
             height: 44,
-            backgroundColor: DS.colors.surface,
+            backgroundColor: C.surface,
             borderRadius: 22,
             paddingHorizontal: DS.spacing.md,
             flexDirection: 'row',
             alignItems: 'center',
+            borderWidth: 1,
+            borderColor: C.border,
           }}>
             <Svg width={14} height={14} viewBox="0 0 24 24" style={{ marginRight: 8 }}>
               <Path
                 d="M21 21L15 15M17 11C17 14.3137 14.3137 17 11 17C7.68629 17 5 14.3137 5 11C5 7.68629 7.68629 5 11 5C14.3137 5 17 7.68629 17 11Z"
-                stroke={DS.colors.primaryGhost}
+                stroke={C.primaryGhost}
                 strokeWidth="1.8"
                 strokeLinecap="round"
               />
@@ -304,30 +311,30 @@ export function FeedScreen() {
               value={searchText}
               onChangeText={handleSearch}
               placeholder="Search designs..."
-              placeholderTextColor={DS.colors.primaryGhost}
+              placeholderTextColor={C.primaryGhost}
               autoFocus={searchVisible}
               style={{
                 flex: 1,
                 fontFamily: DS.font.regular,
                 fontSize: DS.fontSize.sm,
-                color: DS.colors.primary,
+                color: C.primary,
               }}
             />
           </View>
         </Animated.View>
 
-        {/* ── Filter chips ── */}
+        {/* Filter chips */}
         <FilterChipsRow activeChip={activeChip} onChipPress={handleChip} />
       </Animated.View>
 
-      {/* ── Content ── */}
+      {/* Content */}
       {isLoading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <CompassRoseLoader size="medium" />
         </View>
       ) : loadError ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-          <ArchText variant="heading" style={{ fontSize: 20, textAlign: 'center', marginBottom: DS.spacing.md }}>
+          <ArchText variant="heading" style={{ fontSize: 20, color: C.primary, textAlign: 'center', marginBottom: DS.spacing.md }}>
             Couldn&apos;t load designs
           </ArchText>
           <OvalButton label="Retry" variant="outline" onPress={() => { void refresh(); }} />
@@ -348,7 +355,7 @@ export function FeedScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={() => { void refresh(); }}
-              tintColor={DS.colors.primary}
+              tintColor={C.primary}
             />
           }
           style={{ padding: 8 }}
