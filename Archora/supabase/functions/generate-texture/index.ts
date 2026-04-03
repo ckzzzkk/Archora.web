@@ -4,6 +4,7 @@ import { getAuthUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 
 const RequestSchema = z.object({
   prompt: z.string().min(1).max(500),
@@ -119,6 +120,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const { data: { publicUrl } } = supabase.storage.from('renders').getPublicUrl(fileName);
       textureUrl = publicUrl;
     }
+
+    await logAudit({
+      userId: user.id,
+      action: 'texture_generated',
+      resourceType: 'texture',
+      meta: { surface, prompt: prompt.slice(0, 100), ...extractRequestMeta(req) },
+      supabaseUrl: Deno.env.get('SUPABASE_URL')!,
+      supabaseKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    });
 
     return new Response(
       JSON.stringify({ textureUrl, prompt, surface }),

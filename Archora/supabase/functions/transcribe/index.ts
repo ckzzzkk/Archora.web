@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -78,6 +79,15 @@ serve(async (req) => {
     }
 
     const result = await whisperResponse.json() as { text: string };
+
+    await logAudit({
+      userId: user.id,
+      action: 'audio_transcribed',
+      resourceType: 'transcription',
+      meta: { fileSizeBytes: audioFile.size, ...extractRequestMeta(req) },
+      supabaseUrl: Deno.env.get('SUPABASE_URL')!,
+      supabaseKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    });
 
     return new Response(JSON.stringify({ transcript: result.text }), {
       status: 200,
