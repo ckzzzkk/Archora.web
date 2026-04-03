@@ -13,7 +13,7 @@ import { OvalButton } from '../../components/common/OvalButton';
 import { GridBackground } from '../../components/common/GridBackground';
 import { DS } from '../../theme/designSystem';
 import { SUNRISE } from '../../theme/sunrise';
-import { useAuthStore } from '../../stores/authStore';
+import { useTierGate } from '../../hooks/useTierGate';
 
 import { Step1BuildingType } from './steps/Step1BuildingType';
 import { Step2PlotSize } from './steps/Step2PlotSize';
@@ -64,6 +64,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 export function GenerationScreen() {
   const navigation = useNavigation<Nav>();
   const blueprintActions = useBlueprintStore((s) => s.actions);
+  const { allowed: aiAllowed } = useTierGate('aiGenerationsPerMonth');
 
   // Step state
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
@@ -112,35 +113,50 @@ export function GenerationScreen() {
     }
   }, [step]);
 
-  const buildPayload = (): GenerationPayload => ({
-    buildingType: buildingType!,
-    plotSize: parseFloat(plotSize) || 175,
-    plotUnit,
-    ...rooms,
-    style: style!,
-    referenceImageUrl,
-    additionalNotes: notes,
-    transcript,
-  });
+  const buildPayload = (): GenerationPayload => {
+    if (!buildingType || !style) throw new Error('buildPayload called before selection complete');
+    return {
+      buildingType,
+      plotSize: parseFloat(plotSize) || 175,
+      plotUnit: plotUnit as 'm2' | 'ft2',
+      ...rooms,
+      style,
+      referenceImageUrl: referenceImageUrl ?? undefined,
+      additionalNotes: notes,
+      transcript,
+    };
+  };
 
-  const handleGenerate = async () => {
+  // Only build a complete payload on step 7 (for Step7Review preview)
+  const reviewPayload = step === 7 ? buildPayload() : null;
+
+  const handleGenerate = useCallback(async () => {
     if (!buildingType || !style) return;
+
+    // Tier gate: check AI generation quota before proceeding
+    if (!aiAllowed) {
+      navigation.navigate('Subscription', { feature: 'aiGenerationsPerMonth' });
+      return;
+    }
+
     setScreenState('generating');
     setLoadingPhase(0);
     try {
       const payload = buildPayload();
       const blueprint = await aiService.generateFloorPlan(payload);
+      // Blueprint state is synchronous (Zustand), navigate immediately after loading
       blueprintActions.loadBlueprint(blueprint);
-      setScreenState('success');
       navigation.navigate('Workspace', {
         projectId: (blueprint as BlueprintData & { id?: string }).id ?? randomUUID(),
       });
+      // success state is moot since we're navigating away, but keep for correctness:
+      setScreenState('success');
     } catch (err: unknown) {
       setScreenState('error');
       const msg = err instanceof Error ? err.message : 'Generation failed';
       setErrorMessage(ERROR_MESSAGES[msg] ?? 'Something went wrong. Please try again.');
     }
-  };
+  }, [buildingType, style, blueprintActions, navigation, plotSize, plotUnit, rooms, notes, transcript, aiAllowed]);
 
   // ── Generating overlay ────────────────────────────────────────────────────
   if (screenState === 'generating') {
@@ -207,8 +223,6 @@ export function GenerationScreen() {
   }
 
   // ── Main wizard ───────────────────────────────────────────────────────────
-  const payload = buildPayload();
-
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: DS.colors.background }}>
       <GridBackground />
@@ -346,9 +360,9 @@ export function GenerationScreen() {
           />
         )}
 
-        {step === 7 && (
+        {step === 7 && reviewPayload && (
           <Step7Review
-            payload={payload}
+            payload={reviewPayload}
             onGenerate={handleGenerate}
           />
         )}
