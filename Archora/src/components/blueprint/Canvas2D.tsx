@@ -74,6 +74,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   const selectedId = useBlueprintStore((s) => s.selectedId);
   const setSelectedId = useBlueprintStore((s) => s.actions.setSelectedId);
   const deleteFurniture = useBlueprintStore((s) => s.actions.deleteFurniture);
+  const addOpening = useBlueprintStore((s) => s.actions.addOpening);
   const { colors } = useTheme();
   const { light } = useHaptics();
 
@@ -154,6 +155,53 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
     setContextMenu((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  const handleOpeningTap = useCallback((worldX: number, worldY: number, openingType: 'door' | 'window') => {
+    if (!blueprint) return;
+    const walls = blueprint.walls;
+    let nearest: { wall: typeof walls[0]; t: number; dist: number } | null = null;
+
+    for (const wall of walls) {
+      const dx = wall.end.x - wall.start.x;
+      const dy = wall.end.y - wall.start.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len === 0) continue;
+      const t = ((worldX - wall.start.x) * dx + (worldY - wall.start.y) * dy) / (len * len);
+      const ct = Math.max(0, Math.min(1, t));
+      const closestX = wall.start.x + ct * dx;
+      const closestY = wall.start.y + ct * dy;
+      const dist = Math.sqrt((worldX - closestX) ** 2 + (worldY - closestY) ** 2);
+      if (dist < 0.5 && (!nearest || dist < nearest.dist)) {
+        nearest = { wall, t: ct, dist };
+      }
+    }
+
+    if (!nearest) return;
+
+    const wallLen = Math.sqrt(
+      (nearest.wall.end.x - nearest.wall.start.x) ** 2 +
+      (nearest.wall.end.y - nearest.wall.start.y) ** 2,
+    );
+
+    const isDoor = openingType === 'door';
+    const openingWidth = isDoor ? 0.9 : 1.2;
+
+    // Centre the opening on the tap point, clamped to wall bounds
+    const positionCentre = nearest.t * wallLen;
+    const position = Math.max(0, Math.min(wallLen - openingWidth, positionCentre - openingWidth / 2));
+
+    addOpening({
+      id: `opening_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      wallId: nearest.wall.id,
+      type: openingType,
+      position,
+      width: openingWidth,
+      height: isDoor ? 2.1 : 1.2,
+      sillHeight: isDoor ? 0 : 0.8,
+    });
+
+    light();
+  }, [blueprint, addOpening, light]);
+
   const handleMeasureTap = useCallback((mx: number, my: number) => {
     setMeasurePoints((pts) => {
       if (pts.length >= 2) return [{ x: mx, y: my }]; // reset on 3rd tap
@@ -189,6 +237,16 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
 
     if (activeTool === 'measure') {
       runOnJS(handleMeasureTap)(mx, my);
+      return;
+    }
+
+    if (activeTool === 'door') {
+      runOnJS(handleOpeningTap)(mx, my, 'door');
+      return;
+    }
+
+    if (activeTool === 'window') {
+      runOnJS(handleOpeningTap)(mx, my, 'window');
       return;
     }
 
@@ -439,6 +497,33 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                     color={isSelected ? colors.primary : DS.colors.primary}
                     strokeWidth={isSelected ? 4 : 3}
                     opacity={isSelected ? 1 : 0.9}
+                  />
+                );
+              })}
+
+              {/* ── Layer 5b: Openings ────────────────────────────────── */}
+              {(blueprint?.openings ?? []).map((opening) => {
+                const wall = (blueprint?.walls ?? []).find((w) => w.id === opening.wallId);
+                if (!wall) return null;
+                const dx = wall.end.x - wall.start.x;
+                const dy = wall.end.y - wall.start.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                if (len === 0) return null;
+                const ux = dx / len;
+                const uy = dy / len;
+                const sx = toPixelX(wall.start.x + ux * opening.position);
+                const sy = toPixelY(wall.start.y + uy * opening.position);
+                const ex = toPixelX(wall.start.x + ux * (opening.position + opening.width));
+                const ey = toPixelY(wall.start.y + uy * (opening.position + opening.width));
+                const isDoor = opening.type === 'door';
+                return (
+                  <Line
+                    key={opening.id}
+                    p1={{ x: sx, y: sy }}
+                    p2={{ x: ex, y: ey }}
+                    color={isDoor ? DS.colors.warning : DS.colors.success}
+                    strokeWidth={5}
+                    opacity={0.9}
                   />
                 );
               })}
