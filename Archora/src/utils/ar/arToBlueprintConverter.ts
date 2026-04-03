@@ -12,6 +12,7 @@ export interface PhotoAnalysisResult {
   doors: Array<{ width: number; height: number; positionX: number }>;
   roomType: string;
   notes: string;
+  confidence?: number;
 }
 
 // Simple UUID-like ID generator (no external dependency)

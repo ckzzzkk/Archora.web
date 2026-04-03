@@ -126,11 +126,15 @@ function ARPhotoModeContent() {
       const height = Math.max(...ys) - Math.min(...ys);
       const area = width * height;
 
+      const avgConfidence =
+        results.reduce((sum, r) => sum + (r.confidence ?? 0.5), 0) / results.length;
+
       setScanResult({
         blueprint,
         dimensions: { width, height, area },
         roomType: rooms[0]?.type || 'living_room',
         pointCount: walls.length,
+        confidence: avgConfidence,
       });
 
       setShowResult(true);
