@@ -121,13 +121,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       textureUrl = publicUrl;
     }
 
+    const { ip, userAgent } = extractRequestMeta(req);
     await logAudit({
-      userId: user.id,
+      user_id: user.id,
       action: 'texture_generated',
-      resourceType: 'texture',
-      meta: { surface, prompt: prompt.slice(0, 100), ...extractRequestMeta(req) },
-      supabaseUrl: Deno.env.get('SUPABASE_URL')!,
-      supabaseKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      resource_type: 'texture',
+      metadata: { surface, prompt: prompt.slice(0, 100) },
+      ip_address: ip ?? undefined,
+      user_agent: userAgent ?? undefined,
     });
 
     return new Response(

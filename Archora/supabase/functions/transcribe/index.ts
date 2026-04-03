@@ -80,13 +80,14 @@ serve(async (req) => {
 
     const result = await whisperResponse.json() as { text: string };
 
+    const { ip, userAgent } = extractRequestMeta(req);
     await logAudit({
-      userId: user.id,
+      user_id: user.id,
       action: 'audio_transcribed',
-      resourceType: 'transcription',
-      meta: { fileSizeBytes: audioFile.size, ...extractRequestMeta(req) },
-      supabaseUrl: Deno.env.get('SUPABASE_URL')!,
-      supabaseKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      resource_type: 'transcription',
+      metadata: { fileSizeBytes: audioFile.size },
+      ip_address: ip ?? undefined,
+      user_agent: userAgent ?? undefined,
     });
 
     return new Response(JSON.stringify({ transcript: result.text }), {
