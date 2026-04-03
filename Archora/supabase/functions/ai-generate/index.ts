@@ -649,21 +649,37 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
     }
 
     const startMs = Date.now();
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
-        temperature: 0,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55_000);
+
+    let claudeResponse: Response;
+    try {
+      claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4000,
+          temperature: 0,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: userMessage }],
+        }),
+      });
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
+      console.error('[ai-generate]', isTimeout ? 'Request timed out after 55s' : fetchErr);
+      return new Response(
+        JSON.stringify({ error: isTimeout ? 'TIMEOUT' : 'NETWORK' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+    clearTimeout(timeoutId);
 
     if (!claudeResponse.ok) {
       const errorBody = await claudeResponse.text();

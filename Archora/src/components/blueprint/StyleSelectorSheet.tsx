@@ -1,4 +1,5 @@
 import { DS } from '../../theme/designSystem';
+import { SUNRISE } from '../../theme/sunrise';
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, Modal, Dimensions } from 'react-native';
 import Animated, {
@@ -87,9 +88,11 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
             left: 0,
             right: 0,
             height: SHEET_H,
-            backgroundColor: DS.colors.surface,
+            backgroundColor: SUNRISE.glass.prominentBg,
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
+            borderTopWidth: 1,
+            borderTopColor: SUNRISE.sheetTopBorder,
             overflow: 'hidden',
           },
         ]}
@@ -97,7 +100,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
         {/* Handle */}
         <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 6 }}>
           <View
-            style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#444' }}
+            style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: SUNRISE.sheetHandle }}
           />
         </View>
 

@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Pressable, FlatList, TextInput, Modal,
+  View, Pressable, TextInput, Modal,
   KeyboardAvoidingView, Platform, RefreshControl, Alert,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat, withSequence, withSpring, Easing,
 } from 'react-native-reanimated';
@@ -29,6 +30,9 @@ import { DS } from '../../theme/designSystem';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BuildingType } from '../../types';
+import type { EdgeInsets } from 'react-native-safe-area-context';
+import type { AnimatedStyle } from 'react-native-reanimated';
+import type { ViewStyle } from 'react-native';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -280,6 +284,112 @@ function InlineProjectCard({
   );
 }
 
+// --- Fix 1: DashboardHeader extracted as a named component outside DashboardScreen ---
+
+interface DashboardHeaderProps {
+  insets: EdgeInsets;
+  C: ReturnType<typeof useThemeColors>;
+  streakCount: number;
+  flameStyle: AnimatedStyle<ViewStyle>;
+  projects: Project[];
+  aiLimit: number;
+  projLimit: number;
+  handleNewProject: () => void;
+  hasUnread: boolean;
+  onOpenNotifications: () => void;
+  currentUserAiGenerationsUsed: number;
+}
+
+function DashboardHeader({
+  insets,
+  C,
+  streakCount,
+  flameStyle,
+  projects,
+  aiLimit,
+  projLimit,
+  handleNewProject,
+  hasUnread,
+  onOpenNotifications,
+  currentUserAiGenerationsUsed,
+}: DashboardHeaderProps) {
+  return (
+    <>
+      {/* Header */}
+      <View style={{
+        paddingTop: insets.top + 16,
+        paddingHorizontal: DS.spacing.lg,
+        paddingBottom: DS.spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.sm }}>
+          <ArchText variant="heading" style={{ fontSize: 24, color: C.primary }}>Your Projects</ArchText>
+          {streakCount > 0 && (
+            <Animated.View style={[flameStyle, { flexDirection: 'row', alignItems: 'center' }]}>
+              <ArchText variant="body" style={{ fontSize: 18 }}>🔥</ArchText>
+              <ArchText variant="body" style={{ fontFamily: DS.font.semibold, fontSize: 13, color: '#FF6B35' }}>
+                {streakCount}
+              </ArchText>
+            </Animated.View>
+          )}
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+          <Pressable
+            onPress={handleNewProject}
+            style={{
+              width: 40, height: 40, borderRadius: 20,
+              backgroundColor: C.surface,
+              borderWidth: 1, borderColor: C.border,
+              alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24">
+              <Path d="M12 5v14M5 12h14" stroke={C.primary} strokeWidth="1.8" strokeLinecap="round" />
+            </Svg>
+          </Pressable>
+          <Pressable
+            onPress={onOpenNotifications}
+            style={{
+              width: 40, height: 40, borderRadius: 20,
+              backgroundColor: C.surface,
+              borderWidth: 1, borderColor: C.border,
+              alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24">
+              <Path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke={C.primary} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+            {hasUnread && (
+              <View style={{
+                position: 'absolute', top: 7, right: 7,
+                width: 8, height: 8, borderRadius: 4,
+                backgroundColor: C.success,
+              }} />
+            )}
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Stats row */}
+      <View style={{ flexDirection: 'row', marginHorizontal: DS.spacing.lg, gap: DS.spacing.sm, marginBottom: DS.spacing.lg }}>
+        <StatCard
+          label="AI Designs"
+          value={currentUserAiGenerationsUsed}
+          limit={aiLimit !== -1 ? aiLimit : 9999}
+        />
+        <StatCard
+          label="Projects"
+          value={projects.length}
+          limit={projLimit !== -1 ? projLimit : 9999}
+        />
+      </View>
+    </>
+  );
+}
+
 export function DashboardScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
@@ -337,7 +447,13 @@ export function DashboardScreen() {
     navigation.navigate('Workspace', { projectId: project.id });
   };
 
-  const handleNewProject = () => { light(); setShowNewProject(true); };
+  const handleNewProject = useCallback(() => { light(); setShowNewProject(true); }, [light]);
+
+  const handleOpenNotifications = useCallback(() => {
+    light();
+    setShowNotifications(true);
+    setHasUnread(false);
+  }, [light]);
 
   if (!user) {
     return (
@@ -349,97 +465,55 @@ export function DashboardScreen() {
 
   const aiLimit = tierLimits.aiGenerationsPerMonth;
   const projLimit = tierLimits.savedProjects;
+  const currentUserAiGenerationsUsed = user.aiGenerationsUsed ?? 0;
 
-  const ListHeader = (
-    <>
-      {/* Header */}
-      <View style={{
-        paddingTop: insets.top + 16,
-        paddingHorizontal: DS.spacing.lg,
-        paddingBottom: DS.spacing.md,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.sm }}>
-          <ArchText variant="heading" style={{ fontSize: 24, color: C.primary }}>Your Projects</ArchText>
-          {streakCount > 0 && (
-            <Animated.View style={[flameStyle, { flexDirection: 'row', alignItems: 'center' }]}>
-              <ArchText variant="body" style={{ fontSize: 18 }}>🔥</ArchText>
-              <ArchText variant="body" style={{ fontFamily: DS.font.semibold, fontSize: 13, color: '#FF6B35' }}>
-                {streakCount}
-              </ArchText>
-            </Animated.View>
-          )}
-        </View>
+  // Fix 1: stable listHeader callback — only recreates when its deps change
+  const listHeader = useCallback(
+    () => (
+      <DashboardHeader
+        insets={insets}
+        C={C}
+        streakCount={streakCount}
+        flameStyle={flameStyle}
+        projects={projects}
+        aiLimit={aiLimit}
+        projLimit={projLimit}
+        handleNewProject={handleNewProject}
+        hasUnread={hasUnread}
+        onOpenNotifications={handleOpenNotifications}
+        currentUserAiGenerationsUsed={currentUserAiGenerationsUsed}
+      />
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [insets, C, streakCount, flameStyle, projects, aiLimit, projLimit, handleNewProject, hasUnread, handleOpenNotifications, currentUserAiGenerationsUsed],
+  );
 
-        <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
-          <Pressable
-            onPress={handleNewProject}
-            style={{
-              width: 40, height: 40, borderRadius: 20,
-              backgroundColor: C.surface,
-              borderWidth: 1, borderColor: C.border,
-              alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Svg width={18} height={18} viewBox="0 0 24 24">
-              <Path d="M12 5v14M5 12h14" stroke={C.primary} strokeWidth="1.8" strokeLinecap="round" />
-            </Svg>
-          </Pressable>
-          <Pressable
-            onPress={() => { light(); setShowNotifications(true); setHasUnread(false); }}
-            style={{
-              width: 40, height: 40, borderRadius: 20,
-              backgroundColor: C.surface,
-              borderWidth: 1, borderColor: C.border,
-              alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Svg width={18} height={18} viewBox="0 0 24 24">
-              <Path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke={C.primary} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
-            {hasUnread && (
-              <View style={{
-                position: 'absolute', top: 7, right: 7,
-                width: 8, height: 8, borderRadius: 4,
-                backgroundColor: C.success,
-              }} />
-            )}
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Stats row */}
-      <View style={{ flexDirection: 'row', marginHorizontal: DS.spacing.lg, gap: DS.spacing.sm, marginBottom: DS.spacing.lg }}>
-        <StatCard
-          label="AI Designs"
-          value={user.aiGenerationsUsed ?? 0}
-          limit={aiLimit !== -1 ? aiLimit : 9999}
-        />
-        <StatCard
-          label="Projects"
-          value={projects.length}
-          limit={projLimit !== -1 ? projLimit : 9999}
-        />
-      </View>
-    </>
+  // Fix 2: memoized renderItem
+  const renderItem = useCallback(
+    ({ item, index }: { item: Project; index: number }) => (
+      <InlineProjectCard
+        project={item}
+        index={index}
+        onPress={() => navigation.navigate('Workspace', { projectId: item.id })}
+      />
+    ),
+    [navigation],
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: C.background }}>
       {isLoading ? (
         <>
-          {ListHeader}
+          {listHeader()}
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <CompassRoseLoader size="medium" />
           </View>
         </>
       ) : (
-        <FlatList
+        <FlashList
           data={projects}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={ListHeader}
+          ListHeaderComponent={listHeader}
           ListEmptyComponent={<EmptyState onPress={handleNewProject} />}
           refreshControl={
             <RefreshControl
@@ -448,16 +522,7 @@ export function DashboardScreen() {
               tintColor={C.primary}
             />
           }
-          renderItem={useCallback(({ item, index }: { item: typeof projects[0]; index: number }) => (
-            <InlineProjectCard
-              project={item}
-              index={index}
-              onPress={() => {
-                void actions.delete; // keep reference
-                navigation.navigate('Workspace', { projectId: item.id });
-              }}
-            />
-          ), [navigation, actions])}
+          renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
         />

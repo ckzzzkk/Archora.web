@@ -9,6 +9,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getAuthUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 
 const MESHY_BASE = 'https://api.meshy.ai';
 
@@ -30,6 +32,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   } catch (err) {
     return err as Response;
   }
+
+  const rateLimitOk = await checkRateLimit(`ar-scan-status:${user.id}`, 120, 60);
+  if (!rateLimitOk) return Errors.rateLimited('Rate limit exceeded');
 
   const url = new URL(req.url);
   const scanId = url.searchParams.get('scanId');
@@ -87,6 +92,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }
   }
+
+  await logAudit({
+    userId: user.id,
+    action: 'ar_scan_status_polled',
+    resourceType: 'ar_scan',
+    resourceId: scanId,
+    meta: { status, ...extractRequestMeta(req) },
+    supabaseUrl: Deno.env.get('SUPABASE_URL')!,
+    supabaseKey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  });
 
   return new Response(
     JSON.stringify({

@@ -23,6 +23,7 @@ interface ARResultScreenProps {
     };
     roomType: string;
     pointCount: number;
+    confidence?: number;
   };
   onOpenInStudio: () => void;
   onScanAgain: () => void;
@@ -48,9 +49,16 @@ export function ARResultScreen({
     transform: [{ translateY: translateY.value }],
   }));
 
-  const { blueprint, dimensions, roomType, pointCount } = result;
+  const { blueprint, dimensions, roomType, pointCount, confidence } = result;
   const room = blueprint.rooms[0];
   const walls = blueprint.walls;
+
+  const confidencePct = confidence != null ? Math.round(confidence * 100) : null;
+  const confidenceColor =
+    confidence == null ? DS.colors.primaryDim
+    : confidence > 0.7 ? DS.colors.success
+    : confidence > 0.4 ? DS.colors.warning
+    : DS.colors.error;
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
@@ -80,6 +88,19 @@ export function ARResultScreen({
           >
             Your room has been scanned and converted to a blueprint
           </ArchText>
+          {confidencePct != null && (
+            <View style={{ alignItems: 'center', marginTop: 10 }}>
+              <View style={{
+                paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999,
+                borderWidth: 1, borderColor: confidenceColor,
+                backgroundColor: confidenceColor + '20',
+              }}>
+                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 12, color: confidenceColor }}>
+                  {confidencePct}% confidence
+                </ArchText>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Mini floor plan preview */}

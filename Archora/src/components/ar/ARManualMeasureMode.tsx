@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Alert, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -96,10 +96,9 @@ function ARManualMeasureContent() {
     [isSessionStarted, points, hitTest]
   );
 
-  const finalizeRoom = useCallback(async () => {
+  const buildAndShowResult = useCallback(async (roomName: string) => {
     if (points.length < 3) return;
 
-    // Calculate distances between consecutive points
     const wallPairs: { p1: Vector3D; p2: Vector3D }[] = [];
     const distances: number[] = [];
 
@@ -110,7 +109,6 @@ function ARManualMeasureContent() {
       distances.push(await distanceBetween(current, next));
     }
 
-    // Convert to walls and create blueprint
     const walls = convertPointsToWalls(wallPairs);
     const roomDimensions = calculateRoomDimensions(distances);
     const roomType = detectRoomTypeFromDimensions(roomDimensions.area);
@@ -121,7 +119,7 @@ function ARManualMeasureContent() {
       [
         {
           id: `room-${Date.now()}`,
-          name: 'Scanned Room',
+          name: roomName.trim() || 'Scanned Room',
           type: roomType,
           wallIds: walls.map((w) => w.id),
           floorMaterial: 'hardwood',
@@ -142,6 +140,23 @@ function ARManualMeasureContent() {
     });
     setShowResult(true);
   }, [points, distanceBetween]);
+
+  const finalizeRoom = useCallback(() => {
+    if (points.length < 3) return;
+
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        'Name Your Room',
+        'What is this room called?',
+        (name) => { void buildAndShowResult(name ?? 'Living Room'); },
+        'plain-text',
+        'Living Room',
+      );
+    } else {
+      // Android: default name, proceed directly
+      void buildAndShowResult('Living Room');
+    }
+  }, [points.length, buildAndShowResult]);
 
   const handleReset = useCallback(() => {
     setPoints([]);
@@ -282,13 +297,19 @@ function ARManualMeasureContent() {
             gap: 10,
           }}
         >
-          {points.length >= 3 && (
+          {points.length >= 3 ? (
             <OvalButton
               label="Complete Room"
               onPress={finalizeRoom}
               variant="success"
               fullWidth
             />
+          ) : (
+            <View style={{ alignItems: 'center', paddingVertical: 4 }}>
+              <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryDim }}>
+                {points.length}/3 walls minimum
+              </ArchText>
+            </View>
           )}
           <OvalButton
             label="Reset"
