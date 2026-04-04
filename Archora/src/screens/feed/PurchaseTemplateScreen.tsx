@@ -11,11 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import type { PurchaseTemplateScreenProps } from '../../navigation/types';
 import { inspoService } from '../../services/inspoService';
+import { subscriptionService } from '../../services/subscriptionService';
 import { useAuthStore } from '../../stores/authStore';
 import { useUIStore } from '../../stores/uiStore';
 
 import { useHaptics } from '../../hooks/useHaptics';
-import { supabase } from '../../utils/supabaseClient';
 
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import type { Template } from '../../types';
@@ -102,15 +102,7 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
     setPurchasing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: { templateId },
-      });
-
-      if (error) throw error;
-
-      const { url } = data as { url: string };
-      if (!url) throw new Error('No checkout URL returned');
-
+      const { url } = await subscriptionService.createPaymentIntent(templateId);
       await Linking.openURL(url);
     } catch {
       showToast('Payment setup failed. Please try again.', 'error');

@@ -20,6 +20,7 @@ import { ARDepthScanMode } from '../../components/ar/ARDepthScanMode';
 import { ARPhotoMode } from '../../components/ar/ARPhotoMode';
 import { useARCapabilities } from '../../hooks/useARCore';
 import { OvalButton } from '../../components/common/OvalButton';
+import { useTierGate } from '../../hooks/useTierGate';
 
 type ScanMode = 'entry' | 'manual' | 'depth' | 'photo' | 'place' | 'measure';
 
@@ -113,6 +114,9 @@ export function ARScanScreen() {
   const hasDepthAPI = support?.hasDepthAPI ?? false;
   const hasARCore = support?.hasARCore ?? false;
 
+  const { allowed: canScan, requiredTier: scanRequiredTier } = useTierGate('arScansPerMonth');
+  const { allowed: canMeasure, requiredTier: measureRequiredTier } = useTierGate('arMeasure');
+
   useEffect(() => {
     Camera.requestCameraPermission().then(status => {
       setHasPermission(status === 'granted');
@@ -184,22 +188,24 @@ export function ARScanScreen() {
               <ScanModeCard
                 title="Manual Measure"
                 description="Tap corners to measure your room wall by wall. Works on all Android devices."
-                available={hasARCore}
+                available={hasARCore && canScan}
+                requires={!canScan ? scanRequiredTier ?? 'Creator' : !hasARCore ? 'ARCore' : undefined}
                 onPress={() => handleSelectScanMode('manual')}
                 delay={0}
               />
               <ScanModeCard
                 title="Auto Depth Scan"
                 description="Walk around and let ARCore automatically detect walls using Depth API."
-                available={hasARCore && hasDepthAPI}
-                requires={hasDepthAPI ? undefined : 'Depth API'}
+                available={hasARCore && hasDepthAPI && canScan}
+                requires={!canScan ? scanRequiredTier ?? 'Creator' : !hasARCore ? 'ARCore' : !hasDepthAPI ? 'Depth API' : undefined}
                 onPress={() => handleSelectScanMode('depth')}
                 delay={100}
               />
               <ScanModeCard
                 title="Photo Analysis"
                 description="Take photos of each wall and let AI analyze dimensions. Works on all devices."
-                available={true}
+                available={canScan}
+                requires={!canScan ? scanRequiredTier ?? 'Creator' : undefined}
                 onPress={() => handleSelectScanMode('photo')}
                 delay={200}
               />
@@ -210,7 +216,8 @@ export function ARScanScreen() {
             <ScanModeCard
               title="Furniture Placement"
               description="Place furniture in your space using surface detection."
-              available={hasARCore}
+              available={hasARCore && canScan}
+              requires={!canScan ? scanRequiredTier ?? 'Creator' : !hasARCore ? 'ARCore' : undefined}
               onPress={() => handleSelectScanMode('place')}
             />
           )}
@@ -219,11 +226,47 @@ export function ARScanScreen() {
             <ScanModeCard
               title="Measure Mode"
               description="Measure distances between points in your space."
-              available={hasARCore}
+              available={hasARCore && canMeasure}
+              requires={!canMeasure ? measureRequiredTier ?? 'Pro' : !hasARCore ? 'ARCore' : undefined}
               onPress={() => handleSelectScanMode('measure')}
             />
           )}
         </ScrollView>
+      </View>
+    );
+  }
+
+  // Guard: block scan/photo/depth modes for tier-locked users
+  const isScanMode = scanMode === 'manual' || scanMode === 'depth' || scanMode === 'photo' || scanMode === 'place';
+  if (isScanMode && !canScan) {
+    return (
+      <View style={{ flex: 1, backgroundColor: SUNRISE.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: SUNRISE.gold, textAlign: 'center', marginBottom: 12 }}>
+          Creator tier required
+        </ArchText>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+          AR scanning is available on Creator and above plans.
+        </ArchText>
+        <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription' as never)} />
+        <Pressable onPress={handleBackToEntry} style={{ marginTop: 16 }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary }}>Go back</ArchText>
+        </Pressable>
+      </View>
+    );
+  }
+  if (scanMode === 'measure' && !canMeasure) {
+    return (
+      <View style={{ flex: 1, backgroundColor: SUNRISE.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: SUNRISE.gold, textAlign: 'center', marginBottom: 12 }}>
+          Pro tier required
+        </ArchText>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+          AR Measure is available on Pro and above plans.
+        </ArchText>
+        <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription' as never)} />
+        <Pressable onPress={handleBackToEntry} style={{ marginTop: 16 }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary }}>Go back</ArchText>
+        </Pressable>
       </View>
     );
   }

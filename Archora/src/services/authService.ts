@@ -1,4 +1,5 @@
 import { supabase } from '../utils/supabaseClient';
+import { subscriptionService } from './subscriptionService';
 
 export const authService = {
   async uploadAvatar(userId: string, uri: string): Promise<string | null> {
@@ -29,10 +30,11 @@ export const authService = {
   },
 
   async getStripePortalUrl(): Promise<{ url: string | null; error: Error | null }> {
-    const { data, error } = await supabase.functions.invoke('stripe-portal');
-    if (error || !data?.url) {
-      return { url: null, error: error ?? new Error('No URL returned') };
+    try {
+      const { url } = await subscriptionService.getPortalUrl();
+      return { url, error: null };
+    } catch (err) {
+      return { url: null, error: err instanceof Error ? err : new Error('Failed to get portal URL') };
     }
-    return { url: data.url as string, error: null };
   },
 };

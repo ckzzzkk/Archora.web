@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   ScrollView,
   Pressable,
   Alert,
   Linking,
+  AppState,
+  type AppStateStatus,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -200,7 +202,22 @@ export function SubscriptionScreen({ navigation }: Props) {
   const [billing, setBilling] = useState<BillingInterval>('monthly');
   const [isLoading, setIsLoading] = useState(false);
   const user = useAuthStore((s) => s.user);
+  const loadSession = useAuthStore((s) => s.actions.loadSession);
   const tier = user?.subscriptionTier ?? 'starter';
+
+  // Sync subscription when user returns from Stripe checkout
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const checkoutOpenRef = useRef(false);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (nextState: AppStateStatus) => {
+      if (appStateRef.current.match(/inactive|background/) && nextState === 'active' && checkoutOpenRef.current) {
+        checkoutOpenRef.current = false;
+        void subscriptionService.syncSubscription().then(() => loadSession());
+      }
+      appStateRef.current = nextState;
+    });
+    return () => sub.remove();
+  }, [loadSession]);
 
   // Billing toggle animation
   const pillX = useSharedValue(0);
@@ -220,7 +237,10 @@ export function SubscriptionScreen({ navigation }: Props) {
         return;
       }
       const { url } = await subscriptionService.createCheckout(newTier, billing);
-      if (url) await Linking.openURL(url);
+      if (url) {
+        checkoutOpenRef.current = true;
+        await Linking.openURL(url);
+      }
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Could not start checkout');
     } finally {

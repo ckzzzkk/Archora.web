@@ -76,16 +76,38 @@ export const aiService = {
     prompt: string;
     blueprint: BlueprintData;
   }): Promise<{ message: string; blueprint?: BlueprintData }> {
+    const headers = await getAuthHeader();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
     try {
-      const headers = await getAuthHeader();
       const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-edit-blueprint`, {
         method: 'POST',
         headers,
         body: JSON.stringify(params),
+        signal: controller.signal,
       });
-      if (!response.ok) throw new Error('AI blueprint edit failed');
+      clearTimeout(timeoutId);
+
+      if (response.status === 503) {
+        const body = await response.json() as { error?: string };
+        if (body.error === 'AI_NOT_CONFIGURED') {
+          throw Object.assign(new Error('AI features coming soon'), { code: 'AI_NOT_CONFIGURED' });
+        }
+      }
+
+      if (!response.ok) {
+        const err = await response.json() as { error: string };
+        throw Object.assign(new Error(err.error ?? 'AI blueprint edit failed'), { status: response.status });
+      }
+
       return response.json() as Promise<{ message: string; blueprint?: BlueprintData }>;
-    } catch (err) {
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw Object.assign(new Error('Request timed out'), { code: 'TIMEOUT' });
+      }
       throw err instanceof Error ? err : new Error('Blueprint edit failed');
     }
   },

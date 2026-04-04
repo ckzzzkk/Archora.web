@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { Audio } from 'expo-av';
 import { aiService } from '../services/aiService';
+import { useAuthStore } from '../stores/authStore';
+import { isFeatureAllowed } from '../utils/tierLimits';
 
 export interface VoiceInputState {
   isRecording: boolean;
@@ -11,6 +13,9 @@ export interface VoiceInputState {
 }
 
 export function useVoiceInput() {
+  const tier = useAuthStore((s) => s.user?.subscriptionTier ?? 'starter');
+  const audioAllowed = isFeatureAllowed(tier, 'audioInput');
+
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +23,10 @@ export function useVoiceInput() {
   const recordingRef = useRef<Audio.Recording | null>(null);
 
   const startRecording = useCallback(async () => {
+    if (!audioAllowed) {
+      setError('Voice input requires Creator tier or above');
+      return;
+    }
     try {
       setError(null);
       setTranscript('');
@@ -96,7 +105,7 @@ export function useVoiceInput() {
   return {
     isRecording,
     transcript,
-    isAvailable: true,
+    isAvailable: audioAllowed,
     error,
     isFallback,
     startRecording,
