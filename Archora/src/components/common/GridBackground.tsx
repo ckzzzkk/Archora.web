@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Dimensions } from 'react-native';
+import { DS } from '../../theme/designSystem';
 
 const { width: W, height: H } = Dimensions.get('window');
 const STEP = 32;
@@ -31,7 +32,7 @@ export const GridBackground = React.memo(function GridBackground() {
             top: i * STEP,
             left: 0, right: 0,
             height: 1,
-            backgroundColor: '#2A2A2A',
+            backgroundColor: DS.colors.gridLine,
           }}
         />
       ))}
@@ -43,7 +44,7 @@ export const GridBackground = React.memo(function GridBackground() {
             left: i * STEP,
             top: 0, bottom: 0,
             width: 1,
-            backgroundColor: '#2A2A2A',
+            backgroundColor: DS.colors.gridLine,
           }}
         />
       ))}

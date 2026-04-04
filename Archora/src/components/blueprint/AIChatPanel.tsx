@@ -5,6 +5,7 @@ import {
   View, Pressable, TextInput, ScrollView,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArchText } from '../common/ArchText';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
@@ -69,6 +70,7 @@ export function AIChatPanel({ visible, onToggle }: Props) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
   const panelY = useSharedValue(400);
 
   const blueprint = useBlueprintStore((s) => s.blueprint);
@@ -135,7 +137,7 @@ export function AIChatPanel({ visible, onToggle }: Props) {
           </ScrollView>
 
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: SUNRISE.separatorLine, backgroundColor: SUNRISE.glass.subtleBg, gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: Math.max(12, insets.bottom + 8), borderTopWidth: 1, borderTopColor: SUNRISE.separatorLine, backgroundColor: SUNRISE.glass.subtleBg, gap: 10 }}>
               <TextInput
                 value={input} onChangeText={setInput}
                 placeholder="Describe your edit..." placeholderTextColor={DS.colors.primaryGhost}

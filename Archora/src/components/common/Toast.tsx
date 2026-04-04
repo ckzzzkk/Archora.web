@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { SUNRISE } from '../../theme/sunrise';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
@@ -19,6 +20,7 @@ interface Props {
 
 export function Toast({ message, title, type = 'info', onDismiss, duration = 3000 }: Props) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const translateY = useSharedValue(-100);
 
   const borderColors: Record<ToastType, string> = {
@@ -55,7 +57,7 @@ export function Toast({ message, title, type = 'info', onDismiss, duration = 300
           animatedStyle,
           {
             position: 'absolute',
-            top: 60,
+            top: insets.top + 8,
             left: 16,
             right: 16,
             backgroundColor: SUNRISE.toastBg,

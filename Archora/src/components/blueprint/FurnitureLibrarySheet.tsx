@@ -128,7 +128,7 @@ export function FurnitureLibrarySheet({ visible, onClose, onSelectFurniture }: P
 
   return (
     <Modal transparent visible={visible} onRequestClose={onClose} animationType="none">
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={onClose} />
+      <Pressable style={{ flex: 1, backgroundColor: DS.colors.overlay }} onPress={onClose} />
       <Animated.View style={[sheetStyle, {
         position: 'absolute', bottom: 0, left: 0, right: 0, height: SHEET_H,
         backgroundColor: SUNRISE.glass.prominentBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: SUNRISE.sheetTopBorder, overflow: 'hidden',

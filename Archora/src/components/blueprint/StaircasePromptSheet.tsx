@@ -106,7 +106,7 @@ export function StaircasePromptSheet({ visible, floorCount, onSelect, onAddEleva
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
       <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+        style={{ flex: 1, backgroundColor: DS.colors.overlay, justifyContent: 'flex-end' }}
         onPress={onDismiss}
       >
         <Pressable onPress={(e) => e.stopPropagation()}>

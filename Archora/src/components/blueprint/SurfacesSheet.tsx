@@ -1,9 +1,12 @@
 import { DS } from '../../theme/designSystem';
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView, Modal, Dimensions } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import type { WallTexture, MaterialType, CeilingType } from '../../types/blueprint';
+
+const SCREEN_H = Dimensions.get('window').height;
 
 const WALL_TEXTURES: { id: WallTexture; label: string; color: string }[] = [
   { id: 'plain_white', label: 'Plain White', color: '#F5F5F5' },
@@ -81,7 +84,9 @@ interface Props { visible: boolean; onClose: () => void; }
 
 export function SurfacesSheet({ visible, onClose }: Props) {
   const [tab, setTab] = useState<SurfaceTab>('walls');
-  const translateY = useSharedValue(500);
+  const insets = useSafeAreaInsets();
+  const sheetHeight = Math.min(SCREEN_H * 0.65, 480);
+  const translateY = useSharedValue(sheetHeight);
 
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const selectedId = useBlueprintStore((s) => s.selectedId);
@@ -90,7 +95,7 @@ export function SurfacesSheet({ visible, onClose }: Props) {
   useEffect(() => {
     translateY.value = visible
       ? withSpring(0, { damping: 22, stiffness: 280 })
-      : withTiming(500, { duration: 250 });
+      : withTiming(sheetHeight, { duration: 250 });
   }, [visible, translateY]);
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
@@ -102,10 +107,10 @@ export function SurfacesSheet({ visible, onClose }: Props) {
 
   return (
     <Modal transparent visible={visible} onRequestClose={onClose} animationType="none">
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={onClose} />
-      <Animated.View style={[sheetStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: 430, backgroundColor: DS.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderColor: DS.colors.border }]}>
+      <Pressable style={{ flex: 1, backgroundColor: DS.colors.overlay }} onPress={onClose} />
+      <Animated.View style={[sheetStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: sheetHeight, backgroundColor: DS.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderColor: DS.colors.border }]}>
         <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 4 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#444' }} />
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: DS.colors.border }} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10 }}>
           <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: DS.colors.primary, flex: 1 }}>Surfaces</Text>
@@ -121,7 +126,7 @@ export function SurfacesSheet({ visible, onClose }: Props) {
           ))}
         </View>
 
-        <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingBottom: 20 }}>
+        <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingBottom: Math.max(20, insets.bottom + 16) }}>
           {tab === 'walls' && WALL_TEXTURES.map((item) => (
             <Swatch key={item.id} color={item.color} label={item.label}
               selected={selectedWall?.texture === item.id}

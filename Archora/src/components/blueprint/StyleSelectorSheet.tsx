@@ -76,7 +76,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
   return (
     <Modal transparent visible={visible} onRequestClose={onClose} animationType="none">
       <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}
+        style={{ flex: 1, backgroundColor: DS.colors.overlay }}
         onPress={onClose}
       />
       <Animated.View

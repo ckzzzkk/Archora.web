@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
 
@@ -25,6 +26,7 @@ export function AIAssistantSheet({ onClose }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const insets = useSafeAreaInsets();
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const loadBlueprint = useBlueprintStore((s) => s.actions.loadBlueprint);
   const scrollRef = useRef<ScrollView>(null);
@@ -142,7 +144,9 @@ export function AIAssistantSheet({ onClose }: Props) {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            padding: 12,
+            paddingHorizontal: 12,
+            paddingTop: 12,
+            paddingBottom: Math.max(12, insets.bottom + 8),
             gap: 8,
           }}
         >

@@ -2,6 +2,7 @@ import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import Animated, { FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import type { MaterialType } from '../../types';
@@ -26,6 +27,7 @@ interface TexturePickerProps {
 export function TexturePicker({ value, onChange, label = 'Floor Material' }: TexturePickerProps) {
   const { colors } = useTheme();
   const { light } = useHaptics();
+  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
 
   const selected = MATERIALS.find((m) => m.type === value) ?? MATERIALS[0];
@@ -80,7 +82,7 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
 
       <Modal visible={open} transparent animationType="none" onRequestClose={() => setOpen(false)}>
         <TouchableOpacity
-          style={{ flex: 1, backgroundColor: '#00000080' }}
+          style={{ flex: 1, backgroundColor: DS.colors.overlay }}
           activeOpacity={1}
           onPress={() => setOpen(false)}
         />
@@ -96,7 +98,7 @@ export function TexturePicker({ value, onChange, label = 'Floor Material' }: Tex
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             padding: 20,
-            paddingBottom: 40,
+            paddingBottom: Math.max(40, insets.bottom + 20),
           }}
         >
           <Text

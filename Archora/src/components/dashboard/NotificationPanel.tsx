@@ -7,6 +7,7 @@ import {
   FlatList,
   Modal,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle } from 'react-native-svg';
 import Animated, {
   useSharedValue,
@@ -146,6 +147,7 @@ interface Props {
 export function NotificationPanel({ visible, onClose }: Props) {
   const user = useAuthStore((s) => s.user);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -234,7 +236,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
     <Modal transparent visible={visible} onRequestClose={onClose} animationType="none">
       {/* Backdrop */}
       <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
+        style={{ flex: 1, backgroundColor: DS.colors.overlay }}
         onPress={onClose}
       />
 
@@ -265,7 +267,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: 20,
-            paddingTop: 60,
+            paddingTop: Math.max(60, insets.top + 16),
             paddingBottom: 12,
             borderBottomWidth: 1,
             borderBottomColor: DS.colors.border,
