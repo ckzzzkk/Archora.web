@@ -3,6 +3,8 @@ import Stripe from 'https://esm.sh/stripe@14.21.0';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
+import { logAudit } from '../_shared/audit.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const corsResponse = handleCors(req);
@@ -25,6 +27,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   } catch (errResponse) {
     return errResponse as Response;
   }
+
+  const rateLimitOk = await checkRateLimit(`stripe-portal:${user.id}`, 20, 3600);
+  if (!rateLimitOk) return Errors.rateLimited('Rate limit exceeded');
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -50,6 +55,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: 'asoria://account',
+    });
+
+    await logAudit({
+      user_id: user.id,
+      action: 'stripe_portal',
+      resource_type: 'subscription',
+      metadata: { customerId },
     });
 
     return new Response(

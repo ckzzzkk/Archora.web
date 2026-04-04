@@ -4,6 +4,7 @@ import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { logAudit } from '../_shared/audit.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 type SubscriptionTier = 'starter' | 'creator' | 'architect';
 
@@ -37,6 +38,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   } catch (errResponse) {
     return errResponse as Response;
   }
+
+  const rateLimitOk = await checkRateLimit(`stripe-sync:${user.id}`, 30, 3600);
+  if (!rateLimitOk) return Errors.rateLimited('Rate limit exceeded');
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,

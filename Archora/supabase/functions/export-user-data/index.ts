@@ -3,6 +3,7 @@ import { securityHeaders } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { logAudit } from '../_shared/audit.ts';
 import { Errors } from '../_shared/errors.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: securityHeaders });
@@ -10,6 +11,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   try {
     const user = await getAuthUser(req);
+
+    const allowed = await checkRateLimit(`export-data:${user.id}`, 5, 3600);
+    if (!allowed) return Errors.rateLimited('Export rate limit exceeded');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,

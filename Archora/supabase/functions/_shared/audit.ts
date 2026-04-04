@@ -15,7 +15,11 @@ export type AuditAction =
   | 'template_publish'
   | 'template_download'
   | 'project_create'
-  | 'project_delete';
+  | 'project_delete'
+  | 'account_deleted'
+  | 'data_exported'
+  | 'login_success'
+  | 'stripe_portal';
 
 export interface AuditEntry {
   user_id: string;

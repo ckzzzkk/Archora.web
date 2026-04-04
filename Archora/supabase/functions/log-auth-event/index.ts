@@ -3,6 +3,7 @@ import { z } from 'https://esm.sh/zod@3.23.8';
 import { securityHeaders } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { Errors } from '../_shared/errors.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const RequestSchema = z.object({
   // Strict whitelist — only events the client is permitted to log
@@ -15,6 +16,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   try {
     const user = await getAuthUser(req);
+
+    const allowed = await checkRateLimit(`log-auth:${user.id}`, 30, 60);
+    if (!allowed) return Errors.rateLimited('Rate limit exceeded');
 
     const body = await req.json() as unknown;
     const parsed = RequestSchema.safeParse(body);

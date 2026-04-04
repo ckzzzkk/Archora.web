@@ -4,6 +4,7 @@ import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { logAudit } from '../_shared/audit.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const corsResponse = handleCors(req);
@@ -26,6 +27,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   } catch (errResponse) {
     return errResponse as Response;
   }
+
+  const rateLimitOk = await checkRateLimit(`stripe-checkout:${user.id}`, 10, 3600);
+  if (!rateLimitOk) return Errors.rateLimited('Rate limit exceeded');
 
   let body: { priceId?: string };
   try {
