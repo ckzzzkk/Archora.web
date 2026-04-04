@@ -231,9 +231,9 @@ function InlineProjectCard({
   }));
 
   const formattedDate = new Date(
-    (project as unknown as { updatedAt?: string }).updatedAt ?? (project as unknown as { createdAt?: string }).createdAt ?? Date.now()
+    project.updatedAt ?? project.createdAt ?? Date.now()
   ).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const roomCount = (project as unknown as { blueprint?: { rooms?: unknown[] } }).blueprint?.rooms?.length ?? 0;
+  const roomCount = project.roomCount ?? project.blueprintData?.rooms?.length ?? 0;
 
   return (
     <Animated.View style={animStyle}>

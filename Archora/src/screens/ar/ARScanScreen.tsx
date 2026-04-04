@@ -4,6 +4,10 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easi
 import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
 import { useCameraDevice, Camera } from 'react-native-vision-camera';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DS } from '../../theme/designSystem';
 import { SUNRISE } from '../../theme/sunrise';
@@ -106,7 +110,11 @@ export function ARScanScreen() {
   const [scanMode, setScanMode] = useState<ScanMode>('entry');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const device = useCameraDevice('back');
-  const navigation = useNavigation();
+  type ARNavProp = CompositeNavigationProp<
+    BottomTabNavigationProp<MainTabParamList, 'AR'>,
+    NativeStackNavigationProp<RootStackParamList>
+  >;
+  const navigation = useNavigation<ARNavProp>();
   const isFocused = useIsFocused();
   const insets = useSafeAreaInsets();
   const { support, isLoading: isLoadingCapabilities } = useARCapabilities();
@@ -247,7 +255,7 @@ export function ARScanScreen() {
         <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary, textAlign: 'center', marginBottom: 24 }}>
           AR scanning is available on Creator and above plans.
         </ArchText>
-        <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription' as never)} />
+        <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription')} />
         <Pressable onPress={handleBackToEntry} style={{ marginTop: 16 }}>
           <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary }}>Go back</ArchText>
         </Pressable>
@@ -263,7 +271,7 @@ export function ARScanScreen() {
         <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary, textAlign: 'center', marginBottom: 24 }}>
           AR Measure is available on Pro and above plans.
         </ArchText>
-        <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription' as never)} />
+        <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription')} />
         <Pressable onPress={handleBackToEntry} style={{ marginTop: 16 }}>
           <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary }}>Go back</ArchText>
         </Pressable>

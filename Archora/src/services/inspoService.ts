@@ -168,7 +168,7 @@ export const inspoService = {
       .insert({
         user_id: params.userId,
         project_id: params.projectId,
-        name: params.name,
+        title: params.name,
         description: params.description ?? null,
         price: params.price ?? 0,
         building_type: params.buildingType ?? 'house',

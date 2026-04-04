@@ -208,18 +208,18 @@ export function NotificationPanel({ visible, onClose }: Props) {
 
     onClose();
 
-    // Navigate based on type
-    // Navigate based on type — use type assertion since Feed/Account are in nested tab navigator
-    const nav = navigation as unknown as { navigate: (screen: string) => void };
+    // Navigate based on type — Feed/Account are tabs inside Main, cast required for nested navigator
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nav = navigation as any;
     switch (notification.type) {
       case 'like_received':
       case 'save_received':
       case 'comment_received':
-        nav.navigate('Feed');
+        nav.navigate('Main', { screen: 'Feed' });
         break;
       case 'streak_milestone':
       case 'points_awarded':
-        nav.navigate('Account');
+        nav.navigate('Main', { screen: 'Account' });
         break;
       default:
         break;

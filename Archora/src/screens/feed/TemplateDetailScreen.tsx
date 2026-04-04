@@ -55,6 +55,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const heroScale = useSharedValue(1.06);
   const contentY = useSharedValue(30);
@@ -76,7 +77,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
         setTemplate(t);
         setComments(c);
       })
-      .catch(() => {})
+      .catch(() => { setLoadError(true); })
       .finally(() => setLoading(false));
   }, [templateId]);
 
@@ -104,6 +105,19 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
     return (
       <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
         <CompassRoseLoader size="large" />
+      </View>
+    );
+  }
+
+  if (loadError || !template) {
+    return (
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 20, color: DS.colors.error, marginBottom: 12 }}>
+          Failed to load template
+        </ArchText>
+        <Pressable onPress={() => navigation.goBack()}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primary }}>Go back</ArchText>
+        </Pressable>
       </View>
     );
   }

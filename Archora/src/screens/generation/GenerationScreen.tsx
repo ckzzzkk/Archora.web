@@ -153,8 +153,8 @@ export function GenerationScreen() {
       setScreenState('success');
     } catch (err: unknown) {
       setScreenState('error');
-      const msg = err instanceof Error ? err.message : 'Generation failed';
-      setErrorMessage(ERROR_MESSAGES[msg] ?? 'Something went wrong. Please try again.');
+      const code = err instanceof Error && 'code' in err ? (err as Error & { code: string }).code : '';
+      setErrorMessage(ERROR_MESSAGES[code] ?? (err instanceof Error ? err.message : 'Something went wrong. Please try again.'));
     }
   }, [buildingType, style, blueprintActions, navigation, plotSize, plotUnit, rooms, notes, transcript, aiAllowed]);
 
