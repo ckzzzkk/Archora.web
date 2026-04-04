@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Pressable, ScrollView, Share } from 'react-native';
+import { View, Pressable, ScrollView, Share, Modal } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, interpolate,
 } from 'react-native-reanimated';
-import Svg, { Rect, Line } from 'react-native-svg';
+import Svg, { Rect, Line, Path } from 'react-native-svg';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,7 +27,11 @@ import { StaircasePromptSheet } from '../../components/blueprint/StaircasePrompt
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { InHouseView } from '../../components/3d/InHouseView';
 import { DS } from '../../theme/designSystem';
+import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from '../../components/common/ArchText';
+import { SimulationPanel } from '../../components/blueprint/SimulationPanel';
+import { simulationService } from '../../services/simulationService';
+import type { SimulationReport } from '../../types/blueprint';
 import { randomUUID } from 'expo-crypto';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
@@ -165,6 +169,9 @@ export function BlueprintWorkspaceScreen() {
 
   const [showStructuralGrid, setShowStructuralGrid] = useState(false);
   const [aiSheetVisible, setAISheetVisible] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationReport, setSimulationReport] = useState<SimulationReport | null>(null);
+  const [showSimulation, setShowSimulation] = useState(false);
   const canvasRef = useRef<Canvas2DHandle>(null);
 
   const handleToolPress = useCallback((toolId: ToolId) => {
@@ -259,6 +266,23 @@ export function BlueprintWorkspaceScreen() {
     }
   }, [showToast]);
 
+  const handleSimulate = useCallback(async () => {
+    if (!blueprint) {
+      showToast('Generate a blueprint first before simulating', 'info');
+      return;
+    }
+    setIsSimulating(true);
+    try {
+      const result = await simulationService.simulate(blueprint, 'temperate', 'north');
+      setSimulationReport(result);
+      setShowSimulation(true);
+    } catch {
+      showToast('Simulation failed — try again', 'error');
+    } finally {
+      setIsSimulating(false);
+    }
+  }, [blueprint, showToast]);
+
   const handleShare = useCallback(async () => {
     const uri = await exportBlueprintToFile();
     if (!uri) {
@@ -297,6 +321,28 @@ export function BlueprintWorkspaceScreen() {
           <CompassRoseLoader size="small" />
         )}
         <ViewModeToggle mode={viewMode} onSelect={handleViewModeSelect} />
+        {blueprint && (
+          <Pressable
+            onPress={() => void handleSimulate()}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 6,
+              paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
+              backgroundColor: isSimulating ? DS.colors.surfaceHigh : `${SUNRISE.amber}18`,
+              borderWidth: 1, borderColor: `${SUNRISE.amber}40`,
+            }}
+          >
+            {isSimulating ? (
+              <CompassRoseLoader size="small" />
+            ) : (
+              <Svg width={14} height={14} viewBox="0 0 24 24">
+                <Path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke={SUNRISE.amber} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            )}
+            <ArchText variant="body" style={{ fontSize: 12, fontFamily: DS.font.medium, color: SUNRISE.amber }}>
+              {isSimulating ? 'Analysing\u2026' : 'Simulate'}
+            </ArchText>
+          </Pressable>
+        )}
       </View>
 
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
@@ -482,6 +528,62 @@ export function BlueprintWorkspaceScreen() {
       )}
 
       <EditLimitModal />
+
+      {/* Simulation Report Modal */}
+      <Modal
+        visible={showSimulation}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowSimulation(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 20,
+              paddingTop: 16,
+              paddingBottom: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: DS.colors.border,
+              backgroundColor: DS.colors.surface,
+            }}
+          >
+            <ArchText
+              variant="body"
+              style={{ fontFamily: DS.font.heading, fontSize: 18, color: DS.colors.primary }}
+            >
+              Build Analysis
+            </ArchText>
+            <Pressable
+              onPress={() => setShowSimulation(false)}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: DS.colors.surfaceHigh,
+                borderWidth: 1,
+                borderColor: DS.colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: 14 }}>✕</ArchText>
+            </Pressable>
+          </View>
+          {simulationReport && (
+            <SimulationPanel
+              report={simulationReport}
+              onClose={() => setShowSimulation(false)}
+              onReanalyse={() => {
+                setShowSimulation(false);
+                void handleSimulate();
+              }}
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
