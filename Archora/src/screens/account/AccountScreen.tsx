@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path, Circle, Path as SvgPath } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { ArchText } from '../../components/common/ArchText';
 import { authService } from '../../services/authService';
 import { useHaptics } from '../../hooks/useHaptics';
 import { DS } from '../../theme/designSystem';
+import { SUNRISE } from '../../theme/sunrise';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAppearanceStore } from '../../stores/appearanceStore';
 import type { AppearanceMode } from '../../stores/appearanceStore';
@@ -104,6 +105,65 @@ function SettingsCard({ children, danger = false, C }: { children: React.ReactNo
       borderColor: danger ? `${C.error}30` : C.border,
     }}>
       {children}
+    </View>
+  );
+}
+
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+function StreakHeatmap({ streakCount, C }: { streakCount: number; C: ReturnType<typeof useThemeColors> }) {
+  // Build last-7-days activity: today is always active, streak days going back
+  const today = new Date().getDay(); // 0 = Sun
+  const active = new Array(7).fill(false).map((_, i) => {
+    // i=6 → today, i=5 → yesterday, etc.
+    return i >= 7 - Math.min(streakCount, 7);
+  });
+
+  return (
+    <View style={{
+      backgroundColor: C.surface,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: C.border,
+      padding: DS.spacing.md,
+      marginBottom: DS.spacing.sm,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: DS.spacing.sm }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.semibold, fontSize: 13, color: SUNRISE.amber, marginRight: 6 }}>
+          ✦
+        </ArchText>
+        <ArchText variant="body" style={{ fontFamily: DS.font.semibold, fontSize: 13, color: C.primary }}>
+          {streakCount}-day streak
+        </ArchText>
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        {DAY_LABELS.map((label, i) => (
+          <View key={i} style={{ alignItems: 'center', gap: 6 }}>
+            <View style={{
+              width: 32, height: 32, borderRadius: 10,
+              backgroundColor: active[i] ? `${SUNRISE.gold}18` : C.surfaceHigh,
+              borderWidth: 1.5,
+              borderColor: active[i] ? `${SUNRISE.gold}60` : C.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {active[i] && (
+                <Svg width={14} height={14} viewBox="0 0 24 24">
+                  <SvgPath d="M20 6L9 17l-5-5" stroke={SUNRISE.gold} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                </Svg>
+              )}
+            </View>
+            <ArchText variant="body" style={{ fontSize: 10, color: active[i] ? C.primaryDim : C.primaryGhost }}>
+              {label}
+            </ArchText>
+          </View>
+        ))}
+      </View>
+      {streakCount === 0 && (
+        <ArchText variant="body" style={{ fontSize: 12, color: C.primaryGhost, textAlign: 'center', marginTop: DS.spacing.sm }}>
+          Open the app daily to build your streak
+        </ArchText>
+      )}
     </View>
   );
 }
@@ -397,6 +457,10 @@ export function AccountScreen() {
 
         {/* Settings sections */}
         <Animated.View style={bodyStyle}>
+
+          {/* STREAK HEATMAP */}
+          <SectionLabel title="Activity" C={C} />
+          <StreakHeatmap streakCount={user.streakCount ?? 0} C={C} />
 
           {/* APPEARANCE */}
           <SectionLabel title="Appearance" C={C} />

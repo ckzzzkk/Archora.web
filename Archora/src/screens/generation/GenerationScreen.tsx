@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, ScrollView, Pressable, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { randomUUID } from 'expo-crypto';
+import Svg, { Rect, Line, Path, Circle } from 'react-native-svg';
+import Animated, {
+  useSharedValue as useSV, useAnimatedStyle as useAS, withTiming, withRepeat,
+  withDelay as wDelay, withSpring, Easing as EA, interpolate,
+} from 'react-native-reanimated';
 
 import { aiService } from '../../services/aiService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
@@ -61,6 +66,131 @@ const ERROR_MESSAGES: Record<string, string> = {
   AUTH_ERROR: 'Please sign in again',
   AI_NOT_CONFIGURED: 'AI features are coming soon',
 };
+
+// Animated blueprint being drawn — shown while AI generates
+function BlueprintGeneratingOverlay({ phase }: { phase: number }) {
+  // Pulse for the cross-hair + dots
+  const pulse = useSV(0);
+  useEffect(() => {
+    pulse.value = withRepeat(withTiming(1, { duration: 1400, easing: EA.inOut(EA.ease) }), -1, true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Wall draw-in animations (5 walls, staggered)
+  const walls = [useSV(0), useSV(0), useSV(0), useSV(0), useSV(0)];
+  useEffect(() => {
+    walls.forEach((w, i) => {
+      w.value = wDelay(i * 320, withTiming(1, { duration: 600, easing: EA.out(EA.cubic) }));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const w0 = useAS(() => ({ opacity: walls[0].value }));
+  const w1 = useAS(() => ({ opacity: walls[1].value }));
+  const w2 = useAS(() => ({ opacity: walls[2].value }));
+  const w3 = useAS(() => ({ opacity: walls[3].value }));
+  const w4 = useAS(() => ({ opacity: walls[4].value }));
+  const wallStyles = [w0, w1, w2, w3, w4];
+
+  // Phase text fade
+  const textOp = useSV(1);
+  useEffect(() => {
+    textOp.value = withTiming(0, { duration: 200 }, () => {
+      textOp.value = withTiming(1, { duration: 300 });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+  const textStyle = useAS(() => ({ opacity: textOp.value }));
+
+  const pulseStyle = useAS(() => ({
+    opacity: interpolate(pulse.value, [0, 1], [0.4, 1]),
+    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.95, 1.05]) }],
+  }));
+
+  // SVG wall segments (floor plan view)
+  const segments = [
+    // outer walls
+    { x1: 24, y1: 24, x2: 120, y2: 24 },   // top
+    { x1: 120, y1: 24, x2: 120, y2: 112 },  // right
+    { x1: 24, y1: 112, x2: 120, y2: 112 },  // bottom
+    { x1: 24, y1: 24, x2: 24, y2: 112 },    // left
+    { x1: 24, y1: 68, x2: 80, y2: 68 },     // interior partition
+  ];
+
+  return (
+    <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
+      <GridBackground />
+
+      {/* Blueprint canvas */}
+      <Animated.View style={[pulseStyle, { marginBottom: DS.spacing.xl }]}>
+        <Svg width={144} height={136} viewBox="0 0 144 136">
+          {/* Grid dots */}
+          {[0, 1, 2, 3].map((r) => [0, 1, 2, 3, 4].map((c) => (
+            <Circle key={`${r}-${c}`} cx={24 + c * 24} cy={24 + r * 24} r={1.5}
+              fill={SUNRISE.border} opacity={0.4} />
+          )))}
+          {/* Walls — each fades in */}
+          {segments.map((seg, i) => (
+            <Animated.View key={i} style={wallStyles[i]}>
+              <Svg width={144} height={136} viewBox="0 0 144 136" style={{ position: 'absolute', top: 0, left: 0 }}>
+                <Line
+                  x1={seg.x1} y1={seg.y1} x2={seg.x2} y2={seg.y2}
+                  stroke={SUNRISE.gold} strokeWidth={2.2} strokeLinecap="round"
+                />
+              </Svg>
+            </Animated.View>
+          ))}
+          {/* Corner dots where walls meet */}
+          {[
+            { cx: 24, cy: 24 }, { cx: 120, cy: 24 },
+            { cx: 120, cy: 112 }, { cx: 24, cy: 112 },
+            { cx: 80, cy: 68 },
+          ].map((pt, i) => (
+            <Circle key={i} cx={pt.cx} cy={pt.cy} r={3}
+              fill="none" stroke={SUNRISE.amber} strokeWidth={1.5} opacity={0.8} />
+          ))}
+          {/* Compass marker */}
+          <Path d="M72 8 L74 14 L72 12 L70 14 Z" fill={SUNRISE.gold} opacity={0.6} />
+          <Circle cx={72} cy={16} r={2} fill={SUNRISE.gold} opacity={0.4} />
+        </Svg>
+      </Animated.View>
+
+      {/* ARIA label */}
+      <ArchText variant="heading" style={{ fontSize: 13, color: SUNRISE.textSecondary, letterSpacing: 4, textTransform: 'uppercase', marginBottom: DS.spacing.sm }}>
+        ARIA
+      </ArchText>
+
+      {/* Cycling phase text */}
+      <Animated.View style={[textStyle, { alignItems: 'center' }]}>
+        <ArchText variant="body" style={{
+          fontFamily: 'ArchitectsDaughter_400Regular',
+          fontSize: 18,
+          color: DS.colors.primary,
+          textAlign: 'center',
+          paddingHorizontal: 40,
+          marginBottom: DS.spacing.md,
+        }}>
+          {LOADING_PHASES[phase]}
+        </ArchText>
+      </Animated.View>
+
+      {/* Progress dots */}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: DS.spacing.xs }}>
+        {LOADING_PHASES.map((_, i) => (
+          <Animated.View
+            key={i}
+            style={{
+              width: i === phase ? 20 : 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: i === phase ? SUNRISE.gold : SUNRISE.border,
+            }}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
 
 export function GenerationScreen() {
   const navigation = useNavigation<Nav>();
@@ -162,26 +292,7 @@ export function GenerationScreen() {
 
   // ── Generating overlay ────────────────────────────────────────────────────
   if (screenState === 'generating') {
-    return (
-      <View className="flex-1" style={{ backgroundColor: DS.colors.background }}>
-        <GridBackground />
-        <View className="flex-1 items-center justify-center" style={{ gap: 24 }}>
-          <SketchLoader />
-          <ArchText
-            variant="body"
-            style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
-              fontSize: 18,
-              color: DS.colors.primary,
-              textAlign: 'center',
-              paddingHorizontal: 32,
-            }}
-          >
-            {LOADING_PHASES[loadingPhase]}
-          </ArchText>
-        </View>
-      </View>
-    );
+    return <BlueprintGeneratingOverlay phase={loadingPhase} />;
   }
 
   // ── Error overlay ─────────────────────────────────────────────────────────

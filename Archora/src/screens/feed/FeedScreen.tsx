@@ -5,6 +5,7 @@ import {
   TextInput,
   Pressable,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -15,6 +16,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -28,9 +30,130 @@ import { useHaptics } from '../../hooks/useHaptics';
 import { useUIStore } from '../../stores/uiStore';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { DS } from '../../theme/designSystem';
+import { SUNRISE } from '../../theme/sunrise';
 import type { RootStackParamList } from '../../navigation/types';
+import type { Template } from '../../types';
+
+const SCREEN_W = Dimensions.get('window').width;
+const CARD_W = SCREEN_W * 0.52;
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+function TrendingCarousel({
+  templates,
+  onPress,
+  C,
+}: {
+  templates: Template[];
+  onPress: (id: string) => void;
+  C: ReturnType<typeof useThemeColors>;
+}) {
+  const trending = templates
+    .filter((t) => (t.likeCount ?? 0) > 0)
+    .sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0))
+    .slice(0, 8);
+
+  if (trending.length === 0) return null;
+
+  return (
+    <View style={{ marginBottom: DS.spacing.md }}>
+      <View style={{
+        flexDirection: 'row', alignItems: 'center',
+        paddingHorizontal: DS.spacing.lg, marginBottom: DS.spacing.sm,
+      }}>
+        <ArchText variant="body" style={{
+          fontFamily: DS.font.semibold, fontSize: 13,
+          color: SUNRISE.amber, letterSpacing: 0.5, marginRight: 6,
+        }}>
+          ✦ Trending
+        </ArchText>
+        <ArchText variant="body" style={{ fontSize: 12, color: C.primaryGhost }}>
+          this week
+        </ArchText>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: DS.spacing.lg, gap: DS.spacing.sm }}
+      >
+        {trending.map((t, idx) => (
+          <Pressable
+            key={t.id}
+            onPress={() => onPress(t.id)}
+            style={{
+              width: CARD_W,
+              borderRadius: 20,
+              backgroundColor: C.surface,
+              borderWidth: 1,
+              borderColor: idx === 0 ? `${SUNRISE.amber}40` : C.border,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Color thumbnail */}
+            <View style={{
+              height: 100,
+              backgroundColor: SUNRISE.glass.subtleBg,
+              borderBottomWidth: 1,
+              borderBottomColor: C.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Svg width={72} height={56} viewBox="0 0 72 56">
+                <Path
+                  d="M4,28 L36,4 L68,28 L68,52 L4,52 Z"
+                  stroke={idx === 0 ? SUNRISE.amber : SUNRISE.gold}
+                  strokeWidth={1.4} fill="none" strokeLinejoin="round"
+                  opacity={0.8}
+                />
+                <Path
+                  d="M20,52 L20,34 L30,34 L30,52"
+                  stroke={idx === 0 ? SUNRISE.amber : SUNRISE.gold}
+                  strokeWidth={1.2} fill="none"
+                />
+                <Path
+                  d="M42,52 L42,38 L60,38 L60,52"
+                  stroke={idx === 0 ? SUNRISE.amber : SUNRISE.gold}
+                  strokeWidth={1.2} fill="none"
+                />
+              </Svg>
+              {idx === 0 && (
+                <View style={{
+                  position: 'absolute', top: 8, right: 8,
+                  backgroundColor: SUNRISE.amber,
+                  borderRadius: 50, paddingHorizontal: 8, paddingVertical: 3,
+                }}>
+                  <ArchText variant="body" style={{ fontSize: 9, color: '#1A1800', fontFamily: DS.font.bold }}>
+                    #1
+                  </ArchText>
+                </View>
+              )}
+            </View>
+            <View style={{ padding: DS.spacing.sm }}>
+              <ArchText
+                variant="body"
+                numberOfLines={1}
+                style={{ fontSize: 13, fontFamily: DS.font.semibold, color: C.primary, marginBottom: 4 }}
+              >
+                {t.title ?? 'Untitled'}
+              </ArchText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Svg width={10} height={10} viewBox="0 0 24 24">
+                  <Path
+                    d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+                    stroke={SUNRISE.rose} strokeWidth={1.5} fill="none"
+                  />
+                </Svg>
+                <ArchText variant="body" style={{ fontSize: 11, color: C.primaryDim, fontFamily: DS.font.mono }}>
+                  {t.likeCount ?? 0}
+                </ArchText>
+              </View>
+            </View>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
 
 interface ChipConfig {
   label: string;
@@ -322,6 +445,11 @@ export function FeedScreen() {
             />
           </View>
         </Animated.View>
+
+        {/* Trending carousel — only when no active search/filter */}
+        {!searchText && activeChip === 'All' && templates.length > 0 && (
+          <TrendingCarousel templates={templates} onPress={handleItemPress} C={C} />
+        )}
 
         {/* Filter chips */}
         <FilterChipsRow activeChip={activeChip} onChipPress={handleChip} />
