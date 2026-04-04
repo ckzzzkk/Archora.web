@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, Pressable, SafeAreaView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { randomUUID } from 'expo-crypto';
@@ -63,6 +64,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 export function GenerationScreen() {
   const navigation = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
   const blueprintActions = useBlueprintStore((s) => s.actions);
   const { allowed: aiAllowed } = useTierGate('aiGenerationsPerMonth');
 
@@ -235,7 +237,7 @@ export function GenerationScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
+        contentContainerStyle={{ paddingBottom: Math.max(40, insets.bottom + 16), flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

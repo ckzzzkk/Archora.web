@@ -31,7 +31,8 @@ import type { BlueprintData, Wall, Room, RoomType, Vector2D } from '../../types/
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-const CANVAS_H = SCREEN_H - 200;
+// Reserve 240px for header + toolbar + bottom safe area; minimum 400px usable canvas
+const CANVAS_H = Math.max(SCREEN_H - 240, 400);
 const PIXELS_PER_METRE = 40;
 const SNAP_INTERVAL = 0.1;
 

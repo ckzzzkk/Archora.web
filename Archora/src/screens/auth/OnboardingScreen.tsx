@@ -118,13 +118,13 @@ export function OnboardingScreen() {
           setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / width));
         }}
         renderItem={({ item }) => (
-          <View style={{ width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 }}>
+          <View style={{ width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: DS.spacing.lg }}>
             <View style={{ marginBottom: 48 }}>
               {item.icon(DS.colors.primary)}
             </View>
             <ArchText variant="body" style={{
               fontFamily: 'ArchitectsDaughter_400Regular',
-              fontSize: 36,
+              fontSize: Math.min(36, width * 0.092),
               color: DS.colors.primary,
               textAlign: 'center',
               marginBottom: 16,
@@ -161,7 +161,7 @@ export function OnboardingScreen() {
       </View>
 
       {/* CTA */}
-      <View style={{ paddingHorizontal: 32, paddingBottom: 60 }}>
+      <View style={{ paddingHorizontal: DS.spacing.lg, paddingBottom: Math.max(DS.spacing.xxl, 34 + DS.spacing.lg) }}>
         <Pressable
           onPress={handleNext}
           style={{

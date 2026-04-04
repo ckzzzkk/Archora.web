@@ -33,7 +33,7 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
           fontSize: 24,
           color: DS.colors.primary,
           marginBottom: 24,
-          paddingHorizontal: 20,
+          paddingHorizontal: DS.spacing.lg,
         }}
       >
         What style are you going for?
@@ -43,7 +43,7 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
         ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: DS.spacing.lg, gap: 12 }}
       >
         {DESIGN_STYLES.map((style, idx) => {
           const isLocked = !isStyleAccessible(style.id, available);
@@ -93,7 +93,7 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
         })}
       </ScrollView>
 
-      <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
+      <View style={{ paddingHorizontal: DS.spacing.lg, marginTop: 32 }}>
         <Pressable
           onPress={onNext}
           disabled={!selected}

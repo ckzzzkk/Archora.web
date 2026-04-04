@@ -88,7 +88,7 @@ function StarterCard({ isCurrent }: { isCurrent: boolean }) {
       )}
       <View style={{ padding: DS.spacing.lg }}>
         <ArchText variant="heading" style={{ fontSize: 22, marginBottom: DS.spacing.xs }}>Starter</ArchText>
-        <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 36, color: DS.colors.primary, marginBottom: DS.spacing.md }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: DS.fontSize.xxxl, color: DS.colors.primary, marginBottom: DS.spacing.md }}>
           Free
         </ArchText>
         <View style={{ gap: DS.spacing.xs, marginBottom: DS.spacing.md }}>
@@ -153,7 +153,7 @@ function TierCard({
         <ArchText variant="heading" style={{ fontSize: 22, marginBottom: DS.spacing.xs }}>{label}</ArchText>
 
         <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: DS.spacing.xs }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 36, color: accent }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: DS.fontSize.xxxl, color: accent }}>
             ${displayPrice.toFixed(2)}
           </ArchText>
           <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryGhost, marginLeft: 4 }}>/mo</ArchText>
@@ -271,7 +271,7 @@ export function SubscriptionScreen({ navigation }: Props) {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: DS.spacing.lg, paddingBottom: 48 }}
+        contentContainerStyle={{ paddingHorizontal: DS.spacing.lg, paddingBottom: Math.max(48, insets.bottom + 24) }}
       >
         {/* Current tier badge */}
         <View style={{ flexDirection: 'row', marginBottom: DS.spacing.xl }}>

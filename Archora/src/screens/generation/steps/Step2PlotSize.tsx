@@ -23,7 +23,7 @@ interface Props {
 
 export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnitChange, onNext }: Props) {
   return (
-    <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: 20, flex: 1 }}>
+    <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
       <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',
@@ -44,7 +44,7 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
         style={{
           backgroundColor: DS.colors.surface,
           borderRadius: 50,
-          paddingHorizontal: 20,
+          paddingHorizontal: DS.spacing.lg,
           paddingVertical: 14,
           fontFamily: 'Inter_400Regular',
           fontSize: 16,
@@ -61,7 +61,7 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
             key={u}
             onPress={() => onPlotUnitChange(u)}
             style={{
-              paddingHorizontal: 20,
+              paddingHorizontal: DS.spacing.lg,
               paddingVertical: 10,
               backgroundColor: plotUnit === u ? DS.colors.primary : 'transparent',
             }}

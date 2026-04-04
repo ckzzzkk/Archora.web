@@ -54,6 +54,7 @@ function NewProjectModal({
   onCreate: (name: string, type: BuildingType) => void;
 }) {
   const C = useThemeColors();
+  const modalInsets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [buildingType, setBuildingType] = useState<BuildingType>('house');
 
@@ -75,8 +76,8 @@ function NewProjectModal({
           backgroundColor: C.surfaceHigh,
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
-          padding: 32,
-          paddingBottom: 48,
+          padding: DS.spacing.xl,
+          paddingBottom: Math.max(DS.spacing.xxl, modalInsets.bottom + DS.spacing.lg),
           borderTopWidth: 1,
           borderTopColor: C.border,
         }}>
@@ -523,7 +524,7 @@ export function DashboardScreen() {
             />
           }
           renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingBottom: Math.max(120, insets.bottom + 88) }}
           showsVerticalScrollIndicator={false}
         />
       )}

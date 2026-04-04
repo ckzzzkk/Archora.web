@@ -65,7 +65,7 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
   };
 
   return (
-    <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: 20, flex: 1 }}>
+    <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
       <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',

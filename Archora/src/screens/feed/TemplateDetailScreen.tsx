@@ -31,7 +31,7 @@ import type { Template, Comment } from '../../types';
 type Props = NativeStackScreenProps<RootStackParamList, 'TemplateDetail'>;
 
 const SCREEN_H = Dimensions.get('window').height;
-const HERO_H = SCREEN_H * 0.55;
+const HERO_H = Math.min(SCREEN_H * 0.45, 400);
 
 function BackArrow({ color }: { color: string }) {
   return (

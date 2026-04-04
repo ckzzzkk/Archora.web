@@ -80,7 +80,7 @@ const POOL_SIZES: ('small' | 'medium' | 'large')[] = ['small', 'medium', 'large'
 
 export function Step3Rooms(props: Props) {
   return (
-    <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: 20, flex: 1 }}>
+    <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
       <ArchText variant="body"
         style={{
           fontFamily: 'ArchitectsDaughter_400Regular',

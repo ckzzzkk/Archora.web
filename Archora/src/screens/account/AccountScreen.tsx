@@ -313,7 +313,7 @@ export function AccountScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: DS.spacing.lg,
-          paddingBottom: 120,
+          paddingBottom: Math.max(120, insets.bottom + 88),
         }}
       >
         {/* Avatar + name header */}

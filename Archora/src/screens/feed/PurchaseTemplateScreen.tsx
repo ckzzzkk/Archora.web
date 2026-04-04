@@ -21,7 +21,7 @@ import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import type { Template } from '../../types';
 
 const SCREEN_W = Dimensions.get('window').width;
-const HERO_H = SCREEN_W * 0.65;
+const HERO_H = Math.min(SCREEN_W * 0.55, 320);
 
 const WHAT_YOU_GET = [
   'Full blueprint with all rooms and dimensions',
@@ -140,10 +140,10 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
         {template.thumbnailUrl ? (
           <Image
             source={{ uri: template.thumbnailUrl }}
-            style={{ width: SCREEN_W, height: HERO_H, resizeMode: 'cover' }}
+            style={{ width: '100%', height: HERO_H, resizeMode: 'cover' }}
           />
         ) : (
-          <View style={{ width: SCREEN_W, height: HERO_H, backgroundColor: DS.colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ flex: 1, height: HERO_H, backgroundColor: DS.colors.surface, alignItems: 'center', justifyContent: 'center' }}>
             <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: DS.colors.primaryGhost }}>No preview</ArchText>
           </View>
         )}

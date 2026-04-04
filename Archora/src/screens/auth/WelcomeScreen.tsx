@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Pressable, Platform } from 'react-native';
+import { View, Pressable, Platform, Dimensions } from 'react-native';
+
+const SCREEN_W = Dimensions.get('window').width;
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -98,7 +100,7 @@ export function WelcomeScreen() {
         <Animated.View style={[{ alignItems: 'center', marginTop: DS.spacing.md }, titleStyle]}>
           <ArchText
             variant="heading"
-            style={{ fontSize: 48, letterSpacing: 10, color: DS.colors.primary }}
+            style={{ fontSize: Math.min(48, SCREEN_W * 0.125), letterSpacing: Math.min(10, SCREEN_W * 0.026), color: DS.colors.primary }}
           >
             ASORIA
           </ArchText>
@@ -108,7 +110,7 @@ export function WelcomeScreen() {
           <View style={{ width: 120, height: 1, backgroundColor: DS.colors.border }} />
         </Animated.View>
 
-        <Animated.View style={[{ paddingHorizontal: 40 }, subStyle]}>
+        <Animated.View style={[{ paddingHorizontal: DS.spacing.lg }, subStyle]}>
           <ArchText
             variant="body"
             style={{ fontSize: DS.fontSize.md, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 22 }}
