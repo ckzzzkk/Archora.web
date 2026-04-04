@@ -1,3 +1,5 @@
+import type { ClimateZone } from './blueprint';
+
 export interface GenerationPayload {
   buildingType: 'house' | 'apartment' | 'office' | 'studio' | 'villa' | 'commercial';
   plotSize: number;
@@ -15,6 +17,8 @@ export interface GenerationPayload {
   referenceImageUrl?: string;
   additionalNotes: string;
   transcript?: string;
+  climateZone?: ClimateZone;
+  hemisphere?: 'north' | 'south';
 }
 
 export type GenerationStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;

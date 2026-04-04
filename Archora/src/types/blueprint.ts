@@ -1,3 +1,35 @@
+export type ClimateZone = 'tropical' | 'subtropical' | 'temperate' | 'arid' | 'cold' | 'alpine';
+
+export interface SimulationReport {
+  overall: number;
+  structural: number;
+  weather: number;
+  flow: number;
+  codeCompliance: number;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  summary: string;
+  strengths: string[];
+  recommendations: Array<{
+    category: 'structural' | 'weather' | 'flow' | 'code';
+    severity: 'critical' | 'major' | 'minor';
+    issue: string;
+    fix: string;
+  }>;
+  weatherProfile: {
+    solarGain: 'excellent' | 'good' | 'fair' | 'poor';
+    windResistance: 'excellent' | 'good' | 'fair' | 'poor';
+    rainProtection: 'excellent' | 'good' | 'fair' | 'poor';
+    thermalMass: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  structuralProfile: {
+    loadPath: 'excellent' | 'good' | 'fair' | 'poor';
+    spanIntegrity: 'excellent' | 'good' | 'fair' | 'poor';
+    foundationFit: 'excellent' | 'good' | 'fair' | 'poor';
+    shearWalls: 'excellent' | 'good' | 'fair' | 'poor';
+  };
+  generatedAt: string;
+}
+
 export type RoomType =
   | 'bedroom' | 'bathroom' | 'kitchen' | 'living_room'
   | 'dining_room' | 'hallway' | 'garage' | 'office'
@@ -81,6 +113,8 @@ export interface Wall {
   height: number;
   texture?: WallTexture;
   exteriorFinish?: ExteriorFinish;
+  isLoadbearing?: boolean;
+  material?: string;
 }
 
 export interface Opening {
@@ -104,6 +138,8 @@ export interface Room {
   ceilingType?: CeilingType;
   area: number;
   centroid: Vector2D;
+  naturalLightRating?: string;
+  ventilationRating?: string;
 }
 
 export interface FurniturePiece {
@@ -147,6 +183,8 @@ export interface BuildingMetadata {
   roomCount: number;
   generatedFrom: string;
   enrichedPrompt?: string;
+  simulationReport?: SimulationReport;
+  structuralNotes?: string[];
 }
 
 export type StaircaseType = 'straight' | 'l_shape' | 'spiral';
@@ -190,6 +228,7 @@ export interface BlueprintData {
   chatHistory: ChatMessage[];
   createdAt: string;
   updatedAt: string;
+  simulationReport?: SimulationReport;
 }
 
 export type SceneObjectType = 'wall' | 'room' | 'opening' | 'furniture';

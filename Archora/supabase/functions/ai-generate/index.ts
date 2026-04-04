@@ -27,6 +27,8 @@ const RequestSchema = z.object({
   referenceImageUrl: z.string().url().optional(),
   additionalNotes: z.string().max(500).optional(),
   transcript: z.string().max(2000).optional(),
+  climateZone: z.enum(['tropical', 'subtropical', 'temperate', 'arid', 'cold', 'alpine']).optional().default('temperate'),
+  hemisphere: z.enum(['north', 'south']).optional().default('north'),
 });
 
 const SYSTEM_PROMPT = `You are ARIA — ASORIA's AI design intelligence. You are a senior architect, interior designer, and landscape architect with 20 years of professional experience across residential, commercial, and landscape projects worldwide.
@@ -506,61 +508,187 @@ These rules are non-negotiable and must be satisfied in every generation:
   Children's bedrooms grouped together, not separated by adult spaces
   No bedroom should be between two other rooms (corridor bedrooms)
 
-OUTPUT FORMAT: Return ONLY valid JSON matching this exact TypeScript interface. No markdown, no explanation:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STRUCTURAL ENGINEERING RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-interface BlueprintData {
-  id: string; // UUID
-  version: number; // 1
-  metadata: {
-    style: string;
-    buildingType: string;
-    totalArea: number;
-    roomCount: number;
-    generatedFrom: string;
-    enrichedPrompt: string;
-  };
-  walls: Array<{
-    id: string;
-    start: { x: number; y: number };
-    end: { x: number; y: number };
-    thickness: number;
-    height: number;
-  }>;
-  rooms: Array<{
-    id: string;
-    name: string;
-    type: string;
-    wallIds: string[];
-    floorMaterial: string;
-    ceilingHeight: number;
-    area: number;
-    centroid: { x: number; y: number };
-  }>;
-  openings: Array<{
-    id: string;
-    wallId: string;
-    type: string;
-    position: number;
-    width: number;
-    height: number;
-    sillHeight: number;
-  }>;
-  furniture: Array<{
-    id: string;
-    name: string;
-    roomId: string;
-    position: { x: number; y: number; z: number };
-    rotation: { x: number; y: number; z: number };
-    dimensions: { x: number; y: number; z: number };
-    procedural: boolean;
-  }>;
-  createdAt: string;
-  updatedAt: string;
+STRUCTURAL GRID:
+  Standard structural bay: 6.0m × 6.0m maximum (timber frame)
+  Concrete/steel: 9.0m × 9.0m maximum span
+  All loadbearing walls align vertically floor to floor
+  Loadbearing walls identified by running full length of building OR supporting upper floors
+  Columns at grid intersections for spans over 4.5m
+
+SPAN LIMITS (never exceed without beam):
+  Timber joist span: 4.5m maximum unsupported
+  Steel beam: 12m maximum
+  Concrete slab: 8m maximum one-way
+  Flat roof: avoid spans over 6m without internal support
+  Roof truss: 12m maximum clear span (standard domestic)
+
+FOUNDATION TYPES by climate:
+  Temperate/cold: strip foundation, 600mm wide × 300mm deep
+  Tropical/subtropical: pad foundation with ground beam — termite barrier mandatory
+  Arid: raft foundation — differential settlement resistance
+  Alpine/cold: frost-protected shallow foundation min 1.2m below grade
+  All: DPC (damp-proof course) at 150mm above external ground level
+
+SEISMIC AND WIND ZONES:
+  All buildings: shear walls on all 4 elevation quadrants
+  Shear walls minimum 30% of each facade length as solid wall
+  Openings in shear walls: limited to 40% of wall area
+  Hurricane/cyclone: roof tie-downs every 600mm on rafters
+  Hip roofs are more wind-resistant than gable roofs
+  Low pitch roofs (under 15°) perform better in high wind
+
+LOAD PATH:
+  Gravity loads travel: roof → walls → floors → foundation
+  No room should cantilever over 2.5m without steel
+  Wet rooms (bathroom/kitchen) on ground floor preferred for drainage fall
+  Staircase opening needs trimmer joists both sides
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLIMATE-RESPONSIVE DESIGN RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Apply these rules based on the specified climate zone:
+
+TROPICAL (hot humid year-round):
+  Orientation: catch prevailing breeze, avoid direct west sun
+  Roof: steep pitch (45°+) for fast rain runoff, wide overhanging eaves 1.2m minimum
+  Walls: lightweight — thermal mass heats up in tropics (bad)
+  Openings: 40%+ of wall area for cross-ventilation
+  Floor: raised timber or concrete slab with good airflow underneath
+  Shade: covered verandas on all sun-facing elevations
+  Materials: corrosion-resistant — salt air, humidity, termites
+  No basements — high water table
+
+SUBTROPICAL (hot summers, mild winters):
+  Orientation: main glazing north (SH) or south (NH) facing
+  Roof: medium pitch 25-35°, 900mm eaves to block summer sun, admit winter sun
+  Shade: deciduous trees on east and west
+  Cross-ventilation: essential — high-level windows for stack effect
+  Thermal mass: moderate — concrete floors in sun-facing rooms
+  Pool area: consider afternoon shade structures
+
+TEMPERATE (four seasons, moderate rain):
+  Orientation: south-facing (NH) glazing to maximise winter sun
+  Roof: 35° pitch minimum, good insulation, gutters and downpipes
+  Triple glazing: north-facing windows
+  Thermal mass: concrete or stone floors in sun-facing rooms
+  Overhangs: 600mm eaves — blocks summer high sun, admits winter low sun
+  Drainage: all hard surfaces fall away from building minimum 1:100
+
+ARID (hot dry):
+  Orientation: north-facing courtyard (NH) — traditional hacienda/riad plan
+  Roof: flat or very low pitch — rainfall rare, cool nights
+  Walls: thick (350mm+) — thermal mass delays heat penetration
+  Openings: small on west face, larger north/south with deep reveals
+  Shade: covered pergola on all sun-facing walls
+  Water: rainwater harvesting critical — every roof drains to tank
+  Courtyard: central courtyard creates cool microclimate
+
+COLD (long winters, heavy snow):
+  Orientation: maximise south (NH) glazing for passive solar
+  Roof: steep 45°+ pitch, snow load design 1.5 kN/m² minimum
+  Insulation: triple glazed, 200mm wall insulation minimum
+  Foundation: frost-protected, min 1.2m below grade
+  Entry: airlock double-door entry hall essential — prevents heat loss
+  Boiler room: accessible and central
+  No flat roofs — snow accumulation risk
+  Gutters: heated trace wire to prevent ice dams
+
+ALPINE (extreme cold, heavy snow, high altitude):
+  All cold rules plus:
+  Roof: 60°+ pitch for snow shedding
+  Structure: snow load 3.0 kN/m² minimum
+  Windows: quadruple glazed or triple with shutters
+  Mechanical ventilation with heat recovery (MVHR)
+  Compact form: minimise surface area to volume ratio
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Return ONLY valid JSON matching this exact schema. No markdown, no explanation, no code fences.
+
+{
+  "id": "uuid-string",
+  "version": 1,
+  "metadata": {
+    "style": "string",
+    "buildingType": "string",
+    "totalArea": 0,
+    "roomCount": 0,
+    "generatedFrom": "string",
+    "enrichedPrompt": "string",
+    "climateZone": "temperate",
+    "hemisphere": "north",
+    "structuralNotes": [
+      "string — one note per key structural decision, e.g. 'East-west spine wall is loadbearing'",
+      "string — e.g. 'Steel beam required at kitchen-dining junction, 5.2m span'"
+    ],
+    "roofType": "string — gable|hip|flat|pitched|mono_pitch",
+    "roofPitch": 0,
+    "foundationType": "string — strip|raft|pad|pile",
+    "estimatedBuildCost": "string — e.g. '$280,000 – $340,000 USD (mid-spec)'",
+    "weatherRating": "string — excellent|good|fair|poor",
+    "structuralRating": "string — excellent|good|fair|poor",
+    "orientation": "string — e.g. 'Building faces north, living areas south-facing'"
+  },
+  "walls": [
+    {
+      "id": "string",
+      "start": { "x": 0, "y": 0 },
+      "end": { "x": 0, "y": 0 },
+      "thickness": 0.2,
+      "height": 2.7,
+      "isLoadbearing": true,
+      "material": "string — brick|timber_frame|concrete|steel_frame"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "string",
+      "name": "string",
+      "type": "string",
+      "wallIds": [],
+      "floorMaterial": "string",
+      "ceilingHeight": 2.7,
+      "area": 0,
+      "centroid": { "x": 0, "y": 0 },
+      "naturalLightRating": "string — excellent|good|fair",
+      "ventilationRating": "string — excellent|good|fair"
+    }
+  ],
+  "openings": [
+    {
+      "id": "string",
+      "wallId": "string",
+      "type": "string — door|window|sliding_door|bifold|garage_door",
+      "position": 0,
+      "width": 0,
+      "height": 0,
+      "sillHeight": 0
+    }
+  ],
+  "furniture": [
+    {
+      "id": "string",
+      "name": "string",
+      "roomId": "string",
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "dimensions": { "x": 0, "y": 0, "z": 0 },
+      "procedural": true
+    }
+  ],
+  "createdAt": "ISO string",
+  "updatedAt": "ISO string"
 }
 
-- All coordinates in metres. (0,0) is bottom-left of building
-- Walls form closed rooms. Every room must be fully enclosed
-- Output only valid JSON matching the BlueprintData schema`;
+All coordinates in metres. (0,0) is bottom-left. Walls form closed rooms. Every room fully enclosed.
+Apply ALL structural and climate rules to this design. Mark every loadbearing wall with isLoadbearing:true.`;
 
 /** Adds CORS headers to any Response returned by Errors.* helpers. */
 function addCors(res: Response): Response {
@@ -612,6 +740,7 @@ serve(async (req) => {
       plotSize, plotUnit, bedrooms, bathrooms, livingAreas,
       hasGarage, hasGarden, hasPool, poolSize,
       hasHomeOffice, hasUtilityRoom, referenceImageUrl, additionalNotes, transcript,
+      climateZone, hemisphere,
     } = parsed.data;
 
     const details: string[] = [];
@@ -626,6 +755,8 @@ serve(async (req) => {
     if (hasUtilityRoom) details.push('Include utility/laundry room');
     if (style) details.push(`Architectural style: ${style}`);
     if (roomCount) details.push(`Target room count: ${roomCount}`);
+    details.push(`Climate zone: ${climateZone}`);
+    details.push(`Hemisphere: ${hemisphere}`);
 
     const combinedNotes = [prompt, additionalNotes, transcript].filter(Boolean).join('\n');
 
@@ -664,7 +795,7 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 4000,
+          max_tokens: 6000,
           temperature: 0,
           system: SYSTEM_PROMPT,
           messages: [{ role: 'user', content: userMessage }],
