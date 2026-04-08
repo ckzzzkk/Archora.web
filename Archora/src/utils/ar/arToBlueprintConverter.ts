@@ -3,6 +3,7 @@ import type {
   Vector2D, Vector3D, FloorData,
 } from '../../types/blueprint';
 import type { DetectedPlane } from '../../native/ARCoreModule';
+import { snapToGrid } from '../../native/ARCoreModule';
 
 export interface PhotoAnalysisResult {
   wallWidth: number;
@@ -22,11 +23,6 @@ function generateId(): string {
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
-}
-
-// Snap a value to a grid (default 5cm precision)
-export function snapToGrid(value: number, gridSize = 0.05): number {
-  return Math.round(value / gridSize) * gridSize;
 }
 
 // ARCore coordinate transform:
