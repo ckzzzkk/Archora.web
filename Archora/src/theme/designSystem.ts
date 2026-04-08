@@ -12,19 +12,19 @@ export const DS = {
     background:   SUNRISE.background,
     surface:      SUNRISE.surface,
     surfaceHigh:  SUNRISE.elevated,
-    surfaceTop:   '#2A2245',
+    surfaceTop:   '#193535',
     border:       SUNRISE.border,
-    borderLight:  'rgba(180, 130, 220, 0.25)',
-    primary:      SUNRISE.gold,
+    borderLight:  'rgba(201, 255, 253, 0.20)',
+    primary:      SUNRISE.gold,      // #C9FFFD cyan
     primaryDim:   SUNRISE.textSecondary,
     primaryGhost: SUNRISE.inactiveTint,
-    accent:       SUNRISE.amber,
-    accentGlow:   'rgba(232, 184, 109, 0.15)',
+    accent:       SUNRISE.amber,     // #FFEE8C yellow
+    accentGlow:   'rgba(201, 255, 253, 0.12)',
     success:      '#7AB87A',
     warning:      SUNRISE.amber,
     error:        SUNRISE.rose,
     overlay:      'rgba(0,0,0,0.85)',
-    gridLine:     '#161026',
+    gridLine:     '#0A2020',
   },
 
   radius: {

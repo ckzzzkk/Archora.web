@@ -1,44 +1,44 @@
-// Sunrise Glass design tokens — single source of truth for the warm sunrise palette.
-// Import from colors.ts and designSystem.ts, not directly from this file.
+// Teal Sketch design tokens — teal + white sketchy palette replacing SUNRISE glass.
+// Deep teal backgrounds, cyan accents (#C9FFFD), yellow highlights (#FFEE8C), near-white text (#FEFFFD).
 
 export const SUNRISE = {
-  // Sky Base
-  background: '#0E0B1A',
-  surface: '#16122A',
-  elevated: '#1F1A38',
-  border: 'rgba(180, 130, 220, 0.15)',
+  // Dark teal base
+  background: '#061A1A',
+  surface:    '#0C2424',
+  elevated:   '#122E2E',
+  border:     'rgba(201, 255, 253, 0.12)',
 
-  // Sunrise Accent Spectrum
-  rose: '#E8758A',
-  amber: '#D4844B',
-  gold: '#E8B86D',
-  peach: '#F2C4A0',
+  // Accent spectrum
+  rose:  '#FF8C9A',
+  amber: '#FFEE8C',
+  gold:  '#C9FFFD',
+  peach: '#E0FFFE',
 
-  // Text (warm shift)
-  textPrimary: '#F5F0EA',
-  textSecondary: '#9A8E8A',
-  textDim: '#5A5050',
+  // Text
+  textPrimary:   '#FEFFFD',
+  textSecondary: '#8ADEDD',
+  textDim:       '#4A8080',
 
-  // Glass surfaces
+  // Glass surfaces — teal-tinted
   glass: {
-    subtleBg: 'rgba(255, 255, 255, 0.04)',
-    subtleBorder: 'rgba(255, 200, 150, 0.08)',
-    mediumBg: 'rgba(255, 255, 255, 0.08)',
-    mediumBorder: 'rgba(255, 180, 120, 0.15)',
-    prominentBg: 'rgba(255, 255, 255, 0.12)',
-    prominentBorder: 'rgba(255, 160, 80, 0.25)',
-    navBg: 'rgba(14, 11, 26, 0.85)',
-    navBorder: 'rgba(232, 181, 109, 0.20)',
+    subtleBg:        'rgba(201, 255, 253, 0.03)',
+    subtleBorder:    'rgba(201, 255, 253, 0.07)',
+    mediumBg:        'rgba(201, 255, 253, 0.06)',
+    mediumBorder:    'rgba(201, 255, 253, 0.12)',
+    prominentBg:     'rgba(201, 255, 253, 0.10)',
+    prominentBorder: 'rgba(201, 255, 253, 0.20)',
+    navBg:           'rgba(6, 26, 26, 0.90)',
+    navBorder:       'rgba(201, 255, 253, 0.18)',
   },
 
   // Semantic aliases
-  goldBorderDim: 'rgba(232, 181, 109, 0.12)',
-  goldBorderPress: 'rgba(232, 181, 109, 0.35)',
-  goldBorderFocus: 'rgba(232, 181, 109, 0.50)',
-  violetBorder: 'rgba(180, 130, 220, 0.20)',
-  toastBg: 'rgba(22, 18, 42, 0.95)',
-  sheetHandle: 'rgba(232, 181, 109, 0.30)',
-  sheetTopBorder: 'rgba(232, 181, 109, 0.20)',
-  separatorLine: 'rgba(232, 181, 109, 0.10)',
-  inactiveTint: 'rgba(242, 196, 160, 0.40)',
+  goldBorderDim:   'rgba(201, 255, 253, 0.10)',
+  goldBorderPress: 'rgba(201, 255, 253, 0.30)',
+  goldBorderFocus: 'rgba(201, 255, 253, 0.50)',
+  violetBorder:    'rgba(201, 255, 253, 0.12)',
+  toastBg:         'rgba(6, 26, 26, 0.96)',
+  sheetHandle:     'rgba(201, 255, 253, 0.25)',
+  sheetTopBorder:  'rgba(201, 255, 253, 0.15)',
+  separatorLine:   'rgba(201, 255, 253, 0.08)',
+  inactiveTint:    'rgba(201, 255, 253, 0.30)',
 } as const;
