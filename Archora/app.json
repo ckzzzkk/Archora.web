@@ -1,13 +1,15 @@
 {
   "expo": {
-    "name": "Asoria",
+    "name": "ASORIA - AI Architecture Design",
     "slug": "asoria",
+    "description": "Design your dream space with AI. Generate floor plans, visualize in 3D, and walk through your creations.",
     "version": "1.0.0",
     "backgroundColor": "#1A1A1A",
     "scheme": "asoria",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "primaryColor": "#C8C8C8",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -21,6 +23,8 @@
       "bundleIdentifier": "com.asoria.app",
       "buildNumber": "1",
       "infoPlist": {
+        "CFBundleDisplayName": "ASORIA",
+        "CFBundleName": "ASORIA",
         "NSCameraUsageDescription": "ASORIA uses your camera for AR room scanning",
         "NSMicrophoneUsageDescription": "ASORIA uses your microphone for voice prompts",
         "NSPhotoLibraryUsageDescription": "ASORIA saves your designs and exports renders to your photo library"
@@ -43,14 +47,20 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "ASORIA",
+      "shortName": "ASORIA",
+      "description": "AI-powered architecture design platform",
+      "lang": "en",
+      "themeColor": "#1A1A1A",
+      "backgroundColor": "#1A1A1A"
     },
     "plugins": [
       "expo-camera",
       [
         "expo-av",
         {
-          "microphonePermission": "Asoria uses your microphone for voice-to-prompt architectural description."
+          "microphonePermission": "ASORIA uses your microphone for voice-to-prompt architectural description."
         }
       ],
       [
@@ -66,6 +76,12 @@
         "projectId": "1697aad8-bba0-442d-ac24-275a5ddd8e74"
       }
     },
-    "owner": "ckng"
+    "owner": "ckng",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1697aad8-bba0-442d-ac24-275a5ddd8e74"
+    }
   }
 }
