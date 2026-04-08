@@ -12,6 +12,7 @@ import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { DS } from '../../theme/designSystem';
 import { useAuthStore } from '../../stores/authStore';
+import { BRAND } from '../../utils/branding';
 import type { AuthStackParamList } from '../../navigation/types';
 
 function CompassLogo() {
@@ -102,7 +103,7 @@ export function WelcomeScreen() {
             variant="heading"
             style={{ fontSize: Math.min(48, SCREEN_W * 0.125), letterSpacing: Math.min(10, SCREEN_W * 0.026), color: DS.colors.primary }}
           >
-            ASORIA
+            {BRAND.displayName}
           </ArchText>
         </Animated.View>
 
@@ -115,7 +116,7 @@ export function WelcomeScreen() {
             variant="body"
             style={{ fontSize: DS.fontSize.md, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 22 }}
           >
-            Describe it. Build it. Walk through it.
+            {BRAND.tagline}
           </ArchText>
         </Animated.View>
       </View>
@@ -180,7 +181,7 @@ export function WelcomeScreen() {
           variant="caption"
           style={{ fontSize: 12, color: DS.colors.primaryGhost, textAlign: 'center', marginTop: 4 }}
         >
-          {'By continuing you agree to our Terms of Service and Privacy Policy'}
+          {`By continuing you agree to our Terms of Service and Privacy Policy`}
         </ArchText>
       </Animated.View>
     </View>
