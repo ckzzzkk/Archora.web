@@ -147,7 +147,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     const newBlueprint = updater(state);
     if (!newBlueprint) return;
     const tier = getCurrentTier();
-    const historyUpdate = pushHistory(state, state.blueprint, label);
+    const historyUpdate = pushHistory(state, newBlueprint, label);
     scheduleSave(newBlueprint, tier);
     set({ blueprint: newBlueprint, isDirty: true, ...historyUpdate });
   }
@@ -172,8 +172,8 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           isDirty: false,
           currentFloorIndex: 0,
           saveStatus: 'saved',
-          history: [],
-          historyIndex: -1,
+          history: [migrated],
+          historyIndex: 0,
         });
         scheduleSave(migrated, tier);
       },

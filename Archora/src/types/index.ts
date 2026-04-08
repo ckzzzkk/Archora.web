@@ -35,18 +35,17 @@ export interface AppNotification {
 export type PointEventKey =
   | 'DAILY_LOGIN'
   | 'CREATE_PROJECT'
-  | 'COMPLETE_PROJECT'
-  | 'PUBLISH_TEMPLATE'
-  | 'RECEIVE_LIKE'
-  | 'RECEIVE_SAVE'
-  | 'RATE_DESIGN'
-  | 'COMPLETE_ONBOARDING'
-  | 'STREAK_7_DAY'
-  | 'STREAK_30_DAY'
   | 'FIRST_AI_GENERATION'
+  | 'ONBOARDING_COMPLETE'
+  | 'SHARE_DESIGN'
+  | 'RECEIVE_LIKE'
+  | 'COMPLETE_PROFILE'
   | 'FIRST_AR_SCAN'
-  | 'FIRST_WALKTHROUGH'
-  | 'STREAK_MILESTONE';
+  | 'EXPORT_DESIGN'
+  | 'STREAK_MILESTONE'
+  | 'PUBLISH_TEMPLATE'
+  | 'TEMPLATE_SALE'
+  | 'REFER_FRIEND';
 
 /** Legacy alias kept for backward compat */
 export type PointEvent = PointEventKey;
