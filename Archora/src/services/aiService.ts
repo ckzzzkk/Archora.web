@@ -182,6 +182,102 @@ export const aiService = {
       throw err instanceof Error ? err : new Error('Transcription failed');
     }
   },
+
+  /** Create a generation session row for Realtime progress tracking. Returns the session ID. */
+  async createGenerationSession(userId: string): Promise<string> {
+    const { data, error } = await supabase
+      .from('generation_sessions')
+      .insert({ user_id: userId, status: 'pending', iteration: 0, total_iterations: 3 })
+      .select('id')
+      .single();
+    if (error || !data) throw new Error('Could not create generation session');
+    return (data as { id: string }).id;
+  },
+
+  /**
+   * Iterative optimal generation:
+   * 1. Subscribes to Realtime on the session row
+   * 2. Calls ai-generate-optimal (which does up to 3 generate→score→refine loops)
+   * 3. Calls onProgress with each session update
+   * 4. Returns the highest-scoring blueprint
+   */
+  async generateOptimal(
+    payload: Partial<GenerationPayload> & { buildingType: string; style?: string },
+    sessionId: string,
+    onProgress?: (update: {
+      status: string;
+      iteration: number;
+      message: string;
+      scores: Array<{ n: number; score: number; keyChange: string }>;
+    }) => void,
+  ): Promise<BlueprintData> {
+    // Subscribe to session progress via Realtime
+    const channel = supabase
+      .channel(`gen-session:${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'generation_sessions',
+          filter: `id=eq.${sessionId}`,
+        },
+        (event) => {
+          const row = event.new as Record<string, unknown>;
+          onProgress?.({
+            status:    (row.status as string) ?? 'generating',
+            iteration: (row.iteration as number) ?? 1,
+            message:   (row.current_message as string) ?? '',
+            scores:    (row.iteration_scores as Array<{ n: number; score: number; keyChange: string }>) ?? [],
+          });
+        },
+      )
+      .subscribe();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120_000);
+
+    try {
+      const headers = await getAuthHeader();
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-generate-optimal`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ...payload, sessionId }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (response.status === 503) {
+        const body = await response.json() as { error?: string };
+        if (body.error === 'AI_NOT_CONFIGURED') {
+          throw Object.assign(new Error('AI features coming soon'), { code: 'AI_NOT_CONFIGURED' });
+        }
+        throw Object.assign(new Error('Service unavailable'), { code: body.error ?? 'UNAVAILABLE' });
+      }
+
+      if (!response.ok) {
+        const err = await response.json() as { error: string; code?: string };
+        throw Object.assign(new Error(err.error), { code: err.code, status: response.status });
+      }
+
+      const data = await response.json() as { blueprint: BlueprintData; iterations: unknown[]; finalScore: number };
+      if (!data.blueprint || !Array.isArray(data.blueprint.rooms)) {
+        throw Object.assign(new Error('Invalid response from AI'), { code: 'INVALID_RESPONSE' });
+      }
+      return data.blueprint;
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw Object.assign(new Error('Request timed out'), { code: 'TIMEOUT' });
+      }
+      if (err instanceof TypeError && err.message.includes('Network')) {
+        throw Object.assign(new Error('Network error'), { code: 'NETWORK' });
+      }
+      throw err;
+    } finally {
+      await supabase.removeChannel(channel);
+    }
+  },
 };
 
 // Named export matching the spec's generateBlueprint signature.

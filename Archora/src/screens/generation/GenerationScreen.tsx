@@ -12,6 +12,7 @@ import Animated, {
 
 import { aiService } from '../../services/aiService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import { useAuthStore } from '../../stores/authStore';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { SketchLoader } from '../../components/common/SketchLoader';
 import { ArchText } from '../../components/common/ArchText';
@@ -67,8 +68,15 @@ const ERROR_MESSAGES: Record<string, string> = {
   AI_NOT_CONFIGURED: 'AI features are coming soon',
 };
 
+interface IterationProgress {
+  status: string;
+  iteration: number;
+  message: string;
+  scores: Array<{ n: number; score: number; keyChange: string }>;
+}
+
 // Animated blueprint being drawn — shown while AI generates
-function BlueprintGeneratingOverlay({ phase }: { phase: number }) {
+function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: number; iterationProgress: IterationProgress }) {
   // Pulse for the cross-hair + dots
   const pulse = useSV(0);
   useEffect(() => {
@@ -188,6 +196,72 @@ function BlueprintGeneratingOverlay({ phase }: { phase: number }) {
           />
         ))}
       </View>
+
+      {/* Iteration status strip */}
+      <View style={{
+        marginTop: DS.spacing.xl,
+        borderTopWidth: 1,
+        borderTopColor: SUNRISE.border,
+        paddingTop: DS.spacing.md,
+        width: '100%',
+        paddingHorizontal: DS.spacing.xl,
+        alignItems: 'center',
+        gap: DS.spacing.xs,
+      }}>
+        {/* Status line */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.sm }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: SUNRISE.textSecondary, letterSpacing: 2, textTransform: 'uppercase' }}>
+            ITERATION {iterationProgress.iteration} / 3
+          </ArchText>
+          <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: SUNRISE.border }} />
+          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: iterationProgress.status === 'scoring' ? SUNRISE.amber : iterationProgress.status === 'refining' ? SUNRISE.rose : SUNRISE.gold, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+            {iterationProgress.status}
+          </ArchText>
+        </View>
+
+        {/* Live message */}
+        {iterationProgress.message ? (
+          <ArchText variant="body" style={{ fontSize: 12, color: SUNRISE.textSecondary, textAlign: 'center', paddingHorizontal: DS.spacing.sm }}>
+            {iterationProgress.message}
+          </ArchText>
+        ) : null}
+
+        {/* Score badges — appear as iterations complete */}
+        {iterationProgress.scores.length > 0 && (
+          <View style={{ flexDirection: 'row', gap: DS.spacing.sm, marginTop: DS.spacing.xs }}>
+            {iterationProgress.scores.map((s) => {
+              const scoreColor = s.score >= 88 ? SUNRISE.gold : s.score >= 70 ? SUNRISE.amber : SUNRISE.rose;
+              return (
+                <View key={s.n} style={{
+                  alignItems: 'center',
+                  paddingHorizontal: DS.spacing.sm,
+                  paddingVertical: DS.spacing.xs,
+                  borderRadius: 10,
+                  backgroundColor: SUNRISE.glass.subtleBg,
+                  borderWidth: 1,
+                  borderColor: `${scoreColor}30`,
+                  minWidth: 52,
+                }}>
+                  <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 16, color: scoreColor }}>
+                    {s.score}
+                  </ArchText>
+                  <ArchText variant="body" style={{ fontSize: 9, color: SUNRISE.textSecondary, fontFamily: DS.font.mono }}>
+                    #{s.n}
+                  </ArchText>
+                </View>
+              );
+            })}
+            {iterationProgress.scores.length > 1 && (
+              <View style={{ justifyContent: 'center', paddingHorizontal: 4 }}>
+                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: SUNRISE.amber }}>
+                  {iterationProgress.scores[iterationProgress.scores.length - 1].score > iterationProgress.scores[0].score ? '↑' : '→'}
+                  {Math.abs(iterationProgress.scores[iterationProgress.scores.length - 1].score - iterationProgress.scores[0].score)}
+                </ArchText>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -225,11 +299,14 @@ export function GenerationScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('idle');
   const [loadingPhase, setLoadingPhase] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [iterationProgress, setIterationProgress] = useState<IterationProgress>({
+    status: 'generating', iteration: 1, message: 'Preparing design session...', scores: [],
+  });
 
-  // Cycle loading phase text during generation
+  // Cycle loading phase text during generation (fallback when no Realtime update)
   useEffect(() => {
     if (screenState !== 'generating') return;
-    const id = setInterval(() => setLoadingPhase((p) => (p + 1) % LOADING_PHASES.length), 2500);
+    const id = setInterval(() => setLoadingPhase((p) => (p + 1) % LOADING_PHASES.length), 3500);
     return () => clearInterval(id);
   }, [screenState]);
 
@@ -264,24 +341,34 @@ export function GenerationScreen() {
 
   const handleGenerate = useCallback(async () => {
     if (!buildingType || !style) return;
-
-    // Tier gate: check AI generation quota before proceeding
     if (!aiAllowed) {
       navigation.navigate('Subscription', { feature: 'aiGenerationsPerMonth' });
       return;
     }
 
+    const user = useAuthStore.getState().user;
+    if (!user?.id) return;
+
     setScreenState('generating');
     setLoadingPhase(0);
+    setIterationProgress({ status: 'generating', iteration: 1, message: 'Preparing design session...', scores: [] });
+
     try {
+      // Create session for Realtime progress tracking
+      const sessionId = await aiService.createGenerationSession(user.id);
+
       const payload = buildPayload();
-      const blueprint = await aiService.generateFloorPlan(payload);
-      // Blueprint state is synchronous (Zustand), navigate immediately after loading
+      const blueprint = await aiService.generateOptimal(payload, sessionId, (update) => {
+        setIterationProgress(update);
+        // Map status to phase index
+        const phaseMap: Record<string, number> = { generating: 1, scoring: 2, refining: 3, complete: 4 };
+        setLoadingPhase(phaseMap[update.status] ?? 1);
+      });
+
       blueprintActions.loadBlueprint(blueprint);
       navigation.navigate('Workspace', {
         projectId: (blueprint as BlueprintData & { id?: string }).id ?? randomUUID(),
       });
-      // success state is moot since we're navigating away, but keep for correctness:
       setScreenState('success');
     } catch (err: unknown) {
       setScreenState('error');
@@ -292,7 +379,7 @@ export function GenerationScreen() {
 
   // ── Generating overlay ────────────────────────────────────────────────────
   if (screenState === 'generating') {
-    return <BlueprintGeneratingOverlay phase={loadingPhase} />;
+    return <BlueprintGeneratingOverlay phase={loadingPhase} iterationProgress={iterationProgress} />;
   }
 
   // ── Error overlay ─────────────────────────────────────────────────────────
