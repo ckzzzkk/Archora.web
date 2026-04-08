@@ -25,7 +25,10 @@ export const simulationService = {
       throw new Error(err.error ?? 'Simulation failed');
     }
 
-    const result = await response.json() as { report: SimulationReport };
-    return result.report;
+    const raw = await response.json();
+    if (!raw || typeof raw !== 'object' || !('report' in raw)) {
+      throw new Error('Invalid simulation response');
+    }
+    return (raw as { report: SimulationReport }).report;
   },
 };

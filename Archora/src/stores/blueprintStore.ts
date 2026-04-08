@@ -8,6 +8,7 @@ import type {
   StaircaseData, ElevatorData,
 } from '../types/blueprint';
 import type { ViewMode, SubscriptionTier } from '../types';
+import { useAuthStore } from './authStore';
 
 const STORAGE_KEY = 'blueprint_current';
 
@@ -115,13 +116,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
   }
 
   function getCurrentTier(): SubscriptionTier {
-    // Read tier from auth store if available — otherwise default
-    try {
-      const { useAuthStore } = require('../stores/authStore');
-      return useAuthStore.getState().user?.subscriptionTier ?? 'starter';
-    } catch {
-      return 'starter';
-    }
+    return useAuthStore.getState().user?.subscriptionTier ?? 'starter';
   }
 
   function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string): Partial<BlueprintState> {
