@@ -42,7 +42,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   let returnUrl = 'asoria://account';
   try {
     const body = await req.json() as { returnUrl?: string };
-    const ALLOWED_URL_PREFIXES = ['asoria://', 'https://asoria.app', 'http://localhost:3000'];
+    const ALLOWED_URL_PREFIXES = ['asoria://', 'https://asoria.app', 'https://asoria.vercel.app', 'http://localhost:3000'];
     if (body.returnUrl && ALLOWED_URL_PREFIXES.some(p => body.returnUrl!.startsWith(p))) {
       returnUrl = body.returnUrl;
     }

@@ -41,7 +41,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const { priceId } = body;
 
   // Validate optional redirect URLs against whitelist
-  const ALLOWED_URL_PREFIXES = ['asoria://', 'https://asoria.app', 'http://localhost:3000'];
+  const ALLOWED_URL_PREFIXES = ['asoria://', 'https://asoria.app', 'https://asoria.vercel.app', 'http://localhost:3000'];
   const isUrlAllowed = (url: string) => ALLOWED_URL_PREFIXES.some(p => url.startsWith(p));
 
   const successUrl = body.successUrl && isUrlAllowed(body.successUrl)
