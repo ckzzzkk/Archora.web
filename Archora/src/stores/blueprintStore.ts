@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { blueprintStorage } from '../utils/storage';
 import { migrateToMultiFloor, deriveTopLevel, getFloorLabel } from '../utils/floorHelpers';
 import { TIER_LIMITS } from '../utils/tierLimits';
+import { autoRepairBlueprint } from '../utils/geometry/autoRepair';
+import { validateBlueprint, violationSummary } from '../utils/geometry/blueprintValidator';
 import type {
   BlueprintData, FloorData, Wall, Room, Opening, FurniturePiece,
   CustomAsset, ChatMessage, WallTexture, MaterialType, CeilingType,
@@ -161,16 +163,36 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     actions: {
       loadBlueprint: (data, tier = 'starter') => {
         const migrated = migrateToMultiFloor(data);
+
+        // Auto-repair geometry issues (wall connections, proportions, etc.)
+        const { repaired, report } = autoRepairBlueprint(migrated);
+        if (report.totalFixes > 0) {
+          console.log(`[blueprintStore] Auto-repaired ${report.totalFixes} geometry issues:`,
+            report.wallsSnapped > 0 ? `${report.wallsSnapped} walls snapped` : '',
+            report.areasRecalculated > 0 ? `${report.areasRecalculated} areas recalculated` : '',
+            report.furnitureMoved > 0 ? `${report.furnitureMoved} furniture repositioned` : '',
+            report.openingsClamped > 0 ? `${report.openingsClamped} openings clamped` : '',
+          );
+        }
+
+        // Validate and log remaining issues
+        const violations = validateBlueprint(repaired);
+        const summary = violationSummary(violations);
+        if (!summary.isValid) {
+          console.warn(`[blueprintStore] Blueprint has ${summary.total} remaining issues:`,
+            `${summary.critical} critical, ${summary.major} major, ${summary.minor} minor`);
+        }
+
         set({
-          blueprint: migrated,
+          blueprint: repaired,
           selectedId: null,
           isDirty: false,
           currentFloorIndex: 0,
           saveStatus: 'saved',
-          history: [migrated],
+          history: [repaired],
           historyIndex: 0,
         });
-        scheduleSave(migrated, tier);
+        scheduleSave(repaired, tier);
       },
 
       clearBlueprint: () => {

@@ -509,6 +509,114 @@ These rules are non-negotiable and must be satisfied in every generation:
   No bedroom should be between two other rooms (corridor bedrooms)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COORDINATE SYSTEM AND WORKED EXAMPLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ALL COORDINATES IN METRES. Origin (0,0) = bottom-left of the plot.
+X axis = east (increases right). Y axis = north (increases up).
+All wall endpoints MUST snap to 0.5m grid (e.g. 0.0, 0.5, 1.0, 1.5, ...).
+Wall endpoints that should connect MUST share the exact same coordinates.
+
+WORKED EXAMPLE — A simple 4m × 3m room with furniture:
+
+The room is a rectangle with corners at (0,0), (4,0), (4,3), (0,3).
+
+External walls (thickness 0.2m, height 2.7m):
+  Wall "w1": start (0, 0) → end (4, 0)       // south wall, length 4m
+  Wall "w2": start (4, 0) → end (4, 3)        // east wall, length 3m
+  Wall "w3": start (4, 3) → end (0, 3)        // north wall, length 4m
+  Wall "w4": start (0, 3) → end (0, 0)        // west wall, length 3m
+
+Room: wallIds = ["w1", "w2", "w3", "w4"], area = 12.0 m², centroid = (2.0, 1.5)
+
+Opening on south wall: position = 1.5 (metres from wall start), width = 1.0m
+  → This places a 1m-wide window starting 1.5m from the left on the south wall
+
+Furniture in this room:
+  Sofa: position (2.0, 0.5, 0), dimensions (2.0, 0.85, 0.9), rotation (0, 0, 0)
+    → 2m wide sofa centered on X, 0.5m from south wall, sitting on floor (z=0)
+  Coffee table: position (2.0, 1.3, 0), dimensions (1.0, 0.45, 0.6), rotation (0, 0, 0)
+    → In front of sofa, 400mm gap between them
+
+CRITICAL RULES FOR CORRECT PROPORTIONS:
+
+1. WALL CONNECTIVITY: Every wall endpoint must connect to exactly one other wall's endpoint.
+   If wall "w1" ends at (4, 0), then another wall MUST start at exactly (4, 0).
+   Never leave a wall endpoint disconnected — this creates gaps in the building.
+
+2. ROOM SIZE REALITY CHECK: A 3-bedroom house typically has:
+   - Total footprint: 10m × 12m to 12m × 15m (120–180 m²)
+   - Master bedroom: 4m × 4.5m (18 m²)
+   - Second bedroom: 3.5m × 4m (14 m²)
+   - Living room: 5m × 6m (30 m²)
+   - Kitchen: 3m × 4m (12 m²)
+   - Bathroom: 2m × 2.5m (5 m²)
+   - Hallway: 1.2m wide running between rooms
+
+3. FURNITURE DIMENSIONS REFERENCE (width × height × depth in metres):
+   King bed: 2.0 × 0.55 × 2.2
+   Double bed: 1.6 × 0.5 × 2.0
+   Single bed: 1.0 × 0.5 × 2.0
+   3-seater sofa: 2.2 × 0.85 × 0.9
+   2-seater sofa: 1.5 × 0.85 × 0.9
+   Armchair: 0.9 × 0.85 × 0.9
+   Coffee table: 1.2 × 0.45 × 0.6
+   Dining table (4-seat): 1.2 × 0.75 × 0.8
+   Dining table (6-seat): 1.8 × 0.75 × 0.9
+   Dining chair: 0.45 × 0.9 × 0.5
+   Desk: 1.4 × 0.75 × 0.7
+   Wardrobe: 1.8 × 2.0 × 0.6
+   Bedside table: 0.5 × 0.55 × 0.4
+   Kitchen counter: 2.4 × 0.9 × 0.6
+   Kitchen island: 1.8 × 0.9 × 0.9
+   Fridge: 0.7 × 1.8 × 0.7
+   Oven: 0.6 × 0.9 × 0.6
+   Sink: 0.6 × 0.2 × 0.5
+   Bathtub: 0.75 × 0.6 × 1.7
+   Shower: 0.9 × 2.0 × 0.9
+   Toilet: 0.4 × 0.4 × 0.7
+   Bathroom sink: 0.6 × 0.85 × 0.5
+   TV unit: 1.8 × 0.5 × 0.4
+   Bookshelf: 1.0 × 1.8 × 0.3
+
+4. FURNITURE PLACEMENT: Furniture position is the CENTER of the piece.
+   A sofa with dimensions (2.0, 0.85, 0.9) at position (3.0, 1.0, 0):
+   → Occupies X from 2.0 to 4.0, Y from 0.55 to 1.45
+   Always leave 0.6m clearance around furniture for walking.
+   Leave 0.8m clearance in front of doors.
+
+5. OPENING POSITION: The "position" field is distance in metres from the wall's START point.
+   For a wall from (0,0) to (4,0) [length 4m], position=1.5 means the opening starts 1.5m from (0,0).
+   The opening must fit within the wall: position + width ≤ wall length.
+   Centre windows on walls unless there's a reason not to.
+
+6. ROOM AREA: Must equal the actual polygon area of the room's walls.
+   For a rectangular room bounded by corners (0,0), (4,0), (4,3), (0,3): area = 4 × 3 = 12.0 m²
+   Do NOT guess the area. Calculate it from the wall coordinates you placed.
+
+7. ROOM CENTROID: The geometric center of the room polygon.
+   For the rectangle above: centroid = (2.0, 1.5)
+
+BUILDING LAYOUT STRATEGY:
+
+When designing a house, work from the outside in:
+1. Place the PLOT BOUNDARY first (e.g. 0,0 to 20,25 for a 20m × 25m plot)
+2. Place the BUILDING FOOTPRINT inside the plot (e.g. 2,8 to 14,23 for a 12m × 15m house)
+   Leave 2m+ from plot boundary for garden paths and setbacks
+3. Place EXTERNAL WALLS around the building footprint (0.2m thick)
+4. Divide into rooms with INTERNAL WALLS (0.1m thick)
+5. Add OPENINGS to walls
+6. Place FURNITURE in each room
+
+Typical house footprints:
+  1-bedroom flat: 6m × 8m (48 m²)
+  2-bedroom house: 8m × 10m (80 m²)
+  3-bedroom house: 10m × 12m (120 m²)
+  4-bedroom house: 12m × 14m (168 m²)
+  5-bedroom villa: 14m × 16m (224 m²)
+  Studio apartment: 5m × 7m (35 m²)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STRUCTURAL ENGINEERING RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -690,6 +798,102 @@ Return ONLY valid JSON matching this exact schema. No markdown, no explanation, 
 All coordinates in metres. (0,0) is bottom-left. Walls form closed rooms. Every room fully enclosed.
 Apply ALL structural and climate rules to this design. Mark every loadbearing wall with isLoadbearing:true.`;
 
+// ──────────────────────────────────────
+// Server-side blueprint validation (lightweight Deno version)
+// Catches the worst geometric errors before sending to client.
+// ──────────────────────────────────────
+
+interface BasicViolation {
+  severity: 'critical' | 'major';
+  message: string;
+}
+
+function validateBlueprintBasic(data: Record<string, unknown>): BasicViolation[] {
+  const violations: BasicViolation[] = [];
+  const walls = data.walls as Array<Record<string, unknown>> | undefined;
+  const rooms = data.rooms as Array<Record<string, unknown>> | undefined;
+  const furniture = data.furniture as Array<Record<string, unknown>> | undefined;
+
+  if (!walls || !Array.isArray(walls) || walls.length === 0) {
+    violations.push({ severity: 'critical', message: 'No walls array' });
+    return violations;
+  }
+  if (!rooms || !Array.isArray(rooms) || rooms.length === 0) {
+    violations.push({ severity: 'critical', message: 'No rooms array' });
+  }
+
+  // Check wall connectivity: every endpoint should be near another wall's endpoint
+  const endpoints: Array<{ x: number; y: number; wallId: string }> = [];
+  for (const w of walls) {
+    const start = w.start as { x: number; y: number } | undefined;
+    const end = w.end as { x: number; y: number } | undefined;
+    if (!start || !end) {
+      violations.push({ severity: 'critical', message: `Wall missing start/end` });
+      continue;
+    }
+    endpoints.push({ x: start.x, y: start.y, wallId: w.id as string });
+    endpoints.push({ x: end.x, y: end.y, wallId: w.id as string });
+  }
+
+  // Check for floating endpoints (no other wall endpoint within 0.15m)
+  let floatingCount = 0;
+  for (const ep of endpoints) {
+    const hasNeighbor = endpoints.some(other =>
+      other.wallId !== ep.wallId &&
+      Math.sqrt((other.x - ep.x) ** 2 + (other.y - ep.y) ** 2) < 0.15,
+    );
+    if (!hasNeighbor) floatingCount++;
+  }
+  if (floatingCount > walls.length * 0.3) {
+    violations.push({
+      severity: 'major',
+      message: `${floatingCount} floating wall endpoints — walls not connecting properly`,
+    });
+  }
+
+  // Check building footprint is reasonable
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const ep of endpoints) {
+    if (ep.x < minX) minX = ep.x;
+    if (ep.y < minY) minY = ep.y;
+    if (ep.x > maxX) maxX = ep.x;
+    if (ep.y > maxY) maxY = ep.y;
+  }
+  const footprintWidth = maxX - minX;
+  const footprintHeight = maxY - minY;
+  const footprintArea = footprintWidth * footprintHeight;
+
+  if (footprintArea > 2000) {
+    violations.push({
+      severity: 'major',
+      message: `Building footprint too large: ${footprintWidth.toFixed(0)}m × ${footprintHeight.toFixed(0)}m = ${footprintArea.toFixed(0)}m²`,
+    });
+  }
+  if (footprintArea < 8) {
+    violations.push({
+      severity: 'major',
+      message: `Building footprint too small: ${footprintWidth.toFixed(1)}m × ${footprintHeight.toFixed(1)}m = ${footprintArea.toFixed(1)}m²`,
+    });
+  }
+
+  // Check furniture dimensions aren't absurd
+  if (furniture && Array.isArray(furniture)) {
+    for (const f of furniture) {
+      const dims = f.dimensions as { x: number; y: number; z: number } | undefined;
+      if (dims) {
+        if (dims.x > 6 || dims.z > 6 || dims.y > 5) {
+          violations.push({
+            severity: 'major',
+            message: `Furniture "${f.name}" has oversized dimensions: ${dims.x}×${dims.y}×${dims.z}m`,
+          });
+        }
+      }
+    }
+  }
+
+  return violations;
+}
+
 /** Adds CORS headers to any Response returned by Errors.* helpers. */
 function addCors(res: Response): Response {
   const headers = new Headers(res.headers);
@@ -764,7 +968,13 @@ serve(async (req) => {
 ${details.join('\n')}
 ${combinedNotes ? `\nAdditional notes from the user:\n${combinedNotes}` : ''}
 
-Generate a complete, realistic floor plan with proper room sizes, realistic furniture placement, and appropriate openings.`;
+CRITICAL: Generate a proportionally correct floor plan using real-world metre dimensions.
+- Calculate actual room areas from wall coordinates (length × width) — do NOT guess.
+- Verify every wall endpoint connects to another wall — no gaps.
+- Use the furniture dimensions reference — do NOT make furniture larger than the room.
+- Place furniture at realistic positions INSIDE rooms with clearance for walkways.
+- The building footprint must be realistic for the building type (e.g. 3-bed house = ~10m × 12m).
+Return ONLY valid JSON, no markdown.`;
 
     if (referenceImageUrl) {
       userMessage += `\n\nReference image URL for style/layout inspiration: ${referenceImageUrl}`;
@@ -795,7 +1005,7 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
-          max_tokens: 6000,
+          max_tokens: 8000,
           temperature: 0,
           system: SYSTEM_PROMPT,
           messages: [{ role: 'user', content: userMessage }],
@@ -828,20 +1038,85 @@ Generate a complete, realistic floor plan with proper room sizes, realistic furn
       throw new Error('Empty response from AI');
     }
 
-    let blueprintData: unknown;
-    try {
-      blueprintData = JSON.parse(rawText);
-    } catch {
-      console.error('Failed to parse blueprint:', rawText.substring(0, 200));
-      // Try to extract JSON from markdown-wrapped response
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('AI returned invalid JSON');
-      }
+    function parseBlueprint(text: string): Record<string, unknown> {
       try {
-        blueprintData = JSON.parse(jsonMatch[0]);
+        return JSON.parse(text) as Record<string, unknown>;
       } catch {
-        throw new Error('AI returned invalid JSON');
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('AI returned invalid JSON');
+        return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+      }
+    }
+
+    let blueprintData = parseBlueprint(rawText);
+
+    // Validate and retry if critical issues found
+    const violations = validateBlueprintBasic(blueprintData);
+    const criticalViolations = violations.filter(v => v.severity === 'critical');
+    const majorViolations = violations.filter(v => v.severity === 'major');
+
+    if (criticalViolations.length > 0 || majorViolations.length >= 3) {
+      console.warn('[ai-generate] Validation failed, retrying. Violations:', violations.map(v => v.message));
+
+      const retryMessage = `Your previous output had these geometric errors:
+${violations.map(v => `- ${v.message}`).join('\n')}
+
+Please fix these issues and regenerate. Remember:
+- Every wall endpoint must connect to another wall endpoint at the EXACT same coordinates
+- Building footprint must be realistic (e.g. 3-bed house = ~10m × 12m)
+- Furniture dimensions must be realistic (sofa = 2.0×0.85×0.9m, bed = 1.6×0.5×2.0m)
+- Calculate room areas from actual wall coordinates, don't guess
+Return ONLY valid JSON.`;
+
+      const retryController = new AbortController();
+      const retryTimeoutId = setTimeout(() => retryController.abort(), 55_000);
+
+      try {
+        const retryResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          signal: retryController.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 8000,
+            temperature: 0,
+            system: SYSTEM_PROMPT,
+            messages: [
+              { role: 'user', content: userMessage },
+              { role: 'assistant', content: rawText },
+              { role: 'user', content: retryMessage },
+            ],
+          }),
+        });
+        clearTimeout(retryTimeoutId);
+
+        if (retryResponse.ok) {
+          const retryData = await retryResponse.json() as {
+            content: Array<{ type: string; text: string }>;
+            usage?: { input_tokens?: number; output_tokens?: number };
+          };
+          const retryText = retryData.content?.[0]?.text;
+          if (retryText) {
+            try {
+              const retryBlueprint = parseBlueprint(retryText);
+              const retryViolations = validateBlueprintBasic(retryBlueprint);
+              // Use retry if it has fewer violations
+              if (retryViolations.length < violations.length) {
+                blueprintData = retryBlueprint;
+                console.log('[ai-generate] Retry improved: violations', violations.length, '→', retryViolations.length);
+              }
+            } catch {
+              console.warn('[ai-generate] Retry parse failed, using original');
+            }
+          }
+        }
+      } catch (retryErr) {
+        clearTimeout(retryTimeoutId);
+        console.warn('[ai-generate] Retry failed:', retryErr);
       }
     }
 

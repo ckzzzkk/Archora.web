@@ -34,6 +34,9 @@ import {
   metreToPixel,
   pixelToMetre,
 } from '../../utils/canvasHelpers';
+import { ScaleBar } from '../../utils/geometry/ScaleBar';
+import { boundingBox } from '../../utils/geometry/polygonUtils';
+import { wallLength as calcWallLength } from '../../utils/geometry/wallGraph';
 import type { Wall, Room, Opening, FurniturePiece } from '../../types';
 import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
 
@@ -695,6 +698,83 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                   </Group>
                 );
               })()}
+
+              {/* ── Scale bar ────────────────────────────────────── */}
+              <ScaleBar
+                scale={scaleRef.current}
+                x={16}
+                y={CANVAS_H - 28}
+                color="#C9FFFD"
+                bgColor="#061A1A"
+              />
+
+              {/* ── Room dimension labels (width × depth + area) ─ */}
+              {showDimensions && (blueprint?.rooms ?? []).map((room) => {
+                const roomWalls = room.wallIds
+                  .map((id: string) => (blueprint?.walls ?? []).find((w: Wall) => w.id === id))
+                  .filter((w: Wall | undefined): w is Wall => !!w);
+                if (roomWalls.length < 3) return null;
+
+                const allPts = roomWalls.flatMap((w: Wall) => [w.start, w.end]);
+                const bb = boundingBox(allPts);
+                const w = bb.width;
+                const h = bb.height;
+                const cx = toPixelX(room.centroid.x);
+                const cy = toPixelY(room.centroid.y);
+
+                const dimText = `${w.toFixed(1)}m × ${h.toFixed(1)}m`;
+                const areaText = `${room.area.toFixed(1)} m²`;
+
+                return (
+                  <Group key={`dim_${room.id}`}>
+                    {dimFont && (
+                      <SkiaText
+                        x={cx - dimText.length * 2.8}
+                        y={cy + 14}
+                        text={dimText}
+                        font={dimFont}
+                        color="#9A9590"
+                      />
+                    )}
+                    {dimFont && (
+                      <SkiaText
+                        x={cx - areaText.length * 2.8}
+                        y={cy + 26}
+                        text={areaText}
+                        font={dimFont}
+                        color="#5A5550"
+                      />
+                    )}
+                  </Group>
+                );
+              })}
+
+              {/* ── Wall length labels ───────────────────────────── */}
+              {showDimensions && (blueprint?.walls ?? []).map((wall: Wall) => {
+                const len = calcWallLength(wall);
+                if (len < 0.5) return null; // Skip tiny walls
+                const midX = toPixelX((wall.start.x + wall.end.x) / 2);
+                const midY = toPixelY((wall.start.y + wall.end.y) / 2);
+                const label = `${len.toFixed(1)}m`;
+                // Offset label perpendicular to wall
+                const dx = wall.end.x - wall.start.x;
+                const dy = wall.end.y - wall.start.y;
+                const norm = Math.sqrt(dx * dx + dy * dy);
+                const offsetPx = 10;
+                const nx = norm > 0 ? (-dy / norm) * offsetPx : 0;
+                const ny = norm > 0 ? (dx / norm) * offsetPx : offsetPx;
+
+                return dimFont ? (
+                  <SkiaText
+                    key={`wlen_${wall.id}`}
+                    x={midX + nx - label.length * 2.5}
+                    y={midY + ny}
+                    text={label}
+                    font={dimFont}
+                    color="#5A5550"
+                  />
+                ) : null;
+              })}
 
             </Group>
           </Canvas>
