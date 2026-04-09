@@ -31,7 +31,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const rateLimitOk = await checkRateLimit(`stripe-checkout:${user.id}`, 10, 3600);
   if (!rateLimitOk) return Errors.rateLimited('Rate limit exceeded');
 
-  let body: { priceId?: string };
+  let body: { priceId?: string; successUrl?: string; cancelUrl?: string };
   try {
     body = await req.json();
   } catch {
@@ -39,6 +39,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const { priceId } = body;
+
+  // Validate optional redirect URLs against whitelist
+  const ALLOWED_URL_PREFIXES = ['asoria://', 'https://asoria.app', 'http://localhost:3000'];
+  const isUrlAllowed = (url: string) => ALLOWED_URL_PREFIXES.some(p => url.startsWith(p));
+
+  const successUrl = body.successUrl && isUrlAllowed(body.successUrl)
+    ? body.successUrl
+    : 'asoria://subscription-success';
+  const cancelUrl = body.cancelUrl && isUrlAllowed(body.cancelUrl)
+    ? body.cancelUrl
+    : 'asoria://subscription-cancel';
   if (!priceId || typeof priceId !== 'string') {
     return Errors.validation('priceId is required');
   }
@@ -94,8 +105,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: 'asoria://subscription-success',
-      cancel_url: 'asoria://subscription-cancel',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: { user_id: user.id },
     });
 

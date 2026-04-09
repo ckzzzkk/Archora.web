@@ -38,6 +38,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' });
 
+  // Parse optional returnUrl from request body
+  let returnUrl = 'asoria://account';
+  try {
+    const body = await req.json() as { returnUrl?: string };
+    const ALLOWED_URL_PREFIXES = ['asoria://', 'https://asoria.app', 'http://localhost:3000'];
+    if (body.returnUrl && ALLOWED_URL_PREFIXES.some(p => body.returnUrl!.startsWith(p))) {
+      returnUrl = body.returnUrl;
+    }
+  } catch {
+    // No body or invalid JSON — use default
+  }
+
   try {
     // Get Stripe customer ID from users table
     const { data: userData } = await supabase
@@ -54,7 +66,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: 'asoria://account',
+      return_url: returnUrl,
     });
 
     await logAudit({

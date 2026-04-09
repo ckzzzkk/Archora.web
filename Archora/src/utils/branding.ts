@@ -30,7 +30,8 @@ export const BRAND = {
   // URLs
   urls: {
     website: 'https://asoria.app',
-    support: 'https://asoria.app/support',
+    pricing: 'https://asoria.app/pricing',
+    support: 'https://asoria.app/contact',
     privacy: 'https://asoria.app/privacy',
     terms: 'https://asoria.app/terms',
   },

@@ -228,23 +228,13 @@ export function SubscriptionScreen({ navigation }: Props) {
     pillX.value = withSpring(interval === 'annual' ? 1 : 0, { damping: 20, stiffness: 300 });
   };
 
-  const handleUpgrade = async (newTier: Exclude<SubscriptionTier, 'starter'>) => {
-    setIsLoading(true);
+  const handleUpgrade = async (_newTier: Exclude<SubscriptionTier, 'starter'>) => {
+    // Redirect to website for all subscription management (Spotify model)
     try {
-      const priceId = STRIPE_PRICE_IDS[`${newTier}_${billing}` as keyof typeof STRIPE_PRICE_IDS];
-      if (!priceId) {
-        Alert.alert('Not available', 'Upgrade not yet available — check back soon');
-        return;
-      }
-      const { url } = await subscriptionService.createCheckout(newTier, billing);
-      if (url) {
-        checkoutOpenRef.current = true;
-        await Linking.openURL(url);
-      }
-    } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Could not start checkout');
-    } finally {
-      setIsLoading(false);
+      checkoutOpenRef.current = true;
+      await Linking.openURL('https://asoria.app/pricing');
+    } catch {
+      Alert.alert('Error', 'Could not open subscription page');
     }
   };
 
