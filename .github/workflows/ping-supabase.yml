@@ -15,5 +15,10 @@ jobs:
         run: |
           set +e
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SUPABASE_URL}/health")
-          [ "$HTTP_CODE" = "000" ] && { echo "Supabase ping failed: connection error"; exit 1; }
-          echo "Supabase ping successful (HTTP $HTTP_CODE)"
+          echo "HTTP Status: $HTTP_CODE"
+          if [ "$HTTP_CODE" != "000" ]; then
+            echo "Supabase ping successful"
+          else
+            echo "Supabase ping failed"
+            exit 1
+          fi
