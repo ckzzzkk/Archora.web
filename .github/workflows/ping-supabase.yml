@@ -8,9 +8,11 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_PING_URL }}
     steps:
       - name: Ping Supabase
         run: |
           set +e
-          URL="${{ secrets.SUPABASE_PING_URL }}/health"
-          curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${URL}"
+          echo "URL is: ${SUPABASE_URL}/health"
+          curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SUPABASE_URL}/health"
