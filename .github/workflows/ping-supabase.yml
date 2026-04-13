@@ -8,9 +8,10 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_PING_URL }}
     steps:
       - name: Ping Supabase
         run: |
-          echo "Testing secret expansion..."
-          echo "Secret: ${{ secrets.SUPABASE_PING_URL }}"
-          curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${{ secrets.SUPABASE_PING_URL }}/health"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SUPABASE_URL}/health")
+          echo "HTTP Status: $HTTP_CODE"
