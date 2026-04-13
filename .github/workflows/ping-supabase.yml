@@ -11,4 +11,13 @@ jobs:
     steps:
       - name: Ping Supabase
         run: |
-          wget -q -O- --timeout=10 "${{ secrets.SUPABASE_PING_URL }}/health" || true
+          wget -S -O /tmp/ping.txt --timeout=10 "${{ secrets.SUPABASE_PING_URL }}/health" 2>&1 | grep "HTTP/" > /tmp/http_code.txt
+          HTTP_CODE=$(grep -oP 'HTTP/\d\.\d \K\d+' /tmp/http_code.txt || echo "000")
+          echo "HTTP Status: $HTTP_CODE"
+          if [ "$HTTP_CODE" != "000" ]; then
+            echo "Supabase is reachable"
+            exit 0
+          else
+            echo "Supabase ping failed"
+            exit 1
+          fi
