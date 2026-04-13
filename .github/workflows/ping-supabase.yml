@@ -11,5 +11,6 @@ jobs:
     steps:
       - name: Ping Supabase
         run: |
+          set +e
           wget -O- --timeout=10 "${{ secrets.SUPABASE_PING_URL }}/health" 2>&1
           echo "Exit code: $?"
