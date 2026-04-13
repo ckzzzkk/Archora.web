@@ -16,5 +16,7 @@ jobs:
           RESULT=$?
           echo "Result is: $RESULT"
           if [ $RESULT -eq 0 ]; then
-            echo "success"
+            echo "Supabase ping successful"
+          else
+            echo "Supabase ping failed"
           fi
