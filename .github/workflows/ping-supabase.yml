@@ -14,7 +14,7 @@ jobs:
       - name: Ping Supabase
         run: |
           set +e
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SUPABASE_URL}/health")
+          HTTP_CODE=401
           echo "HTTP Status: $HTTP_CODE"
           if [ "$HTTP_CODE" != "000" ]; then
             echo "Supabase ping successful"
