@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set URL
-        run: |
-          echo "SUPABASE_URL=https://harhahyurvxwnoxugehe.supabase.co" >> $GITHUB_ENV
+        run: echo "SUPABASE_URL=${{ secrets.SUPABASE_PING_URL }}" >> $GITHUB_ENV
       - name: Ping Supabase
         run: |
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$SUPABASE_URL/health")
