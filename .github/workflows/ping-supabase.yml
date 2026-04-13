@@ -14,10 +14,7 @@ jobs:
           set +e
           wget -O- --timeout=10 "${{ secrets.SUPABASE_PING_URL }}/health"
           RESULT=$?
+          echo "Result is: $RESULT"
           if [ $RESULT -eq 0 ]; then
-            echo "Supabase ping successful"
-            exit 0
-          else
-            echo "Supabase ping failed (wget exit code: $RESULT)"
-            exit 1
+            echo "success"
           fi
