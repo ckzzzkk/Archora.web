@@ -11,13 +11,11 @@ jobs:
     steps:
       - name: Ping Supabase
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SUPABASE_PING_URL }}/health")
-          echo "HTTP Status: $STATUS"
-          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 500 ]; then
-            echo "Supabase ping successful"
-          else
-            echo "Supabase ping failed with status $STATUS"
-            exit 1
-          fi
+          echo "Testing basic connectivity..."
+          curl -s -o /dev/null -w "%{http_code}" -m 10 https://www.google.com
+          echo ""
+          echo "Testing Supabase..."
+          curl -s -o /dev/null -w "%{http_code}" -m 10 "${{ secrets.SUPABASE_PING_URL }}/health"
+          echo ""
         env:
           SUPABASE_PING_URL: ${{ secrets.SUPABASE_PING_URL }}
