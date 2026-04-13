@@ -1,0 +1,23 @@
+name: Weekly Supabase Ping
+
+on:
+  schedule:
+    - cron: '0 16 * * 2'  # Every Tuesday at 4:00 PM UTC
+  workflow_dispatch:          # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SUPABASE_PING_URL }}")
+          echo "HTTP Status: $STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+            echo "Supabase ping successful"
+          else
+            echo "Supabase ping failed with status $STATUS"
+            exit 1
+          fi
+        env:
+          SUPABASE_PING_URL: ${{ secrets.SUPABASE_PING_URL }}
