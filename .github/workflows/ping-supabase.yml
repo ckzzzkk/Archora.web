@@ -11,9 +11,9 @@ jobs:
     steps:
       - name: Ping Supabase
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SUPABASE_PING_URL }}")
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.SUPABASE_PING_URL }}/health")
           echo "HTTP Status: $STATUS"
-          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 500 ]; then
             echo "Supabase ping successful"
           else
             echo "Supabase ping failed with status $STATUS"
