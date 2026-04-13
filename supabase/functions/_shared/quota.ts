@@ -1,29 +1,23 @@
-import type { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-type SupabaseClient = ReturnType<typeof createClient>;
-
-/**
- * Checks whether the user has remaining quota for the given feature.
- * Calls the quota_check RPC — returns true if allowed, false/error if exceeded.
- * Throws a Response with 429 if quota is exceeded.
- */
 export async function checkQuota(
-  supabase: SupabaseClient,
   userId: string,
-  feature: string,
-): Promise<void> {
+  quotaType: 'ai_generation' | 'ar_scan',
+): Promise<boolean> {
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
+
   const { data, error } = await supabase.rpc('quota_check', {
     p_user_id: userId,
-    p_feature: feature,
+    p_quota_type: quotaType,
   });
 
-  if (error || !data) {
-    throw new Response(
-      JSON.stringify({ error: 'Quota exceeded', code: 'QUOTA_EXCEEDED' }),
-      {
-        status: 429,
-        headers: { 'Content-Type': 'application/json' },
-      },
-    );
+  if (error) {
+    console.error('Quota check error:', error);
+    return false;
   }
+
+  return data as boolean;
 }

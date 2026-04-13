@@ -1,0 +1,66 @@
+{
+  "cli": {
+    "version": ">= 5.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {
+      "node": "20.18.0",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://harhahyurvxwnoxugehe.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "${SUPABASE_ANON_KEY}",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "${STRIPE_PUBLISHABLE_KEY}",
+        "EXPO_PUBLIC_STRIPE_PRICE_CREATOR_MONTHLY": "${STRIPE_PRICE_CREATOR_MONTHLY}",
+        "EXPO_PUBLIC_STRIPE_PRICE_CREATOR_ANNUAL": "${STRIPE_PRICE_CREATOR_ANNUAL}",
+        "EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_MONTHLY": "${STRIPE_PRICE_ARCHITECT_MONTHLY}",
+        "EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_ANNUAL": "${STRIPE_PRICE_ARCHITECT_ANNUAL}"
+      }
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "autoIncrement": true,
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "FILL_IN_APPLE_ID",
+        "ascAppId": "FILL_IN_ASC_APP_ID",
+        "appleTeamId": "FILL_IN_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production"
+      }
+    }
+  }
+}
