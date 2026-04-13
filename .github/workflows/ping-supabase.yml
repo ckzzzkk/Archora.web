@@ -15,3 +15,7 @@ jobs:
           wget -O- --timeout=10 "${{ secrets.SUPABASE_PING_URL }}/health" 2>&1
           RESULT=$?
           echo "wget exit code: $RESULT"
+          if [ $RESULT -ne 0 ]; then
+            echo "ping failed"
+          fi
+          echo "done"
