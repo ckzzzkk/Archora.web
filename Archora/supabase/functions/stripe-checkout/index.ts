@@ -54,15 +54,37 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return Errors.validation('priceId is required');
   }
 
+  // Validate required price IDs are configured — Pro and Architect tiers require env vars
+  const STRIPE_PRICE_PRO_MONTHLY = Deno.env.get('STRIPE_PRICE_PRO_MONTHLY');
+  const STRIPE_PRICE_PRO_ANNUAL = Deno.env.get('STRIPE_PRICE_PRO_ANNUAL');
+  const STRIPE_PRICE_ARCHITECT_MONTHLY = Deno.env.get('STRIPE_PRICE_ARCHITECT_MONTHLY');
+  const STRIPE_PRICE_ARCHITECT_ANNUAL = Deno.env.get('STRIPE_PRICE_ARCHITECT_ANNUAL');
+
+  if (!STRIPE_PRICE_PRO_MONTHLY || !STRIPE_PRICE_PRO_ANNUAL) {
+    console.warn('[stripe-checkout] STRIPE_PRICE_PRO price IDs not configured');
+    return new Response(
+      JSON.stringify({ error: 'Pro subscription not configured', code: 'UPSTREAM_ERROR' }),
+      { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
+
+  if (!STRIPE_PRICE_ARCHITECT_MONTHLY || !STRIPE_PRICE_ARCHITECT_ANNUAL) {
+    console.warn('[stripe-checkout] STRIPE_PRICE_ARCHITECT price IDs not configured');
+    return new Response(
+      JSON.stringify({ error: 'Architect subscription not configured', code: 'UPSTREAM_ERROR' }),
+      { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
+
   // Whitelist valid price IDs — reject anything not in our Stripe products
   const VALID_PRICE_IDS = new Set(
     [
       Deno.env.get('STRIPE_PRICE_CREATOR_MONTHLY'),
       Deno.env.get('STRIPE_PRICE_CREATOR_ANNUAL'),
-      Deno.env.get('STRIPE_PRICE_PRO_MONTHLY'),
-      Deno.env.get('STRIPE_PRICE_PRO_ANNUAL'),
-      Deno.env.get('STRIPE_PRICE_ARCHITECT_MONTHLY'),
-      Deno.env.get('STRIPE_PRICE_ARCHITECT_ANNUAL'),
+      STRIPE_PRICE_PRO_MONTHLY,
+      STRIPE_PRICE_PRO_ANNUAL,
+      STRIPE_PRICE_ARCHITECT_MONTHLY,
+      STRIPE_PRICE_ARCHITECT_ANNUAL,
     ].filter(Boolean),
   );
   if (!VALID_PRICE_IDS.has(priceId)) {
