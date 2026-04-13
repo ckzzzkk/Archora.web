@@ -319,7 +319,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
               {agreed && <ArchText variant="body" style={{ color: '#fff', fontSize: 13, lineHeight: 14 }}>✓</ArchText>}
             </View>
             <ArchText variant="body" style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim, lineHeight: 20 }}>
-              I confirm this design is my own original work and I have the right to publish it on Archora. I agree to the community guidelines.
+              I confirm this design is my own original work and I have the right to publish it on Asoria. I agree to the community guidelines.
             </ArchText>
           </Pressable>
 

@@ -1,8 +1,12 @@
 import { DS } from '../../theme/designSystem';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, PanResponder, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, PanResponder, Pressable, Platform } from 'react-native';
 import { Canvas, useFrame, useThree } from '@react-three/fiber/native';
 import * as THREE from 'three';
+import ViewShot from 'react-native-view-shot';
+import { FFmpegKit, FFmpegKitConfig } from 'ffmpeg-kit-react-native';
+import * as MediaLibrary from 'expo-media-library';
+import { FileSystem } from 'expo-file-system';
 import { ProceduralBuilding } from './ProceduralBuilding';
 import { VirtualJoystick } from './VirtualJoystick';
 import { useBlueprintStore } from '../../stores/blueprintStore';
@@ -127,6 +131,8 @@ export function InHouseView({ onExit }: InHouseViewProps) {
   const [currentRoomName, setCurrentRoomName] = useState('');
   const [tourActive, setTourActive] = useState(false);
   const [selectedObject, setSelectedObject] = useState<{ name: string; info: string } | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingFrameCount, setRecordingFrameCount] = useState(0);
 
   const { allowed: cinematicTourAllowed } = useTierGate('cinematicTour');
   const { allowed: videoExportAllowed } = useTierGate('commercialBuildings');
@@ -137,6 +143,9 @@ export function InHouseView({ onExit }: InHouseViewProps) {
   const lastTouch = useRef<{ x: number; y: number } | null>(null);
   const tourIndexRef = useRef(0);
   const tourTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const viewShotRef = useRef<ViewShot>(null);
+  const capturedFramesRef = useRef<string[]>([]);
 
   const lighting = LIGHTING_PRESETS[timeOfDay];
 
@@ -204,6 +213,91 @@ export function InHouseView({ onExit }: InHouseViewProps) {
     }
   }, []);
 
+  // ── Video export ─────────────────────────────────────────────────────────────
+  const startRecording = useCallback(async () => {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      showToast('Photo library permission required to save video', 'error');
+      return;
+    }
+
+    capturedFramesRef.current = [];
+    setIsRecording(true);
+    setRecordingFrameCount(0);
+
+    recordingIntervalRef.current = setInterval(async () => {
+      if (!viewShotRef.current) return;
+      const currentCount = capturedFramesRef.current.length;
+      // Auto-stop after 150 frames (~5 seconds at 30fps)
+      if (currentCount >= 150) {
+        stopRecording();
+        return;
+      }
+      try {
+        const uri = await viewShotRef.current.capture?.();
+        if (uri) {
+          capturedFramesRef.current.push(uri);
+          setRecordingFrameCount((c) => c + 1);
+        }
+      } catch {
+        // Frame drop — skip
+      }
+    }, 33); // ~30fps
+  }, [showToast, stopRecording]);
+
+  const stopRecording = useCallback(async () => {
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
+    }
+    setIsRecording(false);
+
+    const frames = capturedFramesRef.current;
+    const frameCount = frames.length;
+    capturedFramesRef.current = [];
+    setRecordingFrameCount(0);
+
+    if (frameCount === 0) {
+      showToast('No frames captured — try again', 'error');
+      return;
+    }
+
+    showToast(`Encoding ${frameCount} frames…`, 'info');
+
+    try {
+      const timestamp = Date.now();
+      const outputPath = `${FileSystem.cacheDirectory ?? '/data/user/0/com.asoria.app/cache/'}video_${timestamp}.mp4`;
+
+      // Build FFmpeg concat demuxer script
+      const listFilePath = `${FileSystem.cacheDirectory ?? '/data/user/0/com.asoria.app/cache/'}frames_${timestamp}.txt`;
+      const concatScript = frames
+        .map((f, i) => `file '${f.replace('file://', '')}'`)
+        .join('\n');
+      await FileSystem.writeAsStringAsync(listFilePath, concatScript);
+
+      const session = await FFmpegKit.execute(
+        `-f concat -safe 0 -i "${listFilePath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black" -c:v libx264 -pix_fmt yuv420p -y "${outputPath}"`,
+      );
+      const returnCode = await session.getReturnCode();
+
+      // Clean up list file
+      FileSystem.deleteAsync(listFilePath).catch(() => {});
+
+      if (FFmpegKitConfig.isSuccess(returnCode)) {
+        const asset = await MediaLibrary.createAssetAsync(outputPath);
+        await MediaLibrary.createAlbumAsync('Asoria Walkthroughs', asset, false);
+        showToast('Video saved to Photos', 'success');
+      } else {
+        showToast('Encoding failed — try again', 'error');
+      }
+
+      // Clean up output file
+      FileSystem.deleteAsync(outputPath).catch(() => {});
+    } catch (e) {
+      showToast('Video export failed', 'error');
+    }
+  }, [showToast]);
+
   useEffect(() => () => stopTour(), [stopTour]);
 
   if (!blueprint) {
@@ -221,7 +315,7 @@ export function InHouseView({ onExit }: InHouseViewProps) {
   return (
     <View style={{ flex: 1 }}>
       {/* 3D Canvas with look-pan */}
-      <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+      <ViewShot ref={viewShotRef} style={{ flex: 1 }} options={{ format: 'jpg', quality: 0.8 }} {...panResponder.panHandlers}>
         <Canvas
           camera={{ position: preset.position, fov: preset.fov, near: 0.1, far: 200 }}
           style={{ flex: 1 }}
@@ -258,7 +352,7 @@ export function InHouseView({ onExit }: InHouseViewProps) {
             }}
           />
         </Canvas>
-      </View>
+      </ViewShot>
 
       {/* ── HUD ─────────────────────────────────────────────────────────── */}
 
@@ -346,22 +440,15 @@ export function InHouseView({ onExit }: InHouseViewProps) {
           </Text>
         </TouchableOpacity>
 
-        {/* Video export stub — Architect only */}
+        {/* Video export — Architect only. Press-and-hold to record 5s clip */}
         {videoExportAllowed && (
           <TouchableOpacity
-            onPress={() => showToast('Video export coming soon', 'info')}
-            style={{ backgroundColor: DS.colors.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: DS.colors.border }}
+            onPressIn={isRecording ? undefined : startRecording}
+            onPressOut={isRecording ? stopRecording : undefined}
+            style={{ backgroundColor: DS.colors.surface + 'CC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: isRecording ? DS.colors.warning : DS.colors.border }}
           >
-            {/* VIDEO EXPORT STUB
-             * Requires additional packages: react-native-view-shot + ffmpeg-kit-react-native
-             * (neither is in the current stack — requires native build changes)
-             * Steps when implemented:
-             *   1) Frame capture loop at 30fps via requestAnimationFrame + captureRef()
-             *   2) Encode frames to MP4 via ffmpeg-kit
-             *   3) Save via expo-media-library
-             */}
-            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: DS.colors.primaryGhost }}>
-              ⬇ VIDEO
+            <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: isRecording ? DS.colors.warning : DS.colors.primaryDim }}>
+              {isRecording ? `■ REC ${recordingFrameCount}` : '⬇ VIDEO'}
             </Text>
           </TouchableOpacity>
         )}
