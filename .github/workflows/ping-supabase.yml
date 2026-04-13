@@ -12,6 +12,4 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_PING_URL }}
     steps:
       - name: Ping Supabase
-        run: |
-          set +e
-          curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SUPABASE_URL}/health"
+        run: set +e; curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${SUPABASE_URL}/health"
