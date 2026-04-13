@@ -65,6 +65,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const detections = await runRoboflowDetection(frameUrls[0]).catch(() => []);
 
     // Request Meshy 3D reconstruction (async — returns task ID)
+    // checkQuota already ran for ar_scan above, Meshy call is gated by that
     let meshTaskId: string | null = null;
     try {
       meshTaskId = await requestMeshyReconstruction(frameUrls);
