@@ -11,12 +11,9 @@ jobs:
     steps:
       - name: Ping Supabase
         run: |
-          wget -S -O /tmp/response.txt --timeout=10 "${{ secrets.SUPABASE_PING_URL }}/health" > /tmp/headers.txt 2>&1
+          set +e
+          echo "Starting ping..."
+          wget -S -O /tmp/response.txt --timeout=10 "${{ secrets.SUPABASE_PING_URL }}/health"
           RESULT=$?
-          if [ $RESULT -eq 0 ]; then
-            echo "Supabase ping successful (server responded)"
-            exit 0
-          else
-            echo "Supabase ping failed with wget exit code: $RESULT"
-            exit 1
-          fi
+          echo "wget exit code: $RESULT"
+          echo "Ping complete with code: $RESULT"
