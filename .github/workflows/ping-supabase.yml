@@ -12,10 +12,9 @@ jobs:
       - name: Ping Supabase
         run: |
           echo "Testing basic connectivity..."
-          curl -s -o /dev/null -w "%{http_code}" -m 10 https://www.google.com
-          echo ""
+          curl -s --max-time 10 https://www.google.com -o /dev/null -w "Google: %{http_code}\n"
           echo "Testing Supabase..."
-          curl -s -o /dev/null -w "%{http_code}" -m 10 "${{ secrets.SUPABASE_PING_URL }}/health"
-          echo ""
+          curl -s --max-time 10 "${{ secrets.SUPABASE_PING_URL }}/health" -o /dev/null -w "Supabase: %{http_code}\n"
+          echo "Done"
         env:
           SUPABASE_PING_URL: ${{ secrets.SUPABASE_PING_URL }}
