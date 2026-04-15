@@ -150,8 +150,13 @@ export function SignUpScreen() {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
-    } catch {
-      setError('Google sign in failed. Please try again.');
+    } catch (e) {
+      console.error('[GoogleSignIn]', e);
+      setError(
+        e instanceof Error
+          ? `Google sign in failed: ${e.message}`
+          : 'Google sign in failed. Please try again.'
+      );
     }
   };
 

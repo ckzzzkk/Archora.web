@@ -98,7 +98,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     signOut: async () => {
+      const privacyAccepted = Storage.getString('privacyPolicyAccepted');
       Storage.clearAll();
+      if (privacyAccepted) {
+        Storage.set('privacyPolicyAccepted', privacyAccepted);
+      }
       await supabase.auth.signOut();
       // Clear any remaining secure storage keys
       await SecureStore.deleteItemAsync('sb-access-token').catch(() => {});
@@ -118,6 +122,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (data?.url) {
         const WebBrowser = require('expo-web-browser').default;
         await WebBrowser.openAuthSessionAsync(data.url, 'asoria://auth/callback');
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session) {
+          throw new Error('Session not created. Please try again.');
+        }
       }
     },
 

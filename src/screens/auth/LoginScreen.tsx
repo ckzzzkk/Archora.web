@@ -116,7 +116,10 @@ export function LoginScreen() {
   }));
 
   const handleSignIn = async () => {
-    if (lockedUntil && Date.now() < lockedUntil) return;
+    if (lockedUntil && Date.now() < lockedUntil) {
+      setError('Too many attempts. Wait a moment.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -140,8 +143,13 @@ export function LoginScreen() {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
-    } catch {
-      setError('Google sign in failed. Please try again.');
+    } catch (e) {
+      console.error('[GoogleSignIn]', e);
+      setError(
+        e instanceof Error
+          ? `Google sign in failed: ${e.message}`
+          : 'Google sign in failed. Please try again.'
+      );
     }
   };
 

@@ -5,6 +5,7 @@ import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { InteractionManager, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import {
   ArchitectsDaughter_400Regular,
@@ -22,6 +23,7 @@ import {
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { ToastContainer } from './src/components/common/ToastContainer';
+import { useUIStore } from './src/stores/uiStore';
 import { useAuthStore } from './src/stores/authStore';
 import { supabase } from './src/utils/supabaseClient';
 import { navigationRef } from './src/navigation/navigationRef';
@@ -85,7 +87,19 @@ export default function App() {
         void loadSession();
       } else if (url.includes('auth/callback')) {
         void (async () => {
-          const code = new URL(url).searchParams.get('code');
+          const params = new URL(url).searchParams;
+          const error = params.get('error');
+          const errorDescription = params.get('error_description');
+          const code = params.get('code');
+
+          if (error) {
+            useUIStore.getState().actions.showToast(
+              errorDescription || 'Google sign in failed',
+              'error'
+            );
+            return;
+          }
+
           if (code) {
             const { data } = await supabase.auth.exchangeCodeForSession(code);
             if (data?.session) {
@@ -109,27 +123,31 @@ export default function App() {
   if (!splashDone) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <ExpoStatusBar style="light" backgroundColor="#1A1A1A" />
-        <SplashScreen appReady={appReady} onComplete={() => setSplashDone(true)} />
+        <SafeAreaProvider>
+          <ExpoStatusBar style="light" backgroundColor="#1A1A1A" />
+          <SplashScreen appReady={appReady} onComplete={() => setSplashDone(true)} />
+        </SafeAreaProvider>
       </GestureHandlerRootView>
     );
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ExpoStatusBar style="light" backgroundColor="#1A1A1A" />
-      <NavigationContainer
-        linking={linking}
-        ref={(ref) => { navigationRef.current = ref as typeof navigationRef.current; }}
-        onReady={() => {
-          // Register push listeners only once
-          if (pushListenersRef.current) return;
-          pushListenersRef.current = setupPushListeners();
-        }}
-      >
-        <ToastContainer />
-        <RootNavigator />
-      </NavigationContainer>
+      <SafeAreaProvider>
+        <ExpoStatusBar style="light" backgroundColor="#1A1A1A" />
+        <NavigationContainer
+          linking={linking}
+          ref={(ref) => { navigationRef.current = ref as typeof navigationRef.current; }}
+          onReady={() => {
+            // Register push listeners only once
+            if (pushListenersRef.current) return;
+            pushListenersRef.current = setupPushListeners();
+          }}
+        >
+          <ToastContainer />
+          <RootNavigator />
+        </NavigationContainer>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
