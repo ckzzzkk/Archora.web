@@ -2,6 +2,7 @@ package com.asoria.ar
 
 import android.app.Activity
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
@@ -23,7 +24,6 @@ class ARCoreModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
 
     private var session: Session? = null
     private var frame: Frame? = null
-    private val config = AtomicReference<Config>()
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     override fun getName(): String = NAME
@@ -37,7 +37,7 @@ class ARCoreModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
             val availability = ArCoreApk.getInstance().checkAvailability(context)
 
             val hasARCore = availability.isSupported || availability.isTransient
-            val hasDepthAPI = hasDepthAPI(context)
+            val hasDepthAPI = hasDepthAPI()
 
             val result = Arguments.createMap().apply {
                 putBoolean("hasARCore", hasARCore)
@@ -55,11 +55,13 @@ class ARCoreModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
         }
     }
 
-    private fun hasDepthAPI(context: Context): Boolean {
+    private fun hasDepthAPI(): Boolean {
         return try {
-            Session(context, Config())
-            val capabilities = CameraConfigFilter(context).depthSensorUsage
-            capabilities.contains(CameraConfig.DepthSensorUsage.REQUIRE_AND_USE)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return false
+            val testSession = Session(reactApplicationContext)
+            val supported = testSession.isDepthModeSupported(Config.DepthMode.AUTOMATIC)
+            testSession.close()
+            supported
         } catch (e: Exception) {
             false
         }
@@ -67,7 +69,7 @@ class ARCoreModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
 
     @ReactMethod
     fun requestInstall(promise: Promise) {
-        val activity = currentActivity ?: run {
+        val activity = reactApplicationContext.currentActivity ?: run {
             promise.reject("NO_ACTIVITY", "No current activity")
             return
         }
@@ -96,28 +98,29 @@ class ARCoreModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
 
     @ReactMethod
     fun startSession(promise: Promise) {
-        val activity = currentActivity ?: run {
+        val activity = reactApplicationContext.currentActivity ?: run {
             promise.reject("NO_ACTIVITY", "No current activity")
             return
         }
 
         try {
-            // Create session if not exists
             if (session == null) {
-                session = Session(activity, Config().apply {
+                val newSession = Session(activity)
+                val depthEnabled = hasDepthAPI()
+                val config = Config(newSession).apply {
                     planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
-                    depthMode = if (hasDepthAPI(activity)) Config.DepthMode.AUTOMATIC else Config.DepthMode.DISABLED
+                    this.depthMode = if (depthEnabled) Config.DepthMode.AUTOMATIC else Config.DepthMode.DISABLED
                     updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
                     lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
-                })
+                }
+                newSession.configure(config)
+                session = newSession
             }
 
-            // Resume session
             session?.resume()
-
             promise.resolve(Arguments.createMap().apply {
                 putBoolean("success", true)
-                putBoolean("depthEnabled", hasDepthAPI(activity))
+                putBoolean("depthEnabled", session?.config?.depthMode != Config.DepthMode.DISABLED)
             })
         } catch (e: UnavailableArcoreNotInstalledException) {
             promise.reject("ARCORE_NOT_INSTALLED", "ARCore is not installed")
@@ -165,7 +168,7 @@ class ARCoreModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
         }
     }
 
-    // ── Hit Testing ────────────────────────────────────────────────────────────
+    // ── Hit Testing ───────────────────────────────────────────────────────────
 
     @ReactMethod
     fun hitTest(x: Float, y: Float, promise: Promise) {
@@ -260,7 +263,7 @@ class ARCoreModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
         }
     }
 
-    // ── Camera Pose ────────────────────────────────────────────────────────────
+    // ── Camera Pose ───────────────────────────────────────────────────────────
 
     @ReactMethod
     fun getCameraPose(promise: Promise) {

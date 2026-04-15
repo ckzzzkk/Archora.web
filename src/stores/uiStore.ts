@@ -34,6 +34,7 @@ interface UIState {
 }
 
 let toastCounter = 0;
+const toastTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 export const useUIStore = create<UIState>((set, get) => ({
   toasts: [],
@@ -47,12 +48,18 @@ export const useUIStore = create<UIState>((set, get) => ({
   actions: {
     showToast: (message, type = 'info', duration = 3000) => {
       const id = `toast_${++toastCounter}`;
+      const timer = setTimeout(() => {
+        get().actions.hideToast(id);
+        toastTimers.delete(id);
+      }, duration);
+      toastTimers.set(id, timer);
       const toast: ToastMessage = { id, message, type, duration };
       set((s) => ({ toasts: [...s.toasts, toast] }));
-      setTimeout(() => get().actions.hideToast(id), duration);
     },
 
     hideToast: (id) => {
+      const timer = toastTimers.get(id);
+      if (timer) { clearTimeout(timer); toastTimers.delete(id); }
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     },
 

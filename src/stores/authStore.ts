@@ -5,7 +5,7 @@ import { Storage } from '../utils/storage';
 import { useUIStore } from './uiStore';
 import type { User, SubscriptionTier } from '../types';
 
-const REFRESH_TOKEN_KEY = 'asoria_refresh_token';
+let sessionLoadInFlight = false;
 
 interface AuthState {
   user: User | null;
@@ -33,12 +33,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   actions: {
     signIn: async (email: string, password: string) => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (error) {
+        // Never expose "Invalid login credentials" vs "user not found" distinction —
+        // both mean the same thing to an attacker trying to enumerate accounts.
+        throw new Error('Invalid email or password.');
+      }
 
       const { session } = data;
       if (!session) throw new Error('No session returned');
 
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, session.refresh_token);
+      // Supabase client now handles secure token storage via secureAuthStorageAdapter
+      // Manual token storage removed - rely on Supabase's built-in session management
 
       const { data: userData } = await supabase
         .from('users')
@@ -62,12 +67,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         password,
         options: { data: { display_name: displayName } },
       });
-      if (error) throw error;
+      if (error) {
+        // Supabase returns "user_already_exists" for taken emails.
+        // Never surface this to the UI — it enables email enumeration.
+        const isKnownAuthError = error.message?.includes('user_already_exists')
+          || error.message?.includes('Email not confirmed')
+          || error.status === 422;
+        if (isKnownAuthError) {
+          throw new Error('Check your email to confirm your account.');
+        }
+        throw error;
+      }
 
       const { session } = data;
       if (!session) return; // email confirmation required
 
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, session.refresh_token);
+      // Supabase client handles secure token storage
 
       const { data: userData } = await supabase
         .from('users')
@@ -85,7 +100,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     signOut: async () => {
       Storage.clearAll();
       await supabase.auth.signOut();
-      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      // Clear any remaining secure storage keys
+      await SecureStore.deleteItemAsync('sb-access-token').catch(() => {});
+      await SecureStore.deleteItemAsync('sb-refresh-token').catch(() => {});
       set({ user: null, accessToken: null, isAuthenticated: false });
     },
 
@@ -94,60 +111,46 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         provider: 'google',
         options: {
           redirectTo: 'asoria://auth/callback',
-          skipBrowserRedirect: false,
+          skipBrowserRedirect: true,
         },
       });
       if (error) throw error;
       if (data?.url) {
-        const { Linking } = require('react-native');
-        await Linking.openURL(data.url);
+        const WebBrowser = require('expo-web-browser').default;
+        await WebBrowser.openAuthSessionAsync(data.url, 'asoria://auth/callback');
       }
     },
 
     deleteAccount: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not signed in');
-      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-      const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
-      const res = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: supabaseAnonKey,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!res.ok) throw new Error('Could not delete account');
+      // Use Supabase functions.invoke for consistency and security
+      const { error } = await supabase.functions.invoke('delete-account', {});
+      if (error) throw new Error(error.message ?? 'Could not delete account');
       Storage.clearAll();
       await supabase.auth.signOut();
       set({ user: null, isAuthenticated: false, accessToken: null });
     },
 
     refreshSession: async () => {
-      const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-      if (!refreshToken) return false;
-
-      const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+      // Rely on Supabase client's autoRefreshToken and built-in session management
+      // The secureAuthStorageAdapter handles secure token storage/retrieval
+      const { data, error } = await supabase.auth.refreshSession();
       if (error || !data.session) return false;
-
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.session.refresh_token);
       set({ accessToken: data.session.access_token });
       return true;
     },
 
     loadSession: async () => {
+      if (sessionLoadInFlight) return;
+      sessionLoadInFlight = true;
       set({ isLoading: true });
       try {
-        const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-        if (!refreshToken) { set({ isLoading: false }); return; }
-
-        const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+        // Supabase client auto-loads session from secure storage on init
+        const { data, error } = await supabase.auth.getSession();
         if (error || !data.session) {
           useUIStore.getState().actions.showToast('Session expired — please sign in again', 'error');
+          sessionLoadInFlight = false;
           set({ isLoading: false }); return;
         }
-
-        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.session.refresh_token);
 
         const { data: userData } = await supabase
           .from('users')
@@ -155,6 +158,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', data.session.user.id)
           .single();
 
+        sessionLoadInFlight = false;
         set({
           accessToken: data.session.access_token,
           isAuthenticated: true,
@@ -163,6 +167,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       } catch {
         useUIStore.getState().actions.showToast('Could not restore session — please sign in', 'error');
+        sessionLoadInFlight = false;
         set({ isLoading: false });
       }
     },

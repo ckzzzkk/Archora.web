@@ -104,15 +104,19 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            storeFile file('../../asoria-release.jks')
+            storePassword project.findProperty('KEYSTORE_PASSWORD') ?: 'asoria123'
+            keyAlias project.findProperty('KEY_ALIAS') ?: 'asoria'
+            keyPassword project.findProperty('KEY_PASSWORD') ?: 'asoria123'
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds
@@ -156,8 +160,8 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
-    // ARCore for room scanning
-    implementation("com.google.ar:core:1.45.0")
+    // ARCore SDK for room scanning and AR features
+    implementation("com.google.ar:core:1.36.0")
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";

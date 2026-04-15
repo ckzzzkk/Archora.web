@@ -12,3 +12,7 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# ARCore
+-keep class com.google.ar.** { *; }
+-keep class com.asoria.ar.** { *; }

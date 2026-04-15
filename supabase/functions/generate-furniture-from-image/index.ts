@@ -274,6 +274,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const dimensions = { x: identification.width, y: identification.height, z: identification.depth };
 
+  // Verify project ownership if projectId is provided
+  if (projectId) {
+    const { data: project } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', projectId)
+      .single();
+    if (!project || project.user_id !== user.id) {
+      return Errors.forbidden('Project not found or access denied');
+    }
+  }
+
   const { data: record, error: insertErr } = await supabase
     .from('custom_furniture')
     .insert({

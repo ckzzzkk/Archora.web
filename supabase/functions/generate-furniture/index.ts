@@ -57,11 +57,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
   );
   const { data: userData } = await supabase
     .from('users')
-    .select('tier')
+    .select('subscription_tier')
     .eq('id', user.id)
     .single();
 
-  const tier = (userData as { tier?: string } | null)?.tier ?? 'starter';
+  const tier = (userData as { subscription_tier?: string } | null)?.subscription_tier ?? 'starter';
   if (tier !== 'architect') {
     return new Response(
       JSON.stringify({ error: 'Custom AI furniture requires an Architect subscription', code: 'QUOTA_EXCEEDED' }),

@@ -412,8 +412,8 @@ export function GenerationScreen() {
         setLoadingPhase(phaseMap[update.status] ?? 1);
       });
 
-      blueprintActions.loadBlueprint(blueprint);
-      save(buildPayload());
+      await blueprintActions.loadBlueprint(blueprint);
+      await save(buildPayload());
       navigation.navigate('Workspace', {
         projectId: (blueprint as BlueprintData & { id?: string }).id ?? randomUUID(),
       });
