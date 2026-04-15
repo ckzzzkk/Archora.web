@@ -139,7 +139,12 @@ export function SignUpScreen() {
     setLoading(true);
     try {
       await signUp(email.trim(), password, displayName.trim());
-      // Navigation handled by RootNavigator auth state change or EmailVerification flow
+      // If we get here with no error, auth store handles routing.
+      // If email confirmation is required, signUp returns without setting
+      // isAuthenticated — navigate to EmailVerification explicitly.
+      if (!useAuthStore.getState().isAuthenticated) {
+        navigation.navigate('EmailVerification', { email: email.trim() });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign up failed. Please try again.');
     } finally {

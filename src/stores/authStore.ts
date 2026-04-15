@@ -121,18 +121,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error;
       if (data?.url) {
         const WebBrowser = require('expo-web-browser').default;
-        const result = await WebBrowser.openAuthSessionAsync(data.url, 'asoria://auth/callback');
-        // Check if the browser was dismissed or cancelled
-        if (result.type === 'cancel' || result.type === 'dismissed') {
-          throw new Error('Sign in was cancelled.');
-        }
-        // The result.url contains the callback URL with the auth code
-        // Supabase's WebBrowser handler processes this automatically
-        // Verify session was created
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session) {
-          throw new Error('Session not created. Please try again.');
-        }
+        // Open browser - user completes Google login, then Google redirects to
+        // asoria://auth/callback. The OS opens the app, App.tsx catches the
+        // deep link, exchanges code for session, and refreshes the auth store.
+        // openAuthSessionAsync will return with the result after the app
+        // receives the redirect.
+        await WebBrowser.openAuthSessionAsync(data.url, 'asoria://auth/callback');
       }
     },
 
