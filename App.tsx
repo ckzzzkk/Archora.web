@@ -34,7 +34,7 @@ import { setupPushListeners } from './src/hooks/useNotifications';
 // but the nested screen config is valid at runtime.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const linking: any = {
-  prefixes: ['asoria://'],
+  prefixes: ['asoria://', 'exp.asoria://'],
   config: {
     screens: {
       Auth: {
@@ -87,12 +87,14 @@ export default function App() {
         void loadSession();
       } else if (url.includes('auth/callback')) {
         void (async () => {
+          console.log('[App] auth callback URL:', url);
           const params = new URL(url).searchParams;
           const error = params.get('error');
           const errorDescription = params.get('error_description');
           const code = params.get('code');
 
           if (error) {
+            console.log('[App] OAuth error:', error, errorDescription);
             useUIStore.getState().actions.showToast(
               errorDescription || 'Google sign in failed',
               'error'
@@ -101,9 +103,20 @@ export default function App() {
           }
 
           if (code) {
-            const { data } = await supabase.auth.exchangeCodeForSession(code);
+            console.log('[App] exchanging code for session');
+            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+            if (exchangeError) {
+              console.error('[App] exchangeCodeForSession failed:', exchangeError);
+              useUIStore.getState().actions.showToast('Sign in failed. Please try again.', 'error');
+              return;
+            }
             if (data?.session) {
-              useAuthStore.getState().actions.refreshSession();
+              console.log('[App] session created, loading full session with user data');
+              // Must call loadSession (not refreshSession) to fetch user data and set isAuthenticated=true
+              await useAuthStore.getState().actions.loadSession();
+            } else {
+              console.error('[App] exchangeCodeForSession returned no session');
+              useUIStore.getState().actions.showToast('Sign in failed. Please try again.', 'error');
             }
           }
         })();

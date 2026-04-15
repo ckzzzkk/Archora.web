@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { openAuthSessionAsync } from 'expo-web-browser';
+import type { WebBrowserAuthSessionResult } from 'expo-web-browser';
 import { supabase } from '../utils/supabaseClient';
 import { Storage } from '../utils/storage';
 import { useUIStore } from './uiStore';
 import type { User, SubscriptionTier } from '../types';
-
-let sessionLoadInFlight = false;
 
 interface AuthState {
   user: User | null;
@@ -68,12 +68,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         options: { data: { display_name: displayName } },
       });
       if (error) {
-        // Supabase returns "user_already_exists" for taken emails.
-        // Never surface this to the UI — it enables email enumeration.
-        const isKnownAuthError = error.message?.includes('user_already_exists')
-          || error.message?.includes('Email not confirmed')
-          || error.status === 422;
-        if (isKnownAuthError) {
+        // Supabase returns "user_already_exists" when email is taken (e.g. OAuth account exists).
+        // Distinguish between "needs email confirmation" vs "account already exists" to show correct message.
+        if (error.message?.includes('user_already_exists')) {
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        }
+        if (error.message?.includes('Email not confirmed') || error.status === 422) {
           throw new Error('Check your email to confirm your account.');
         }
         throw error;
@@ -118,16 +118,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           skipBrowserRedirect: true,
         },
       });
-      if (error) throw error;
-      if (data?.url) {
-        const WebBrowser = require('expo-web-browser').default;
-        // Open browser - user completes Google login, then Google redirects to
-        // asoria://auth/callback. The OS opens the app, App.tsx catches the
-        // deep link, exchanges code for session, and refreshes the auth store.
-        // openAuthSessionAsync will return with the result after the app
-        // receives the redirect.
-        await WebBrowser.openAuthSessionAsync(data.url, 'asoria://auth/callback');
+      if (error) {
+        console.error('[authStore] signInWithGoogle OAuth error:', error);
+        throw error;
       }
+      if (!data?.url) {
+        console.error('[authStore] signInWithGoogle: no URL returned');
+        throw new Error('Failed to get Google auth URL');
+      }
+      console.log('[authStore] signInWithGoogle: opening browser for OAuth flow');
+      // openAuthSessionAsync returns immediately after opening the browser.
+      // The actual OAuth callback (with code) is handled by App.tsx Linking listener.
+      // We await this to ensure the browser was opened (not cancelled immediately).
+      const result = await openAuthSessionAsync(data.url, 'asoria://auth/callback') as { type: string; url?: string };
+      if (result.type === 'cancel' || result.type === 'dismiss') {
+        console.log('[authStore] signInWithGoogle: user cancelled or dismissed browser');
+        throw new Error('Sign in was cancelled.');
+      }
+      console.log('[authStore] signInWithGoogle: browser closed, waiting for OAuth callback...');
     },
 
     deleteAccount: async () => {
@@ -149,16 +157,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     loadSession: async () => {
-      if (sessionLoadInFlight) return;
-      sessionLoadInFlight = true;
       set({ isLoading: true });
       try {
         // Supabase client auto-loads session from secure storage on init
         const { data, error } = await supabase.auth.getSession();
         if (error || !data.session) {
           useUIStore.getState().actions.showToast('Session expired — please sign in again', 'error');
-          sessionLoadInFlight = false;
-          set({ isLoading: false }); return;
+          set({ isLoading: false, isAuthenticated: false, user: null });
+          return;
         }
 
         const { data: userData } = await supabase
@@ -167,7 +173,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', data.session.user.id)
           .single();
 
-        sessionLoadInFlight = false;
         set({
           accessToken: data.session.access_token,
           isAuthenticated: true,
@@ -176,8 +181,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       } catch {
         useUIStore.getState().actions.showToast('Could not restore session — please sign in', 'error');
-        sessionLoadInFlight = false;
-        set({ isLoading: false });
+        set({ isLoading: false, isAuthenticated: false, user: null });
       }
     },
 
