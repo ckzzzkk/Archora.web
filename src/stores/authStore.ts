@@ -121,7 +121,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error;
       if (data?.url) {
         const WebBrowser = require('expo-web-browser').default;
-        await WebBrowser.openAuthSessionAsync(data.url, 'asoria://auth/callback');
+        const result = await WebBrowser.openAuthSessionAsync(data.url, 'asoria://auth/callback');
+        // Check if the browser was dismissed or cancelled
+        if (result.type === 'cancel' || result.type === 'dismissed') {
+          throw new Error('Sign in was cancelled.');
+        }
+        // The result.url contains the callback URL with the auth code
+        // Supabase's WebBrowser handler processes this automatically
+        // Verify session was created
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData?.session) {
           throw new Error('Session not created. Please try again.');
