@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 import type { Template, Comment } from '../types';
 
 function mapTemplate(row: Record<string, unknown>): Template {

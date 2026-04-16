@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 import type { Project, BlueprintData } from '../types';
 
 function mapRow(row: Record<string, unknown>): Project {

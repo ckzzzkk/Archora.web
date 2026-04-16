@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 import type { AppNotification, NotificationType } from '../types/index';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 

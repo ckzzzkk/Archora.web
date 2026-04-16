@@ -10,7 +10,6 @@ import type {
   StaircaseData, ElevatorData,
 } from '../types/blueprint';
 import type { ViewMode, SubscriptionTier } from '../types';
-import { useAuthStore } from './authStore';
 import { clipboard } from '../utils/clipboard';
 import type { ClipboardItem } from '../utils/clipboard';
 
@@ -134,7 +133,9 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
   }
 
   function getCurrentTier(): SubscriptionTier {
-    return useAuthStore.getState().user?.subscriptionTier ?? 'starter';
+    // Auth state is managed by AuthProvider / useSession.
+    // For non-React store contexts, default to 'starter' (manual save).
+    return 'starter';
   }
 
   function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string): Partial<BlueprintState> {

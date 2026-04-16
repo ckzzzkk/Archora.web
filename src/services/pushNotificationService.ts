@@ -9,7 +9,7 @@
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 // Must be set before using the service
 Notifications.setNotificationHandler({

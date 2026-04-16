@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 import type { BlueprintData } from '../types';
 import type { GenerationPayload } from '../types/generation';
 import { validateBlueprintData } from '../utils/blueprintValidation';

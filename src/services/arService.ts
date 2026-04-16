@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 import { ARCoreModule } from '../native/ARCoreModule';
 import type { PhotoAnalysisResult } from '../utils/ar/arToBlueprintConverter';
 

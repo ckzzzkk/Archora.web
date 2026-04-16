@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 import type { SimulationReport, BlueprintData } from '../types/blueprint';
 
 export const simulationService = {

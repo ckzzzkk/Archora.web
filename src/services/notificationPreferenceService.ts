@@ -4,7 +4,7 @@
  * Reads and updates per-user notification preference toggles.
  */
 
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

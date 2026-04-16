@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 export const authService = {
   async uploadAvatar(userId: string, uri: string): Promise<string | null> {
