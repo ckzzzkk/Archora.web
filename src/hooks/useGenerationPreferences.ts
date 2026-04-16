@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { aiService } from '../services/aiService';
 import type { GenerationPayload } from '../types/generation';
 import type { UserPreferences } from '../services/aiService';
-import { useAuth } from './useAuth';
+import { useSession } from './useSession';
 
 export function useGenerationPreferences() {
-  const { user } = useAuth();
+  const { user } = useSession();
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [prefilledFromDb, setPrefilledFromDb] = useState(false);
