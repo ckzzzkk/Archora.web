@@ -18,7 +18,7 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabase';
 
 
 import type { AuthStackParamList } from '../../navigation/types';
