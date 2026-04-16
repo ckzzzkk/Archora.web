@@ -11,7 +11,7 @@ import { GridBackground } from '../../components/common/GridBackground';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { DS } from '../../theme/designSystem';
-import { useAuthStore } from '../../stores/authStore';
+import { signInWithGoogle } from '../../auth/signInWithGoogle';
 import { BRAND } from '../../utils/branding';
 import type { AuthStackParamList } from '../../navigation/types';
 
@@ -47,7 +47,6 @@ function GoogleIcon() {
 export function WelcomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const insets = useSafeAreaInsets();
-  const { signInWithGoogle } = useAuthStore((s) => s.actions);
 
   // Entry animations
   const logoOp = useSharedValue(0);
