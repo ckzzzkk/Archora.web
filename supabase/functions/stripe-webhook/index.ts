@@ -107,7 +107,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
             await supabase.from('notifications').insert({
               user_id: metaUserId,
-              type: 'system',
+              type: 'template_purchased',
               payload: {
                 title: 'Purchase complete!',
                 message: 'Your template has been saved. Open it from your saved designs.',
@@ -118,7 +118,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
             if (sellerId && sellerId !== metaUserId) {
               await supabase.from('notifications').insert({
                 user_id: sellerId,
-                type: 'system',
+                type: 'template_purchased',
                 payload: {
                   title: 'Template sold!',
                   message: 'Someone purchased your template.',
@@ -205,7 +205,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
           await supabase
             .from('subscriptions')
-            .update({ status: 'canceled' })
+            .update({ status: 'canceled', cancel_at_period_end: false })
             .eq('stripe_subscription_id', sub.id);
 
           await supabase.from('notifications').insert({

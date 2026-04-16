@@ -13,7 +13,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
-
+import { Storage } from '../../utils/storage';
 import { useHaptics } from '../../hooks/useHaptics';
 
 
@@ -82,23 +82,17 @@ export function OnboardingScreen() {
     scrollX.value = event.contentOffset.x;
   });
 
-  const handleNext = () => {
-    if (activeIndex < SLIDES.length - 1) {
-      light();
-      const next = activeIndex + 1;
-      listRef.current?.scrollToIndex({ index: next, animated: true });
-      setActiveIndex(next);
-    } else {
-      light();
-      navigation.navigate('SignUp');
-    }
+  const handleFinish = () => {
+    light();
+    // Mark onboarding as seen - RootNavigator will re-render and hide this screen
+    Storage.set('onboarding_seen', 'true');
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
       {/* Skip */}
       <Pressable
-        onPress={() => navigation.navigate('SignUp')}
+        onPress={handleFinish}
         style={{ position: 'absolute', top: 60, right: 24, zIndex: 10 }}
       >
         <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryGhost }}>
@@ -163,7 +157,7 @@ export function OnboardingScreen() {
       {/* CTA */}
       <View style={{ paddingHorizontal: DS.spacing.lg, paddingBottom: Math.max(DS.spacing.xxl, 34 + DS.spacing.lg) }}>
         <Pressable
-          onPress={handleNext}
+          onPress={activeIndex < SLIDES.length - 1 ? () => { light(); listRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true }); setActiveIndex(activeIndex + 1); } : handleFinish}
           style={{
             backgroundColor: DS.colors.primary,
             borderRadius: 24,

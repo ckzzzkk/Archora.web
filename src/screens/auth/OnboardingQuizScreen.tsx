@@ -436,9 +436,11 @@ export function OnboardingQuizScreen() {
       }
 
       const prompt = buildQuizPrompt(answers);
+      // Map quiz building type to AI service type — 'residential' maps to 'house'
+      const aiBuildingType = (answers.buildingType === 'residential' ? 'house' : answers.buildingType) as 'house' | 'apartment' | 'office' | 'studio' | 'villa' | 'commercial';
       const blueprint = await aiService.generateFloorPlan({
         prompt,
-        buildingType: answers.buildingType as 'house' | 'apartment' | 'office' | 'studio' | 'villa' | 'commercial',
+        buildingType: aiBuildingType,
         style: answers.styles[0],
       });
       loadBlueprint(blueprint);
