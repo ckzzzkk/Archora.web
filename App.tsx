@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import './src/styles/global.css';
 import React, { useEffect, useState, useRef } from 'react';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
-import { InteractionManager, Linking } from 'react-native';
+import { Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -23,9 +23,9 @@ import {
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { ToastContainer } from './src/components/common/ToastContainer';
-import { useUIStore } from './src/stores/uiStore';
-import { useAuthStore } from './src/stores/authStore';
-import { supabase } from './src/utils/supabaseClient';
+import { supabase } from './src/lib/supabase';
+// authStore removed — now using AuthProvider
+import { AuthProvider } from './src/auth/AuthProvider';
 import { navigationRef } from './src/navigation/navigationRef';
 import { setupPushListeners } from './src/hooks/useNotifications';
 
@@ -57,16 +57,8 @@ export default function App() {
     JetBrainsMono_700Bold,
   });
 
-  const loadSession = useAuthStore((s) => s.actions.loadSession);
   const [splashDone, setSplashDone] = useState(false);
   const pushListenersRef = useRef<(() => void) | null>(null);
-
-  useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => {
-      void loadSession();
-    });
-    return () => task.cancel();
-  }, [loadSession]);
 
   // Global error handler — surfaces unhandled JS errors in Metro (dev) for debugging
   useEffect(() => {
@@ -79,57 +71,19 @@ export default function App() {
     });
   }, []);
 
-  // Handle deep links for subscription callbacks
+  // Handle deep links for Stripe subscription callback only
   useEffect(() => {
     const handleUrl = ({ url }: { url: string }) => {
       if (url.startsWith('asoria://subscription-success')) {
-        // Reload user session to pick up updated subscription tier from Stripe webhook
-        void loadSession();
-      } else if (url.includes('auth/callback')) {
-        void (async () => {
-          console.log('[App] auth callback URL:', url);
-          const params = new URL(url).searchParams;
-          const error = params.get('error');
-          const errorDescription = params.get('error_description');
-          const code = params.get('code');
-
-          if (error) {
-            console.log('[App] OAuth error:', error, errorDescription);
-            useUIStore.getState().actions.showToast(
-              errorDescription || 'Google sign in failed',
-              'error'
-            );
-            return;
-          }
-
-          if (code) {
-            console.log('[App] exchanging code for session');
-            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-            if (exchangeError) {
-              console.error('[App] exchangeCodeForSession failed:', exchangeError);
-              useUIStore.getState().actions.showToast('Sign in failed. Please try again.', 'error');
-              return;
-            }
-            if (data?.session) {
-              console.log('[App] session created, loading full session with user data');
-              // Must call loadSession (not refreshSession) to fetch user data and set isAuthenticated=true
-              await useAuthStore.getState().actions.loadSession();
-            } else {
-              console.error('[App] exchangeCodeForSession returned no session');
-              useUIStore.getState().actions.showToast('Sign in failed. Please try again.', 'error');
-            }
-          }
-        })();
+        // Stripe webhook updated subscription tier — reload session
+        // AuthProvider will pick up the new session via onAuthStateChange
+        supabase.auth.getSession();
       }
-      // asoria://reset-password is handled by the linking config above via NavigationContainer
     };
-
     const sub = Linking.addEventListener('url', handleUrl);
-    // Handle cold-start URL (app was closed when the link was opened)
     void Linking.getInitialURL().then((url) => { if (url) handleUrl({ url }); });
-
     return () => sub.remove();
-  }, [loadSession]);
+  }, []);
 
   const appReady = fontsLoaded;
 
@@ -148,18 +102,20 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ExpoStatusBar style="light" backgroundColor="#1A1A1A" />
-        <NavigationContainer
-          linking={linking}
-          ref={(ref) => { navigationRef.current = ref as typeof navigationRef.current; }}
-          onReady={() => {
-            // Register push listeners only once
-            if (pushListenersRef.current) return;
-            pushListenersRef.current = setupPushListeners();
-          }}
-        >
-          <ToastContainer />
-          <RootNavigator />
-        </NavigationContainer>
+        <AuthProvider>
+          <NavigationContainer
+            linking={linking}
+            ref={(ref) => { navigationRef.current = ref as typeof navigationRef.current; }}
+            onReady={() => {
+              // Register push listeners only once
+              if (pushListenersRef.current) return;
+              pushListenersRef.current = setupPushListeners();
+            }}
+          >
+            <ToastContainer />
+            <RootNavigator />
+          </NavigationContainer>
+        </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
