@@ -1,8 +1,15 @@
--- Migration 036: Add 'pro' to subscription_tier enum
--- The enum was missing 'pro' which caused Pro tier users to hit PostgreSQL enum violations.
--- Also fixes the RLS policy that prevents subscription_tier updates.
+-- Migration 036: Add 'pro' to subscription_tier enum and fix RLS
+-- Remote database has subscription_tier enum (not tier TEXT) so this handles both cases.
 
--- Add 'pro' to the enum
+-- Create enum if it doesn't exist (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'subscription_tier') THEN
+    CREATE TYPE subscription_tier AS ENUM ('starter', 'creator', 'pro', 'architect');
+  END IF;
+END $$;
+
+-- Add 'pro' if enum exists and doesn't have it
 ALTER TYPE subscription_tier ADD VALUE IF NOT EXISTS 'pro';
 
 -- Fix the RLS policy: remove the circular subqueries in WITH CHECK

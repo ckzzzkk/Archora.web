@@ -32,8 +32,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   actions: {
     signIn: async (email: string, password: string) => {
+      console.log('[authStore] signIn: starting for', email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('[authStore] signIn: result', { error: error?.message, hasSession: !!data?.session });
       if (error) {
+        console.error('[authStore] signIn error:', error);
         // Never expose "Invalid login credentials" vs "user not found" distinction —
         // both mean the same thing to an attacker trying to enumerate accounts.
         throw new Error('Invalid email or password.');
@@ -157,21 +160,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     loadSession: async () => {
+      console.log('[authStore] loadSession: starting');
       set({ isLoading: true });
       try {
         // Supabase client auto-loads session from secure storage on init
         const { data, error } = await supabase.auth.getSession();
+        console.log('[authStore] loadSession: getSession result', { error: error?.message, hasSession: !!data?.session });
         if (error || !data.session) {
-          useUIStore.getState().actions.showToast('Session expired — please sign in again', 'error');
+          console.log('[authStore] loadSession: no session, treating as logged out');
           set({ isLoading: false, isAuthenticated: false, user: null });
           return;
         }
 
-        const { data: userData } = await supabase
+        console.log('[authStore] loadSession: fetching user data for', data.session.user.id);
+        const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('id', data.session.user.id)
           .single();
+        console.log('[authStore] loadSession: user query result', { error: userError?.message, hasUser: !!userData });
 
         set({
           accessToken: data.session.access_token,
@@ -179,8 +186,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: userData ? mapDbUser(userData) : null,
           isLoading: false,
         });
-      } catch {
-        useUIStore.getState().actions.showToast('Could not restore session — please sign in', 'error');
+      } catch (e) {
+        console.error('[authStore] loadSession: exception:', e);
         set({ isLoading: false, isAuthenticated: false, user: null });
       }
     },
