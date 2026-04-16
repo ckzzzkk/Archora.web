@@ -2,7 +2,7 @@ import { DS } from '../theme/designSystem';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useAuthStore } from '../stores/authStore';
+import { useSession } from '../auth/useSession';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { lazyScreen } from '../utils/lazyScreen';
@@ -77,8 +77,8 @@ function QuizCheckLoadingScreen() {
 }
 
 export function RootNavigator() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isLoading = useAuthStore((s) => s.isLoading);
+  const { session, isLoading } = useSession();
+  const isAuthenticated = !!session;
   // null = still checking, false = quiz pending, true = quiz done
   const [quizDone, setQuizDone] = useState<boolean | null>(null);
 
