@@ -1,7 +1,7 @@
 /**
  * Supabase client using @supabase/ssr
  * Uses AsyncStorage for session persistence (the recommended approach for RN).
- * This replaces src/utils/supabaseClient.ts.
+ * Replaces the old src/utils/supabaseClient.ts.
  */
 import { createClient } from '@supabase/ssr';
 
