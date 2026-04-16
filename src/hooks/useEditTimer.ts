@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import { supabase } from '../utils/supabaseClient';
-import { useAuthStore } from '../stores/authStore';
+import { supabase } from '../lib/supabase';
+import { useSession } from '../auth/useSession';
 import { useUIStore } from '../stores/uiStore';
 import { TIER_LIMITS } from '../utils/tierLimits';
 
@@ -9,7 +9,7 @@ const SYNC_INTERVAL_MS = 60_000; // sync to Supabase every 60s
 const STARTER_DAILY_LIMIT_SECONDS = TIER_LIMITS.starter.dailyEditTimeSeconds; // 2700 (45 min)
 
 export function useEditTimer() {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const openModal = useUIStore((s) => s.actions.openModal);
 
   const accumulatedRef = useRef(0); // seconds accumulated this session

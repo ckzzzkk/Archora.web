@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../utils/supabaseClient';
-import { useAuthStore } from '../stores/authStore';
+import { supabase } from '../lib/supabase';
+import { useSession } from '../auth/useSession';
 import { useUIStore } from '../stores/uiStore';
 
 export interface StreakState {
@@ -9,8 +9,7 @@ export interface StreakState {
 }
 
 export function useStreak(): StreakState {
-  const user = useAuthStore((s) => s.user);
-  const updateUser = useAuthStore((s) => s.actions.updateUser);
+  const { user } = useSession();
   const showToast = useUIStore((s) => s.actions.showToast);
 
   const [streakCount, setStreakCount] = useState(user?.streakCount ?? 0);
@@ -40,8 +39,8 @@ export function useStreak(): StreakState {
         setStreakCount(streak_count);
         setDidIncrease(increased);
 
-        // Update authStore so other screens see latest streak
-        updateUser({ streakCount: streak_count });
+        // AuthProvider will re-fetch user data via onAuthStateChange
+        // No manual update needed
 
         if (increased && streak_count > 1) {
           showToast(`🔥 ${streak_count} day streak!`, 'success');

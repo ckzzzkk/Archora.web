@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useBlueprintStore } from '../stores/blueprintStore';
-import { useAuthStore } from '../stores/authStore';
+import { useSession } from '../auth/useSession';
 import { useUIStore } from '../stores/uiStore';
 import { useHaptics } from './useHaptics';
 import { snap } from '../utils/canvasHelpers';
@@ -34,7 +34,7 @@ export function useFurniturePlacement(onFurniturePlaced?: () => void): UseFurnit
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const addFurniture = useBlueprintStore((s) => s.actions.addFurniture);
   const updateFurniture = useBlueprintStore((s) => s.actions.updateFurniture);
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const showToast = useUIStore((s) => s.actions.showToast);
   const { light, success, warning: hapticWarning } = useHaptics();
 

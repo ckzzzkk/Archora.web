@@ -24,7 +24,7 @@ import {
   subscribeToNotifications,
   unsubscribeFromNotifications,
 } from '../../services/notificationService';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import type { AppNotification } from '../../types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { RootStackParamList } from '../../navigation/types';
@@ -183,7 +183,7 @@ interface Props {
 }
 
 export function NotificationPanel({ visible, onClose }: Props) {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
 

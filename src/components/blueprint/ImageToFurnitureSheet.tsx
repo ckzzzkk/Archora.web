@@ -7,7 +7,7 @@ import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from '../common/ArchText';
 import { OvalButton } from '../common/OvalButton';
 import { AIProcessingIndicator } from '../common/AIProcessingIndicator';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabase';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import type { CustomAsset } from '../../types/blueprint';
 import * as ImagePicker from 'expo-image-picker';

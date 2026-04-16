@@ -12,7 +12,7 @@ import Svg, { Path, Circle, Line, Rect, Polyline, G } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { useProjectStore } from '../../stores/projectStore';
 import type { Project } from '../../types';
 import { useHaptics } from '../../hooks/useHaptics';
@@ -579,7 +579,7 @@ export function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { light } = useHaptics();
   const C = useThemeColors();
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const userTier = user?.subscriptionTier ?? 'starter';
   const { projects, isLoading, actions } = useProjectStore();
   const [showNewProject, setShowNewProject] = useState(false);

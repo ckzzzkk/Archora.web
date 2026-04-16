@@ -12,7 +12,7 @@ import Animated, {
 
 import { aiService } from '../../services/aiService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { SketchLoader } from '../../components/common/SketchLoader';
 import { ArchText } from '../../components/common/ArchText';
@@ -270,6 +270,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
 export function GenerationScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
+  const { user } = useSession();
   const blueprintActions = useBlueprintStore((s) => s.actions);
   const { allowed: aiAllowed } = useTierGate('aiGenerationsPerMonth');
   const { preferences, loading: prefsLoading, prefilledFromDb, setPrefilledFromDb, save } = useGenerationPreferences();
@@ -393,7 +394,6 @@ export function GenerationScreen() {
       return;
     }
 
-    const user = useAuthStore.getState().user;
     if (!user?.id) return;
 
     setScreenState('generating');

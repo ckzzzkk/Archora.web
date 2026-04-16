@@ -5,7 +5,7 @@ import { View, Pressable, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { Storage } from '../../utils/storage';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -187,7 +187,7 @@ To request to review, update, or delete your personal information, please submit
 
 export function PrivacyPolicyScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated } = useSession();
 
   const handleAccept = () => {
     Storage.set('privacyPolicyAccepted', new Date().toISOString());

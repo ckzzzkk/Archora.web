@@ -13,7 +13,7 @@ import { useTheme } from '../../hooks/useTheme';
 import type { TierLimits } from '../../utils/tierLimits';
 import type { SubscriptionTier } from '../../types';
 import type { RootStackParamList } from '../../navigation/types';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabase';
 
 const TIER_LABELS: Record<SubscriptionTier, string> = {
   starter: 'Starter',

@@ -6,7 +6,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
 
 import { aiService } from '../../../services/aiService';
-import { useAuthStore } from '../../../stores/authStore';
+import { useSession } from '../../../auth/useSession';
 import { useUIStore } from '../../../stores/uiStore';
 import { useTierGate } from '../../../hooks/useTierGate';
 import { CompassRoseLoader } from '../../../components/common/CompassRoseLoader';
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onNext }: Props) {
-  const userId = useAuthStore((s) => s.user?.id);
+  const userId = useSession().user?.id;
   const s = useUIStore();
   const { allowed: canUploadReference } = useTierGate('blueprintUpload');
   const [uploading, setUploading] = useState(false);

@@ -10,10 +10,11 @@ import Svg, { Path, Circle, Path as SvgPath } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore, clearAllUserData } from '../../stores/authStore';
+import { useUser } from '../../auth/useUser';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { authService } from '../../services/authService';
+import { supabase } from '../../lib/supabase';
 import { useHaptics } from '../../hooks/useHaptics';
 import { DS } from '../../theme/designSystem';
 import { SUNRISE } from '../../theme/sunrise';
@@ -235,8 +236,7 @@ export function AccountScreen() {
   const { light, medium } = useHaptics();
   const C = useThemeColors();
 
-  const user = useAuthStore((s) => s.user);
-  const authActions = useAuthStore((s) => s.actions);
+  const { user, signOut } = useUser();
 
   const [editing, setEditing] = useState(false);
   const [nameVal, setNameVal] = useState(user?.displayName ?? '');
@@ -294,7 +294,9 @@ export function AccountScreen() {
   const submitName = async () => {
     setEditing(false);
     if (!nameVal.trim() || nameVal === user.displayName) return;
-    authActions.updateUser({ displayName: nameVal.trim() });
+    // Update display name in users table via Supabase
+    await supabase.from('users').update({ display_name: nameVal.trim() }).eq('id', user.id);
+    // AuthProvider's onAuthStateChange will fire and update user data reactively
   };
 
   const pickAvatar = async () => {
@@ -311,7 +313,7 @@ export function AccountScreen() {
     if (!user.id) return;
     const publicUrl = await authService.uploadAvatar(user.id, file.uri);
     if (!publicUrl) { Alert.alert('Upload Failed', 'Could not upload avatar. Please try again.'); return; }
-    authActions.updateUser({ avatarUrl: publicUrl });
+    await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', user.id);
   };
 
   const handleManageSubscription = async () => {
@@ -325,7 +327,7 @@ export function AccountScreen() {
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: () => { void authActions.signOut(); } },
+      { text: 'Sign Out', style: 'destructive', onPress: () => { void signOut(); } },
     ]);
   };
 
@@ -343,7 +345,7 @@ export function AccountScreen() {
               style: 'destructive',
               onPress: async () => {
                 try {
-                  await authActions.deleteAccount();
+                  await authService.deleteAccount();
                 } catch {
                   Alert.alert('Error', 'Could not delete your account. Please contact support.');
                 }
@@ -587,7 +589,7 @@ export function AccountScreen() {
               <OvalButton
                 label="Clear app data (dev)"
                 variant="danger"
-                onPress={() => { void clearAllUserData(); }}
+                onPress={() => { void signOut(); }}
               />
             </View>
           )}

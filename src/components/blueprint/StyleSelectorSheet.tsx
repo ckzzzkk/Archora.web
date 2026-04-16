@@ -11,7 +11,7 @@ import Animated, {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { useHaptics } from '../../hooks/useHaptics';
 import { DESIGN_STYLES, isStyleAccessible, STARTER_STYLES } from '../../data/designStyles';
 import { TIER_LIMITS } from '../../utils/tierLimits';
@@ -31,7 +31,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
   const { light, medium } = useHaptics();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const tier = user?.subscriptionTier ?? 'starter';
 
   const applyStyle = useBlueprintStore((s) => s.actions.applyStyle);

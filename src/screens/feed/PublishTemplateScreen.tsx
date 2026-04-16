@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import type { PublishTemplateScreenProps } from '../../navigation/types';
 import { inspoService } from '../../services/inspoService';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { useUIStore } from '../../stores/uiStore';
 import { useTierGate } from '../../hooks/useTierGate';
 
@@ -63,7 +63,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
   const { projectId } = route.params;
   
   const { medium, light } = useHaptics();
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const showToast = useUIStore((s) => s.actions.showToast);
 
   const publishGate = useTierGate('publishTemplates');

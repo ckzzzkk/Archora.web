@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useHaptics } from '../../hooks/useHaptics';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { inspoService } from '../../services/inspoService';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -22,8 +22,8 @@ interface LikeButtonProps {
 export function LikeButton({ templateId, likeCount: initialCount, isLiked: initialLiked, onToggle }: LikeButtonProps) {
   const { colors } = useTheme();
   const { medium } = useHaptics();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const userId = useAuthStore((s) => s.user?.id);
+  const { isAuthenticated, user } = useSession();
+  const userId = user?.id;
 
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);

@@ -13,7 +13,7 @@ import { useEditTimer } from '../../hooks/useEditTimer';
 import { useShakeDetector } from '../../hooks/useShakeDetector';
 import { use2D3DSync } from '../../hooks/use2D3DSync';
 import { TIER_LIMITS } from '../../utils/tierLimits';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { useUIStore } from '../../stores/uiStore';
 import { Canvas2D } from '../../components/blueprint/Canvas2D';
 import type { Canvas2DHandle } from '../../components/blueprint/Canvas2D';
@@ -158,7 +158,7 @@ export function BlueprintWorkspaceScreen() {
     addElevator,
   } = useBlueprintStore((s) => s.actions);
 
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const showToast = useUIStore((s) => s.actions.showToast);
   const tier = user?.subscriptionTier ?? 'starter';
   const maxFloors = TIER_LIMITS[tier].maxFloors;

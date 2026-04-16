@@ -1,5 +1,4 @@
-import { supabase } from '../utils/supabaseClient';
-import { useAuthStore } from '../stores/authStore';
+import { supabase } from '../lib/supabase';
 import { useUIStore } from '../stores/uiStore';
 
 export const PointEvents = {
@@ -21,14 +20,16 @@ export const PointEvents = {
 export type PointEventKey = keyof typeof PointEvents;
 
 export async function awardPoints(event: PointEventKey): Promise<number> {
-  const user = useAuthStore.getState().user;
-  if (!user?.id) return 0;
+  // Get current user from Supabase session
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData?.session?.user?.id;
+  if (!userId) return 0;
 
   const delta = PointEvents[event];
 
   try {
     const { data, error } = await supabase.rpc('award_points', {
-      p_user_id: user.id,
+      p_user_id: userId,
       p_event: event,
       p_delta: delta,
     });
@@ -39,9 +40,6 @@ export async function awardPoints(event: PointEventKey): Promise<number> {
     }
 
     const newTotal = (data as { total: number } | null)?.total ?? 0;
-
-    // Update authStore
-    useAuthStore.getState().actions.updateUser({ pointsTotal: newTotal });
 
     // Show points toast
     useUIStore.getState().actions.showToast(`+${delta} points`, 'success');
@@ -54,14 +52,15 @@ export async function awardPoints(event: PointEventKey): Promise<number> {
 }
 
 export async function getPointsTotal(): Promise<number> {
-  const user = useAuthStore.getState().user;
-  if (!user?.id) return 0;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData?.session?.user?.id;
+  if (!userId) return 0;
 
   try {
     const { data, error } = await supabase
       .from('user_points')
       .select('total')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (error || !data) return 0;

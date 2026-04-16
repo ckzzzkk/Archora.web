@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type * as Notifications from 'expo-notifications';
-import { useAuthStore } from '../stores/authStore';
+import { useSession } from '../auth/useSession';
 import {
   getNotifications,
   getUnreadCount,
@@ -68,7 +68,7 @@ export function setupPushListeners(): () => void {
 // ── Hook (for screen/panel use) ─────────────────────────────────────────────
 
 export function useNotifications() {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);

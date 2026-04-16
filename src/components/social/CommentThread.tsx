@@ -8,8 +8,8 @@ import { SkeletonLoader } from '../common/SkeletonLoader';
 import { EmptyState } from '../common/EmptyState';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
-import { supabase } from '../../utils/supabaseClient';
-import { useAuthStore } from '../../stores/authStore';
+import { supabase } from '../../lib/supabase';
+import { useSession } from '../../auth/useSession';
 import type { Comment } from '../../types';
 
 interface CommentItemProps {
@@ -117,8 +117,7 @@ interface CommentThreadProps {
 export function CommentThread({ templateId, comments, loading = false, onCommentPosted }: CommentThreadProps) {
   const { colors } = useTheme();
   const { medium } = useHaptics();
-  const user = useAuthStore((s) => s.user);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { user, isAuthenticated } = useSession();
 
   const [body, setBody] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);

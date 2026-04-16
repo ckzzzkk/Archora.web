@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useBlueprintStore } from '../stores/blueprintStore';
-import { useAuthStore } from '../stores/authStore';
+import { useSession } from '../auth/useSession';
 import { aiService } from '../services/aiService';
 import { useToast } from './useToast';
 import { TIER_LIMITS } from '../utils/tierLimits';
@@ -18,7 +18,7 @@ export function useBlueprint() {
   const isDirty = useBlueprintStore((s) => s.isDirty);
   const actions = useBlueprintStore((s) => s.actions);
 
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const { showToast } = useToast();
 
   const generateFromPrompt = useCallback(

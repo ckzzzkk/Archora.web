@@ -4,7 +4,7 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTierGate } from '../../hooks/useTierGate';
 import { TIER_LIMITS } from '../../utils/tierLimits';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import type { FloorData } from '../../types/blueprint';
 
 interface Props {
@@ -79,7 +79,7 @@ export function FloorSelectorBar({
   onDeleteFloor,
   onStaircasePrompt,
 }: Props) {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const tier = user?.subscriptionTier ?? 'starter';
   const maxFloors = TIER_LIMITS[tier].maxFloors;
   const canAddFloor = floors.length < maxFloors;

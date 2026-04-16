@@ -28,7 +28,7 @@ import { useHaptics } from '../../hooks/useHaptics';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
 import { Storage } from '../../utils/storage';
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../lib/supabase';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 
 

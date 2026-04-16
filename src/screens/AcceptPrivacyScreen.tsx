@@ -5,7 +5,7 @@ import { ArchText } from '../components/common/ArchText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useAuthStore } from '../stores/authStore';
+import { useSession } from '../auth/useSession';
 import { Storage } from '../utils/storage';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -13,7 +13,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function AcceptPrivacyScreen() {
   const navigation = useNavigation<NavProp>();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated } = useSession();
 
   const handleAccept = () => {
     Storage.set('privacyPolicyAccepted', new Date().toISOString());

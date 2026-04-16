@@ -12,7 +12,7 @@ import Svg, { Path } from 'react-native-svg';
 import type { PurchaseTemplateScreenProps } from '../../navigation/types';
 import { inspoService } from '../../services/inspoService';
 import { subscriptionService } from '../../services/subscriptionService';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { useUIStore } from '../../stores/uiStore';
 
 import { useHaptics } from '../../hooks/useHaptics';
@@ -57,7 +57,7 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
   const { templateId } = route.params;
   
   const { medium } = useHaptics();
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const showToast = useUIStore((s) => s.actions.showToast);
 
   const [template, setTemplate] = useState<Template | null>(null);

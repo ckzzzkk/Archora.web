@@ -4,8 +4,8 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
-import { supabase } from '../../utils/supabaseClient';
-import { useAuthStore } from '../../stores/authStore';
+import { supabase } from '../../lib/supabase';
+import { useSession } from '../../auth/useSession';
 
 interface RatingStarsProps {
   rating: number;
@@ -59,7 +59,7 @@ export function RatingStars({
 }: RatingStarsProps) {
   const { colors } = useTheme();
   const { light } = useHaptics();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated } = useSession();
   const [localRating, setLocalRating] = useState<number | null>(userRating ?? null);
 
   const displayRating = localRating ?? rating;

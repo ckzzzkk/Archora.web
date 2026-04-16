@@ -5,7 +5,7 @@ import { View,  Pressable, ScrollView } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { DESIGN_STYLES } from '../../../data/designStyles';
-import { useAuthStore } from '../../../stores/authStore';
+import { useSession } from '../../../auth/useSession';
 import { getAvailableStyles, isStyleAccessible } from '../../../utils/tierLimits';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 
 export function Step4Style({ selected, onSelect, onNext }: Props) {
   const scrollRef = useRef<ScrollView>(null);
-  const tier = useAuthStore((s) => s.user?.subscriptionTier ?? 'starter');
+  const tier = useSession().user?.subscriptionTier ?? 'starter';
   const available = getAvailableStyles(tier);
 
   const handleSelect = useCallback((id: string, index: number) => {

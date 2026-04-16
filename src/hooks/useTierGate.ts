@@ -1,4 +1,4 @@
-import { useAuthStore } from '../stores/authStore';
+import { useSession } from '../auth/useSession';
 import { TIER_LIMITS, isFeatureAllowed, getUpgradeTier, type TierLimits } from '../utils/tierLimits';
 import type { SubscriptionTier } from '../types';
 
@@ -11,7 +11,7 @@ export interface TierGateResult {
 }
 
 export function useTierGate(feature: keyof TierLimits): TierGateResult {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const tier: SubscriptionTier = user?.subscriptionTier ?? 'starter';
   const limits = TIER_LIMITS[tier];
   const usage = feature === 'aiGenerationsPerMonth'

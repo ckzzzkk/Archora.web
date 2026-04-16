@@ -12,7 +12,7 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
 import { ArchText } from '../../components/common/ArchText';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
@@ -199,7 +199,7 @@ export function SubscriptionScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [billing, setBilling] = useState<BillingInterval>('monthly');
   const [isLoading, setIsLoading] = useState(false);
-  const user = useAuthStore((s) => s.user);
+  const { user } = useSession();
   const tier = user?.subscriptionTier ?? 'starter';
 
   // Billing toggle animation
