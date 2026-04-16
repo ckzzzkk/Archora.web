@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { aiService } from '../services/aiService';
 import type { GenerationPayload } from '../types/generation';
 import type { UserPreferences } from '../services/aiService';
-import { useSession } from './useSession';
+import { useSession } from '../auth/useSession';
 
 export function useGenerationPreferences() {
   const { user } = useSession();
