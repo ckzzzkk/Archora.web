@@ -14,7 +14,9 @@ import { OvalInput } from '../../components/common/OvalInput';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { DS } from '../../theme/designSystem';
-import { useAuthStore } from '../../stores/authStore';
+import { useSession } from '../../auth/useSession';
+import { signInWithEmail } from '../../auth/signInWithEmail';
+import { signInWithGoogle } from '../../auth/signInWithGoogle';
 import type { AuthStackParamList } from '../../navigation/types';
 
 
@@ -64,8 +66,6 @@ function EyeIcon({ visible }: { visible: boolean }) {
 export function LoginScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const insets = useSafeAreaInsets();
-  const { signIn, signInWithGoogle } = useAuthStore((s) => s.actions);
-
   // Form state
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -124,8 +124,8 @@ export function LoginScreen() {
     setError('');
     setLoading(true);
     try {
-      await signIn(email.trim(), password);
-      // Navigation handled by RootNavigator auth state change
+      await signInWithEmail(email.trim(), password);
+      // AuthProvider's onAuthStateChange fires → session set → navigator re-renders
     } catch (e) {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
@@ -142,22 +142,14 @@ export function LoginScreen() {
   };
 
   const handleGoogleSignIn = async () => {
-    console.log('[GoogleSignIn] button pressed, starting OAuth flow');
     setGoogleLoading(true);
     setError('');
     try {
-      await Promise.race([
-        signInWithGoogle(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Connection timed out. Check your internet.')), 15000)
-        ),
-      ]);
+      await signInWithGoogle();
+      // AuthProvider handles session automatically — navigator will re-render
     } catch (e) {
-      console.error('[GoogleSignIn]', e);
       setError(
-        e instanceof Error
-          ? `Google sign in failed: ${e.message}`
-          : 'Google sign in failed. Please try again.'
+        e instanceof Error ? `Google sign in failed: ${e.message}` : 'Google sign in failed. Please try again.'
       );
     } finally {
       setGoogleLoading(false);
