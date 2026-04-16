@@ -1,6 +1,7 @@
 import { supabase } from '../utils/supabaseClient';
 import type { BlueprintData } from '../types';
 import type { GenerationPayload } from '../types/generation';
+import { validateBlueprintData } from '../utils/blueprintValidation';
 
 export interface UserPreferences {
   user_id: string;
@@ -70,13 +71,20 @@ export const aiService = {
 
       const raw = await response.json();
       // Support both old edge function (raw BlueprintData) and new ({ blueprint: BlueprintData })
-      const blueprintData = (raw && typeof raw === 'object' && 'blueprint' in raw)
+      const rawBlueprint = (raw && typeof raw === 'object' && 'blueprint' in raw)
         ? (raw as { blueprint: BlueprintData }).blueprint
         : (raw as BlueprintData);
-      if (!blueprintData || !Array.isArray(blueprintData.rooms)) {
-        throw Object.assign(new Error('Invalid response from AI'), { code: 'INVALID_RESPONSE' });
+
+      // Validate AI-generated blueprint against schema to prevent malformed/injected data
+      const validation = validateBlueprintData(rawBlueprint);
+      if (!validation.valid || !validation.data) {
+        console.error('[aiService] Blueprint validation failed:', validation.errors);
+        throw Object.assign(new Error('Invalid response from AI'), {
+          code: 'INVALID_RESPONSE',
+          details: validation.errors,
+        });
       }
-      return blueprintData;
+      return validation.data as BlueprintData;
     } catch (err: unknown) {
       clearTimeout(timeoutId);
       if (err instanceof Error && err.name === 'AbortError') {
@@ -291,13 +299,20 @@ export const aiService = {
       }
 
       const raw = await response.json();
-      const blueprintData = (raw && typeof raw === 'object' && 'blueprint' in raw)
+      const rawBlueprint = (raw && typeof raw === 'object' && 'blueprint' in raw)
         ? (raw as { blueprint: BlueprintData }).blueprint
         : (raw as BlueprintData);
-      if (!blueprintData || !Array.isArray(blueprintData.rooms)) {
-        throw Object.assign(new Error('Invalid response from AI'), { code: 'INVALID_RESPONSE' });
+
+      // Validate AI-generated blueprint against schema
+      const validation = validateBlueprintData(rawBlueprint);
+      if (!validation.valid || !validation.data) {
+        console.error('[aiService] generateOptimal validation failed:', validation.errors);
+        throw Object.assign(new Error('Invalid response from AI'), {
+          code: 'INVALID_RESPONSE',
+          details: validation.errors,
+        });
       }
-      return blueprintData;
+      return validation.data as BlueprintData;
     } catch (err: unknown) {
       clearTimeout(timeoutId);
       if (err instanceof Error && err.name === 'AbortError') {

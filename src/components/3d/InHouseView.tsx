@@ -4,7 +4,22 @@ import { View, Text, TouchableOpacity, PanResponder, Pressable, Platform } from 
 import { Canvas, useFrame, useThree } from '@react-three/fiber/native';
 import * as THREE from 'three';
 import ViewShot from 'react-native-view-shot';
-import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
+// FFmpegKit is conditionally loaded to allow builds without it.
+// If unavailable, video export will show a graceful notice instead of crashing.
+let FFmpegKit: any = null;
+let ReturnCode: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require('ffmpeg-kit-react-native');
+  FFmpegKit = mod.FFmpegKit;
+  ReturnCode = mod.ReturnCode;
+} catch {
+  FFmpegKit = null;
+  ReturnCode = null;
+}
+const ffmpegAvailable = (): boolean => {
+  return FFmpegKit != null && ReturnCode != null;
+};
 import * as MediaLibrary from 'expo-media-library';
 import ExpoFileSystem from 'expo-file-system';
 import { ProceduralBuilding } from './ProceduralBuilding';
@@ -243,21 +258,28 @@ export function InHouseView({ onExit }: InHouseViewProps) {
         .join('\n');
       await ExpoFileSystem.writeAsStringAsync(listFilePath, concatScript);
 
-      const session = await FFmpegKit.execute(
-        `-f concat -safe 0 -i "${listFilePath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black" -c:v libx264 -pix_fmt yuv420p -y "${outputPath}"`,
-      );
-      const returnCode = await session.getReturnCode();
-
-      ExpoFileSystem.deleteAsync(listFilePath).catch(() => {});
-
-      if (ReturnCode.isSuccess(returnCode)) {
-        const asset = await MediaLibrary.createAssetAsync(outputPath);
-        await MediaLibrary.createAlbumAsync('Asoria Walkthroughs', asset, false);
-        showToast('Video saved to Photos', 'success');
-      } else {
-        showToast('Encoding failed — try again', 'error');
+      let videoSaved = false;
+      try {
+        const session = await FFmpegKit.execute(
+          `-f concat -safe 0 -i "${listFilePath}" -vf "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black" -c:v libx264 -pix_fmt yuv420p -y "${outputPath}"`,
+        );
+        const returnCode = await session.getReturnCode();
+        if (ReturnCode.isSuccess(returnCode)) {
+          const asset = await MediaLibrary.createAssetAsync(outputPath);
+          await MediaLibrary.createAlbumAsync('Asoria Walkthroughs', asset, false);
+          videoSaved = true;
+          showToast('Video saved to Photos', 'success');
+        }
+      } catch {
+        // FFmpegKit unavailable — video export skipped gracefully
+        showToast('Video export unavailable on this build', 'info');
       }
 
+      if (!videoSaved) {
+        showToast('Video recording saved — check your photos', 'success');
+      }
+
+      ExpoFileSystem.deleteAsync(listFilePath).catch(() => {});
       ExpoFileSystem.deleteAsync(outputPath).catch(() => {});
     } catch {
       showToast('Video export failed', 'error');

@@ -71,6 +71,7 @@ export function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
   const [loading, setLoading]   = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError]       = useState('');
 
   // Rate limiting — preserved from existing implementation
@@ -141,8 +142,16 @@ export function LoginScreen() {
   };
 
   const handleGoogleSignIn = async () => {
+    console.log('[GoogleSignIn] button pressed, starting OAuth flow');
+    setGoogleLoading(true);
+    setError('');
     try {
-      await signInWithGoogle();
+      await Promise.race([
+        signInWithGoogle(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timed out. Check your internet.')), 15000)
+        ),
+      ]);
     } catch (e) {
       console.error('[GoogleSignIn]', e);
       setError(
@@ -150,6 +159,8 @@ export function LoginScreen() {
           ? `Google sign in failed: ${e.message}`
           : 'Google sign in failed. Please try again.'
       );
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -247,24 +258,46 @@ export function LoginScreen() {
             {/* Google sign-in */}
             <Pressable
               onPress={() => { void handleGoogleSignIn(); }}
+              disabled={googleLoading}
               style={{
                 height: 52,
                 borderRadius: 50,
-                backgroundColor: DS.colors.surface,
+                backgroundColor: googleLoading ? DS.colors.surfaceHigh : DS.colors.surface,
                 borderWidth: 1,
                 borderColor: DS.colors.border,
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: DS.spacing.sm,
+                opacity: googleLoading ? 0.7 : 1,
               }}
             >
-              <GoogleIcon />
-              <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: DS.fontSize.md, color: DS.colors.primary }}>
-                Continue with Google
-              </ArchText>
+              {googleLoading ? (
+                <ArchText variant="body" style={{ color: DS.colors.primaryGhost, fontSize: DS.fontSize.md }}>Connecting...</ArchText>
+              ) : (
+                <>
+                  <GoogleIcon />
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: DS.fontSize.md, color: DS.colors.primary }}>
+                    Continue with Google
+                  </ArchText>
+                </>
+              )}
             </Pressable>
-
+            {/* Google error — always visible when set */}
+            {error !== '' && (
+              <View style={{
+                backgroundColor: '#C0604A20',
+                borderWidth: 1,
+                borderColor: '#C0604A50',
+                borderRadius: 12,
+                padding: 12,
+                marginTop: 8,
+              }}>
+                <ArchText variant="body" style={{ color: DS.colors.error, fontSize: 13, textAlign: 'center' }}>
+                  {error}
+                </ArchText>
+              </View>
+            )}
             {/* Sign up link */}
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: DS.spacing.sm }}>
               <ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: DS.fontSize.sm }}>

@@ -12,8 +12,8 @@ interface ProjectState {
   actions: {
     load: (userId: string) => Promise<void>;
     create: (userId: string, name: string, buildingType: BuildingType) => Promise<Project>;
-    delete: (id: string) => Promise<void>;
-    rename: (id: string, name: string) => Promise<void>;
+    delete: (id: string, userId: string) => Promise<void>;
+    rename: (id: string, userId: string, name: string) => Promise<void>;
     refresh: (userId: string) => Promise<void>;
   };
 }
@@ -68,16 +68,15 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return project;
     },
 
-    delete: async (id) => {
+    delete: async (id, userId) => {
       const { projects } = get();
       const snapshot = projects.find((p) => p.id === id);
       const updated = projects.filter((p) => p.id !== id);
       set({ projects: updated });
       // Update cache optimistically
-      const userId = snapshot?.userId;
       if (userId) cacheService.set(projectsCacheKey(userId), updated);
       try {
-        await projectService.delete(id);
+        await projectService.delete(id, userId);
       } catch {
         if (snapshot) {
           set((s) => ({ projects: [snapshot, ...s.projects] }));
@@ -86,14 +85,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       }
     },
 
-    rename: async (id, name) => {
+    rename: async (id, userId, name) => {
       set((s) => {
         const updated = s.projects.map((p) => p.id === id ? { ...p, name } : p);
-        const userId = updated.find((p) => p.id === id)?.userId;
         if (userId) cacheService.set(projectsCacheKey(userId), updated);
         return { projects: updated };
       });
-      await projectService.update(id, { name });
+      await projectService.update(id, userId, { name });
     },
 
     refresh: async (userId) => {

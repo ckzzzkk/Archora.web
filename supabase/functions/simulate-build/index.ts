@@ -129,8 +129,9 @@ serve(async (req) => {
     if (!anthropicKey) {
       return new Response(JSON.stringify({
         error: 'AI_NOT_CONFIGURED',
-        message: 'Simulation engine coming soon — API key not yet configured',
-      }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        message: 'AI generation coming soon — team is configuring the AI pipeline',
+        fallback: true,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const userMessage = `Analyse this blueprint and return the simulation report as JSON.

@@ -5,6 +5,7 @@ import { Errors } from '../_shared/errors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { logAudit } from '../_shared/audit.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { checkQuota } from '../_shared/quota.ts';
 
 type SubscriptionTier = 'starter' | 'creator' | 'pro' | 'architect';
 
@@ -43,6 +44,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const rateLimitOk = await checkRateLimit(`stripe-sync:${user.id}`, 30, 3600);
   if (!rateLimitOk) return Errors.rateLimited('Rate limit exceeded');
+
+  const quotaOk = await checkQuota(user.id, 'ai_generation');
+  if (!quotaOk) {
+    console.warn('[stripe-sync] Quota check failed for user:', user.id);
+  }
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -90,7 +96,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const priceId = sub.items.data[0]?.price.id ?? '';
     const tier = getTierFromPriceId(priceId);
 
-    await supabase.from('users').update({ subscription_tier: tier }).eq('id', user.id);
+    await supabase.from('users').upsert({ id: user.id, subscription_tier: tier }, { onConflict: 'id' });
     await supabase.from('subscriptions').upsert({
       user_id: user.id,
       stripe_subscription_id: sub.id,

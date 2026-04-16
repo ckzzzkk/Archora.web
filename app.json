@@ -56,16 +56,19 @@
       "backgroundColor": "#1A1A1A"
     },
     "plugins": [
-      ["expo-build-properties", {
-        "android": {
-          "enableHermes": true,
-          "enableProguardInReleaseBuilds": true,
-          "enableShrinkResourcesInReleaseBuilds": true
-        },
-        "ios": {
-          "flipper": false
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableHermes": true,
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          },
+          "ios": {
+            "flipper": false
+          }
         }
-      }],
+      ],
       "./plugin/withARKitModule",
       "expo-camera",
       [
@@ -91,7 +94,8 @@
           "androidCollapsedTitle": "ASORIA",
           "androidNotificationChannel": "default"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

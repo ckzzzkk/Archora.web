@@ -16,6 +16,8 @@ import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { ConfirmationCard } from './ConfirmationCard';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
+import { buildSelectedContext, sanitizePrompt } from '../../utils/promptSanitizer';
+import { validateChatMessage } from '../../utils/blueprintValidation';
 import type { ChatMessage, BlueprintData } from '../../types/blueprint';
 
 function ChatBubbleIcon({ color }: { color: string }) {
@@ -83,20 +85,13 @@ export function AIChatPanel({ visible, onToggle }: Props) {
   const addChatMessage = useBlueprintStore((s) => s.actions.addChatMessage);
   const loadBlueprint = useBlueprintStore((s) => s.actions.loadBlueprint);
 
-  // Build selected-object context for AI
-  const selectedContext = (() => {
-    if (!selectedId || !blueprint) return '';
-    const walls = blueprint.walls ?? [];
-    const rooms = blueprint.rooms ?? [];
-    const furniture = blueprint.furniture ?? [];
-    const wall = walls.find((w) => w.id === selectedId);
-    if (wall) return `[Selected: wall "${wall.id}" texture=${wall.texture ?? 'plain'}]`;
-    const room = rooms.find((r) => r.id === selectedId);
-    if (room) return `[Selected: room "${room.name}" area=${room.area}m²]`;
-    const piece = furniture.find((f) => f.id === selectedId);
-    if (piece) return `[Selected: ${piece.name} (${piece.category}) at position (${piece.position.x.toFixed(1)}, ${piece.position.z.toFixed(1)})]`;
-    return '';
-  })();
+  // Build selected-object context for AI (uses sanitized values)
+  const selectedContext = buildSelectedContext({
+    selectedId,
+    walls: blueprint?.walls,
+    rooms: blueprint?.rooms,
+    furniture: blueprint?.furniture,
+  });
 
   React.useEffect(() => {
     panelY.value = visible
@@ -109,27 +104,52 @@ export function AIChatPanel({ visible, onToggle }: Props) {
   const recentMessages = (blueprint?.chatHistory ?? []).slice(-5);
 
   const sendMessage = useCallback(async () => {
-    const text = input.trim();
-    if (!text || isLoading || !blueprint) return;
+    const rawText = input.trim();
+    if (!rawText || isLoading || !blueprint) return;
+
+    // Sanitize user input to prevent prompt injection
+    const text = sanitizePrompt(rawText);
+    if (!text) return;
+
+    // Validate and sanitize chat message content
+    const sanitizedContent = validateChatMessage(text);
+    if (!sanitizedContent) return;
+
     setInput('');
     setIsLoading(true);
 
-    const userMsg: ChatMessage = { id: `msg_${Date.now()}`, role: 'user', content: text, timestamp: new Date().toISOString() };
+    const userMsg: ChatMessage = {
+      id: `msg_${Date.now()}`,
+      role: 'user',
+      content: sanitizedContent,
+      timestamp: new Date().toISOString()
+    };
     addChatMessage(userMsg);
 
     try {
-      const enrichedPrompt = selectedContext ? `${text}\n\n${selectedContext}` : text;
+      // Sanitize context and combine with prompt
+      const safeContext = selectedContext;
+      const enrichedPrompt = safeContext ? `${text}\n\n${safeContext}` : text;
       const data = await aiService.editBlueprint({ prompt: enrichedPrompt, blueprint });
 
       if (data.blueprint) {
         setPendingBlueprint(data.blueprint);
         setPendingMessage(data.message ?? 'Blueprint updated.');
-        addChatMessage({ id: `msg_${Date.now()}_r`, role: 'assistant', content: data.message ?? 'Done! Review the changes below.', timestamp: new Date().toISOString() });
+        const responseContent = validateChatMessage(data.message ?? 'Done! Review the changes below.');
+        if (responseContent) {
+          addChatMessage({ id: `msg_${Date.now()}_r`, role: 'assistant', content: responseContent, timestamp: new Date().toISOString() });
+        }
       } else {
-        addChatMessage({ id: `msg_${Date.now()}_r`, role: 'assistant', content: data.message ?? "Couldn't apply that change.", timestamp: new Date().toISOString() });
+        const responseContent = validateChatMessage(data.message ?? "Couldn't apply that change.");
+        if (responseContent) {
+          addChatMessage({ id: `msg_${Date.now()}_r`, role: 'assistant', content: responseContent, timestamp: new Date().toISOString() });
+        }
       }
     } catch {
-      addChatMessage({ id: `msg_${Date.now()}_e`, role: 'assistant', content: "Sorry, I couldn't process that. Please try again.", timestamp: new Date().toISOString() });
+      const errorContent = validateChatMessage("Sorry, I couldn't process that. Please try again.");
+      if (errorContent) {
+        addChatMessage({ id: `msg_${Date.now()}_e`, role: 'assistant', content: errorContent, timestamp: new Date().toISOString() });
+      }
     } finally {
       setIsLoading(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);

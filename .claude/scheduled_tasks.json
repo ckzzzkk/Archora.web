@@ -5,7 +5,8 @@
       "cron": "0 16 * * 2",
       "prompt": "curl -s -o /dev/null -w \"Supabase ping result: %{http_code}\\n\" https://your-supabase-url.supabase.co",
       "createdAt": 1776097393523,
-      "recurring": true
+      "recurring": true,
+      "lastFiredAt": 1776194424192
     }
   ]
 }

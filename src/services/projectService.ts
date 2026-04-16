@@ -38,7 +38,17 @@ export const projectService = {
     return mapRow(data as Record<string, unknown>);
   },
 
-  async update(id: string, updates: Partial<{ name: string; blueprintData: BlueprintData; thumbnailUrl: string; isPublished: boolean }>): Promise<Project> {
+  async update(id: string, userId: string, updates: Partial<{ name: string; blueprintData: BlueprintData; thumbnailUrl: string; isPublished: boolean }>): Promise<Project> {
+    // Ownership verification — user must own this project
+    const { data: existing } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', id)
+      .single();
+    if (!existing || existing.user_id !== userId) {
+      throw new Error('Not authorized to update this project');
+    }
+
     const dbUpdates: Record<string, unknown> = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.blueprintData !== undefined) dbUpdates.blueprint_data = updates.blueprintData;
@@ -55,16 +65,28 @@ export const projectService = {
     return mapRow(data as Record<string, unknown>);
   },
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, userId: string): Promise<void> {
+    // Ownership verification — user must own this project
+    const { data: existing } = await supabase
+      .from('projects')
+      .select('user_id')
+      .eq('id', id)
+      .single();
+    if (!existing || existing.user_id !== userId) {
+      throw new Error('Not authorized to delete this project');
+    }
+
     const { error } = await supabase.from('projects').delete().eq('id', id);
     if (error) throw error;
   },
 
-  async get(id: string): Promise<Project> {
+  async get(id: string, userId: string): Promise<Project> {
+    // Ownership verification — user must own this project
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .eq('id', id)
+      .eq('user_id', userId)
       .single();
     if (error) throw error;
     return mapRow(data as Record<string, unknown>);

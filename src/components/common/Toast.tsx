@@ -32,13 +32,22 @@ export function Toast({ message, title, type = 'info', onDismiss, duration = 300
 
   useEffect(() => {
     translateY.value = withSpring(0, { damping: 15, stiffness: 200 });
-    const timer = setTimeout(() => {
-      translateY.value = withTiming(-120, { duration: 250 }, () => {
-        // onDismiss would need to run on JS thread
-      });
-      setTimeout(onDismiss, 260);
+    const dismissed = { current: false };
+    const timer2 = { current: null as ReturnType<typeof setTimeout> | null };
+    const timer1 = setTimeout(() => {
+      translateY.value = withTiming(-120, { duration: 250 });
+      timer2.current = setTimeout(() => {
+        if (!dismissed.current) {
+          dismissed.current = true;
+          onDismiss();
+        }
+      }, 260);
     }, duration);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer1);
+      if (timer2.current !== null) clearTimeout(timer2.current);
+      dismissed.current = true;
+    };
   }, []);
 
   const swipeUp = Gesture.Pan()

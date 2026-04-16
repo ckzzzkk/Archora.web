@@ -1337,8 +1337,9 @@ Return ONLY valid JSON, no markdown.`;
       // AI_NOT_CONFIGURED is a custom code not in Errors.* — kept as direct response
       return new Response(JSON.stringify({
         error: 'AI_NOT_CONFIGURED',
-        message: 'AI generation coming soon — API key not yet configured',
-      }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        message: 'AI generation coming soon — team is configuring the AI pipeline',
+        fallback: true,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const startMs = Date.now();

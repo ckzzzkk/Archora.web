@@ -1,2 +1,45 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+
+# Android
+android/app/build/
+android/.gradle/
+android/build/
+!.gitkeep
+
+# iOS (generated via expo prebuild)
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+ios/*.xcodeproj
+
+# JavaScript build artifacts
+.expo/
+dist/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Keystores (NEVER commit)
+*.jks
+*.keystore
+
+# Gradle
+.gradle/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Worktrees (keep this)
 .worktrees
-.gitnexus

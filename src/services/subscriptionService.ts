@@ -14,6 +14,19 @@ async function getAuthHeader(): Promise<Record<string, string>> {
 }
 
 export const subscriptionService = {
+  async manageSubscriptionPortal(returnUrl: string): Promise<string> {
+    const headers = await getAuthHeader();
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/stripe-portal`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ returnUrl }),
+    });
+    if (!response.ok) throw new Error('Could not open subscription management');
+    const { url } = await response.json() as { url: string };
+    if (!url) throw new Error('No portal URL returned');
+    return url;
+  },
+
   async syncSubscription(): Promise<{ synced: boolean; tier?: string }> {
     const headers = await getAuthHeader();
     const response = await fetch(`${SUPABASE_URL}/functions/v1/stripe-sync`, {

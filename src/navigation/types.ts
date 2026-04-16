@@ -21,6 +21,7 @@ export type MainTabParamList = {
 };
 
 export type RootStackParamList = {
+  AcceptPrivacy: undefined;
   Auth: undefined;
   Main: undefined;
   Onboarding: undefined;

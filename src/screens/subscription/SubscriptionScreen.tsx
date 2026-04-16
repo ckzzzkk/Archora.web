@@ -21,6 +21,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { SubscriptionTier } from '../../types';
 import { TIER_LIMITS } from '../../utils/tierLimits';
+import { subscriptionService } from '../../services/subscriptionService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Subscription'>;
 
@@ -220,9 +221,13 @@ export function SubscriptionScreen({ navigation }: Props) {
 
   const handleManageSubscription = async () => {
     try {
-      await Linking.openURL('https://asoria.app/account');
-    } catch {
-      Alert.alert('Error', 'Could not open subscription page');
+      setIsLoading(true);
+      const url = await subscriptionService.manageSubscriptionPortal('asoria://account');
+      if (url) await Linking.openURL(url);
+    } catch (err) {
+      Alert.alert('Error', 'Could not open subscription management. Please visit asoria.app/account on web.');
+    } finally {
+      setIsLoading(false);
     }
   };
 

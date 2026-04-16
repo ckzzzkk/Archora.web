@@ -30,10 +30,13 @@ export function useGenerationPreferences() {
 
   const save = useCallback(async (payload: Partial<GenerationPayload>) => {
     if (!user?.id) return;
-    await aiService.upsertUserPreferences(user.id, payload);
-    // Refresh local state
-    const updated = await aiService.fetchUserPreferences(user.id);
-    setPreferences(updated);
+    try {
+      await aiService.upsertUserPreferences(user.id, payload);
+      const updated = await aiService.fetchUserPreferences(user.id);
+      setPreferences(updated);
+    } catch (err) {
+      console.error('[useGenerationPreferences] save failed:', err);
+    }
   }, [user?.id]);
 
   return { preferences, loading, prefilledFromDb, setPrefilledFromDb, save };

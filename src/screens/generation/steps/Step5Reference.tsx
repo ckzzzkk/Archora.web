@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { aiService } from '../../../services/aiService';
 import { useAuthStore } from '../../../stores/authStore';
+import { useUIStore } from '../../../stores/uiStore';
 import { useTierGate } from '../../../hooks/useTierGate';
 import { CompassRoseLoader } from '../../../components/common/CompassRoseLoader';
 
@@ -19,6 +20,7 @@ interface Props {
 
 export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onNext }: Props) {
   const userId = useAuthStore((s) => s.user?.id);
+  const s = useUIStore();
   const { allowed: canUploadReference } = useTierGate('blueprintUpload');
   const [uploading, setUploading] = useState(false);
   const [localUri, setLocalUri] = useState<string | null>(null);
@@ -54,10 +56,13 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
     try {
       if (!userId) throw new Error('Not authenticated');
       const publicUrl = await aiService.uploadReferenceImage(userId, asset.uri);
-      if (!publicUrl) throw new Error('Upload returned no URL');
-      onImageUploaded(publicUrl);
+      if (!publicUrl) {
+        s.actions.showToast('Failed to upload reference image — generation will continue without it', 'warning');
+      } else {
+        onImageUploaded(publicUrl);
+      }
     } catch {
-      Alert.alert('Upload failed', 'Could not upload image. Please try again.');
+      s.actions.showToast('Failed to upload reference image — generation will continue without it', 'warning');
       setLocalUri(null);
     } finally {
       setUploading(false);

@@ -355,8 +355,8 @@ serve(async (req) => {
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicKey) {
       return new Response(
-        JSON.stringify({ error: 'AI_NOT_CONFIGURED', message: 'AI not yet configured' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        JSON.stringify({ error: 'AI_NOT_CONFIGURED', message: 'AI generation coming soon — team is configuring the AI pipeline', fallback: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 

@@ -101,10 +101,10 @@ serve(async (req: Request) => {
 
     const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_KEY) {
-      console.error('[ai-edit-blueprint] ANTHROPIC_API_KEY not set — returning 503');
+      console.error('[ai-edit-blueprint] ANTHROPIC_API_KEY not set — returning 200 with fallback');
       return new Response(
-        JSON.stringify({ error: 'AI_NOT_CONFIGURED' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        JSON.stringify({ error: 'AI_NOT_CONFIGURED', message: 'AI generation coming soon — team is configuring the AI pipeline', fallback: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 

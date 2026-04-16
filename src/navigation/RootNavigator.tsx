@@ -43,6 +43,10 @@ const OnboardingScreen = lazyScreen(() =>
   import('../screens/onboarding/OnboardingScreen')
     .then((m) => ({ default: m.OnboardingScreen })));
 
+const AcceptPrivacyScreen = lazyScreen(() =>
+  import('../screens/AcceptPrivacyScreen')
+    .then((m) => ({ default: m.AcceptPrivacyScreen })));
+
 const HelpFAQScreen = lazyScreen(() =>
   import('../screens/account/HelpFAQScreen')
     .then((m) => ({ default: m.HelpFAQScreen })));
@@ -92,6 +96,29 @@ export function RootNavigator() {
       <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
         <CompassRoseLoader size="large" />
       </View>
+    );
+  }
+
+  const privacyAccepted = Storage.getString('privacyPolicyAccepted');
+
+  // Show privacy policy for brand new users who haven't accepted
+  if (!privacyAccepted) {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 200, contentStyle: { backgroundColor: '#1A1A1A' } }}>
+        <Stack.Screen name="AcceptPrivacy" component={AcceptPrivacyScreen} />
+        <Stack.Screen name="Auth" component={AuthNavigator} />
+        <Stack.Screen name="Main" component={MainNavigator} />
+        <Stack.Screen
+          name="PrivacyPolicy"
+          component={PrivacyPolicyScreen}
+          options={{ animation: 'fade', animationDuration: 150 }}
+        />
+        <Stack.Screen
+          name="Terms"
+          component={TermsScreen}
+          options={{ animation: 'fade', animationDuration: 150 }}
+        />
+      </Stack.Navigator>
     );
   }
 
