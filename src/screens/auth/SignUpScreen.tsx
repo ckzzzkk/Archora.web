@@ -14,8 +14,9 @@ import { OvalInput } from '../../components/common/OvalInput';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { DS } from '../../theme/designSystem';
-import { useAuthStore } from '../../stores/authStore';
 import type { AuthStackParamList } from '../../navigation/types';
+import { signUp } from '../../auth/signUp';
+import { signInWithGoogle } from '../../auth/signInWithGoogle';
 
 
 function GoogleIcon() {
@@ -73,7 +74,6 @@ function EyeIcon({ visible }: { visible: boolean }) {
 export function SignUpScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const insets = useSafeAreaInsets();
-  const { signUp, signInWithGoogle } = useAuthStore((s) => s.actions);
 
   // Form state
   const [displayName, setDisplayName]         = useState('');
@@ -138,15 +138,17 @@ export function SignUpScreen() {
 
     setLoading(true);
     try {
-      await signUp(email.trim(), password, displayName.trim());
-      // If we get here with no error, auth store handles routing.
-      // If email confirmation is required, signUp returns without setting
-      // isAuthenticated — navigate to EmailVerification explicitly.
-      if (!useAuthStore.getState().isAuthenticated) {
+      const { requiresConfirmation } = await signUp(email.trim(), password, displayName.trim());
+      if (requiresConfirmation) {
         navigation.navigate('EmailVerification', { email: email.trim() });
       }
+      // If no confirmation required, AuthProvider handles session — navigator re-renders
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Sign up failed. Please try again.');
+      if (e instanceof Error && e.message.includes('user_already_exists')) {
+        setError('An account with this email already exists. Please sign in instead.');
+      } else {
+        setError(e instanceof Error ? e.message : 'Sign up failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -156,11 +158,8 @@ export function SignUpScreen() {
     try {
       await signInWithGoogle();
     } catch (e) {
-      console.error('[GoogleSignIn]', e);
       setError(
-        e instanceof Error
-          ? `Google sign in failed: ${e.message}`
-          : 'Google sign in failed. Please try again.'
+        e instanceof Error ? `Google sign in failed: ${e.message}` : 'Google sign in failed. Please try again.'
       );
     }
   };
