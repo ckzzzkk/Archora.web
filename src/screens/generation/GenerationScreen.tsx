@@ -164,7 +164,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
       </Animated.View>
 
       {/* ARIA label */}
-      <ArchText variant="heading" style={{ fontSize: 13, color: DS.colors.textSecondary, letterSpacing: 4, textTransform: 'uppercase', marginBottom: DS.spacing.sm }}>
+      <ArchText variant="heading" style={{ fontSize: 13, color: DS.colors.primaryDim, letterSpacing: 4, textTransform: 'uppercase', marginBottom: DS.spacing.sm }}>
         ARIA
       </ArchText>
 
@@ -210,7 +210,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
       }}>
         {/* Status line */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.sm }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.textSecondary, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.primaryDim, letterSpacing: 2, textTransform: 'uppercase' }}>
             ITERATION {iterationProgress.iteration} / 3
           </ArchText>
           <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: DS.colors.border }} />
@@ -221,7 +221,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
 
         {/* Live message */}
         {iterationProgress.message ? (
-          <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.textSecondary, textAlign: 'center', paddingHorizontal: DS.spacing.sm }}>
+          <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim, textAlign: 'center', paddingHorizontal: DS.spacing.sm }}>
             {iterationProgress.message}
           </ArchText>
         ) : null}
@@ -245,7 +245,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
                   <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 16, color: scoreColor }}>
                     {s.score}
                   </ArchText>
-                  <ArchText variant="body" style={{ fontSize: 9, color: DS.colors.textSecondary, fontFamily: DS.font.mono }}>
+                  <ArchText variant="body" style={{ fontSize: 9, color: DS.colors.primaryDim, fontFamily: DS.font.mono }}>
                     #{s.n}
                   </ArchText>
                 </View>

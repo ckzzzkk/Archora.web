@@ -84,7 +84,7 @@ function ScanModeCard({ title, description, available, requires, onPress, delay 
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: available ? DS.colors.accent : DS.colors.textSecondary }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: available ? DS.colors.accent : DS.colors.primaryDim }}>
             {title}
           </ArchText>
           {!available && requires && (
@@ -95,7 +95,7 @@ function ScanModeCard({ title, description, available, requires, onPress, delay 
             </View>
           )}
         </View>
-        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary, lineHeight: 20 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim, lineHeight: 20 }}>
           {description}
         </ArchText>
       </Pressable>
@@ -179,7 +179,7 @@ export function ARScanScreen() {
           <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 28, color: DS.colors.accent, marginBottom: 8 }}>
             AR Scan
           </ArchText>
-          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim }}>
             Choose a scanning method to capture your room
           </ArchText>
         </View>
@@ -253,12 +253,12 @@ export function ARScanScreen() {
         <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: DS.colors.accent, textAlign: 'center', marginBottom: 12 }}>
           Creator tier required
         </ArchText>
-        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: 24 }}>
           AR scanning is available on Creator and above plans.
         </ArchText>
         <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription')} />
         <Pressable onPress={handleBackToEntry} style={{ marginTop: 16 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary }}>Go back</ArchText>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim }}>Go back</ArchText>
         </Pressable>
       </View>
     );
@@ -269,12 +269,12 @@ export function ARScanScreen() {
         <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: DS.colors.accent, textAlign: 'center', marginBottom: 12 }}>
           Pro tier required
         </ArchText>
-        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: 24 }}>
           AR Measure is available on Pro and above plans.
         </ArchText>
         <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription')} />
         <Pressable onPress={handleBackToEntry} style={{ marginTop: 16 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary }}>Go back</ArchText>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim }}>Go back</ArchText>
         </Pressable>
       </View>
     );

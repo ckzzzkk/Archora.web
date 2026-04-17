@@ -18,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../hooks/useTheme';
 import { useHaptics } from '../hooks/useHaptics';
+import { DS } from '../theme/designSystem';
 import type { RootStackParamList } from './types';
 import { useTabDirection } from './TabDirectionContext';
 
