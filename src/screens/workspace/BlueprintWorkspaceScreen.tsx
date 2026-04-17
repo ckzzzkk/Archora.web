@@ -28,7 +28,6 @@ import { CopyPasteSheet } from '../../components/blueprint/CopyPasteSheet';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { InHouseView } from '../../components/3d/InHouseView';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from '../../components/common/ArchText';
 import { SimulationPanel } from '../../components/blueprint/SimulationPanel';
 import { CostEstimatorModal } from '../../components/common/CostEstimatorModal';
@@ -185,7 +184,7 @@ export function BlueprintWorkspaceScreen() {
 
   const handleToolPress = useCallback((toolId: ToolId) => {
     if (toolId === 'furniture') { setShowFurniture(true); return; }
-    if (toolId === 'surfaces') { setShowSurfaces(true); return; }
+    if (toolId === 'surfaces') { setShowStyleSelector(true); return; }
     setActiveTool(toolId);
   }, []);
 
@@ -359,18 +358,18 @@ export function BlueprintWorkspaceScreen() {
             style={{
               flexDirection: 'row', alignItems: 'center', gap: 6,
               paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
-              backgroundColor: isSimulating ? DS.colors.surfaceHigh : `${SUNRISE.amber}18`,
-              borderWidth: 1, borderColor: `${SUNRISE.amber}40`,
+              backgroundColor: isSimulating ? DS.colors.surfaceHigh : `${DS.colors.warning}18`,
+              borderWidth: 1, borderColor: `${DS.colors.warning}40`,
             }}
           >
             {isSimulating ? (
               <CompassRoseLoader size="small" />
             ) : (
               <Svg width={14} height={14} viewBox="0 0 24 24">
-                <Path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke={SUNRISE.amber} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke={DS.colors.warning} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             )}
-            <ArchText variant="body" style={{ fontSize: 12, fontFamily: DS.font.medium, color: SUNRISE.amber }}>
+            <ArchText variant="body" style={{ fontSize: 12, fontFamily: DS.font.medium, color: DS.colors.warning }}>
               {isSimulating ? 'Analysing\u2026' : 'Simulate'}
             </ArchText>
           </Pressable>
@@ -469,13 +468,13 @@ export function BlueprintWorkspaceScreen() {
               onPress={() => setShowImageToFurniture(true)}
               style={{
                 paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
-                backgroundColor: `${SUNRISE.amber}18`, borderWidth: 1,
-                borderColor: `${SUNRISE.amber}40`, flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: `${DS.colors.warning}18`, borderWidth: 1,
+                borderColor: `${DS.colors.warning}40`, flexDirection: 'row', alignItems: 'center', gap: 4,
                 marginRight: 8,
               }}
             >
               <Text style={{ fontSize: 14 }}>📷</Text>
-              <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: SUNRISE.amber }}>Photo → 3D</ArchText>
+              <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.warning }}>Photo → 3D</ArchText>
             </Pressable>
           )}
           {/* Copy/Paste — clipboard access */}

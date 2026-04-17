@@ -4,11 +4,15 @@
  * Uses @supabase/ssr's onAuthStateChange for reactive updates.
  * Session is available synchronously on first render (no race).
  *
+ * Offline-first: user data is cached in MMKV so the app knows the
+ * user's tier, limits, points and streak even when offline.
+ *
  * Children access via useSession() hook.
  */
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { signOut } from './signOut';
+import { userCache } from '../utils/userCache';
 import type { User } from '../types';
 import type { Session } from '@supabase/supabase-js';
 
@@ -26,14 +30,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch app user row from users table
-  const fetchUserData = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    return data;
+  // Fetch app user row from users table.
+  // On success: persist to MMKV cache for offline access.
+  // On failure: fall back to MMKV cache so tier/limits work offline.
+  const fetchUserData = useCallback(async (userId: string): Promise<User | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error || !data) throw error ?? new Error('No user data');
+      const mapped = mapDbUser(data);
+      userCache.save(mapped);
+      return mapped;
+    } catch {
+      // Network offline — return cached user so tier/limits still work
+      return userCache.load();
+    }
   }, []);
 
   // Initial session load + auth state listener
@@ -45,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (data.session?.user) {
           const userData = await fetchUserData(data.session.user.id);
           if (userData) {
-            setUser(mapDbUser(userData));
+            setUser(userData);
           }
         }
       } finally {
@@ -61,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         if (session?.user) {
           const userData = await fetchUserData(session.user.id);
-          setUser(userData ? mapDbUser(userData) : null);
+          setUser(userData);
         } else {
           setUser(null);
         }

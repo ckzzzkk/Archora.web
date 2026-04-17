@@ -1,5 +1,4 @@
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View, Text, Pressable, TextInput, ScrollView,
@@ -58,7 +57,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.role === 'user';
   return (
     <View style={{ alignSelf: isUser ? 'flex-end' : 'flex-start', maxWidth: '80%', marginBottom: 8 }}>
-      <View style={{ backgroundColor: isUser ? DS.colors.surfaceHigh : SUNRISE.elevated, borderRadius: 16, borderBottomRightRadius: isUser ? 4 : 16, borderBottomLeftRadius: isUser ? 16 : 4, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: isUser ? DS.colors.primary + '30' : SUNRISE.violetBorder }}>
+      <View style={{ backgroundColor: isUser ? DS.colors.surfaceHigh : DS.colors.surfaceHigh, borderRadius: 16, borderBottomRightRadius: isUser ? 4 : 16, borderBottomLeftRadius: isUser ? 16 : 4, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: isUser ? DS.colors.primary + '30' : 'rgba(240, 237, 232, 0.12)' }}>
         <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primary, lineHeight: 18 }}>{msg.content}</ArchText>
       </View>
       <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 9, color: DS.colors.primaryGhost, marginTop: 2, alignSelf: isUser ? 'flex-end' : 'flex-start', paddingHorizontal: 4 }}>
@@ -167,8 +166,8 @@ export function AIChatPanel({ visible, onToggle }: Props) {
 
       {/* Panel */}
       {visible && (
-        <Animated.View style={[panelStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: 380, backgroundColor: SUNRISE.glass.prominentBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: SUNRISE.sheetTopBorder }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: SUNRISE.separatorLine }}>
+        <Animated.View style={[panelStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: 380, backgroundColor: 'rgba(240, 237, 232, 0.10)', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: DS.colors.border }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(240, 237, 232, 0.08)' }}>
             <ChatBubbleIcon color={DS.colors.primary} />
             <ArchText variant="heading" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primary, marginLeft: 8, flex: 1 }}>AI Blueprint Editor</ArchText>
             <Pressable onPress={onToggle} style={{ padding: 8 }}><ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: 18 }}>✕</ArchText></Pressable>
@@ -229,7 +228,7 @@ export function AIChatPanel({ visible, onToggle }: Props) {
           )}
 
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: Math.max(12, insets.bottom + 8), borderTopWidth: 1, borderTopColor: SUNRISE.separatorLine, backgroundColor: SUNRISE.glass.subtleBg, gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: Math.max(12, insets.bottom + 8), borderTopWidth: 1, borderTopColor: 'rgba(240, 237, 232, 0.08)', backgroundColor: 'rgba(240, 237, 232, 0.03)', gap: 10 }}>
               <TextInput
                 value={input} onChangeText={setInput}
                 placeholder="Describe your edit..." placeholderTextColor={DS.colors.primaryGhost}

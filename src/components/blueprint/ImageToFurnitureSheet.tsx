@@ -3,7 +3,6 @@ import {
   View, Text, Pressable, Image, Alert,
 } from 'react-native';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from '../common/ArchText';
 import { OvalButton } from '../common/OvalButton';
 import { AIProcessingIndicator } from '../common/AIProcessingIndicator';
@@ -232,9 +231,9 @@ export function ImageToFurnitureSheet({ onClose }: { onClose: () => void }) {
                   <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#7AB87A' }}>Mesh Ready</Text>
                 </View>
               ) : (
-                <View style={{ backgroundColor: `${SUNRISE.amber}20`, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ backgroundColor: `${DS.colors.warning}20`, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Text style={{ fontSize: 12 }}>⚙</Text>
-                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: SUNRISE.amber }}>
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: DS.colors.warning }}>
                     Procedural
                   </Text>
                 </View>

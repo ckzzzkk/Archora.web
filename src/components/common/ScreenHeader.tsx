@@ -3,7 +3,6 @@ import { View, Pressable } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from './ArchText';
 
 interface ScreenHeaderProps {
@@ -37,9 +36,9 @@ export function ScreenHeader({ title, onBack, rightAction }: ScreenHeaderProps) 
                 width: 40,
                 height: 40,
                 borderRadius: 20,
-                backgroundColor: SUNRISE.glass.subtleBg,
+                backgroundColor: 'rgba(240, 237, 232, 0.03)',
                 borderWidth: 1,
-                borderColor: SUNRISE.glass.subtleBorder,
+                borderColor: 'rgba(240, 237, 232, 0.07)',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -71,7 +70,7 @@ export function ScreenHeader({ title, onBack, rightAction }: ScreenHeaderProps) 
       </View>
 
       {/* Separator */}
-      <View style={{ height: 1, backgroundColor: SUNRISE.separatorLine }} />
+      <View style={{ height: 1, backgroundColor: 'rgba(240, 237, 232, 0.08)' }} />
     </View>
   );
 }

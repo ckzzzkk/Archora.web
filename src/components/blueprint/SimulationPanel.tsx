@@ -5,7 +5,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArchText } from '../common/ArchText';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import type { SimulationReport } from '../../types/blueprint';
 
 interface SimulationPanelProps {
@@ -19,35 +18,35 @@ type RatingLevel = 'excellent' | 'good' | 'fair' | 'poor';
 function gradeColor(grade: SimulationReport['grade']): string {
   switch (grade) {
     case 'A': return '#7AB87A';
-    case 'B': return SUNRISE.gold;
-    case 'C': return SUNRISE.amber;
+    case 'B': return DS.colors.accent;
+    case 'C': return DS.colors.warning;
     case 'D': return '#FFB870';
-    case 'F': return SUNRISE.rose;
+    case 'F': return DS.colors.error;
     default:  return DS.colors.primaryDim;
   }
 }
 
 function scoreColor(score: number): string {
   if (score >= 80) return '#7AB87A';
-  if (score >= 60) return SUNRISE.gold;
-  if (score >= 40) return SUNRISE.amber;
-  return SUNRISE.rose;
+  if (score >= 60) return DS.colors.accent;
+  if (score >= 40) return DS.colors.warning;
+  return DS.colors.error;
 }
 
 function ratingColor(rating: RatingLevel): string {
   switch (rating) {
     case 'excellent': return '#7AB87A';
-    case 'good':      return SUNRISE.gold;
-    case 'fair':      return SUNRISE.amber;
-    case 'poor':      return SUNRISE.rose;
+    case 'good':      return DS.colors.accent;
+    case 'fair':      return DS.colors.warning;
+    case 'poor':      return DS.colors.error;
     default:          return DS.colors.primaryDim;
   }
 }
 
 function severityColor(severity: 'critical' | 'major' | 'minor'): string {
   switch (severity) {
-    case 'critical': return SUNRISE.rose;
-    case 'major':    return SUNRISE.amber;
+    case 'critical': return DS.colors.error;
+    case 'major':    return DS.colors.warning;
     case 'minor':    return DS.colors.border;
     default:         return DS.colors.border;
   }
@@ -524,15 +523,15 @@ export function SimulationPanel({ report, onReanalyse, onClose }: SimulationPane
             marginHorizontal: 20,
             paddingVertical: 14,
             borderRadius: DS.radius.oval,
-            backgroundColor: `${SUNRISE.amber}18`,
+            backgroundColor: `${DS.colors.warning}18`,
             borderWidth: 1,
-            borderColor: `${SUNRISE.amber}40`,
+            borderColor: `${DS.colors.warning}40`,
             alignItems: 'center',
           }}
         >
           <ArchText
             variant="body"
-            style={{ fontFamily: DS.font.medium, fontSize: 14, color: SUNRISE.amber }}
+            style={{ fontFamily: DS.font.medium, fontSize: 14, color: DS.colors.warning }}
           >
             Re-analyse
           </ArchText>

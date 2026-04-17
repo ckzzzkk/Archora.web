@@ -165,7 +165,7 @@ export function ForgotPasswordScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={{ flex: 1, padding: 32, paddingTop: 80 }}>
+        <View style={{ flex: 1, padding: 32, paddingTop: 80, backgroundColor: DS.colors.background }}>
           <Pressable onPress={() => navigation.goBack()} style={{ marginBottom: 40 }}>
             <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryGhost }}>
               ← Back

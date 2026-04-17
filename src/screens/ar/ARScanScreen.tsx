@@ -10,7 +10,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from '../../components/common/ArchText';
 import { ARPermissionRequest } from '../../components/ar/ARPermissionRequest';
 import { ARModeSelector } from '../../components/ar/ARModeSelector';
@@ -76,16 +75,16 @@ function ScanModeCard({ title, description, available, requires, onPress, delay 
       <Pressable
         onPress={available ? onPress : undefined}
         style={{
-          backgroundColor: available ? SUNRISE.glass.subtleBg : 'rgba(14, 11, 26, 0.50)',
+          backgroundColor: available ? 'rgba(240, 237, 232, 0.03)' : 'rgba(14, 11, 26, 0.50)',
           borderRadius: DS.radius.card,
           padding: 20,
           borderWidth: 1,
-          borderColor: available ? SUNRISE.goldBorderDim : SUNRISE.glass.subtleBorder,
+          borderColor: available ? 'rgba(240, 237, 232, 0.10)' : 'rgba(240, 237, 232, 0.07)',
           opacity: available ? 1 : 0.6,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: available ? SUNRISE.gold : SUNRISE.textSecondary }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: available ? DS.colors.accent : DS.colors.textSecondary }}>
             {title}
           </ArchText>
           {!available && requires && (
@@ -96,7 +95,7 @@ function ScanModeCard({ title, description, available, requires, onPress, delay 
             </View>
           )}
         </View>
-        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary, lineHeight: 20 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary, lineHeight: 20 }}>
           {description}
         </ArchText>
       </Pressable>
@@ -174,13 +173,13 @@ export function ARScanScreen() {
   // Entry screen - mode selection
   if (scanMode === 'entry') {
     return (
-      <View style={{ flex: 1, backgroundColor: SUNRISE.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 }}>
         {/* Header */}
         <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 28, color: SUNRISE.gold, marginBottom: 8 }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 28, color: DS.colors.accent, marginBottom: 8 }}>
             AR Scan
           </ArchText>
-          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary }}>
             Choose a scanning method to capture your room
           </ArchText>
         </View>
@@ -250,32 +249,32 @@ export function ARScanScreen() {
   const isScanMode = scanMode === 'manual' || scanMode === 'depth' || scanMode === 'photo' || scanMode === 'place';
   if (isScanMode && !canScan) {
     return (
-      <View style={{ flex: 1, backgroundColor: SUNRISE.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-        <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: SUNRISE.gold, textAlign: 'center', marginBottom: 12 }}>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: DS.colors.accent, textAlign: 'center', marginBottom: 12 }}>
           Creator tier required
         </ArchText>
-        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary, textAlign: 'center', marginBottom: 24 }}>
           AR scanning is available on Creator and above plans.
         </ArchText>
         <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription')} />
         <Pressable onPress={handleBackToEntry} style={{ marginTop: 16 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary }}>Go back</ArchText>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary }}>Go back</ArchText>
         </Pressable>
       </View>
     );
   }
   if (scanMode === 'measure' && !canMeasure) {
     return (
-      <View style={{ flex: 1, backgroundColor: SUNRISE.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-        <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: SUNRISE.gold, textAlign: 'center', marginBottom: 12 }}>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: DS.colors.accent, textAlign: 'center', marginBottom: 12 }}>
           Pro tier required
         </ArchText>
-        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary, textAlign: 'center', marginBottom: 24 }}>
           AR Measure is available on Pro and above plans.
         </ArchText>
         <OvalButton label="Upgrade" onPress={() => navigation.navigate('Subscription')} />
         <Pressable onPress={handleBackToEntry} style={{ marginTop: 16 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: SUNRISE.textSecondary }}>Go back</ArchText>
+          <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.textSecondary }}>Go back</ArchText>
         </Pressable>
       </View>
     );

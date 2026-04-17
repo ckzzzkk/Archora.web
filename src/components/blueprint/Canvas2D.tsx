@@ -1,5 +1,5 @@
 import { DS } from '../../theme/designSystem';
-import React, { useCallback, useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useCallback, useRef, useState, useEffect, forwardRef, useImperativeHandle, useReducer } from 'react';
 import { View, Dimensions } from 'react-native';
 import {
   Canvas,
@@ -17,6 +17,7 @@ import {
   useSharedValue,
   runOnJS,
   withSpring,
+  useAnimatedReaction,
 } from 'react-native-reanimated';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -144,9 +145,19 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   const scaleRef = useRef(1);
   const offsetXRef = useRef(SCREEN_W / 2);
   const offsetYRef = useRef(CANVAS_H / 2);
-  scale.addListener(0, (v) => { scaleRef.current = v; });
-  offsetX.addListener(1, (v) => { offsetXRef.current = v; });
-  offsetY.addListener(2, (v) => { offsetYRef.current = v; });
+  // Sync Reanimated shared values to plain refs so gesture handlers can read them.
+  // Pattern mirrors SketchScreen — runOnJS forces React re-render so Skia picks up latest values.
+  const [, forceCanvasRender] = useReducer((n: number) => n + 1, 0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useAnimatedReaction(
+    () => ({ s: (scale as any).value, ox: (offsetX as any).value, oy: (offsetY as any).value }),
+    (curr) => {
+      scaleRef.current = curr.s;
+      offsetXRef.current = curr.ox;
+      offsetYRef.current = curr.oy;
+      runOnJS(forceCanvasRender)();
+    },
+  );
 
   const showContextMenu = useCallback(
     (item: FurniturePiece, screenX: number, screenY: number) => {
@@ -391,9 +402,9 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   const handleCut = () => { handleCopy(); if (contextMenu.item) deleteFurniture(contextMenu.item.id); };
   const handleDelete = () => { if (contextMenu.item) deleteFurniture(contextMenu.item.id); };
 
-  const ox = offsetX.value;
-  const oy = offsetY.value;
-  const sc = 1; // canvas group uses scale=1; pan/zoom via offset only (Skia group transform for perf)
+  const ox = offsetXRef.current;
+  const oy = offsetYRef.current;
+  const sc = scaleRef.current; // current zoom scale — now functional via pinch gesture
 
   const toPixelX = (m: number) => metreToPixel(m, sc, ox);
   const toPixelY = (m: number) => metreToPixel(m, sc, oy);

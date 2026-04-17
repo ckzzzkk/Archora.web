@@ -33,7 +33,6 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useUIStore } from '../../stores/uiStore';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Template } from '../../types';
 

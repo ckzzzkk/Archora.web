@@ -1,30 +1,30 @@
-import { SUNRISE } from './sunrise';
-
 /**
  * ASORIA Design System — single source of truth for all visual decisions.
  * Import as: import { DS } from '../../theme/designSystem'
  *
  * BASE_COLORS in colors.ts remain the authoritative colour tokens for existing code.
  * DS.colors mirrors and extends them for new components.
+ *
+ * Theme: Grey-first dark mode — Background #1A1A1A, Sketchy white line art accents
  */
 export const DS = {
   colors: {
-    background:   SUNRISE.background,
-    surface:      SUNRISE.surface,
-    surfaceHigh:  SUNRISE.elevated,
-    surfaceTop:   '#193535',
-    border:       SUNRISE.border,
-    borderLight:  'rgba(201, 255, 253, 0.20)',
-    primary:      SUNRISE.gold,      // #C9FFFD cyan
-    primaryDim:   SUNRISE.textSecondary,
-    primaryGhost: SUNRISE.inactiveTint,
-    accent:       SUNRISE.amber,     // #FFEE8C yellow
-    accentGlow:   'rgba(201, 255, 253, 0.12)',
+    background:   '#1A1A1A',
+    surface:      '#222222',
+    surfaceHigh:  '#2C2C2C',
+    surfaceTop:   '#2C2C2C',
+    border:       '#333333',
+    borderLight:  'rgba(240, 237, 232, 0.12)',
+    primary:      '#C8C8C8',       // grey white
+    primaryDim:   '#9A9590',
+    primaryGhost: '#5A5550',
+    accent:       '#D4A84B',       // warm gold
+    accentGlow:   'rgba(200, 200, 200, 0.12)',
     success:      '#7AB87A',
-    warning:      SUNRISE.amber,
-    error:        SUNRISE.rose,
+    warning:      '#D4A84B',
+    error:        '#C0604A',
     overlay:      'rgba(0,0,0,0.85)',
-    gridLine:     '#0A2020',
+    gridLine:     '#2C2C2C',
   },
 
   radius: {

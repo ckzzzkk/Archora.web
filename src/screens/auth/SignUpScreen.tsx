@@ -17,6 +17,7 @@ import { DS } from '../../theme/designSystem';
 import type { AuthStackParamList } from '../../navigation/types';
 import { signUp } from '../../auth/signUp';
 import { signInWithGoogle } from '../../auth/signInWithGoogle';
+import { validatePassword } from '../../utils/validation';
 
 
 function GoogleIcon() {
@@ -133,7 +134,8 @@ export function SignUpScreen() {
     setError('');
     if (displayName.trim().length < 2) { setError('Display name must be at least 2 characters.'); return; }
     if (!/\S+@\S+\.\S+/.test(email))   { setError('Enter a valid email address.'); return; }
-    if (password.length < 8)            { setError('Password must be at least 8 characters.'); return; }
+    const { valid: pwValid, errors: pwErrors } = validatePassword(password);
+    if (!pwValid) { setError(pwErrors.join(' • ')); return; }
     if (password !== confirmPw)          { setError('Passwords do not match.'); return; }
 
     setLoading(true);
@@ -222,7 +224,7 @@ export function SignUpScreen() {
               returnKeyType="next"
             />
 
-            {/* Password + strength bar */}
+            {/* Password + checklist + strength bar */}
             <View style={{ gap: 6 }}>
               <OvalInput
                 value={password}
@@ -235,20 +237,49 @@ export function SignUpScreen() {
                 returnKeyType="next"
               />
               {password.length > 0 && (
-                <View style={{ paddingHorizontal: DS.spacing.md }}>
-                  {/* Track */}
-                  <View style={{ height: 3, borderRadius: 2, backgroundColor: '#333333', overflow: 'hidden' }}>
-                    <Animated.View
-                      style={[
-                        { height: 3, borderRadius: 2, backgroundColor: strengthColors[strengthScore] },
-                        strengthBarStyle,
-                      ]}
-                    />
+                <>
+                  {/* Checklist */}
+                  <View style={{ paddingHorizontal: DS.spacing.md, gap: 5 }}>
+                    {[
+                      { met: password.length >= 8, label: 'At least 8 characters' },
+                      { met: /[A-Z]/.test(password), label: 'One uppercase letter' },
+                      { met: /[a-z]/.test(password), label: 'One lowercase letter' },
+                      { met: /[0-9]/.test(password), label: 'One number' },
+                      { met: /[^A-Za-z0-9]/.test(password), label: 'One special character (optional)' },
+                    ].map(({ met, label }) => (
+                      <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Svg width={14} height={14} viewBox="0 0 24 24">
+                          {met ? (
+                            <Path d="M20 6L9 17l-5-5" stroke="#7AB87A" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          ) : (
+                            <Path d="M6 6l12 12M6 18L18 6" stroke="#5A5550" strokeWidth="2" fill="none" strokeLinecap="round" />
+                          )}
+                        </Svg>
+                        <ArchText
+                          variant="caption"
+                          style={{ color: met ? '#7AB87A' : '#5A5550', fontSize: 12, fontFamily: 'Inter_400Regular' }}
+                        >
+                          {label}
+                        </ArchText>
+                      </View>
+                    ))}
                   </View>
-                  <ArchText variant="caption" style={{ color: strengthColors[strengthScore], fontSize: 11, marginTop: 3 }}>
-                    {strengthLabels[strengthScore]}
-                  </ArchText>
-                </View>
+                  {/* Strength bar */}
+                  <View style={{ paddingHorizontal: DS.spacing.md }}>
+                    {/* Track */}
+                    <View style={{ height: 3, borderRadius: 2, backgroundColor: '#333333', overflow: 'hidden' }}>
+                      <Animated.View
+                        style={[
+                          { height: 3, borderRadius: 2, backgroundColor: strengthColors[strengthScore] },
+                          strengthBarStyle,
+                        ]}
+                      />
+                    </View>
+                    <ArchText variant="caption" style={{ color: strengthColors[strengthScore], fontSize: 11, marginTop: 3 }}>
+                      {strengthLabels[strengthScore]}
+                    </ArchText>
+                  </View>
+                </>
               )}
             </View>
 

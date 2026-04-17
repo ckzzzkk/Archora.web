@@ -10,7 +10,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 
 export type OvalButtonVariant = 'filled' | 'outline' | 'ghost' | 'danger' | 'success';
 export type OvalButtonSize   = 'small' | 'medium' | 'large';
@@ -103,10 +102,10 @@ export function OvalButton({
   };
 
   const labelColor = variant === 'filled' || variant === 'success'
-    ? SUNRISE.background
+    ? DS.colors.background
     : variant === 'danger'
-    ? SUNRISE.rose
-    : SUNRISE.gold;
+    ? DS.colors.error
+    : DS.colors.primary;
 
   if (variant === 'filled') {
     return (
@@ -125,12 +124,12 @@ export function OvalButton({
         ]}
       >
         <LinearGradient
-          colors={[SUNRISE.gold, SUNRISE.amber]}
+          colors={[DS.colors.primary, DS.colors.accent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[contentStyle, { borderRadius: DS.radius.oval }]}
         >
-          {loading ? <LoadingDots color={SUNRISE.background} /> : (
+          {loading ? <LoadingDots color={DS.colors.background} /> : (
             <>
               {icon}
               <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }}>
@@ -144,9 +143,9 @@ export function OvalButton({
   }
 
   const nonFilledStyle = variant === 'outline'
-    ? { bg: SUNRISE.glass.subtleBg, border: SUNRISE.glass.navBorder, borderWidth: 1 }
+    ? { bg: 'rgba(240, 237, 232, 0.03)', border: 'rgba(240, 237, 232, 0.18)', borderWidth: 1 }
     : variant === 'danger'
-    ? { bg: SUNRISE.glass.subtleBg, border: 'rgba(232, 117, 138, 0.30)', borderWidth: 1 }
+    ? { bg: 'rgba(240, 237, 232, 0.03)', border: 'rgba(192, 96, 74, 0.30)', borderWidth: 1 }
     : variant === 'success'
     ? { bg: '#7AB87A', border: 'transparent', borderWidth: 0 }
     : { bg: 'transparent', border: 'transparent', borderWidth: 0 }; // ghost

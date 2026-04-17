@@ -29,7 +29,6 @@ import {
   unsubscribeFromNotifications,
 } from '../../services/notificationService';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BuildingType } from '../../types';
@@ -377,13 +376,13 @@ function NewProjectModal({ visible, onClose, onCreate }: {
           <View style={{
             backgroundColor: C.surface,
             borderTopLeftRadius: 28, borderTopRightRadius: 28,
-            borderTopWidth: 1, borderColor: SUNRISE.sheetTopBorder,
+            borderTopWidth: 1, borderColor: DS.colors.border,
             paddingHorizontal: DS.spacing.lg,
             paddingTop: DS.spacing.lg,
             paddingBottom: Math.max(DS.spacing.xxl, modalInsets.bottom + DS.spacing.lg),
           }}>
             {/* Handle */}
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: SUNRISE.sheetHandle, alignSelf: 'center', marginBottom: DS.spacing.lg }} />
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(240, 237, 232, 0.25)', alignSelf: 'center', marginBottom: DS.spacing.lg }} />
             <ArchText variant="heading" style={{ fontSize: 22, color: C.primary, marginBottom: DS.spacing.lg }}>
               New Design
             </ArchText>
@@ -455,7 +454,7 @@ function DashboardHeader({
   const greeting = getDayGreeting();
   return (
     <LinearGradient
-      colors={['#0F3030', '#0C2828', SUNRISE.background]}
+      colors={['#1F3030', '#1C2828', DS.colors.background]}
       locations={[0, 0.5, 1]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -523,8 +522,8 @@ function DashboardHeader({
           flexDirection: 'row',
           alignItems: 'center',
           gap: DS.spacing.sm,
-          backgroundColor: SUNRISE.glass.subtleBg,
-          borderWidth: 1, borderColor: SUNRISE.goldBorderDim,
+          backgroundColor: 'rgba(240, 237, 232, 0.03)',
+          borderWidth: 1, borderColor: 'rgba(240, 237, 232, 0.10)',
           borderRadius: 14, paddingHorizontal: DS.spacing.md, paddingVertical: 10,
         }}>
           <ArchText variant="body" style={{ fontSize: 18 }}>🔥</ArchText>
@@ -542,8 +541,8 @@ function DashboardHeader({
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: SUNRISE.glass.subtleBg,
-          borderWidth: 1, borderColor: SUNRISE.goldBorderDim,
+          backgroundColor: 'rgba(240, 237, 232, 0.03)',
+          borderWidth: 1, borderColor: 'rgba(240, 237, 232, 0.10)',
           borderRadius: 14, paddingVertical: 10,
         }}>
           <ArchText variant="body" style={{ fontSize: 14, color: DS.colors.accent, fontFamily: DS.font.mono, fontWeight: '700' }}>
@@ -558,8 +557,8 @@ function DashboardHeader({
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: SUNRISE.glass.subtleBg,
-          borderWidth: 1, borderColor: SUNRISE.goldBorderDim,
+          backgroundColor: 'rgba(240, 237, 232, 0.03)',
+          borderWidth: 1, borderColor: 'rgba(240, 237, 232, 0.10)',
           borderRadius: 14, paddingVertical: 10,
         }}>
           <ArchText variant="body" style={{ fontSize: 14, color: C.primary, fontFamily: DS.font.mono, fontWeight: '700' }}>

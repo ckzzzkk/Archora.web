@@ -26,7 +26,7 @@ import { DS } from '../../theme/designSystem';
 import { ArchText } from '../../components/common/ArchText';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 import type { RootStackParamList } from '../../navigation/types';
-import type { BlueprintData, Wall, Room, RoomType, Vector2D } from '../../types/blueprint';
+import type { BlueprintData, Wall, Room, RoomType, Vector2D, FloorData } from '../../types/blueprint';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -220,6 +220,18 @@ function sketchToBlueprintData(
       ]
     : [];
 
+  const groundFloor: FloorData = {
+      id: genId(),
+      label: 'G',
+      index: 0,
+      walls: blueprintWalls,
+      rooms,
+      openings: [],
+      furniture: [],
+      staircases: [],
+      elevators: [],
+    };
+
   return {
     id: genId(),
     version: 1,
@@ -234,7 +246,7 @@ function sketchToBlueprintData(
     rooms,
     openings: [],
     furniture: [],
-    floors: [],
+    floors: [groundFloor],
     customAssets: [],
     chatHistory: [],
     createdAt: now,

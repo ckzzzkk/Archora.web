@@ -14,10 +14,10 @@ import { useUser } from '../../auth/useUser';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { authService } from '../../services/authService';
+import { subscriptionService } from '../../services/subscriptionService';
 import { supabase } from '../../lib/supabase';
 import { useHaptics } from '../../hooks/useHaptics';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAppearanceStore } from '../../stores/appearanceStore';
 import type { AppearanceMode } from '../../stores/appearanceStore';
@@ -131,7 +131,7 @@ function StreakHeatmap({ streakCount, C }: { streakCount: number; C: ReturnType<
       marginBottom: DS.spacing.sm,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: DS.spacing.sm }}>
-        <ArchText variant="body" style={{ fontFamily: DS.font.semibold, fontSize: 13, color: SUNRISE.amber, marginRight: 6 }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.semibold, fontSize: 13, color: DS.colors.accent, marginRight: 6 }}>
           ✦
         </ArchText>
         <ArchText variant="body" style={{ fontFamily: DS.font.semibold, fontSize: 13, color: C.primary }}>
@@ -143,15 +143,15 @@ function StreakHeatmap({ streakCount, C }: { streakCount: number; C: ReturnType<
           <View key={i} style={{ alignItems: 'center', gap: 6 }}>
             <View style={{
               width: 32, height: 32, borderRadius: 10,
-              backgroundColor: active[i] ? `${SUNRISE.gold}18` : C.surfaceHigh,
+              backgroundColor: active[i] ? `${DS.colors.primary}18` : C.surfaceHigh,
               borderWidth: 1.5,
-              borderColor: active[i] ? `${SUNRISE.gold}60` : C.border,
+              borderColor: active[i] ? `${DS.colors.primary}60` : C.border,
               alignItems: 'center',
               justifyContent: 'center',
             }}>
               {active[i] && (
                 <Svg width={14} height={14} viewBox="0 0 24 24">
-                  <SvgPath d="M20 6L9 17l-5-5" stroke={SUNRISE.gold} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  <SvgPath d="M20 6L9 17l-5-5" stroke={DS.colors.primary} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
                 </Svg>
               )}
             </View>
@@ -318,9 +318,14 @@ export function AccountScreen() {
 
   const handleManageSubscription = async () => {
     try {
-      await Linking.openURL('https://asoria.app/account');
+      setPortalLoading(true);
+      const returnUrl = 'asoria://account';
+      const url = await subscriptionService.manageSubscriptionPortal(returnUrl);
+      await Linking.openURL(url);
     } catch {
-      Alert.alert('Error', 'Could not open subscription page');
+      Alert.alert('Error', 'Could not open subscription page. Please try again.');
+    } finally {
+      setPortalLoading(false);
     }
   };
 
@@ -512,7 +517,30 @@ export function AccountScreen() {
               label="Change Password"
               onPress={() => {
                 light();
-                Alert.alert('Change Password', 'A password reset link will be sent to your email.');
+                Alert.alert(
+                  'Change Password',
+                  'A password reset link will be sent to your email. Click the link to set a new password.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Send Link',
+                      onPress: async () => {
+                        try {
+                          const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+                            redirectTo: 'asoria://reset-password',
+                          });
+                          if (error) {
+                            Alert.alert('Error', error.message);
+                          } else {
+                            Alert.alert('Email Sent', `Reset link sent to ${user.email}. Check your inbox.`);
+                          }
+                        } catch {
+                          Alert.alert('Error', 'Failed to send reset email. Please try again.');
+                        }
+                      },
+                    },
+                  ],
+                );
               }}
               C={C}
             />

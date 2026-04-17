@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from '../common/ArchText';
 import { diffBlueprints, type BlueprintDiff } from '../../utils/diffBlueprint';
 import type { BlueprintData } from '../../types/blueprint';
@@ -34,12 +33,12 @@ export function ConfirmationCard({ original, proposed, aiMessage, currentFloorIn
       padding: 14,
       marginBottom: 12,
       borderWidth: 1,
-      borderColor: `${SUNRISE.amber}50`,
+      borderColor: `${DS.colors.warning}50`,
     }}>
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 8 }}>
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: SUNRISE.amber }} />
-        <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: SUNRISE.amber, flex: 1 }}>
+        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: DS.colors.warning }} />
+        <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: DS.colors.warning, flex: 1 }}>
           Review this change
         </ArchText>
       </View>
@@ -60,13 +59,13 @@ export function ConfirmationCard({ original, proposed, aiMessage, currentFloorIn
           <ChangeChip key={`rem-${r}`} label="-Room" value={r} color="#C0604A" />
         ))}
         {diff.roomChanges.resized.map((r) => (
-          <ChangeChip key={`res-${r.name}`} label="↔" value={`${r.name} ${r.from}→${r.to}m²`} color={SUNRISE.amber} />
+          <ChangeChip key={`res-${r.name}`} label="↔" value={`${r.name} ${r.from}→${r.to}m²`} color={DS.colors.warning} />
         ))}
         {diff.furnitureChanges.added.map((f) => (
           <ChangeChip key={`fadd-${f}`} label="+Furniture" value={f} color="#7AB87A" />
         ))}
         {diff.furnitureChanges.moved.map((f) => (
-          <ChangeChip key={`fmov-${f}`} label="↕" value={f} color={SUNRISE.amber} />
+          <ChangeChip key={`fmov-${f}`} label="↕" value={f} color={DS.colors.warning} />
         ))}
         {diff.furnitureChanges.removed.map((f) => (
           <ChangeChip key={`frem-${f}`} label="-Furniture" value={f} color="#C0604A" />

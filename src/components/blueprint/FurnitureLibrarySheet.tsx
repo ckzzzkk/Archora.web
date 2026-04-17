@@ -1,5 +1,4 @@
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, Pressable, ScrollView, TextInput, Modal, FlatList, Dimensions,
@@ -177,10 +176,10 @@ export function FurnitureLibrarySheet({ visible, onClose, onSelectFurniture }: P
       <Pressable style={{ flex: 1, backgroundColor: DS.colors.overlay }} onPress={onClose} />
       <Animated.View style={[sheetStyle, {
         position: 'absolute', bottom: 0, left: 0, right: 0, height: SHEET_H,
-        backgroundColor: SUNRISE.glass.prominentBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: SUNRISE.sheetTopBorder, overflow: 'hidden',
+        backgroundColor: 'rgba(240, 237, 232, 0.10)', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: DS.colors.border, overflow: 'hidden',
       }]}>
         <View style={{ alignItems: 'center', paddingTop: 12, paddingBottom: 6 }}>
-          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: SUNRISE.sheetHandle }} />
+          <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(240, 237, 232, 0.25)' }} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 10 }}>
           <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary, flex: 1 }}>Furniture Library</Text>

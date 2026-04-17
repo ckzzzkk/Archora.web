@@ -1,5 +1,3 @@
-import { SUNRISE } from './sunrise';
-
 export type ThemeName = 'drafting' | 'blueprint' | 'sketchbook' | 'studio' | 'night_shift' | 'copper';
 
 export interface ColorTheme {
@@ -69,18 +67,18 @@ export const COLOR_THEMES: Record<ThemeName, ColorTheme> = {
   },
 };
 
-// Base colors — sunrise glass palette
+// Base colors — grey-first dark mode palette
 export const BASE_COLORS = {
-  background:    SUNRISE.background,
-  surface:       SUNRISE.surface,
-  surfaceHigh:   SUNRISE.elevated,
-  border:        SUNRISE.border,
-  textPrimary:   SUNRISE.textPrimary,
-  textSecondary: SUNRISE.textSecondary,
-  textDim:       SUNRISE.textDim,
+  background:    '#1A1A1A',
+  surface:       '#222222',
+  surfaceHigh:   '#2C2C2C',
+  border:        '#333333',
+  textPrimary:   '#F0EDE8',
+  textSecondary: '#9A9590',
+  textDim:       '#5A5550',
   success:       '#7AB87A',
-  warning:       SUNRISE.amber,
-  error:         SUNRISE.rose,
+  warning:       '#D4A84B',
+  error:         '#C0604A',
 } as const;
 
 /** Add alpha to a hex color. Usage: withAlpha(BASE_COLORS.surface, 0.85) */

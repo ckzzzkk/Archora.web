@@ -356,6 +356,8 @@ export function InHouseView({ onExit }: InHouseViewProps) {
 
           <ProceduralBuilding
             blueprint={blueprint}
+            allFloors={blueprint.floors}
+            currentFloorIndex={currentFloorIndex}
             showFurniture
             onSelectWall={(id) => {
               const wall = blueprint.walls.find((w) => w.id === id);

@@ -1,4 +1,3 @@
-import { SUNRISE } from '../theme/sunrise';
 import React, { useEffect, useRef } from 'react';
 import { View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -109,7 +108,7 @@ function TabItem({ route, isFocused, onPress }: TabItemProps) {
     transform: [{ scaleX: pillScale.value }],
   }));
 
-  const iconColor = isFocused ? SUNRISE.gold : SUNRISE.inactiveTint;
+  const iconColor = isFocused ? DS.colors.primary : DS.colors.primaryGhost;
   const iconRenderer = ICONS[route.name];
 
   return (
@@ -135,7 +134,7 @@ function TabItem({ route, isFocused, onPress }: TabItemProps) {
         <Svg width={48} height={48} viewBox="0 0 48 48">
           <AnimatedPath
             d={WOBBLY_PATH}
-            stroke={SUNRISE.gold}
+            stroke={DS.colors.primary}
             strokeWidth={1.5}
             fill="none"
             strokeDasharray={CIRCUMFERENCE}
@@ -173,7 +172,7 @@ const FABButton = React.memo(function FABButton() {
   return (
     <Pressable onPress={handlePress}>
       <LinearGradient
-        colors={[SUNRISE.gold, SUNRISE.amber]}
+        colors={[DS.colors.accent, DS.colors.warning]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{
@@ -182,7 +181,7 @@ const FABButton = React.memo(function FABButton() {
           borderRadius: 24,
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: SUNRISE.gold,
+          shadowColor: DS.colors.accent,
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.4,
           shadowRadius: 12,
@@ -191,7 +190,7 @@ const FABButton = React.memo(function FABButton() {
       >
         <Animated.View style={fabStyle}>
           <Svg width={22} height={22} viewBox="0 0 24 24">
-            <Path d="M12 5v14M5 12h14" stroke={SUNRISE.background} strokeWidth="2" strokeLinecap="round" />
+            <Path d="M12 5v14M5 12h14" stroke={DS.colors.background} strokeWidth="2" strokeLinecap="round" />
           </Svg>
         </Animated.View>
       </LinearGradient>
@@ -226,8 +225,8 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         borderRadius: 32,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: SUNRISE.glass.navBorder,
-        shadowColor: SUNRISE.gold,
+        borderColor: 'rgba(240, 237, 232, 0.18)',
+        shadowColor: DS.colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 16,
@@ -239,7 +238,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         tint="dark"
         style={{
           flex: 1,
-          backgroundColor: SUNRISE.glass.navBg,
+          backgroundColor: 'rgba(26, 26, 26, 0.90)',
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 8,

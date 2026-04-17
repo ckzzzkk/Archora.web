@@ -9,6 +9,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
+import { GridBackground } from '../../components/common/GridBackground';
 import { DS } from '../../theme/designSystem';
 import { Storage } from '../../utils/storage';
 import type { RootStackParamList } from '../../navigation/types';
@@ -23,10 +24,10 @@ interface Slide {
 }
 
 const SLIDES: Slide[] = [
-  { id: '0', icon: 'compass', title: 'Design with AI',  desc: 'Describe your vision and watch ARIA build it in seconds.' },
-  { id: '1', icon: 'ruler',   title: 'Sketch & Refine', desc: 'Draw floor plans, drag furniture, perfect every detail.' },
-  { id: '2', icon: 'cube',    title: 'See it in 3D',    desc: 'Walk through your design before the first brick is laid.' },
-  { id: '3', icon: 'people',  title: 'Share & Inspire', desc: 'Publish templates and earn revenue from your designs.' },
+  { id: '0', icon: 'compass', title: 'AI Architecture',  desc: 'Describe your dream space in seconds. Our AI transforms your words into detailed floor plans.' },
+  { id: '1', icon: 'ruler',   title: 'Sketch & Refine', desc: 'Draw freehand, drag furniture, adjust rooms. Every detail, exactly as you envision.' },
+  { id: '2', icon: 'cube',    title: 'Walk Through 3D',    desc: 'Experience your design in immersive 3D before a single brick is laid.' },
+  { id: '3', icon: 'people',  title: 'Share & Earn', desc: 'Publish your templates to the community. Inspire others and earn revenue.' },
 ];
 
 function SlideIcon({ icon }: { icon: Slide['icon'] }) {
@@ -36,55 +37,93 @@ function SlideIcon({ icon }: { icon: Slide['icon'] }) {
 
   switch (icon) {
     case 'compass':
+      // Sketchy architectural compass with measurement marks
       return (
-        <Svg width={100} height={100} viewBox="0 0 100 100">
-          <Circle cx="50" cy="50" r="45" stroke={primary} strokeWidth="1.5" fill="none" />
-          <Path d="M50 20 L44 50 L50 46 L56 50 Z" fill={primary} />
-          <Path d="M50 80 L44 50 L50 54 L56 50 Z" fill={dim} />
-          <Path d="M20 50 L50 44 L46 50 L50 56 Z" fill={dim} />
-          <Path d="M80 50 L50 44 L54 50 L50 56 Z" fill={dim} />
-          <Circle cx="50" cy="50" r="4" fill={primary} />
+        <Svg width={110} height={110} viewBox="0 0 110 110">
+          {/* Outer ring - double line for sketchy effect */}
+          <Circle cx="55" cy="55" r="48" stroke={primary} strokeWidth="1.2" fill="none" strokeDasharray="2 3" />
+          <Circle cx="55" cy="55" r="44" stroke={primary} strokeWidth="0.8" fill="none" opacity={0.5} />
+          {/* Cardinal tick marks */}
+          <Path d="M55 7 L55 15 M55 95 L55 103 M7 55 L15 55 M95 55 L103 55" stroke={primary} strokeWidth="2" strokeLinecap="round" />
+          {/* Minor tick marks */}
+          <Path d="M55 20 L55 24 M55 86 L55 90 M20 55 L24 55 M86 55 L90 55" stroke={dim} strokeWidth="1.2" strokeLinecap="round" />
+          {/* Compass needle - north */}
+          <Path d="M55 18 L50 50 L55 45 L60 50 Z" fill={primary} opacity={0.9} />
+          {/* Compass needle - south */}
+          <Path d="M55 92 L50 50 L55 55 L60 50 Z" fill={dim} opacity={0.7} />
+          {/* Center circle */}
+          <Circle cx="55" cy="50" r="5" stroke={primary} strokeWidth="1.5" fill={DS.colors.background} />
+          <Circle cx="55" cy="50" r="2" fill={primary} />
+          {/* Sketchy accent lines */}
+          <Path d="M20 20 Q30 25 25 35" stroke={ghost} strokeWidth="0.8" fill="none" opacity={0.4} />
+          <Path d="M90 20 Q80 25 85 35" stroke={ghost} strokeWidth="0.8" fill="none" opacity={0.4} />
         </Svg>
       );
     case 'ruler':
+      // Sketchy pencil and house floor plan
       return (
-        <Svg width={100} height={100} viewBox="0 0 100 100">
-          {/* Pencil */}
-          <Path d="M30 70 L60 20 L70 30 L40 80 Z" stroke={primary} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
-          <Path d="M60 20 L68 12 L78 22 L70 30 Z" stroke={primary} strokeWidth="1.5" fill={primary} fillOpacity={0.15} />
-          <Path d="M30 70 L26 78 L38 80 Z" stroke={primary} strokeWidth="1.5" fill="none" />
-          {/* Ruler */}
-          <Rect x="55" y="55" width="30" height="14" rx="2" stroke={dim} strokeWidth="1.5" fill="none" transform="rotate(-30 55 55)" />
-          <Line x1="59" y1="59" x2="59" y2="63" stroke={dim} strokeWidth="1" transform="rotate(-30 55 55)" />
-          <Line x1="65" y1="59" x2="65" y2="63" stroke={dim} strokeWidth="1" transform="rotate(-30 55 55)" />
-          <Line x1="71" y1="59" x2="71" y2="63" stroke={dim} strokeWidth="1" transform="rotate(-30 55 55)" />
-          <Line x1="77" y1="59" x2="77" y2="63" stroke={dim} strokeWidth="1" transform="rotate(-30 55 55)" />
+        <Svg width={110} height={110} viewBox="0 0 110 110">
+          {/* Floor plan base */}
+          <Rect x="20" y="40" width="45" height="35" stroke={ghost} strokeWidth="1.2" fill="none" strokeDasharray="3 2" rx="1" />
+          <Path d="M20 57 L42.5 40 L65 57" stroke={ghost} strokeWidth="0.8" fill="none" opacity={0.5} />
+          {/* Room dividers */}
+          <Path d="M42.5 40 L42.5 75 M20 57 L65 57" stroke={ghost} strokeWidth="0.8" opacity={0.4} />
+          {/* Pencil body */}
+          <Path d="M55 85 L85 30 L95 40 L65 95 Z" stroke={primary} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+          {/* Pencil tip */}
+          <Path d="M55 85 L48 100 L65 95 Z" stroke={primary} strokeWidth="1.2" fill={primary} fillOpacity={0.2} />
+          {/* Pencil top */}
+          <Path d="M85 30 L95 20 L100 25 L90 35 Z" stroke={dim} strokeWidth="1.2" fill="none" />
+          {/* Measurement marks on ruler edge */}
+          <Path d="M30 78 L30 82 M40 75 L40 82 M50 72 L50 82" stroke={dim} strokeWidth="0.8" opacity={0.6} />
         </Svg>
       );
     case 'cube':
+      // Isometric 3D cube with floor plan
       return (
-        <Svg width={100} height={100} viewBox="0 0 100 100">
-          {/* 3D cube */}
-          <Path d="M50 15 L80 32 L80 68 L50 85 L20 68 L20 32 Z" stroke={primary} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
-          <Path d="M50 15 L50 85" stroke={dim} strokeWidth="1" strokeDasharray="4 4" />
-          <Path d="M20 32 L80 32" stroke={dim} strokeWidth="1" strokeDasharray="4 4" />
-          <Path d="M50 15 L80 32" stroke={primary} strokeWidth="1.5" />
-          <Path d="M50 15 L20 32" stroke={primary} strokeWidth="1.5" />
-          {/* Floor plan overlay */}
-          <Rect x="34" y="48" width="32" height="24" stroke={ghost} strokeWidth="1" fill="none" rx="1" opacity={0.6} />
-          <Line x1="50" y1="48" x2="50" y2="72" stroke={ghost} strokeWidth="1" opacity={0.6} />
+        <Svg width={110} height={110} viewBox="0 0 110 110">
+          {/* Back vertical edge */}
+          <Path d="M55 12 L55 88" stroke={dim} strokeWidth="1" strokeDasharray="5 3" opacity={0.4} />
+          {/* Base rectangle */}
+          <Path d="M55 88 L88 72 L88 28 L55 44 Z" stroke={primary} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+          {/* Top rectangle */}
+          <Path d="M55 12 L22 28 L22 72 L55 88 Z" stroke={primary} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+          {/* Left face */}
+          <Path d="M22 28 L55 44 L55 88 L22 72 Z" stroke={primary} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+          {/* Inner floor plan - sketchy overlay */}
+          <Rect x="30" y="50" width="18" height="14" stroke={ghost} strokeWidth="0.8" fill="none" strokeDasharray="2 2" rx="0.5" opacity={0.5} />
+          <Path d="M48 50 L48 64" stroke={ghost} strokeWidth="0.6" opacity={0.4} />
+          {/* Room label dots */}
+          <Circle cx="39" cy="57" r="1.5" fill={ghost} opacity={0.6} />
+          <Circle cx="55" cy="57" r="1.5" fill={ghost} opacity={0.6} />
+          {/* Perspective lines */}
+          <Path d="M55 44 L88 28" stroke={primary} strokeWidth="1.2" opacity={0.6} />
+          <Path d="M22 28 L55 12" stroke={primary} strokeWidth="1.2" opacity={0.6} />
         </Svg>
       );
     case 'people':
+      // Three sketchy figures representing community
       return (
-        <Svg width={100} height={100} viewBox="0 0 100 100">
-          {/* Three people */}
-          <Circle cx="50" cy="30" r="10" stroke={primary} strokeWidth="1.5" fill="none" />
-          <Path d="M30 70 Q30 50 50 50 Q70 50 70 70" stroke={primary} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-          <Circle cx="25" cy="35" r="7" stroke={dim} strokeWidth="1.5" fill="none" />
-          <Path d="M10 72 Q10 55 25 55 Q40 55 40 72" stroke={dim} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-          <Circle cx="75" cy="35" r="7" stroke={dim} strokeWidth="1.5" fill="none" />
-          <Path d="M60 72 Q60 55 75 55 Q90 55 90 72" stroke={dim} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <Svg width={110} height={110} viewBox="0 0 110 110">
+          {/* Center figure - slightly larger */}
+          <Circle cx="55" cy="28" r="11" stroke={primary} strokeWidth="1.5" fill="none" />
+          {/* Head sketch accent */}
+          <Path d="M48 22 Q55 18 62 22" stroke={primary} strokeWidth="0.8" fill="none" opacity={0.4} />
+          {/* Body */}
+          <Path d="M55 39 Q55 55 42 75 M55 39 Q55 55 68 75" stroke={primary} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+          {/* Arms */}
+          <Path d="M55 48 Q40 52 32 60 M55 48 Q70 52 78 60" stroke={primary} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          {/* Left figure */}
+          <Circle cx="25" cy="38" r="8" stroke={dim} strokeWidth="1.2" fill="none" />
+          <Path d="M25 46 Q25 60 15 78 M25 46 Q25 60 35 78" stroke={dim} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          <Path d="M25 54 Q12 58 6 65 M25 54 Q38 58 44 65" stroke={dim} strokeWidth="1" fill="none" strokeLinecap="round" opacity={0.7} />
+          {/* Right figure */}
+          <Circle cx="85" cy="38" r="8" stroke={dim} strokeWidth="1.2" fill="none" />
+          <Path d="M85 46 Q85 60 75 78 M85 46 Q85 60 95 78" stroke={dim} strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          <Path d="M85 54 Q72 58 66 65 M85 54 Q98 58 104 65" stroke={dim} strokeWidth="1" fill="none" strokeLinecap="round" opacity={0.7} />
+          {/* Connection lines - community bonds */}
+          <Path d="M36 42 Q45 38 48 35" stroke={ghost} strokeWidth="0.6" strokeDasharray="2 2" fill="none" opacity={0.3} />
+          <Path d="M74 42 Q65 38 62 35" stroke={ghost} strokeWidth="0.6" strokeDasharray="2 2" fill="none" opacity={0.3} />
         </Svg>
       );
   }
@@ -136,6 +175,7 @@ export function OnboardingScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
+      <GridBackground />
       <FlatList
         ref={flatListRef}
         data={SLIDES}

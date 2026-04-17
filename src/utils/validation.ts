@@ -8,6 +8,7 @@ export function validatePassword(password: string): { valid: boolean; errors: st
   if (!/[A-Z]/.test(password)) errors.push('At least one uppercase letter');
   if (!/[a-z]/.test(password)) errors.push('At least one lowercase letter');
   if (!/[0-9]/.test(password)) errors.push('At least one number');
+  // Special character is optional — shown as "(optional)" in the checklist
   return { valid: errors.length === 0, errors };
 }
 

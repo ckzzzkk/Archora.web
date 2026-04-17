@@ -19,7 +19,6 @@ import { ArchText } from '../../components/common/ArchText';
 import { OvalButton } from '../../components/common/OvalButton';
 import { GridBackground } from '../../components/common/GridBackground';
 import { DS } from '../../theme/designSystem';
-import { SUNRISE } from '../../theme/sunrise';
 import { useTierGate } from '../../hooks/useTierGate';
 import { useGenerationPreferences } from '../../hooks/useGenerationPreferences';
 
@@ -136,7 +135,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
           {/* Grid dots */}
           {[0, 1, 2, 3].map((r) => [0, 1, 2, 3, 4].map((c) => (
             <Circle key={`${r}-${c}`} cx={24 + c * 24} cy={24 + r * 24} r={1.5}
-              fill={SUNRISE.border} opacity={0.4} />
+              fill={DS.colors.border} opacity={0.4} />
           )))}
           {/* Walls — each fades in */}
           {segments.map((seg, i) => (
@@ -144,7 +143,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
               <Svg width={144} height={136} viewBox="0 0 144 136" style={{ position: 'absolute', top: 0, left: 0 }}>
                 <Line
                   x1={seg.x1} y1={seg.y1} x2={seg.x2} y2={seg.y2}
-                  stroke={SUNRISE.gold} strokeWidth={2.2} strokeLinecap="round"
+                  stroke={DS.colors.primary} strokeWidth={2.2} strokeLinecap="round"
                 />
               </Svg>
             </Animated.View>
@@ -156,16 +155,16 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
             { cx: 80, cy: 68 },
           ].map((pt, i) => (
             <Circle key={i} cx={pt.cx} cy={pt.cy} r={3}
-              fill="none" stroke={SUNRISE.amber} strokeWidth={1.5} opacity={0.8} />
+              fill="none" stroke={DS.colors.accent} strokeWidth={1.5} opacity={0.8} />
           ))}
           {/* Compass marker */}
-          <Path d="M72 8 L74 14 L72 12 L70 14 Z" fill={SUNRISE.gold} opacity={0.6} />
-          <Circle cx={72} cy={16} r={2} fill={SUNRISE.gold} opacity={0.4} />
+          <Path d="M72 8 L74 14 L72 12 L70 14 Z" fill={DS.colors.primary} opacity={0.6} />
+          <Circle cx={72} cy={16} r={2} fill={DS.colors.primary} opacity={0.4} />
         </Svg>
       </Animated.View>
 
       {/* ARIA label */}
-      <ArchText variant="heading" style={{ fontSize: 13, color: SUNRISE.textSecondary, letterSpacing: 4, textTransform: 'uppercase', marginBottom: DS.spacing.sm }}>
+      <ArchText variant="heading" style={{ fontSize: 13, color: DS.colors.textSecondary, letterSpacing: 4, textTransform: 'uppercase', marginBottom: DS.spacing.sm }}>
         ARIA
       </ArchText>
 
@@ -192,7 +191,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
               width: i === phase ? 20 : 6,
               height: 6,
               borderRadius: 3,
-              backgroundColor: i === phase ? SUNRISE.gold : SUNRISE.border,
+              backgroundColor: i === phase ? DS.colors.primary : DS.colors.border,
             }}
           />
         ))}
@@ -202,7 +201,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
       <View style={{
         marginTop: DS.spacing.xl,
         borderTopWidth: 1,
-        borderTopColor: SUNRISE.border,
+        borderTopColor: DS.colors.border,
         paddingTop: DS.spacing.md,
         width: '100%',
         paddingHorizontal: DS.spacing.xl,
@@ -211,18 +210,18 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
       }}>
         {/* Status line */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.sm }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: SUNRISE.textSecondary, letterSpacing: 2, textTransform: 'uppercase' }}>
+          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.textSecondary, letterSpacing: 2, textTransform: 'uppercase' }}>
             ITERATION {iterationProgress.iteration} / 3
           </ArchText>
-          <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: SUNRISE.border }} />
-          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: iterationProgress.status === 'scoring' ? SUNRISE.amber : iterationProgress.status === 'refining' ? SUNRISE.rose : SUNRISE.gold, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+          <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: DS.colors.border }} />
+          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: iterationProgress.status === 'scoring' ? DS.colors.warning : iterationProgress.status === 'refining' ? DS.colors.error : DS.colors.primary, letterSpacing: 1.5, textTransform: 'uppercase' }}>
             {iterationProgress.status}
           </ArchText>
         </View>
 
         {/* Live message */}
         {iterationProgress.message ? (
-          <ArchText variant="body" style={{ fontSize: 12, color: SUNRISE.textSecondary, textAlign: 'center', paddingHorizontal: DS.spacing.sm }}>
+          <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.textSecondary, textAlign: 'center', paddingHorizontal: DS.spacing.sm }}>
             {iterationProgress.message}
           </ArchText>
         ) : null}
@@ -231,14 +230,14 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
         {iterationProgress.scores.length > 0 && (
           <View style={{ flexDirection: 'row', gap: DS.spacing.sm, marginTop: DS.spacing.xs }}>
             {iterationProgress.scores.map((s) => {
-              const scoreColor = s.score >= 88 ? SUNRISE.gold : s.score >= 70 ? SUNRISE.amber : SUNRISE.rose;
+              const scoreColor = s.score >= 88 ? DS.colors.primary : s.score >= 70 ? DS.colors.warning : DS.colors.error;
               return (
                 <View key={s.n} style={{
                   alignItems: 'center',
                   paddingHorizontal: DS.spacing.sm,
                   paddingVertical: DS.spacing.xs,
                   borderRadius: 10,
-                  backgroundColor: SUNRISE.glass.subtleBg,
+                  backgroundColor: 'rgba(240, 237, 232, 0.03)',
                   borderWidth: 1,
                   borderColor: `${scoreColor}30`,
                   minWidth: 52,
@@ -246,7 +245,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
                   <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 16, color: scoreColor }}>
                     {s.score}
                   </ArchText>
-                  <ArchText variant="body" style={{ fontSize: 9, color: SUNRISE.textSecondary, fontFamily: DS.font.mono }}>
+                  <ArchText variant="body" style={{ fontSize: 9, color: DS.colors.textSecondary, fontFamily: DS.font.mono }}>
                     #{s.n}
                   </ArchText>
                 </View>
@@ -254,7 +253,7 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
             })}
             {iterationProgress.scores.length > 1 && (
               <View style={{ justifyContent: 'center', paddingHorizontal: 4 }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: SUNRISE.amber }}>
+                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.warning }}>
                   {iterationProgress.scores[iterationProgress.scores.length - 1].score > iterationProgress.scores[0].score ? '↑' : '→'}
                   {Math.abs(iterationProgress.scores[iterationProgress.scores.length - 1].score - iterationProgress.scores[0].score)}
                 </ArchText>
@@ -562,9 +561,9 @@ export function GenerationScreen() {
                         paddingHorizontal: 14,
                         paddingVertical: 7,
                         borderRadius: 999,
-                        backgroundColor: SUNRISE.glass.subtleBg,
+                        backgroundColor: 'rgba(240, 237, 232, 0.03)',
                         borderWidth: 1,
-                        borderColor: SUNRISE.goldBorderDim,
+                        borderColor: 'rgba(240, 237, 232, 0.10)',
                       }}
                     >
                       <ArchText

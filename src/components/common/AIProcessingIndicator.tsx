@@ -22,7 +22,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
-import { SUNRISE } from '../../theme/sunrise';
 import { ArchText } from './ArchText';
 import { DS } from '../../theme/designSystem';
 
@@ -280,7 +279,7 @@ export function AIProcessingIndicator({
   color,
 }: Props) {
   const { colors } = useTheme();
-  const accentColor = color ?? SUNRISE.gold;
+  const accentColor = color ?? DS.colors.accent;
   const dims = SIZES[size];
 
   const [currentIndex, setCurrentIndex] = React.useState(0);
