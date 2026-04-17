@@ -14,6 +14,7 @@ import {
   Path as SkiaPath,
   Line as SkiaLine,
   Circle as SkiaCircle,
+  Skia,
 } from '@shopify/react-native-skia';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -65,7 +66,7 @@ interface SketchWall {
   isPreview: boolean;
 }
 
-type DrawTool = 'wall' | 'eraser' | 'dimension' | 'text';
+type DrawTool = 'wall' | 'line' | 'curve' | 'arc' | 'eraser' | 'dimension' | 'text';
 type SketchMode = 'draw' | 'presets';
 type PresetSize = 'small' | 'medium' | 'large';
 
@@ -140,7 +141,122 @@ function rectWalls(x: number, y: number, w: number, h: number): SketchWall[] {
   }));
 }
 
-// --- Closed polygon detection ---
+/** Compute the 3 control points for a circular arc from start to end with given bulge direction */
+function circularArcPoints(start: Vector2D, end: Vector2D, bulgeDir: Vector2D): { cx: number; cy: number; r: number; startAngle: number; endAngle: number } {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const chord = Math.sqrt(dx * dx + dy * dy);
+  const dist = Math.sqrt(bulgeDir.x * bulgeDir.x + bulgeDir.y * bulgeDir.y);
+  if (dist === 0) {
+    // Degenerate — just return midpoint
+    return { cx: (start.x + end.x) / 2, cy: (start.y + end.y) / 2, r: chord / 2, startAngle: 0, endAngle: Math.PI };
+  }
+  // Unit direction from bulge
+  const nx = bulgeDir.x / dist;
+  const ny = bulgeDir.y / dist;
+  // Perpendicular to chord (for arc center offset)
+  const perpX = -dy / chord;
+  const perpY = dx / chord;
+  // Signed distance from chord midpoint to arc center (sagitta)
+  const midX = (start.x + end.x) / 2;
+  const midY = (start.y + end.y) / 2;
+  const sagitta = Math.abs(dx * nx + dy * ny);
+  const r = (chord / 2) / Math.sin(Math.atan2(sagitta, chord / 2));
+  // Sign: dot product with perpendicular determines which side
+  const sign = (dx * perpX + dy * perpY) >= 0 ? 1 : -1;
+  const cx = midX + sign * perpX * r * (1 - Math.cos(Math.atan2(sagitta, chord / 2)));
+  const cy = midY + sign * perpY * r * (1 - Math.cos(Math.atan2(sagitta, chord / 2)));
+  const startAngle = Math.atan2(start.y - cy, start.x - cx);
+  const endAngle = Math.atan2(end.y - cy, end.x - cx);
+  return { cx, cy, r, startAngle, endAngle };
+}
+
+/** Catmull-Rom cubic Bezier spline through points — returns array of {cp1, cp2, end} for Skia cubicTo */
+function catmullRomToBezier(pts: Vector2D[], tension = 0.5): Array<{ cp1: Vector2D; cp2: Vector2D; end: Vector2D }> {
+  if (pts.length < 2) return [];
+  if (pts.length === 2) {
+    return [{ cp1: pts[0], cp2: pts[1], end: pts[1] }];
+  }
+  const result: Array<{ cp1: Vector2D; cp2: Vector2D; end: Vector2D }> = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = i > 0 ? pts[i - 1] : pts[0];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = i < pts.length - 2 ? pts[i + 2] : pts[pts.length - 1];
+    const cp1: Vector2D = { x: p1.x + (p2.x - p0.x) * tension / 3, y: p1.y + (p2.y - p0.y) * tension / 3 };
+    const cp2: Vector2D = { x: p2.x - (p3.x - p1.x) * tension / 3, y: p2.y - (p3.y - p1.y) * tension / 3 };
+    result.push({ cp1, cp2, end: p2 });
+  }
+  return result;
+}
+
+// --- Curve / arc tessellation to wall segments ---
+
+/** Convert a smooth curve (array of points) to SketchWall segments for the blueprint */
+function curveToWalls(pts: Vector2D[], resolution = 0.1): SketchWall[] {
+  if (pts.length < 2) return [];
+  const walls: SketchWall[] = [];
+  const segments = catmullRomToBezier(pts);
+  for (const seg of segments) {
+    // Sample cubic Bezier at intervals
+    const steps = Math.max(4, Math.ceil(Math.sqrt((seg.end.x - seg.cp2.x) ** 2 + (seg.end.y - seg.cp2.y) ** 2) / resolution));
+    let prevPt = pts[segments.indexOf(seg)];
+    if (segments.indexOf(seg) === 0) prevPt = pts[0];
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      // Cubic Bezier: B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
+      const t2 = t * t, t3 = t2 * t, mt = 1 - t, mt2 = mt * mt;
+      const prevSegIdx = segments.indexOf(seg);
+      const startPt = i === 1 ? (prevSegIdx === 0 ? pts[0] : pts[prevSegIdx]) : prevPt;
+      const endPt = {
+        x: mt2 * mt * (prevSegIdx === 0 ? pts[0].x : pts[prevSegIdx].x) + 3 * mt2 * t * seg.cp1.x + 3 * mt * t2 * seg.cp2.x + t3 * seg.end.x,
+        y: mt2 * mt * (prevSegIdx === 0 ? pts[0].y : pts[prevSegIdx].y) + 3 * mt2 * t * seg.cp1.y + 3 * mt * t2 * seg.cp2.y + t3 * seg.end.y,
+      };
+      if (i > 1) {
+        walls.push({ id: genId(), start: prevPt, end: endPt, isPreview: false });
+      }
+      prevPt = endPt;
+    }
+  }
+  // Simpler approximation: just connect points linearly for reliability
+  const simpleWalls: SketchWall[] = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const steps = Math.max(2, Math.ceil(dist2D(pts[i], pts[i + 1]) / resolution));
+    for (let s = 0; s < steps; s++) {
+      const t0 = s / steps;
+      const t1 = (s + 1) / steps;
+      const x0 = pts[i].x + (pts[i + 1].x - pts[i].x) * t0;
+      const y0 = pts[i].y + (pts[i + 1].y - pts[i].y) * t0;
+      const x1 = pts[i].x + (pts[i + 1].x - pts[i].x) * t1;
+      const y1 = pts[i].y + (pts[i + 1].y - pts[i].y) * t1;
+      simpleWalls.push({ id: genId(), start: { x: x0, y: y0 }, end: { x: x1, y: y1 }, isPreview: false });
+    }
+  }
+  return simpleWalls;
+}
+
+/** Convert a circular arc to SketchWall segments */
+function arcToWalls(start: Vector2D, end: Vector2D, bulgeDir: Vector2D, resolution = 0.1): SketchWall[] {
+  const { cx, cy, r, startAngle, endAngle } = circularArcPoints(start, end, bulgeDir);
+  const arcLen = Math.abs(r * ((endAngle - startAngle + Math.PI * 3) % (Math.PI * 2) - Math.PI));
+  const steps = Math.max(4, Math.ceil(arcLen / resolution));
+  const walls: SketchWall[] = [];
+  let prevAngle = startAngle;
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const totalRange = ((endAngle - startAngle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    const angle = startAngle + totalRange * t;
+    const x0 = cx + r * Math.cos(prevAngle);
+    const y0 = cy + r * Math.sin(prevAngle);
+    const x1 = cx + r * Math.cos(angle);
+    const y1 = cy + r * Math.sin(angle);
+    if (i > 1) {
+      walls.push({ id: genId(), start: { x: x0, y: y0 }, end: { x: x1, y: y1 }, isPreview: false });
+    }
+    prevAngle = angle;
+  }
+  return walls;
+}
 
 function findClosedPolygon(walls: SketchWall[]): SketchWall[] | null {
   if (walls.length < 3) return null;
@@ -194,9 +310,11 @@ function sketchToBlueprintData(
   closedPoly: SketchWall[] | null,
   roomType: RoomType,
   buildingType: 'house' | 'apartment' | 'office' | 'studio' | 'villa',
+  extraWalls: SketchWall[] = [],
 ): BlueprintData {
   const now = nowISO();
-  const blueprintWalls: Wall[] = walls.map((sw) => ({
+  const allWalls = [...walls, ...extraWalls];
+  const blueprintWalls: Wall[] = allWalls.map((sw) => ({
     id: sw.id,
     start: sw.start,
     end: sw.end,
@@ -381,6 +499,22 @@ export function SketchScreen() {
   const [walls, setWalls] = useState<SketchWall[]>([]);
   const [closedPolygon, setClosedPolygon] = useState<SketchWall[] | null>(null);
 
+  // Line tool state: first anchor point
+  const [lineAnchor, setLineAnchor] = useState<Vector2D | null>(null);
+
+  // Curve tool state: list of tapped points
+  const [curvePoints, setCurvePoints] = useState<Vector2D[]>([]);
+
+  // Arc tool state: start + end + bulge
+  const [arcStart, setArcStart] = useState<Vector2D | null>(null);
+  const [arcEnd, setArcEnd] = useState<Vector2D | null>(null);
+  const [arcDragBulge, setArcDragBulge] = useState<Vector2D | null>(null); // drag offset while setting bulge
+
+  // Arc drag shared value for smooth preview
+  const arcDragX = useSharedValue(-9999);
+  const arcDragY = useSharedValue(-9999);
+  const arcDragActive = useSharedValue(false);
+
   // Viewport shared values (Reanimated)
   const scale = useSharedValue(1);
   const offsetX = useSharedValue(SCREEN_W / 2);
@@ -410,6 +544,9 @@ export function SketchScreen() {
   const skPreviewEndX = useRef(-9999);
   const skPreviewEndY = useRef(-9999);
   const skIsDrawing = useRef(false);
+  const skArcDragX = useRef(-9999);
+  const skArcDragY = useRef(-9999);
+  const skArcDragActive = useRef(false);
 
   const [, forceCanvasRender] = useReducer((n: number) => n + 1, 0);
 
@@ -423,6 +560,9 @@ export function SketchScreen() {
       pex: previewEndX.value,
       pey: previewEndY.value,
       id: isDrawing.value,
+      adx: arcDragX.value,
+      ady: arcDragY.value,
+      ada: arcDragActive.value,
     }),
     (curr) => {
       skScale.current = curr.s;
@@ -433,6 +573,9 @@ export function SketchScreen() {
       skPreviewEndX.current = curr.pex;
       skPreviewEndY.current = curr.pey;
       skIsDrawing.current = curr.id;
+      skArcDragX.current = curr.adx;
+      skArcDragY.current = curr.ady;
+      skArcDragActive.current = curr.ada;
       runOnJS(forceCanvasRender)();
     },
   );
@@ -484,6 +627,56 @@ export function SketchScreen() {
       prev.filter((w) => pointToSegmentDist({ x: mx, y: my }, w.start, w.end) >= 0.3),
     );
   }, []);
+
+  // Line tool: tap once = first anchor, tap twice = commit wall
+  const handleLineTap = useCallback((mx: number, my: number) => {
+    if (lineAnchor === null) {
+      setLineAnchor({ x: mx, y: my });
+    } else {
+      setWalls((prev) => [
+        ...prev,
+        { id: genId(), start: lineAnchor, end: { x: mx, y: my }, isPreview: false },
+      ]);
+      setLineAnchor(null);
+    }
+  }, [lineAnchor]);
+
+  // Curve tool: tap to add points, double-tap to commit as tessellated walls
+  const handleCurveTap = useCallback((mx: number, my: number) => {
+    setCurvePoints((prev) => [...prev, { x: mx, y: my }]);
+  }, []);
+
+  const handleCurveCommit = useCallback(() => {
+    if (curvePoints.length < 2) { setCurvePoints([]); return; }
+    const tessellated = curveToWalls(curvePoints);
+    setWalls((prev) => [...prev, ...tessellated]);
+    setCurvePoints([]);
+  }, [curvePoints]);
+
+  // Arc tool: tap start → tap end → drag bulge → release commits
+  const handleArcTap = useCallback((mx: number, my: number) => {
+    if (arcStart === null) {
+      setArcStart({ x: mx, y: my });
+      setArcEnd(null);
+      setArcDragBulge(null);
+    } else if (arcEnd === null) {
+      setArcEnd({ x: mx, y: my });
+    }
+  }, [arcStart, arcEnd]);
+
+  const handleArcDrag = useCallback((mx: number, my: number) => {
+    setArcDragBulge({ x: mx, y: my });
+  }, []);
+
+  const handleArcCommit = useCallback(() => {
+    if (arcStart !== null && arcEnd !== null && arcDragBulge !== null) {
+      const walls = arcToWalls(arcStart, arcEnd, arcDragBulge);
+      setWalls((prev) => [...prev, ...walls]);
+    }
+    setArcStart(null);
+    setArcEnd(null);
+    setArcDragBulge(null);
+  }, [arcStart, arcEnd, arcDragBulge]);
 
   // Pinch gesture
   const pinchGesture = Gesture.Pinch()
@@ -549,9 +742,60 @@ export function SketchScreen() {
     runOnJS(eraseWallAt)(mx, my);
   });
 
+  // Line tool: tap first point, tap second point → commits a wall
+  const lineTapGesture = Gesture.Tap()
+    .onEnd((e) => {
+      const mx = snap(pixelToMetre(e.x, scale.value, offsetX.value));
+      const my = snap(pixelToMetre(e.y, scale.value, offsetY.value));
+      runOnJS(handleLineTap)(mx, my);
+    });
+
+  // Curve tool: tap to add point, double-tap to finish
+  const curveTapGesture = Gesture.Tap()
+    .onEnd((e) => {
+      const mx = snap(pixelToMetre(e.x, scale.value, offsetX.value));
+      const my = snap(pixelToMetre(e.y, scale.value, offsetY.value));
+      runOnJS(handleCurveTap)(mx, my);
+    });
+  const curveDoubleTapGesture = Gesture.Tap().numberOfTaps(2)
+    .onEnd((e) => {
+      const mx = snap(pixelToMetre(e.x, scale.value, offsetX.value));
+      const my = snap(pixelToMetre(e.y, scale.value, offsetY.value));
+      runOnJS(handleCurveCommit)();
+    });
+
+  // Arc tool: tap start, tap end, drag to set bulge
+  const arcTapGesture = Gesture.Tap()
+    .onEnd((e) => {
+      const mx = snap(pixelToMetre(e.x, scale.value, offsetX.value));
+      const my = snap(pixelToMetre(e.y, scale.value, offsetY.value));
+      runOnJS(handleArcTap)(mx, my);
+    });
+  const arcPanGesture = Gesture.Pan()
+    .onStart(() => {
+      arcDragActive.value = true;
+    })
+    .onUpdate((e) => {
+      const mx = snap(pixelToMetre(e.x, scale.value, offsetX.value));
+      const my = snap(pixelToMetre(e.y, scale.value, offsetY.value));
+      arcDragX.value = mx;
+      arcDragY.value = my;
+      runOnJS(handleArcDrag)(mx, my);
+    })
+    .onEnd(() => {
+      arcDragActive.value = false;
+      runOnJS(handleArcCommit)();
+    });
+
   const activeGesture =
     tool === 'wall'
       ? Gesture.Exclusive(drawGesture, Gesture.Simultaneous(pinchGesture))
+      : tool === 'line'
+      ? Gesture.Exclusive(lineTapGesture, Gesture.Simultaneous(pinchGesture, panGesture))
+      : tool === 'curve'
+      ? Gesture.Exclusive(Gesture.Exclusive(curveTapGesture, curveDoubleTapGesture), Gesture.Simultaneous(pinchGesture, panGesture))
+      : tool === 'arc'
+      ? Gesture.Race(arcTapGesture, Gesture.Exclusive(arcPanGesture, Gesture.Simultaneous(pinchGesture, panGesture)))
       : tool === 'eraser'
       ? Gesture.Exclusive(tapGesture, Gesture.Simultaneous(pinchGesture))
       : Gesture.Simultaneous(panGesture, pinchGesture);
@@ -587,6 +831,9 @@ export function SketchScreen() {
 
   const TOOLS: { id: DrawTool; label: string }[] = [
     { id: 'wall', label: 'Wall' },
+    { id: 'line', label: 'Line' },
+    { id: 'curve', label: 'Curve' },
+    { id: 'arc', label: 'Arc' },
     { id: 'eraser', label: 'Erase' },
     { id: 'dimension', label: 'Dim' },
     { id: 'text', label: 'Text' },
@@ -708,6 +955,140 @@ export function SketchScreen() {
                     color={`${accentColor}99`}
                   />
                 )}
+
+                {/* Line tool preview: first anchor dot */}
+                {tool === 'line' && lineAnchor !== null && (
+                  <SkiaCircle
+                    cx={metreToPixel(lineAnchor.x, skScale.current, skOffsetX.current)}
+                    cy={metreToPixel(lineAnchor.y, skScale.current, skOffsetY.current)}
+                    r={8}
+                    color={accentColor}
+                  />
+                )}
+
+                {/* Curve tool preview: points + smooth curve */}
+                {tool === 'curve' && curvePoints.length > 0 && (() => {
+                  const m2p = (pt: Vector2D) => ({
+                    x: metreToPixel(pt.x, skScale.current, skOffsetX.current),
+                    y: metreToPixel(pt.y, skScale.current, skOffsetY.current),
+                  });
+                  const pixelPts = curvePoints.map(m2p);
+                  // Build SVG path string (Catmull-Rom → cubic Bezier)
+                  const svgParts: string[] = [];
+                  if (pixelPts.length > 0) {
+                    svgParts.push(`M ${pixelPts[0].x} ${pixelPts[0].y}`);
+                    if (pixelPts.length === 2) {
+                      svgParts.push(`L ${pixelPts[1].x} ${pixelPts[1].y}`);
+                    } else if (pixelPts.length > 2) {
+                      for (let i = 0; i < pixelPts.length - 1; i++) {
+                        const p0 = pixelPts[Math.max(0, i - 1)];
+                        const p1 = pixelPts[i];
+                        const p2 = pixelPts[i + 1];
+                        const p3 = pixelPts[Math.min(pixelPts.length - 1, i + 2)];
+                        const cp1x = p1.x + (p2.x - p0.x) * 0.35;
+                        const cp1y = p1.y + (p2.y - p0.y) * 0.35;
+                        const cp2x = p2.x - (p3.x - p1.x) * 0.35;
+                        const cp2y = p2.y - (p3.y - p1.y) * 0.35;
+                        svgParts.push(`C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`);
+                      }
+                    }
+                  }
+                  const curvePath = Skia.Path.Make();
+                  if (pixelPts.length === 2) {
+                    curvePath.moveTo(pixelPts[0].x, pixelPts[0].y);
+                    curvePath.lineTo(pixelPts[1].x, pixelPts[1].y);
+                  } else if (pixelPts.length > 2) {
+                    // Approximate Catmull-Rom with line segments (20 per segment)
+                    for (let i = 0; i < pixelPts.length - 1; i++) {
+                      const p0 = pixelPts[Math.max(0, i - 1)];
+                      const p1 = pixelPts[i];
+                      const p2 = pixelPts[i + 1];
+                      const p3 = pixelPts[Math.min(pixelPts.length - 1, i + 2)];
+                      for (let t = 0; t <= 1; t += 0.05) {
+                        const t2 = t * t;
+                        const t3 = t2 * t;
+                        const x = 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+                        const y = 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3);
+                        if (t === 0 && i === 0) curvePath.moveTo(x, y);
+                        else curvePath.lineTo(x, y);
+                      }
+                    }
+                  }
+                  return (
+                    <>
+                      {pixelPts.map((pt, i) => (
+                        <SkiaCircle key={i} cx={pt.x} cy={pt.y} r={i === 0 ? 8 : 5} color={i === 0 ? accentColor : `${accentColor}aa`} />
+                      ))}
+                      <SkiaPath
+                        path={curvePath}
+                        style="stroke"
+                        strokeWidth={2.5}
+                        color={`${accentColor}cc`}
+                      />
+                    </>
+                  );
+                })()}
+
+                {/* Arc tool preview */}
+                {tool === 'arc' && arcStart !== null && (() => {
+                  const startPx = { x: metreToPixel(arcStart.x, skScale.current, skOffsetX.current), y: metreToPixel(arcStart.y, skScale.current, skOffsetY.current) };
+                  const endPx = arcEnd !== null ? { x: metreToPixel(arcEnd.x, skScale.current, skOffsetX.current), y: metreToPixel(arcEnd.y, skScale.current, skOffsetY.current) } : null;
+                  const dragPx = skArcDragActive.current ? { x: metreToPixel(skArcDragX.current, skScale.current, skOffsetX.current), y: metreToPixel(skArcDragY.current, skScale.current, skOffsetY.current) } : null;
+
+                  let arcPath: ReturnType<typeof Skia.Path.Make> | null = null;
+                  if (endPx !== null && dragPx !== null) {
+                    // Circular arc from start to end through drag direction
+                    const { r, startAngle, endAngle } = circularArcPoints(
+                      arcStart,
+                      arcEnd ?? arcStart,
+                      { x: skArcDragX.current - (arcStart.x), y: skArcDragY.current - (arcStart.y) }
+                    );
+                    const arcR = r * skScale.current * PIXELS_PER_METRE;
+                    const sweep = ((endAngle - startAngle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+                    const useSmallArc = Math.abs(sweep) <= Math.PI;
+                    const isCCW = sweep < 0;
+                    arcPath = Skia.Path.Make();
+                    arcPath.moveTo(startPx.x, startPx.y);
+                    // Sample arc as line segments
+                    const { cx, cy } = circularArcPoints(
+                      arcStart,
+                      arcEnd ?? arcStart,
+                      { x: skArcDragX.current - arcStart.x, y: skArcDragY.current - arcStart.y }
+                    );
+                    const acx = metreToPixel(cx, skScale.current, skOffsetX.current);
+                    const acy = metreToPixel(cy, skScale.current, skOffsetY.current);
+                    const asteps = 24;
+                    for (let i = 1; i <= asteps; i++) {
+                      const a = startAngle + (sweep / asteps) * i;
+                      arcPath.lineTo(acx + arcR * Math.cos(a), acy + arcR * Math.sin(a));
+                    }
+                  }
+                  return (
+                    <>
+                      {/* Start anchor */}
+                      <SkiaCircle cx={startPx.x} cy={startPx.y} r={8} color={accentColor} />
+                      {/* End anchor */}
+                      {endPx !== null && <SkiaCircle cx={endPx.x} cy={endPx.y} r={8} color={accentColor} />}
+                      {/* Drag indicator */}
+                      {endPx !== null && dragPx !== null && (
+                        <>
+                          <SkiaLine p1={startPx} p2={endPx} strokeWidth={1} color={`${accentColor}44`} />
+                          <SkiaLine p1={endPx} p2={dragPx} strokeWidth={1.5} color={`${accentColor}88`} />
+                          {arcPath && <SkiaPath path={arcPath} style="stroke" strokeWidth={2.5} color={`${accentColor}cc`} />}
+                          <SkiaCircle cx={dragPx.x} cy={dragPx.y} r={6} color={accentColor} />
+                        </>
+                      )}
+                      {endPx === null && (
+                        <SkiaLine
+                          p1={startPx}
+                          p2={dragPx ?? { x: startPx.x + 40, y: startPx.y - 30 }}
+                          strokeWidth={1.5}
+                          color={`${accentColor}88`}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
                 </Canvas>
               </GestureDetector>
             </ErrorBoundary>
