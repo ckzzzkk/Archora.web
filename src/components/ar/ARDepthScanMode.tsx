@@ -169,16 +169,14 @@ function ARDepthScanContent() {
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       {/* Instructions */}
       <ARInstructionBubble
-        instruction={
+        prompt={
           isScanning
             ? `Detected ${capturedPlanes.length} walls`
             : 'Auto-detect walls as you walk around'
         }
-        hint={
-          isScanning
-            ? 'Tap Capture to save detected walls'
-            : 'Requires Depth API capable device'
-        }
+        wallCount={capturedPlanes.length}
+        totalWalls={4}
+        qualityPercent={Math.min((capturedPlanes.length / 4) * 100, 100)}
         step={isScanning ? `Walls: ${capturedPlanes.length}` : undefined}
       />
 
