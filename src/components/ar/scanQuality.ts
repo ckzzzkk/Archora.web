@@ -1,5 +1,3 @@
-import type { DetectedPlane } from '../../native/ARCoreModule';
-
 interface ScanQualityResult {
   qualityPercent: number; // 0–100
   wallCount: number;
@@ -8,16 +6,14 @@ interface ScanQualityResult {
 }
 
 /**
- * Calculate scan quality based on detected wall planes.
+ * Calculate scan quality based on captured wall count.
  * Quality = walls captured (up to 4) + corners found.
- * Corners = where 2+ walls meet at similar positions.
  */
 export function calculateScanQuality(
-  planes: DetectedPlane[],
   capturedWallCount: number,
 ): ScanQualityResult {
-  const wallCount = capturedWallCount;
-  const cornerCount = Math.floor(wallCount / 2); // rough estimate
+  const wallCount = Math.max(0, capturedWallCount);
+  const cornerCount = Math.floor(wallCount / 2);
 
   const qualityPercent = Math.min(
     100,
@@ -33,10 +29,8 @@ export function calculateScanQuality(
     prompt = 'Good coverage — scan corners next';
   } else if (wallCount === 3) {
     prompt = 'Almost complete — scan the last wall';
-  } else if (wallCount >= 4) {
-    prompt = 'Room captured — tap Complete';
   } else {
-    prompt = 'Keep scanning walls';
+    prompt = 'Room captured — tap Complete';
   }
 
   return { qualityPercent, wallCount, cornerCount, prompt };
