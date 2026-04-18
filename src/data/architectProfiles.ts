@@ -1,4 +1,6 @@
 // Types
+import type { SubscriptionTier } from '../types';
+
 export interface ArchitectRule {
   rule: string;
   why: string;
@@ -880,6 +882,27 @@ export function calculateTokenCost(baseTokens: number, architectId: string): num
   };
   const multiplier = MULTIPLIERS[architectId] ?? 1.0;
   return Math.ceil(baseTokens * multiplier);
+}
+
+export type ArchitectTier = 'starter' | 'creator' | 'pro' | 'architect';
+
+export const ARCHITECT_TIER_REQUIRED: Record<string, ArchitectTier> = {
+  'frank-lloyd-wright': 'starter',
+  'zaha-hadid': 'starter',
+  'tadao-ando': 'starter',
+  'norman-foster': 'creator',
+  'le-corbusier': 'creator',
+  'peter-zumthor': 'creator',
+  'bjarke-ingels': 'creator',
+  'kengo-kuma': 'pro',
+  'alain-carle': 'pro',
+  'louis-kahn': 'pro',
+  'santiago-calatrava': 'pro',
+  'rem-koolhaas': 'architect',
+};
+
+export function getArchitectTierRequired(architectId: string): ArchitectTier {
+  return ARCHITECT_TIER_REQUIRED[architectId] ?? 'starter';
 }
 
 // UI-specific exports

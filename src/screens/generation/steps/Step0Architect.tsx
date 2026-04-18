@@ -63,23 +63,23 @@ function ArchitectCard({
     >
       {selected && (
         <View style={{ position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: DS.colors.accent, alignItems: 'center', justifyContent: 'center' }}>
-          <ArchText style={{ color: '#000', fontSize: 12, fontWeight: '700' }}>✓</ArchText>
+          <ArchText variant="body" style={{ color: '#000', fontSize: 12, fontWeight: '700' }}>✓</ArchText>
         </View>
       )}
       {locked && (
         <View style={{ position: 'absolute', top: 10, right: 10 }}>
-          <ArchText style={{ fontSize: 10, color: DS.colors.warning }}>🔒</ArchText>
+          <ArchText variant="body" style={{ fontSize: 10, color: DS.colors.warning }}>🔒</ArchText>
         </View>
       )}
 
-      <ArchText style={{ fontSize: 24, marginBottom: 8 }}>{icon}</ArchText>
+      <ArchText variant="body" style={{ fontSize: 24, marginBottom: 8 }}>{icon}</ArchText>
       <ArchText variant="body" style={{ fontFamily: DS.font.medium, fontSize: 13, color: DS.colors.primary, marginBottom: 2 }}>
         {architect.name.split(' ').slice(0, 2).join(' ')}
       </ArchText>
-      <ArchText style={{ fontSize: 10, color: DS.colors.primaryGhost, marginBottom: 8 }}>
+      <ArchText variant="body" style={{ fontSize: 10, color: DS.colors.primaryGhost, marginBottom: 8 }}>
         {architect.era.split(',')[0]}
       </ArchText>
-      <ArchText style={{ fontSize: 11, color: DS.colors.accent, fontStyle: 'italic', marginBottom: 8 }}>
+      <ArchText variant="body" style={{ fontSize: 11, color: DS.colors.accent, fontStyle: 'italic', marginBottom: 8 }}>
         "{architect.tagline}"
       </ArchText>
       <ArchText variant="body" style={{ fontSize: 10, color: DS.colors.primaryDim, lineHeight: 14 }} numberOfLines={3}>
@@ -87,7 +87,7 @@ function ArchitectCard({
       </ArchText>
       {locked && (
         <View style={{ marginTop: 8, backgroundColor: `${DS.colors.warning}22`, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, alignSelf: 'flex-start' }}>
-          <ArchText style={{ fontSize: 9, color: DS.colors.warning, fontFamily: DS.font.medium }}>
+          <ArchText variant="body" style={{ fontSize: 9, color: DS.colors.warning, fontFamily: DS.font.medium }}>
             {tierRequired.charAt(0).toUpperCase() + tierRequired.slice(1)}+
           </ArchText>
         </View>
