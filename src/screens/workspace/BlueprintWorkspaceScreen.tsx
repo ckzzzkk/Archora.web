@@ -25,6 +25,7 @@ import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
 import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
 import { ImageToFurnitureSheet } from '../../components/blueprint/ImageToFurnitureSheet';
 import { CopyPasteSheet } from '../../components/blueprint/CopyPasteSheet';
+import { RenderSheet } from '../../components/blueprint/RenderSheet';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { OvalButton } from '../../components/common/OvalButton';
 import { InHouseView } from '../../components/3d/InHouseView';
@@ -183,9 +184,11 @@ export function BlueprintWorkspaceScreen() {
   const { allowed: cadExportAllowed } = useTierGate('cadExport');
   const { allowed: costEstimatorAllowed } = useTierGate('costEstimator');
   const { allowed: customFurnitureAllowed } = useTierGate('customFurniture');
+  const { allowed: aiGenerationsAllowed } = useTierGate('aiGenerationsPerMonth');
 
   const [showImageToFurniture, setShowImageToFurniture] = useState(false);
   const [showCopyPaste, setShowCopyPaste] = useState(false);
+  const [showRenderSheet, setShowRenderSheet] = useState(false);
 
   const route = useRoute<NativeStackScreenProps<RootStackParamList, 'Workspace'>['route']>();
   const currentProjectId = route.params?.projectId;
@@ -507,6 +510,23 @@ export function BlueprintWorkspaceScreen() {
             <Text style={{ fontSize: 14 }}>📋</Text>
             <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.primary }}>Copy</ArchText>
           </Pressable>
+          {/* Creative Render — Pro+ only */}
+          {blueprint && aiGenerationsAllowed && (
+            <Pressable
+              onPress={() => setShowRenderSheet(true)}
+              style={{
+                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
+                backgroundColor: `${DS.colors.accent}18`, borderWidth: 1,
+                borderColor: `${DS.colors.accent}40`, flexDirection: 'row', alignItems: 'center', gap: 4,
+                marginRight: 8,
+              }}
+            >
+              <Text style={{ fontSize: 14 }}>🎨</Text>
+              <View style={{ flexShrink: 1 }}>
+                <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.accent }} numberOfLines={1}>Render</ArchText>
+              </View>
+            </Pressable>
+          )}
           {/* Share — available in 2D view with a blueprint loaded */}
           {blueprint && viewMode === '2D' && (
             <Pressable
@@ -642,6 +662,12 @@ export function BlueprintWorkspaceScreen() {
         <Modal transparent animationType="slide" onRequestClose={() => setShowCopyPaste(false)}>
           <Pressable style={{ flex: 1 }} onPress={() => setShowCopyPaste(false)} />
           <CopyPasteSheet onClose={() => setShowCopyPaste(false)} />
+        </Modal>
+      )}
+      {showRenderSheet && (
+        <Modal transparent animationType="slide" onRequestClose={() => setShowRenderSheet(false)}>
+          <Pressable style={{ flex: 1 }} onPress={() => setShowRenderSheet(false)} />
+          <RenderSheet onClose={() => setShowRenderSheet(false)} />
         </Modal>
       )}
       {blueprint && (
