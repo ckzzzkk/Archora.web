@@ -1,6 +1,8 @@
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { checkQuota } from '../_shared/quota.ts';
+import { getArchitectById, buildArchitectPromptSection } from '../_shared/architects.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
@@ -9,6 +11,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 const RequestSchema = z.object({
   prompt: z.string().min(1).max(2000),
   blueprint: z.record(z.unknown()),
+  architectId: z.string().optional(),
 });
 
 const SYSTEM_PROMPT = `You are ARIA — a senior architect with 20 years of experience designing homes that people genuinely love living in. You've worked with young couples finding their first place together, growing families who need their home to flex with them, and retirees creating spaces that will serve them beautifully for decades.
@@ -163,13 +166,30 @@ serve(async (req: Request) => {
     const allowed = await checkRateLimit(`ai-edit:${user.id}`, 30, 3600);
     if (!allowed) return Errors.rateLimited('AI edit rate limit exceeded — try again later');
 
+    // Quota check — ai_edits are separate from ai_generations
+    const quotaOk = await checkQuota(user.id, 'ai_edit');
+    if (!quotaOk) {
+      return Errors.quotaExceeded('Monthly AI edit quota reached.');
+    }
+
     const body = await req.json() as unknown;
     const parsed = RequestSchema.safeParse(body);
     if (!parsed.success) {
       return Errors.validation('Invalid request body', parsed.error.issues);
     }
 
-    const { prompt, blueprint } = parsed.data;
+    const { prompt, blueprint, architectId } = parsed.data;
+
+    // Inject architect influence if specified
+    let effectiveSystemPrompt = SYSTEM_PROMPT;
+    if (architectId) {
+      const architect = getArchitectById(architectId);
+      if (architect) {
+        effectiveSystemPrompt = `${buildArchitectPromptSection(architect)}
+
+${SYSTEM_PROMPT}`;
+      }
+    }
 
     const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_KEY) {
@@ -197,7 +217,7 @@ serve(async (req: Request) => {
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 8192,
-          system: SYSTEM_PROMPT,
+          system: effectiveSystemPrompt,
           messages: [
             {
               role: 'user',
@@ -244,6 +264,12 @@ serve(async (req: Request) => {
       resource_type: 'project',
       resource_id: null,
       meta: { prompt: prompt.slice(0, 200), ...extractRequestMeta(req) },
+    });
+
+    // Fire-and-forget: increment ai_edits_used
+    import('https://esm.sh/@supabase/supabase-js@2').then(({ createClient }) => {
+      const supabase2 = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      supabase2.from('users').update({ ai_edits_used: supabase2.sql`ai_edits_used + 1` }).eq('id', user.id).catch(() => {});
     });
 
     return new Response(JSON.stringify(result), {
