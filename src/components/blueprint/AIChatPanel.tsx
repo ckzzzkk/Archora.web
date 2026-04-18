@@ -1,5 +1,5 @@
 import { DS } from '../../theme/designSystem';
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, Pressable, TextInput, ScrollView,
   KeyboardAvoidingView, Platform,
@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArchText } from '../common/ArchText';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
+  withRepeat,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { AIProcessingIndicator } from '../common/AIProcessingIndicator';
@@ -18,6 +19,7 @@ import { aiService } from '../../services/aiService';
 import { buildSelectedContext, sanitizePrompt } from '../../utils/promptSanitizer';
 import { validateChatMessage } from '../../utils/blueprintValidation';
 import type { ChatMessage, BlueprintData } from '../../types/blueprint';
+import { Audio } from 'expo-av';
 
 function ChatBubbleIcon({ color }: { color: string }) {
   return (
@@ -74,9 +76,13 @@ export function AIChatPanel({ visible, onToggle }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [pendingBlueprint, setPendingBlueprint] = useState<BlueprintData | null>(null);
   const [pendingMessage, setPendingMessage] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const recordingRef = useRef<Audio.Recording | null>(null);
   const insets = useSafeAreaInsets();
   const panelY = useSharedValue(400);
+  const pulseScale = useSharedValue(1);
 
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const selectedId = useBlueprintStore((s) => s.selectedId);
@@ -91,6 +97,78 @@ export function AIChatPanel({ visible, onToggle }: Props) {
     rooms: blueprint?.rooms,
     furniture: blueprint?.furniture,
   });
+
+  // Contextual example prompts based on blueprint state
+  const examplePrompts = useMemo(() => {
+    if (!blueprint) return ['"Add a window to the north wall"', '"Make the living room bigger"'];
+    const hasFurniture = (blueprint.furniture?.length ?? 0) > 0;
+    const hasMultiFloor = (blueprint.floors?.length ?? 0) > 1;
+    const selectedRoom = blueprint.rooms?.find(r => r.id === selectedId);
+    const prompts = [];
+    if (selectedRoom) {
+      prompts.push(`"Resize the ${selectedRoom.name}"`);
+      prompts.push(`"Add furniture to ${selectedRoom.name}"`);
+    }
+    if (!hasFurniture) prompts.push('"Suggest furniture for each room"');
+    if (!hasMultiFloor) prompts.push('"Add a second floor"');
+    prompts.push('"Add a window to the north wall"');
+    return prompts.slice(0, 5);
+  }, [blueprint, selectedId]);
+
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulseScale.value }] }));
+
+  // Voice recording
+  const startRecording = useCallback(async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') return;
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      recordingRef.current = recording;
+      setIsRecording(true);
+      pulseScale.value = withRepeat(
+        // eslint-disable-next-line no-undefined
+        withTiming(1.15, { duration: 600 }),
+        -1,
+        true,
+      );
+    } catch {
+      // silently fail
+    }
+  }, [pulseScale]);
+
+  const stopRecording = useCallback(async () => {
+    if (!recordingRef.current) return;
+    pulseScale.value = withTiming(1, { duration: 150 });
+    setIsRecording(false);
+    setIsTranscribing(true);
+    try {
+      await recordingRef.current.stopAndUnloadAsync();
+      const uri = recordingRef.current.getURI();
+      recordingRef.current = null;
+      if (!uri) return;
+      const text = await aiService.transcribeAudio(uri);
+      if (text) setInput((prev) => (prev ? `${prev}\n${text}` : text).slice(0, 500));
+    } catch {
+      // silently fail
+    } finally {
+      setIsTranscribing(false);
+    }
+  }, [pulseScale]);
+
+  const toggleRecording = useCallback(() => {
+    if (isRecording) void stopRecording();
+    else void startRecording();
+  }, [isRecording, startRecording, stopRecording]);
+
+  // Quick action chips pre-fill input
+  const quickActions = [
+    { label: 'Resize Room', template: 'Make the [room] 20% larger' },
+    { label: 'Add Floor', template: 'Add a second floor with 2 bedrooms' },
+    { label: 'Change Style', template: 'Apply modern style to the whole house' },
+    { label: 'Add Window', template: 'Add a window to the north wall' },
+    { label: 'Suggest Furniture', template: 'Suggest furniture for each room' },
+  ];
 
   React.useEffect(() => {
     panelY.value = visible
@@ -180,13 +258,7 @@ export function AIChatPanel({ visible, onToggle }: Props) {
                   Ask me to edit your blueprint
                 </ArchText>
                 <View style={{ marginTop: 12, gap: 6 }}>
-                  {[
-                    '"Move the sofa to the bedroom"',
-                    '"Add a window on the north wall"',
-                    '"Change the kitchen floor to oak"',
-                    '"Make the living room bigger"',
-                    '"Add a second floor with 2 bedrooms"',
-                  ].map((example) => (
+                  {examplePrompts.map((example) => (
                     <Pressable
                       key={example}
                       onPress={() => setInput(example.replace(/^"|"$/g, ''))}
@@ -227,14 +299,53 @@ export function AIChatPanel({ visible, onToggle }: Props) {
             </View>
           )}
 
+          {/* Quick action chips */}
+          <View style={{ paddingHorizontal: 16, paddingTop: 10, flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+            {quickActions.map(({ label }) => (
+              <Pressable
+                key={label}
+                onPress={() => {
+                  const qa = quickActions.find((a) => a.label === label);
+                  if (qa) setInput(qa.template);
+                }}
+                style={{ backgroundColor: `${DS.colors.primary}15`, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: `${DS.colors.primary}30` }}
+              >
+                <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: DS.colors.primary }}>{label}</ArchText>
+              </Pressable>
+            ))}
+          </View>
+
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: Math.max(12, insets.bottom + 8), borderTopWidth: 1, borderTopColor: 'rgba(240, 237, 232, 0.08)', backgroundColor: 'rgba(240, 237, 232, 0.03)', gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(12, insets.bottom + 8), borderTopWidth: 1, borderTopColor: 'rgba(240, 237, 232, 0.08)', backgroundColor: 'rgba(240, 237, 232, 0.03)', gap: 10 }}>
               <TextInput
                 value={input} onChangeText={setInput}
                 placeholder="Describe your edit..." placeholderTextColor={DS.colors.primaryGhost}
                 multiline
                 style={{ flex: 1, backgroundColor: DS.colors.surfaceHigh, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primary, maxHeight: 80, borderWidth: 1, borderColor: DS.colors.border }}
               />
+              {/* Mic button for voice input */}
+              <Animated.View style={pulseStyle}>
+                <Pressable
+                  onPress={toggleRecording}
+                  disabled={isTranscribing}
+                  style={{
+                    width: 36, height: 36, borderRadius: 18,
+                    backgroundColor: isRecording ? DS.colors.error : DS.colors.surface,
+                    borderWidth: 1.5,
+                    borderColor: isRecording ? DS.colors.error : DS.colors.border,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  {isTranscribing ? (
+                    <CompassRoseLoader size="small" />
+                  ) : (
+                    <Svg width={16} height={16} viewBox="0 0 24 24">
+                      <Path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill={DS.colors.primary} />
+                      <Path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" fill={DS.colors.primary} />
+                    </Svg>
+                  )}
+                </Pressable>
+              </Animated.View>
               <SendButton onPress={() => { void sendMessage(); }} loading={isLoading} />
             </View>
           </KeyboardAvoidingView>
