@@ -6,6 +6,7 @@ import { checkQuota } from '../_shared/quota.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { logAudit } from '../_shared/audit.ts';
 import { Errors } from '../_shared/errors.ts';
+import { getArchitectById, buildArchitectPromptSection } from '../_shared/architects.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const RequestSchema = z.object({
@@ -29,6 +30,7 @@ const RequestSchema = z.object({
   transcript: z.string().max(2000).optional(),
   climateZone: z.enum(['tropical', 'subtropical', 'temperate', 'arid', 'cold', 'alpine']).optional().default('temperate'),
   hemisphere: z.enum(['north', 'south']).optional().default('north'),
+  architectId: z.string().optional(),
 });
 
 const SYSTEM_PROMPT = `You are ARIA — ASORIA's AI design intelligence. You're a senior architect and interior designer with 20 years of experience who genuinely loves what you do. You've worked on everything from tight city apartments to sprawling countryside villas, and you bring that accumulated wisdom to every single design.
@@ -1279,12 +1281,6 @@ serve(async (req) => {
       return addCors(Errors.rateLimited('Rate limit exceeded. Try again later.'));
     }
 
-    // Quota check (atomic, race-condition safe)
-    const quotaOk = await checkQuota(user.id, 'ai_generation');
-    if (!quotaOk) {
-      return addCors(Errors.quotaExceeded('Monthly AI generation quota reached.'));
-    }
-
     const body = await req.json();
     const parsed = RequestSchema.safeParse(body);
     if (!parsed.success) {
@@ -1296,8 +1292,14 @@ serve(async (req) => {
       plotSize, plotUnit, bedrooms, bathrooms, livingAreas,
       hasGarage, hasGarden, hasPool, poolSize,
       hasHomeOffice, hasUtilityRoom, referenceImageUrl, additionalNotes, transcript,
-      climateZone, hemisphere,
+      climateZone, hemisphere, architectId,
     } = parsed.data;
+
+    // Quota check (atomic, race-condition safe) — with architect multiplier
+    const quotaOk = await checkQuota(user.id, 'ai_generation', { architectId: architectId ?? undefined });
+    if (!quotaOk) {
+      return addCors(Errors.quotaExceeded('Monthly AI generation quota reached.'));
+    }
 
     const details: string[] = [];
     if (plotSize) details.push(`Plot size: ${plotSize} ${plotUnit === 'ft2' ? 'ft²' : 'm²'}`);
@@ -1333,6 +1335,20 @@ Return ONLY valid JSON, no markdown.`;
     }
 
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+
+    // Inject architect influence into system prompt if specified
+    let effectiveSystemPrompt = SYSTEM_PROMPT;
+    if (architectId) {
+      const architect = getArchitectById(architectId);
+      if (architect) {
+        const architectSection = buildArchitectPromptSection(architect);
+        effectiveSystemPrompt = `${architectSection}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${SYSTEM_PROMPT}`;
+      }
+    }
+
     if (!anthropicKey) {
       // AI_NOT_CONFIGURED is a custom code not in Errors.* — kept as direct response
       return new Response(JSON.stringify({
@@ -1360,7 +1376,7 @@ Return ONLY valid JSON, no markdown.`;
           model: 'claude-sonnet-4-6',
           max_tokens: 8000,
           temperature: 0,
-          system: SYSTEM_PROMPT,
+          system: effectiveSystemPrompt,
           messages: [{ role: 'user', content: userMessage }],
         }),
       });
@@ -1437,7 +1453,7 @@ Return ONLY valid JSON.`;
             model: 'claude-sonnet-4-6',
             max_tokens: 8000,
             temperature: 0,
-            system: SYSTEM_PROMPT,
+            system: effectiveSystemPrompt,
             messages: [
               { role: 'user', content: userMessage },
               { role: 'assistant', content: rawText },
@@ -1473,6 +1489,14 @@ Return ONLY valid JSON.`;
       }
     }
 
+    // Inject architect influence into blueprint metadata
+    if (architectId) {
+      const architect = getArchitectById(architectId);
+      if (architect && blueprintData.metadata) {
+        (blueprintData.metadata as Record<string, unknown>).architectInfluence = architect.name;
+      }
+    }
+
     // Log to ai_generations table
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -1495,8 +1519,24 @@ Return ONLY valid JSON.`;
       user_id: user.id,
       action: 'ai_generate',
       resource_type: 'blueprint',
-      metadata: { buildingType, style, tier: user.app_metadata?.subscription_tier ?? 'starter' },
+      metadata: { buildingType, style, tier: user.app_metadata?.subscription_tier ?? 'starter', architectId },
     });
+
+    // Increment architect-specific generation counter
+    if (architectId) {
+      const supabase2 = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      try {
+        await supabase2.rpc('increment_architect_counter', {
+          p_user_id: user.id,
+          p_architect_id: architectId,
+        });
+      } catch (e) {
+        console.warn('Failed to increment architect counter:', e);
+      }
+    }
 
     return new Response(JSON.stringify({ blueprint: blueprintData }), {
       status: 200,
