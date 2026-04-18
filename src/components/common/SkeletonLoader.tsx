@@ -17,7 +17,7 @@ interface SkeletonProps {
   style?: ViewStyle;
 }
 
-function SkeletonItem({ width = '100%', height = 16, borderRadius = 6, style }: SkeletonProps) {
+export function SkeletonItem({ width = '100%', height = 16, borderRadius = 6, style }: SkeletonProps) {
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -44,6 +44,55 @@ function SkeletonItem({ width = '100%', height = 16, borderRadius = 6, style }: 
         style,
       ]}
     />
+  );
+}
+
+/**
+ * MasonryCardSkeleton — skeleton that matches FeedCard shape for masonry grid.
+ * Two alternating heights (200 / 260) to mimic the masonry layout.
+ */
+export function MasonryCardSkeleton({ height = 200 }: { height?: number }) {
+  const thumbnailHeight = Math.round(height * 0.65);
+  return (
+    <View style={{
+      borderRadius: DS.radius.card, // 24px — oval-first design system
+      overflow: 'hidden',
+      backgroundColor: DS.colors.surface,
+      borderWidth: 1,
+      borderColor: DS.colors.border,
+      marginBottom: 8,
+    }}>
+      {/* Thumbnail */}
+      <SkeletonItem
+        width="100%"
+        height={thumbnailHeight}
+        borderRadius={0}
+        style={{ borderRadius: 0 }}
+      />
+      {/* Author row */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingTop: 8,
+        paddingBottom: 4,
+        gap: 6,
+      }}>
+        <SkeletonItem width={28} height={28} borderRadius={14} />
+        <SkeletonItem height={10} width="40%" />
+      </View>
+      {/* Stats row */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 10,
+        paddingBottom: 8,
+      }}>
+        <SkeletonItem width={32} height={14} borderRadius={4} />
+        <SkeletonItem width={32} height={14} borderRadius={4} />
+      </View>
+    </View>
   );
 }
 

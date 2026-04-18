@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  useAnimatedProps,
   withSpring,
   withTiming,
   withSequence,
@@ -16,7 +15,6 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTheme } from '../hooks/useTheme';
 import { useHaptics } from '../hooks/useHaptics';
 import { DS } from '../theme/designSystem';
 import type { RootStackParamList } from './types';
@@ -78,46 +76,69 @@ interface TabItemProps {
   onPress: () => void;
 }
 
+// Human-readable accessibility labels for each route
+const ROUTE_ACCESSIBILITY_LABELS: Record<string, string> = {
+  Home: 'Home tab',
+  Create: 'Create tab',
+  Inspo: 'Inspiration tab',
+  AR: 'AR Scan tab',
+  Account: 'Account tab',
+};
+
 function TabItem({ route, isFocused, onPress }: TabItemProps) {
-  const circleProgress = useSharedValue(isFocused ? 1 : 0);
+  const circleOpacity = useSharedValue(isFocused ? 1 : 0);
   const pillOpacity = useSharedValue(isFocused ? 1 : 0);
   const pillScale = useSharedValue(isFocused ? 1 : 0.7);
+  const pressScale = useSharedValue(1);
 
   useEffect(() => {
     if (isFocused) {
-      circleProgress.value = withSequence(
-        withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) }),
-        withSpring(0.95, { damping: 8, stiffness: 200 }),
-        withSpring(1, { damping: 12, stiffness: 300 }),
-      );
+      circleOpacity.value = withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) });
       pillOpacity.value = withTiming(1, { duration: 150 });
       pillScale.value = withSpring(1, { damping: 14, stiffness: 280 });
     } else {
-      circleProgress.value = withTiming(0, { duration: 120 });
+      circleOpacity.value = withTiming(0, { duration: 120 });
       pillOpacity.value = withTiming(0, { duration: 100 });
       pillScale.value = withSpring(0.7, { damping: 14, stiffness: 280 });
     }
-  }, [isFocused, circleProgress, pillOpacity, pillScale]);
-
-  const animatedCircleProps = useAnimatedProps(() => ({
-    strokeDashoffset: CIRCUMFERENCE * (1 - circleProgress.value),
-    opacity: circleProgress.value,
-  }));
+  }, [isFocused, circleOpacity, pillOpacity, pillScale]);
 
   const pillStyle = useAnimatedStyle(() => ({
     opacity: pillOpacity.value,
     transform: [{ scaleX: pillScale.value }],
   }));
 
+  const pressScaleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+
+  const circleStyle = useAnimatedStyle(() => ({
+    opacity: circleOpacity.value,
+    transform: [{ scale: 0.7 + 0.3 * circleOpacity.value }],
+  }));
+
   const iconColor = isFocused ? DS.colors.primary : DS.colors.primaryGhost;
   const iconRenderer = ICONS[route.name];
+
+  const handlePressIn = () => {
+    pressScale.value = withSpring(0.88, { damping: 12, stiffness: 400 });
+  };
+
+  const handlePressOut = () => {
+    pressScale.value = withSpring(1, { damping: 14, stiffness: 380 });
+  };
 
   return (
     <Pressable
       onPress={onPress}
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityLabel={ROUTE_ACCESSIBILITY_LABELS[route.name] ?? `${route.name} tab`}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: isFocused }}
+      accessibilityHint="Double tap to navigate to this tab"
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 6, minHeight: 44, minWidth: 44 }}
     >
-      {/* Active pill background */}
       <Animated.View
         style={[
           {
@@ -130,24 +151,20 @@ function TabItem({ route, isFocused, onPress }: TabItemProps) {
         ]}
       />
 
-      {/* Scratchy circle — drawn via strokeDashoffset */}
-      <View style={{ position: 'absolute', width: 48, height: 48, top: -2 }}>
-        <Svg width={48} height={48} viewBox="0 0 48 48">
-          <AnimatedPath
-            d={WOBBLY_PATH}
-            stroke={DS.colors.primary}
-            strokeWidth={1.5}
-            fill="none"
-            strokeDasharray={CIRCUMFERENCE}
-            animatedProps={animatedCircleProps}
-          />
-        </Svg>
-      </View>
-
-      {/* Icon */}
-      <View>
-        {iconRenderer ? iconRenderer(iconColor) : null}
-      </View>
+      <Animated.View style={pressScaleStyle}>
+        {/* Animated focus circle */}
+        <Animated.View style={[{
+          position: 'absolute',
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          borderWidth: 1.5,
+          borderColor: DS.colors.primary,
+        }, circleStyle]} />
+        <View>
+          {iconRenderer ? iconRenderer(iconColor) : null}
+        </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -156,10 +173,21 @@ const FABButton = React.memo(function FABButton() {
   const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { light } = useHaptics();
   const rotation = useSharedValue(0);
+  const scale = useSharedValue(1);
 
   const fabStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
+    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
   }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.82, { damping: 8, stiffness: 600 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1.08, { damping: 6, stiffness: 300 }, () => {
+      scale.value = withSpring(1, { damping: 12, stiffness: 400 });
+    });
+  };
 
   const handlePress = () => {
     light();
@@ -171,30 +199,37 @@ const FABButton = React.memo(function FABButton() {
   };
 
   return (
-    <Pressable onPress={handlePress}>
-      <LinearGradient
-        colors={[DS.colors.accent, DS.colors.warning]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 24,
-          alignItems: 'center',
-          justifyContent: 'center',
-          shadowColor: DS.colors.accent,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.4,
-          shadowRadius: 12,
-          elevation: 16,
-        }}
-      >
-        <Animated.View style={fabStyle}>
+    <Pressable
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      accessibilityLabel="Create new design"
+      accessibilityRole="button"
+      accessibilityHint="Opens the 7-step AI design generator"
+    >
+      <Animated.View style={fabStyle}>
+        <LinearGradient
+          colors={[DS.colors.accent, DS.colors.warning]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: DS.colors.accent,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.4,
+            shadowRadius: 12,
+            elevation: 16,
+          }}
+        >
           <Svg width={22} height={22} viewBox="0 0 24 24">
             <Path d="M12 5v14M5 12h14" stroke={DS.colors.background} strokeWidth="2" strokeLinecap="round" />
           </Svg>
-        </Animated.View>
-      </LinearGradient>
+        </LinearGradient>
+      </Animated.View>
     </Pressable>
   );
 });
@@ -217,6 +252,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
 
   return (
     <View
+      accessibilityRole="tablist"
       style={{
         position: 'absolute',
         bottom: Math.max(insets.bottom, 16) + 8,
@@ -278,4 +314,3 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     </View>
   );
 }
-

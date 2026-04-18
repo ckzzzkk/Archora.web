@@ -1,8 +1,9 @@
 import React from 'react';
 import { DS } from '../../../theme/designSystem';
 import { ArchText } from '../../../components/common/ArchText';
-import { View,  Pressable, Image } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { View, Pressable, Image } from 'react-native';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { useHaptics } from '../../../hooks/useHaptics';
 
 import { DESIGN_STYLES } from '../../../data/designStyles';
 import type { GenerationPayload } from '../../../types/generation';
@@ -21,6 +22,41 @@ interface Props {
   payload: GenerationPayload;
   result?: BlueprintData | null;
   onGenerate: () => void;
+}
+
+function GenerateButton({ onPress }: { onPress: () => void }) {
+  const { light } = useHaptics();
+  const scale = useSharedValue(1);
+  const btnStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Pressable
+      onPressIn={() => { light(); scale.value = withSpring(0.95, { damping: 10, stiffness: 400 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 14, stiffness: 350 }); }}
+      onPress={() => { light(); onPress(); }}
+      accessibilityLabel="Create My Design, generate your floor plan with AI"
+      accessibilityRole="button"
+      accessibilityHint="Starts the AI generation process for your floor plan"
+    >
+      <Animated.View style={[btnStyle, {
+        backgroundColor: DS.colors.primary,
+        borderRadius: 50,
+        paddingVertical: 18,
+        alignItems: 'center',
+        height: 56,
+        justifyContent: 'center',
+      }]}>
+        <ArchText variant="body"
+          style={{
+            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontSize: 18,
+            color: DS.colors.background,
+          }}
+        >
+          Create My Design
+        </ArchText>
+      </Animated.View>
+    </Pressable>
+  );
 }
 
 export function Step7Review({ payload, result, onGenerate }: Props) {
@@ -108,27 +144,7 @@ export function Step7Review({ payload, result, onGenerate }: Props) {
         </ArchText>
       )}
 
-      <Pressable
-        onPress={onGenerate}
-        style={{
-          backgroundColor: DS.colors.primary,
-          borderRadius: 50,
-          paddingVertical: 18,
-          alignItems: 'center',
-          height: 56,
-          justifyContent: 'center',
-        }}
-      >
-        <ArchText variant="body"
-          style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
-            fontSize: 18,
-            color: DS.colors.background,
-          }}
-        >
-          Create My Design
-        </ArchText>
-      </Pressable>
+      <GenerateButton onPress={onGenerate} />
     </Animated.View>
   );
 }

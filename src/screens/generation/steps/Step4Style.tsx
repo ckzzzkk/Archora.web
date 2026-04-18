@@ -53,6 +53,10 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
             <Pressable
               key={style.id}
               onPress={() => !isLocked && handleSelect(style.id, idx)}
+              accessibilityLabel={`${style.name} style${isActive ? ', selected' : ''}${isLocked ? ', locked' : ''}`}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isActive, disabled: isLocked }}
+              accessibilityHint={isLocked ? 'Upgrade your plan to unlock this style' : 'Double tap to select this style'}
               style={{
                 width: 120,
                 height: 140,
@@ -97,6 +101,10 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
         <Pressable
           onPress={onNext}
           disabled={!selected}
+          accessibilityLabel={selected ? 'Next, proceed to next step' : 'Next, select a style first'}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !selected }}
+          accessibilityHint="Proceeds to the reference image upload step"
           style={{
             backgroundColor: selected ? DS.colors.primary : DS.colors.border,
             borderRadius: 50,

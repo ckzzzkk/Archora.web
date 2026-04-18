@@ -28,20 +28,41 @@ export function Card({
   style,
 }: CardProps) {
   const scale = useSharedValue(1);
+  const shadowOpacity = useSharedValue(elevated ? 0.3 : 0);
+  const shadowY = useSharedValue(elevated ? 2 : 0);
 
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const shadowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: shadowOpacity.value,
+    shadowOffset: { width: 0, height: shadowY.value },
+  }));
 
   const handlePressIn = () => {
-    if (onPress) scale.value = withSpring(0.97, { damping: 20, stiffness: 300 });
+    if (onPress) {
+      scale.value = withSpring(0.97, { damping: 20, stiffness: 300 });
+      if (elevated) {
+        shadowOpacity.value = withSpring(0.6, { damping: 20, stiffness: 300 });
+        shadowY.value = withSpring(8, { damping: 20, stiffness: 300 });
+      }
+    }
   };
   const handlePressOut = () => {
-    if (onPress) scale.value = withSpring(1, { damping: 20, stiffness: 300 });
+    if (onPress) {
+      scale.value = withSpring(1, { damping: 20, stiffness: 300 });
+      if (elevated) {
+        shadowOpacity.value = withSpring(0.3, { damping: 20, stiffness: 300 });
+        shadowY.value = withSpring(2, { damping: 20, stiffness: 300 });
+      }
+    }
   };
 
   const containerStyle = [
     {
       backgroundColor: DS.colors.surface,
-      borderRadius: 12,
+      borderRadius: DS.radius.card, // 24px — oval-first design system
       borderWidth: 1,
       borderColor: DS.colors.border,
     },
@@ -59,7 +80,7 @@ export function Card({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={1}
-        style={[animStyle, containerStyle]}
+        style={[animStyle, shadowStyle, containerStyle]}
       >
         {children}
       </AnimatedTouchable>
@@ -67,7 +88,7 @@ export function Card({
   }
 
   return (
-    <Animated.View testID={testID} style={[animStyle, containerStyle]}>
+    <Animated.View testID={testID} style={[animStyle, shadowStyle, containerStyle]}>
       {children}
     </Animated.View>
   );

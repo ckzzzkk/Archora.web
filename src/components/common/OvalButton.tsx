@@ -107,12 +107,22 @@ export function OvalButton({
     ? DS.colors.error
     : DS.colors.primary;
 
+  const accessibilityLabel = loading
+    ? `${label}, loading`
+    : disabled
+    ? `${label}, disabled`
+    : label;
+
   if (variant === 'filled') {
     return (
       <AnimatedPressable
         onPress={isInactive ? undefined : onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!isInactive, busy: !!loading }}
+        accessibilityHint={loading ? 'Please wait while the action completes' : undefined}
         style={[
           animStyle,
           {
@@ -132,9 +142,11 @@ export function OvalButton({
           {loading ? <LoadingDots color={DS.colors.background} /> : (
             <>
               {icon}
-              <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }}>
-                {label}
-              </Text>
+              <View style={{ flexShrink: 1 }}>
+                <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }} numberOfLines={1}>
+                  {label}
+                </Text>
+              </View>
             </>
           )}
         </LinearGradient>
@@ -155,6 +167,10 @@ export function OvalButton({
       onPress={isInactive ? undefined : onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!isInactive, busy: !!loading }}
+      accessibilityHint={loading ? 'Please wait while the action completes' : undefined}
       style={[
         animStyle,
         {
@@ -173,9 +189,11 @@ export function OvalButton({
       ) : (
         <>
           {icon}
-          <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }}>
-            {label}
-          </Text>
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }} numberOfLines={1}>
+              {label}
+            </Text>
+          </View>
         </>
       )}
     </AnimatedPressable>

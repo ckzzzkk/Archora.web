@@ -1,7 +1,7 @@
 import { DS } from '../../theme/designSystem';
 import React, { useState } from 'react';
 import { TextInput, View, Text, TouchableOpacity } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolateColor } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolateColor } from 'react-native-reanimated';
 import { useTheme } from '../../hooks/useTheme';
 
 interface InputProps {
@@ -47,12 +47,12 @@ export function Input({
 
   const handleFocus = () => {
     setFocused(true);
-    focusAnim.value = withTiming(1, { duration: 200 });
+    focusAnim.value = withSpring(1, { damping: 16, stiffness: 260 });
   };
 
   const handleBlur = () => {
     setFocused(false);
-    focusAnim.value = withTiming(0, { duration: 200 });
+    focusAnim.value = withSpring(0, { damping: 16, stiffness: 260 });
   };
 
   const borderStyle = useAnimatedStyle(() => ({
@@ -65,8 +65,14 @@ export function Input({
     <View style={{ width: '100%', marginBottom: 16 }}>
       {label ? (
         <Text
-          className="text-xs font-medium tracking-widest uppercase mb-1"
-          style={{ color: DS.colors.primaryDim, fontFamily: 'JetBrainsMono_400Regular' }}
+          style={{
+            fontFamily: DS.font.mono,
+            fontSize: DS.fontSize.xs,
+            color: DS.colors.primaryDim,
+            letterSpacing: 1.2,
+            textTransform: 'uppercase',
+            marginBottom: DS.spacing.xs,
+          }}
         >
           {label}
         </Text>
@@ -76,8 +82,8 @@ export function Input({
         style={[
           borderStyle,
           {
-            borderWidth: 1,
-            borderRadius: 6,
+            borderWidth: 1.5,
+            borderRadius: DS.radius.input, // oval pill — oval-first design system
             backgroundColor: DS.colors.surface,
             opacity: editable ? 1 : 0.5,
             flexDirection: 'row',

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, memo } from 'react';
 import {
   View,
   ScrollView,
@@ -16,7 +16,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Line } from 'react-native-svg';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -24,6 +24,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
 import { FeedCard } from '../../components/social/FeedCard';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { SkeletonLoader } from '../../components/common/SkeletonLoader';
+import { MasonryCardSkeleton } from '../../components/common/SkeletonLoader';
 import { ArchText } from '../../components/common/ArchText';
 import { OvalButton } from '../../components/common/OvalButton';
 import { NotificationPanel } from '../../components/dashboard/NotificationPanel';
@@ -87,7 +89,7 @@ function TrendingCarousel({
             onPress={() => onPress(t.id)}
             style={{
               width: CARD_W,
-              borderRadius: 20,
+              borderRadius: DS.radius.card, // 24px — oval-first design system
               backgroundColor: C.surface,
               borderWidth: 1,
               borderColor: idx === 0 ? '#FFEE8C40' : C.border,
@@ -201,6 +203,10 @@ function FilterChipsRow({
           <Pressable
             key={chip.label}
             onPress={() => onChipPress(chip)}
+            accessibilityLabel={chip.label}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: active }}
+            accessibilityHint="Double tap to filter by this category"
             style={{
               paddingHorizontal: 14,
               paddingVertical: 6,
@@ -210,17 +216,37 @@ function FilterChipsRow({
               backgroundColor: active ? C.accentGlow : 'transparent',
             }}
           >
-            <ArchText variant="body" style={{
-              fontFamily: DS.font.medium,
-              fontSize: 12,
-              color: active ? C.primary : C.primaryDim,
-            }}>
-              {chip.label}
-            </ArchText>
+            <View style={{ flexShrink: 1 }}>
+              <ArchText variant="body" style={{
+                fontFamily: DS.font.medium,
+                fontSize: 12,
+                color: active ? C.primary : C.primaryDim,
+              }} numberOfLines={1}>
+                {chip.label}
+              </ArchText>
+            </View>
           </Pressable>
         );
       })}
     </ScrollView>
+  );
+}
+
+/**
+ * FeedSkeletonGrid — skeleton loaders shown while feed is loading.
+ * Renders 6 skeleton cards in a 2-column masonry layout to match FlashList.
+ */
+function FeedSkeletonGrid() {
+  // Alternate heights to mimic masonry layout
+  const heights = [200, 260, 200, 260, 200, 260];
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 8 }}>
+      {heights.map((h, i) => (
+        <View key={i} style={{ width: '47%' }}>
+          <MasonryCardSkeleton height={h} />
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -229,17 +255,28 @@ function FeedEmptyState() {
   const navigation = useNavigation<Nav>();
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-      <Svg width={64} height={64} viewBox="0 0 48 48" style={{ marginBottom: DS.spacing.md }}>
-        <Circle cx="24" cy="24" r="20" stroke={C.border} strokeWidth="1.5" fill="none" />
-        <Path d="M24 8 L22 20 L26 20 Z" stroke={C.primaryGhost} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
-        <Path d="M24 40 L22 28 L26 28 Z" stroke={C.primaryGhost} strokeWidth="1.2" fill="none" strokeLinejoin="round" />
-        <Circle cx="24" cy="24" r="3" stroke={C.primaryDim} strokeWidth="1.2" fill="none" />
+      {/* Blueprint-style house illustration */}
+      <Svg width={96} height={80} viewBox="0 0 96 80" style={{ marginBottom: DS.spacing.lg }}>
+        {/* House outline */}
+        <Path d="M8 48 L48 12 L88 48" stroke={C.border} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Rect x="16" y="48" width="64" height="28" stroke={C.border} strokeWidth="1.6" fill="none" />
+        <Rect x="38" y="60" width="20" height="16" stroke={C.border} strokeWidth="1.2" fill="none" />
+        <Rect x="22" y="54" width="12" height="10" stroke={C.border} strokeWidth="1.1" fill="none" />
+        <Rect x="62" y="54" width="12" height="10" stroke={C.border} strokeWidth="1.1" fill="none" />
+        {/* Grid lines in background */}
+        <Line x1="0" y1="76" x2="96" y2="76" stroke={C.border} strokeWidth="0.6" opacity="0.4" />
+        <Line x1="0" y1="68" x2="20" y2="68" stroke={C.border} strokeWidth="0.6" opacity="0.3" />
+        <Line x1="76" y1="68" x2="96" y2="68" stroke={C.border} strokeWidth="0.6" opacity="0.3" />
+        {/* Compass rose */}
+        <Circle cx="80" cy="16" r="8" stroke={C.border} strokeWidth="1" fill="none" strokeDasharray="2 2" />
+        <Path d="M80 10 L81.5 14 L80 13 L78.5 14 Z" fill={C.border} />
+        <Circle cx="80" cy="16" r="2" fill={C.border} />
       </Svg>
       <ArchText variant="heading" style={{ fontSize: 22, color: C.primary, textAlign: 'center', marginBottom: DS.spacing.xs }}>
-        No designs yet
+        Your canvas awaits
       </ArchText>
-      <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, textAlign: 'center', marginBottom: DS.spacing.xl }}>
-        Be the first to share your blueprint.
+      <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, textAlign: 'center', lineHeight: 20, marginBottom: DS.spacing.xl }}>
+        No designs shared yet.{'\n'}Be the first to inspire the community.
       </ArchText>
       <OvalButton
         label="Create a Design"
@@ -256,7 +293,7 @@ interface MasonryItemProps {
   onPress: (id: string) => void;
 }
 
-function MasonryItem({ item, index, onPress }: MasonryItemProps) {
+const MasonryItem = memo(function MasonryItem({ item, index, onPress }: MasonryItemProps) {
   const height = index % 2 === 0 ? 200 : 260;
   return (
     <FeedCard
@@ -266,7 +303,7 @@ function MasonryItem({ item, index, onPress }: MasonryItemProps) {
       onPress={() => onPress(item.id)}
     />
   );
-}
+});
 
 export function FeedScreen() {
   const navigation = useNavigation<Nav>();
@@ -373,8 +410,11 @@ export function FeedScreen() {
           {/* Search */}
           <Pressable
             onPress={toggleSearch}
+            accessibilityLabel="Search designs"
+            accessibilityRole="button"
+            accessibilityHint="Toggles the search bar"
             style={{
-              width: 40, height: 40, borderRadius: 20,
+              width: 44, height: 44, borderRadius: 20,
               backgroundColor: searchVisible ? C.primary : C.surface,
               borderWidth: 1, borderColor: C.border,
               alignItems: 'center', justifyContent: 'center',
@@ -392,8 +432,11 @@ export function FeedScreen() {
           {/* Bell */}
           <Pressable
             onPress={() => setShowNotifications(true)}
+            accessibilityLabel={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+            accessibilityRole="button"
+            accessibilityHint="Opens the notifications panel"
             style={{
-              width: 40, height: 40, borderRadius: 20,
+              width: 44, height: 44, borderRadius: 20,
               backgroundColor: C.surface,
               borderWidth: 1, borderColor: unreadCount > 0 ? C.success : C.border,
               alignItems: 'center', justifyContent: 'center',
@@ -477,13 +520,20 @@ export function FeedScreen() {
 
       {/* Content */}
       {isLoading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <CompassRoseLoader size="medium" />
-        </View>
+        <FeedSkeletonGrid />
       ) : loadError ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-          <ArchText variant="heading" style={{ fontSize: 20, color: C.primary, textAlign: 'center', marginBottom: DS.spacing.md }}>
+          {/* Network error illustration */}
+          <Svg width={64} height={64} viewBox="0 0 64 64" style={{ marginBottom: DS.spacing.md }}>
+            <Circle cx="32" cy="32" r="24" stroke={C.border} strokeWidth="1.5" fill="none" />
+            <Path d="M20 20 L44 44 M44 20 L20 44" stroke={C.border} strokeWidth="1.8" strokeLinecap="round" />
+            <Circle cx="32" cy="32" r="4" stroke={C.border} strokeWidth="1.2" fill="none" />
+          </Svg>
+          <ArchText variant="heading" style={{ fontSize: 20, color: C.primary, textAlign: 'center', marginBottom: DS.spacing.xs }}>
             Couldn&apos;t load designs
+          </ArchText>
+          <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, textAlign: 'center', lineHeight: 18, marginBottom: DS.spacing.lg }}>
+            Check your connection and try again.
           </ArchText>
           <OvalButton label="Retry" variant="outline" onPress={() => { void refresh(); }} />
         </View>
@@ -507,6 +557,11 @@ export function FeedScreen() {
             />
           }
           style={{ padding: 8 }}
+          // Performance: limit render window
+          windowSize={5}
+          maxToRenderPerBatch={10}
+          initialNumToRender={8}
+          updateCellsBatchingPeriod={50}
           ListFooterComponent={
             isFetchingMore ? (
               <View style={{ padding: DS.spacing.md, alignItems: 'center' }}>

@@ -137,7 +137,7 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
         onPressOut={handlePressOut}
         style={{
           backgroundColor: DS.colors.surface,
-          borderRadius: 20,
+          borderRadius: DS.radius.card, // 24px — oval-first design system
           overflow: 'hidden',
           borderWidth: 1,
           borderColor: DS.colors.border,

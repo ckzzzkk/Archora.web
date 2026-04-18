@@ -41,6 +41,7 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
         placeholder="Plot size"
         placeholderTextColor={DS.colors.primaryGhost}
         keyboardType="numeric"
+        accessibilityLabel="Plot size in square meters or feet"
         style={{
           backgroundColor: DS.colors.surface,
           borderRadius: 50,
@@ -60,6 +61,9 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
           <Pressable
             key={u}
             onPress={() => onPlotUnitChange(u)}
+            accessibilityLabel={`${u === 'm2' ? 'Square meters' : 'Square feet'}`}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: plotUnit === u }}
             style={{
               paddingHorizontal: DS.spacing.lg,
               paddingVertical: 10,
@@ -85,6 +89,9 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
             <Pressable
               key={qp.label}
               onPress={() => onPlotSizeChange(String(qp.value))}
+              accessibilityLabel={`${qp.label}, ${qp.value} ${plotUnit === 'm2' ? 'square meters' : 'square feet'}`}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: plotSize === String(qp.value) }}
               style={{
                 paddingHorizontal: 16,
                 paddingVertical: 8,
@@ -111,6 +118,9 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
       <Pressable
         onPress={onNext}
         disabled={!plotSize}
+        accessibilityLabel={plotSize ? 'Next, proceed to rooms' : 'Next, enter plot size first'}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !plotSize }}
         style={{
           backgroundColor: plotSize ? DS.colors.primary : DS.colors.border,
           borderRadius: 50,

@@ -3,11 +3,13 @@ import { View, ScrollView, Pressable, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { randomUUID } from 'expo-crypto';
 import Svg, { Rect, Line, Path, Circle } from 'react-native-svg';
 import Animated, {
   useSharedValue as useSV, useAnimatedStyle as useAS, withTiming, withRepeat,
   withDelay as wDelay, withSpring, Easing as EA, interpolate,
+  runOnJS,
 } from 'react-native-reanimated';
 
 import { aiService } from '../../services/aiService';
@@ -126,7 +128,12 @@ function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: numbe
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={`ARIA is generating your design. ${LOADING_PHASES[phase]}`}
+      accessibilityRole="progressbar"
+    >
       <GridBackground />
 
       {/* Blueprint canvas */}
@@ -424,6 +431,33 @@ export function GenerationScreen() {
     }
   }, [buildingType, style, blueprintActions, navigation, plotSize, plotUnit, rooms, notes, transcript, aiAllowed]);
 
+  // ── Swipe-to-go-back gesture ─────────────────────────────────────────────
+  const swipeTranslateX = useSV(0);
+  const handleSwipeBack = useCallback(() => {
+    if (step > 1) {
+      setStep((prev) => (prev - 1) as typeof step);
+    }
+  }, [step]);
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-10, 10])
+    .onUpdate((event) => {
+      if (event.translationX < 0) {
+        swipeTranslateX.value = event.translationX * 0.25;
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationX < -80) {
+        swipeTranslateX.value = withSpring(0);
+        runOnJS(handleSwipeBack)();
+      } else {
+        swipeTranslateX.value = withSpring(0, { damping: 16, stiffness: 200 });
+      }
+    });
+
+  const wizardStyle = useAS(() => ({ transform: [{ translateX: swipeTranslateX.value }] }));
+
   // ── Generating overlay ────────────────────────────────────────────────────
   if (screenState === 'generating') {
     return <BlueprintGeneratingOverlay phase={loadingPhase} iterationProgress={iterationProgress} />;
@@ -471,6 +505,8 @@ export function GenerationScreen() {
 
   // ── Main wizard ───────────────────────────────────────────────────────────
   return (
+    <GestureDetector gesture={panGesture}>
+    <Animated.View style={[wizardStyle, { flex: 1 }]}>
     <SafeAreaView className="flex-1" style={{ backgroundColor: DS.colors.background }}>
       <GridBackground />
 
@@ -615,6 +651,8 @@ export function GenerationScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
+    </Animated.View>
+    </GestureDetector>
   );
 }
 

@@ -22,7 +22,7 @@ import { NotificationPanel } from '../../components/dashboard/NotificationPanel'
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
-import { SkeletonLoader } from '../../components/common/SkeletonLoader';
+import { SkeletonLoader, SkeletonItem } from '../../components/common/SkeletonLoader';
 import {
   getNotifications,
   subscribeToNotifications,
@@ -155,20 +155,44 @@ function BlueprintThumbnail({ type, color, size = 64 }: { type: BuildingType; co
   );
 }
 
-function SkeletonCards() {
+/**
+ * ProjectCardSkeleton — skeleton that matches InlineProjectCard shape.
+ */
+function ProjectCardSkeleton({ C }: { C: ReturnType<typeof useThemeColors> }) {
+  return (
+    <View style={{
+      backgroundColor: C.surface,
+      borderRadius: DS.radius.card, // 24px — oval-first design system
+      marginHorizontal: DS.spacing.lg,
+      marginBottom: DS.spacing.sm,
+      borderWidth: 1,
+      borderColor: C.border,
+      overflow: 'hidden',
+    }}>
+      {/* Thumbnail */}
+      <SkeletonItem width="100%" height={88} borderRadius={0} style={{ borderRadius: 0 }} />
+      {/* Content */}
+      <View style={{ padding: DS.spacing.md }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <SkeletonItem height={14} width="55%" style={{ marginBottom: 0 }} />
+          <SkeletonItem height={10} width="20%" style={{ marginBottom: 0 }} />
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <SkeletonItem height={20} width={56} borderRadius={6} style={{ marginBottom: 0 }} />
+            <SkeletonItem height={20} width={56} borderRadius={6} style={{ marginBottom: 0 }} />
+          </View>
+          <SkeletonItem height={28} width={52} borderRadius={50} style={{ marginBottom: 0 }} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function SkeletonCards({ C }: { C: ReturnType<typeof useThemeColors> }) {
   return (
     <>
-      {[0, 1, 2].map((i) => (
-        <View
-          key={i}
-          style={{
-            marginHorizontal: DS.spacing.lg,
-            marginBottom: DS.spacing.sm,
-          }}
-        >
-          <SkeletonLoader rows={3} cardStyle />
-        </View>
-      ))}
+      {[0, 1, 2].map((i) => <ProjectCardSkeleton key={i} C={C} />)}
     </>
   );
 }
@@ -184,7 +208,7 @@ function DailyChallengeBanner({ C }: { C: ReturnType<typeof useThemeColors> }) {
   return (
     <Animated.View style={[bannerStyle, { marginHorizontal: DS.spacing.lg, marginBottom: DS.spacing.md }]}>
       <View style={{
-        borderRadius: 16,
+        borderRadius: DS.radius.medium, // 16px — accent banner card
         borderWidth: 1,
         borderColor: `${DS.colors.accent}30`,
         backgroundColor: `${DS.colors.accent}08`,
@@ -296,9 +320,12 @@ function InlineProjectCard({ project, onPress, index }: { project: Project; onPr
     <Animated.View style={animStyle}>
       <Pressable
         onPress={onPress}
+        accessibilityLabel={`${project.name}, ${btype} with ${roomCount} rooms, updated ${formattedDate}`}
+        accessibilityRole="button"
+        accessibilityHint="Opens this design in the workspace"
         style={{
           backgroundColor: C.surface,
-          borderRadius: 20,
+          borderRadius: DS.radius.card, // 24px — oval-first design system
           marginHorizontal: DS.spacing.lg,
           marginBottom: DS.spacing.sm,
           borderWidth: 1,
@@ -408,6 +435,10 @@ function NewProjectModal({ visible, onClose, onCreate }: {
                 <Pressable
                   key={bt.key}
                   onPress={() => setBuildingType(bt.key)}
+                  accessibilityLabel={bt.label}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: buildingType === bt.key }}
+                  accessibilityHint="Double tap to select this building type"
                   style={{
                     paddingHorizontal: DS.spacing.md, paddingVertical: DS.spacing.sm,
                     borderRadius: 50, borderWidth: 1,
@@ -471,15 +502,20 @@ function DashboardHeader({
           <ArchText variant="body" style={{ fontSize: 11, color: `${C.primary}60`, fontFamily: DS.font.mono, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
             {greeting}
           </ArchText>
-          <ArchText variant="heading" style={{ fontSize: 24, color: C.primary }}>
-            ASORIA
-          </ArchText>
+          <View style={{ flexShrink: 1 }}>
+            <ArchText variant="heading" style={{ fontSize: 22, color: C.primary }} numberOfLines={1}>
+              ASORIA
+            </ArchText>
+          </View>
         </View>
         <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
           <Pressable
             onPress={onNewProject}
+            accessibilityLabel="Create new design"
+            accessibilityRole="button"
+            accessibilityHint="Opens the new project dialog"
             style={{
-              width: 40, height: 40, borderRadius: 20,
+              width: 44, height: 44, borderRadius: 20,
               backgroundColor: `${C.primary}12`,
               borderWidth: 1, borderColor: `${C.primary}30`,
               alignItems: 'center', justifyContent: 'center',
@@ -491,8 +527,11 @@ function DashboardHeader({
           </Pressable>
           <Pressable
             onPress={onOpenNotifications}
+            accessibilityLabel={`Notifications${hasUnread ? ', unread notifications' : ''}`}
+            accessibilityRole="button"
+            accessibilityHint="Opens the notifications panel"
             style={{
-              width: 40, height: 40, borderRadius: 20,
+              width: 44, height: 44, borderRadius: 20,
               backgroundColor: `${C.primary}12`,
               borderWidth: 1, borderColor: `${C.primary}30`,
               alignItems: 'center', justifyContent: 'center',
@@ -585,6 +624,7 @@ export function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
 
   const { streakCount } = useStreak();
   const points = user?.pointsTotal ?? 0;
@@ -601,8 +641,14 @@ export function DashboardScreen() {
   const handleRefresh = useCallback(async () => {
     if (!user?.id) return;
     setRefreshing(true);
-    await actions.refresh(user.id);
-    setRefreshing(false);
+    setRefreshError(false);
+    try {
+      await actions.refresh(user.id);
+    } catch {
+      setRefreshError(true);
+    } finally {
+      setRefreshing(false);
+    }
   }, [user?.id, actions]);
 
   const handleCreate = async (name: string, buildingType: BuildingType) => {
@@ -670,14 +716,31 @@ export function DashboardScreen() {
       {isLoading ? (
         <>
           {listHeader()}
-          <SkeletonCards />
+          <SkeletonCards C={C} />
         </>
       ) : (
         <FlashList
           data={projects}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={listHeader}
-          ListEmptyComponent={<EmptyState onPress={handleNewProject} />}
+          ListEmptyComponent={refreshError ? (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, paddingHorizontal: 32 }}>
+              <Svg width={56} height={56} viewBox="0 0 56 56" style={{ marginBottom: DS.spacing.md }}>
+                <Circle cx="28" cy="28" r="22" stroke={C.border} strokeWidth="1.5" fill="none" />
+                <Path d="M20 20 L36 36 M36 20 L20 36" stroke={C.primaryDim} strokeWidth="1.8" strokeLinecap="round" />
+                <Circle cx="28" cy="44" r="2" fill={C.primaryDim} />
+              </Svg>
+              <ArchText variant="heading" style={{ fontSize: 20, color: C.primary, textAlign: 'center', marginBottom: DS.spacing.xs }}>
+                Connection hiccup
+              </ArchText>
+              <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, textAlign: 'center', lineHeight: 20, marginBottom: DS.spacing.lg }}>
+                Could not reach the server. Check your connection and try again.
+              </ArchText>
+              <OvalButton label="Retry" variant="outline" size="small" onPress={() => { void handleRefresh(); }} />
+            </View>
+          ) : (
+            <EmptyState onPress={handleNewProject} />
+          )}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -688,6 +751,11 @@ export function DashboardScreen() {
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: Math.max(120, insets.bottom + 88) }}
           showsVerticalScrollIndicator={false}
+          // @ts-expect-error -- FlashList v2 performance props not in types
+          windowSize={5}
+          maxToRenderPerBatch={8}
+          initialNumToRender={6}
+          updateCellsBatchingPeriod={50}
         />
       )}
 

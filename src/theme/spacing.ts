@@ -11,11 +11,16 @@ export const SPACING = {
   '4xl': 64,
 } as const;
 
+// RADIUS must match DS.radius in designSystem.ts — oval-first, never sharp
 export const RADIUS = {
-  input: 8,
-  card: 12,
-  button: 24,
-  pill: 999,
+  input:   50,  // oval pill inputs
+  card:    24,  // content cards
+  button:  50,  // oval pill buttons
+  chip:    50,  // filter chips
+  pill:    999, // full round
+  small:   12,  // small elements (badges, tags)
+  medium:  16,  // medium elements
+  large:   24,  // large cards, modals
 } as const;
 
 export const FONT_SIZES = {

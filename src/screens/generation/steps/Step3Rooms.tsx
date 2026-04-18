@@ -1,8 +1,9 @@
 import React from 'react';
 import { DS } from '../../../theme/designSystem';
 import { ArchText } from '../../../components/common/ArchText';
-import { View,  Pressable, Switch } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { View, Pressable, Switch } from 'react-native';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { useHaptics } from '../../../hooks/useHaptics';
 
 
 interface Props {
@@ -27,36 +28,60 @@ interface Props {
   onNext: () => void;
 }
 
+function StepperButton({ children, onPress, disabled, accessibilityLabel }: { children: React.ReactNode; onPress: () => void; disabled?: boolean; accessibilityLabel?: string }) {
+  const { light } = useHaptics();
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Pressable
+      onPressIn={() => { if (!disabled) scale.value = withSpring(0.88, { damping: 10, stiffness: 500 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 12, stiffness: 400 }); }}
+      onPress={() => { if (!disabled) { light(); onPress(); } }}
+      disabled={disabled}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
+      style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Animated.View style={[animatedStyle, {
+        width: 36, height: 36, borderRadius: 18,
+        backgroundColor: disabled ? DS.colors.surface + '60' : DS.colors.surface,
+        borderWidth: 1, borderColor: DS.colors.border,
+        alignItems: 'center', justifyContent: 'center',
+        opacity: disabled ? 0.5 : 1,
+      }]}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 function Stepper({ label, value, onChange, min = 0, max = 20 }: {
   label: string; value: number; onChange: (v: number) => void; min?: number; max?: number;
 }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-      <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 16, color: DS.colors.primary }}>{label}</ArchText>
+      <View style={{ flexShrink: 1, marginRight: 8 }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 16, color: DS.colors.primary }} numberOfLines={1}>{label}</ArchText>
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-        <Pressable
+        <StepperButton
           onPress={() => value > min && onChange(value - 1)}
-          style={{
-            width: 36, height: 36, borderRadius: 18,
-            backgroundColor: DS.colors.surface, borderWidth: 1, borderColor: DS.colors.border,
-            alignItems: 'center', justifyContent: 'center',
-          }}
+          disabled={value <= min}
+          accessibilityLabel={`Decrease ${label}`}
         >
-          <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 18, color: DS.colors.primary }}>-</ArchText>
-        </Pressable>
+          <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 18, color: value <= min ? DS.colors.primaryGhost : DS.colors.primary }}>-</ArchText>
+        </StepperButton>
         <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 20, color: DS.colors.primary, minWidth: 28, textAlign: 'center' }}>
           {value}
         </ArchText>
-        <Pressable
+        <StepperButton
           onPress={() => value < max && onChange(value + 1)}
-          style={{
-            width: 36, height: 36, borderRadius: 18,
-            backgroundColor: DS.colors.surface, borderWidth: 1, borderColor: DS.colors.border,
-            alignItems: 'center', justifyContent: 'center',
-          }}
+          disabled={value >= max}
+          accessibilityLabel={`Increase ${label}`}
         >
-          <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 18, color: DS.colors.primary }}>+</ArchText>
-        </Pressable>
+          <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 18, color: value >= max ? DS.colors.primaryGhost : DS.colors.primary }}>+</ArchText>
+        </StepperButton>
       </View>
     </View>
   );
@@ -65,12 +90,18 @@ function Stepper({ label, value, onChange, min = 0, max = 20 }: {
 function ToggleRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-      <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: DS.colors.primary }}>{label}</ArchText>
+      <View style={{ flexShrink: 1, marginRight: 8 }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: DS.colors.primary }} numberOfLines={1}>{label}</ArchText>
+      </View>
       <Switch
         value={value}
         onValueChange={onChange}
         trackColor={{ false: DS.colors.border, true: DS.colors.primary }}
         thumbColor={DS.colors.surface}
+        accessibilityLabel={label}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value }}
+        accessibilityHint="Double tap to toggle"
       />
     </View>
   );

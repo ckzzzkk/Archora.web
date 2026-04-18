@@ -26,13 +26,21 @@ export function Button({
   const { colors } = useTheme();
   const { light } = useHaptics();
   const scale = useSharedValue(1);
+  const pressOpacity = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    opacity: pressOpacity.value,
   }));
 
-  const handlePressIn = () => { scale.value = withSpring(0.97); };
-  const handlePressOut = () => { scale.value = withSpring(1, { damping: 10, stiffness: 200 }); };
+  const handlePressIn = () => {
+    scale.value = withSpring(0.94, { damping: 14, stiffness: 380 });
+    pressOpacity.value = withSpring(0.82, { damping: 14, stiffness: 380 });
+  };
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 14, stiffness: 320 });
+    pressOpacity.value = withSpring(1, { damping: 14, stiffness: 320 });
+  };
 
   const handlePress = () => {
     if (disabled || loading) return;

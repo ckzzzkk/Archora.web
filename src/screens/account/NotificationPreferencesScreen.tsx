@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, ScrollView, Switch, Pressable,
+  View, ScrollView, Pressable,
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing,
@@ -18,11 +18,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ArchText } from '../../components/common/ArchText';
+import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { notificationPreferenceService, type NotificationPreferences } from '../../services/notificationPreferenceService';
 import { useHaptics } from '../../hooks/useHaptics';
 import { DS } from '../../theme/designSystem';
 import type { RootStackParamList } from '../../navigation/types';
+import { AnimatedToggle } from '../../components/common/AnimatedToggle';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -110,11 +112,10 @@ function PrefRow({
       <ArchText variant="body" style={{ flex: 1, fontSize: DS.fontSize.md, color: C.primary }}>
         {label}
       </ArchText>
-      <Switch
+      <AnimatedToggle
         value={value}
         onValueChange={onToggle}
         trackColor={{ false: C.border, true: DS.colors.accent }}
-        thumbColor={value ? C.primary : C.primaryDim}
       />
     </View>
   );
@@ -270,18 +271,21 @@ export function NotificationPreferencesScreen() {
             paddingVertical: 16,
           }}>
             <View style={{ flex: 1 }}>
-              <ArchText variant="body" style={{ fontSize: DS.fontSize.md, color: C.primary, marginBottom: 2 }}>
-                Push Notifications
-              </ArchText>
-              <ArchText variant="body" style={{ fontSize: 12, color: C.primaryDim }}>
-                Master toggle for all push notifications
-              </ArchText>
+              <View style={{ flexShrink: 1 }}>
+                <ArchText variant="body" style={{ fontSize: DS.fontSize.md, color: C.primary, marginBottom: 2 }} numberOfLines={1}>
+                  Push Notifications
+                </ArchText>
+              </View>
+              <View style={{ flexShrink: 1 }}>
+                <ArchText variant="body" style={{ fontSize: 12, color: C.primaryDim }} numberOfLines={2}>
+                  Master toggle for all push notifications
+                </ArchText>
+              </View>
             </View>
-            <Switch
+            <AnimatedToggle
               value={prefs.push_enabled}
               onValueChange={(next) => handleToggle('push_enabled', next)}
               trackColor={{ false: C.border, true: DS.colors.accent }}
-              thumbColor={prefs.push_enabled ? C.primary : C.primaryDim}
             />
           </View>
         </View>
@@ -289,7 +293,7 @@ export function NotificationPreferencesScreen() {
 
       {loading ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ArchText variant="body" style={{ color: C.primaryGhost }}>Loading…</ArchText>
+          <CompassRoseLoader size="medium" />
         </View>
       ) : prefs && (
         <ScrollView

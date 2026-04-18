@@ -307,6 +307,9 @@ export function NotificationPanel({ visible, onClose }: Props) {
       <Pressable
         style={{ flex: 1, backgroundColor: DS.colors.overlay }}
         onPress={onClose}
+        accessibilityLabel="Close notifications panel"
+        accessibilityRole="button"
+        accessibilityHint="Tap to dismiss the notifications panel"
       />
 
       <Animated.View
@@ -356,7 +359,12 @@ export function NotificationPanel({ visible, onClose }: Props) {
             )}
           </Text>
           {unreadCount > 0 && (
-            <Pressable onPress={handleMarkAllRead} style={{ marginRight: 16 }}>
+            <Pressable
+              onPress={handleMarkAllRead}
+              accessibilityLabel={`Mark all ${unreadCount} notifications as read`}
+              accessibilityRole="button"
+              style={{ marginRight: 16 }}
+            >
               <Text
                 style={{
                   fontFamily: 'Inter_400Regular',
@@ -368,7 +376,13 @@ export function NotificationPanel({ visible, onClose }: Props) {
               </Text>
             </Pressable>
           )}
-          <Pressable onPress={onClose} hitSlop={8}>
+          <Pressable
+            onPress={onClose}
+            accessibilityLabel="Close notifications"
+            accessibilityRole="button"
+            accessibilityHint="Closes the notifications panel"
+            hitSlop={8}
+          >
             <Svg width={20} height={20} viewBox="0 0 24 24">
               <Path
                 d="M5 5 L19 19 M19 5 L5 19"

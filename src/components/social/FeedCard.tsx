@@ -69,8 +69,11 @@ function FeedCardInner({ template, onPress, index = 0, height = 240 }: FeedCardP
         onPressOut={() => {
           pressScale.value = withSpring(1, { damping: 14 });
         }}
+        accessibilityLabel={`${template.title ?? 'Untitled design'} by ${template.authorDisplayName ?? 'unknown'}, ${template.likeCount ?? 0} likes, ${template.saveCount ?? 0} saves`}
+        accessibilityRole="button"
+        accessibilityHint="Opens this design detail page"
         style={{
-          borderRadius: 20,
+          borderRadius: DS.radius.card, // 24px — oval-first design system
           overflow: 'hidden',
           backgroundColor: DS.colors.surface,
           borderWidth: 1,

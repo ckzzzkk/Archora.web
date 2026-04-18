@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser } from '../../auth/useUser';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
+import { SkeletonLoader } from '../../components/common/SkeletonLoader';
+import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { authService } from '../../services/authService';
 import { subscriptionService } from '../../services/subscriptionService';
 import { supabase } from '../../lib/supabase';
@@ -64,14 +66,17 @@ function SettingsRow({
   const content = (
     <View style={{
       paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingVertical: 14,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      minHeight: 52,
     }}>
-      <ArchText variant="body" style={{ fontSize: DS.fontSize.md, color: danger ? C.error : C.primary }}>
-        {label}
-      </ArchText>
+      <View style={{ flexShrink: 1, marginRight: 8 }}>
+        <ArchText variant="body" style={{ fontSize: DS.fontSize.md, color: danger ? C.error : C.primary }} numberOfLines={2}>
+          {label}
+        </ArchText>
+      </View>
       {right != null ? right : (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.xs }}>
           {value != null && (
@@ -88,7 +93,13 @@ function SettingsRow({
   return (
     <View>
       {onPress != null ? (
-        <Pressable onPress={onPress}>{content}</Pressable>
+        <Pressable
+          onPress={onPress}
+          accessibilityLabel={danger ? `${label}, warning: this action cannot be undone` : label}
+          accessibilityRole="button"
+          accessibilityHint={danger ? 'This action cannot be undone' : undefined}
+          style={{ minHeight: 44, justifyContent: 'center' }}
+        >{content}</Pressable>
       ) : content}
       {!last && (
         <View style={{ height: 1, backgroundColor: C.border, marginHorizontal: 20 }} />
@@ -101,7 +112,7 @@ function SettingsCard({ children, danger = false, C }: { children: React.ReactNo
   return (
     <View style={{
       backgroundColor: danger ? `${C.error}15` : C.surface,
-      borderRadius: 20,
+      borderRadius: DS.radius.card, // 24px — oval-first design system
       overflow: 'hidden',
       borderWidth: 1,
       borderColor: danger ? `${C.error}30` : C.border,
@@ -124,7 +135,7 @@ function StreakHeatmap({ streakCount, C }: { streakCount: number; C: ReturnType<
   return (
     <View style={{
       backgroundColor: C.surface,
-      borderRadius: 20,
+      borderRadius: DS.radius.card, // 24px — oval-first design system
       borderWidth: 1,
       borderColor: C.border,
       padding: DS.spacing.md,
@@ -189,6 +200,10 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
             <Pressable
               key={m}
               onPress={() => setMode(m)}
+              accessibilityLabel={`${label} appearance mode`}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: active }}
+              accessibilityHint="Double tap to select this appearance mode"
               style={{
                 flex: 1,
                 paddingVertical: 10,
@@ -274,8 +289,24 @@ export function AccountScreen() {
 
   if (!user) {
     return (
-      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
-        <ArchText variant="body" style={{ color: DS.colors.primaryDim }}>Loading...</ArchText>
+      <View style={{ flex: 1, backgroundColor: C.background }}>
+        {/* Header skeleton */}
+        <View style={{ alignItems: 'center', paddingTop: 60, paddingBottom: DS.spacing.xl }}>
+          <SkeletonLoader showAvatar={false} rows={1} cardStyle={false} />
+          <View style={{ marginTop: DS.spacing.md, alignItems: 'center' }}>
+            <SkeletonLoader rows={1} cardStyle={false} />
+            <View style={{ height: DS.spacing.xs }} />
+            <SkeletonLoader rows={1} cardStyle={false} />
+          </View>
+        </View>
+        {/* Settings cards skeleton */}
+        <View style={{ paddingHorizontal: DS.spacing.lg }}>
+          {[1, 2, 3, 4].map((i) => (
+            <View key={i} style={{ marginBottom: DS.spacing.md }}>
+              <SkeletonLoader rows={3} cardStyle />
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
@@ -393,6 +424,9 @@ export function AccountScreen() {
           {/* Avatar */}
           <Pressable
             onPress={() => { void pickAvatar(); }}
+            accessibilityLabel="Change profile photo"
+            accessibilityRole="button"
+            accessibilityHint="Opens the photo library to select a new profile picture"
             style={{ position: 'relative', marginBottom: DS.spacing.md }}
           >
             <View style={{
@@ -445,13 +479,19 @@ export function AccountScreen() {
               }}
             />
           ) : (
-            <Pressable onPress={() => setEditing(true)} hitSlop={8}>
+            <Pressable
+              onPress={() => setEditing(true)}
+              accessibilityLabel={`Edit display name, currently ${user.displayName ?? 'Unnamed'}`}
+              accessibilityRole="button"
+              accessibilityHint="Double tap to edit your display name"
+              hitSlop={8}
+            >
               <ArchText variant="heading" style={{ fontSize: 24, color: C.primary, marginBottom: DS.spacing.sm }}>{user.displayName ?? 'Unnamed'}</ArchText>
             </Pressable>
           )}
 
           <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, marginBottom: DS.spacing.sm }}>
-            {user.email}
+            {user.email ?? ''}
           </ArchText>
 
           {/* Tier badge */}
@@ -572,6 +612,10 @@ export function AccountScreen() {
                     }}
                     trackColor={{ false: C.border, true: C.accent }}
                     thumbColor={notificationsOn ? C.background : C.primaryDim}
+                    accessibilityLabel="Push notifications"
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: notificationsOn }}
+                    accessibilityHint="Double tap to toggle push notifications"
                   />
                 )
               }

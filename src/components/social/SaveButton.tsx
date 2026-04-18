@@ -4,8 +4,7 @@ import { Pressable, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSequence,
-  withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useSession } from '../../auth/useSession';
@@ -30,12 +29,17 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
   const [loading, setLoading] = useState(false);
 
   const scale = useSharedValue(1);
+  const iconScale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const iconAnimStyle = useAnimatedStyle(() => ({ transform: [{ scale: iconScale.value }] }));
 
   const toggle = async () => {
     if (!isAuthenticated || loading) return;
     medium();
-    scale.value = withSequence(withTiming(1.2, { duration: 100 }), withTiming(1, { duration: 100 }));
+    scale.value = withSpring(1.3, { damping: 8, stiffness: 500 });
+    iconScale.value = withSpring(saved ? 1.4 : 1.4, { damping: 8, stiffness: 400 }, () => {
+      iconScale.value = withSpring(1, { damping: 10, stiffness: 300 });
+    });
 
     const next = !saved;
     setSaved(next);
@@ -59,11 +63,17 @@ export function SaveButton({ templateId, saveCount: initialCount, isSaved: initi
   };
 
   return (
-    <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Pressable
+      onPress={toggle}
+      accessibilityLabel={saved ? `Unsave, ${count} saves` : `Save, ${count} saves`}
+      accessibilityRole="button"
+      accessibilityHint="Double tap to toggle save"
+      style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}
+    >
       <Animated.View style={animStyle}>
-        <Text style={{ fontSize: 16, color: saved ? colors.primary : DS.colors.primaryGhost }}>
+        <Animated.Text style={{ fontSize: 16, color: saved ? colors.primary : DS.colors.primaryGhost, transform: [{ scale: iconScale.value }] }}>
           {saved ? '⊸' : '⊹'}
-        </Text>
+        </Animated.Text>
       </Animated.View>
       <Text
         style={{

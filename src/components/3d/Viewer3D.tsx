@@ -65,7 +65,7 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
       <EmptyState
         title="No Blueprint"
         subtitle="Generate or load a blueprint to view it in 3D."
-        icon="◻"
+        variant="projects"
       />
     );
   }

@@ -70,7 +70,7 @@ const TIER_PERKS: Record<Exclude<SubscriptionTier, 'starter'>, string[]> = {
 function StarterCard({ isCurrent }: { isCurrent: boolean }) {
   return (
     <View style={{
-      borderRadius: 20,
+      borderRadius: DS.radius.card, // 24px — oval-first design system
       borderWidth: isCurrent ? 2 : 1,
       borderColor: isCurrent ? DS.colors.primary : DS.colors.border,
       backgroundColor: DS.colors.surface,
@@ -125,7 +125,7 @@ function TierCard({
 
   return (
     <View style={{
-      borderRadius: 20,
+      borderRadius: DS.radius.card, // 24px — oval-first design system
       borderWidth: isHighlighted ? 2 : 1,
       borderColor: isHighlighted ? accent : DS.colors.border,
       backgroundColor: DS.colors.surface,
@@ -179,16 +179,19 @@ function TierCard({
             backgroundColor: isCurrent ? DS.colors.border : accent,
             borderRadius: 50,
             paddingVertical: 14,
+            paddingHorizontal: 14,
             alignItems: 'center',
           }}
         >
-          <ArchText variant="body" style={{
-            fontFamily: DS.font.bold,
-            fontSize: 15,
-            color: isCurrent ? DS.colors.primaryGhost : DS.colors.background,
-          }}>
-            {isCurrent ? 'Current Plan' : `Upgrade to ${label}`}
-          </ArchText>
+          <View style={{ flexShrink: 1 }}>
+            <ArchText variant="body" style={{
+              fontFamily: DS.font.bold,
+              fontSize: 15,
+              color: isCurrent ? DS.colors.primaryGhost : DS.colors.background,
+            }} numberOfLines={1}>
+              {isCurrent ? 'Current Plan' : `Upgrade to ${label}`}
+            </ArchText>
+          </View>
         </Pressable>
       </View>
     </View>
@@ -345,7 +348,9 @@ export function SubscriptionScreen({ navigation }: Props) {
           borderBottomColor: DS.colors.border,
           marginBottom: DS.spacing.xs,
         }}>
-          <ArchText variant="body" style={{ flex: 2, fontFamily: DS.font.medium, fontSize: 10, color: DS.colors.primaryGhost, letterSpacing: 1, textTransform: 'uppercase' }}>Feature</ArchText>
+          <View style={{ flex: 2, flexShrink: 1 }}>
+            <ArchText variant="body" style={{ fontFamily: DS.font.medium, fontSize: 10, color: DS.colors.primaryGhost, letterSpacing: 1, textTransform: 'uppercase' }} numberOfLines={1}>Feature</ArchText>
+          </View>
           <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.primaryGhost, textAlign: 'center' }}>FREE</ArchText>
           <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.primary, textAlign: 'center' }}>CRTV</ArchText>
           <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.success, textAlign: 'center' }}>PRO</ArchText>
@@ -363,7 +368,9 @@ export function SubscriptionScreen({ navigation }: Props) {
               backgroundColor: i % 2 !== 0 ? '#FFFFFF06' : 'transparent',
             }}
           >
-            <ArchText variant="body" style={{ flex: 2, fontSize: 11, color: DS.colors.primaryDim }}>{row.label}</ArchText>
+            <View style={{ flex: 2, flexShrink: 1 }}>
+              <ArchText variant="body" style={{ fontSize: 11, color: DS.colors.primaryDim }} numberOfLines={2}>{row.label}</ArchText>
+            </View>
             <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, textAlign: 'center' }}>{row.starter}</ArchText>
             <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primary, textAlign: 'center' }}>{row.creator}</ArchText>
             <ArchText variant="body" style={{ flex: 1, fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.success, textAlign: 'center' }}>{row.pro}</ArchText>

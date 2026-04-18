@@ -83,10 +83,12 @@ function ScanModeCard({ title, description, available, requires, onPress, delay 
           opacity: available ? 1 : 0.6,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: available ? DS.colors.accent : DS.colors.primaryDim }}>
-            {title}
-          </ArchText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+          <View style={{ flexShrink: 1 }}>
+            <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: available ? DS.colors.accent : DS.colors.primaryDim }} numberOfLines={1}>
+              {title}
+            </ArchText>
+          </View>
           {!available && requires && (
             <View style={{ backgroundColor: DS.colors.warning + '20', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4 }}>
               <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.warning }}>
@@ -164,8 +166,19 @@ export function ARScanScreen() {
 
   if (!device) {
     return (
-      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
-        <ArchText variant="body" style={{ color: DS.colors.primaryDim }}>No camera found</ArchText>
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <Svg width={64} height={64} viewBox="0 0 64 64" style={{ marginBottom: 20 }}>
+          <Circle cx="32" cy="32" r="24" stroke={DS.colors.border} strokeWidth="1.5" fill="none" />
+          <Path d="M20 24 L28 24 L32 18 L36 24 L44 24" stroke={DS.colors.primaryDim} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <Circle cx="32" cy="36" r="8" stroke={DS.colors.primaryDim} strokeWidth="1.5" fill="none" />
+          <Circle cx="32" cy="36" r="3" stroke={DS.colors.primaryDim} strokeWidth="1.2" fill="none" />
+        </Svg>
+        <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 20, color: DS.colors.primary, textAlign: 'center', marginBottom: 8 }}>
+          No camera found
+        </ArchText>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 20 }}>
+          We couldn&apos;t find a camera on this device. Try restarting the app or check your device settings.
+        </ArchText>
       </View>
     );
   }

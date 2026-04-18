@@ -4,8 +4,7 @@ import { Pressable, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSequence,
-  withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useSession } from '../../auth/useSession';
@@ -30,12 +29,20 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
   const [loading, setLoading] = useState(false);
 
   const scale = useSharedValue(1);
+  const heartScale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   const toggle = async () => {
     if (!isAuthenticated || loading) return;
     medium();
-    scale.value = withSequence(withTiming(1.2, { duration: 100 }), withTiming(1, { duration: 100 }));
+    // Spring bounce on press
+    scale.value = withSpring(1.3, { damping: 8, stiffness: 500 }, () => {
+      scale.value = withSpring(1, { damping: 10, stiffness: 300 });
+    });
+    // Heart fill animation
+    heartScale.value = withSpring(liked ? 0.7 : 1.4, { damping: 8, stiffness: 400 }, () => {
+      heartScale.value = withSpring(1, { damping: 10, stiffness: 300 });
+    });
 
     const next = !liked;
     setLiked(next);
@@ -60,11 +67,17 @@ export function LikeButton({ templateId, likeCount: initialCount, isLiked: initi
   };
 
   return (
-    <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Pressable
+      onPress={toggle}
+      accessibilityLabel={liked ? `Unlike, ${count} likes` : `Like, ${count} likes`}
+      accessibilityRole="button"
+      accessibilityHint="Double tap to toggle like"
+      style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}
+    >
       <Animated.View style={animStyle}>
-        <Text style={{ fontSize: 16, color: liked ? DS.colors.error : DS.colors.primaryGhost }}>
+        <Animated.Text style={{ fontSize: 16, color: liked ? DS.colors.error : DS.colors.primaryGhost, transform: [{ scale: heartScale.value }] }}>
           {liked ? '♥' : '♡'}
-        </Text>
+        </Animated.Text>
       </Animated.View>
       <Text
         style={{

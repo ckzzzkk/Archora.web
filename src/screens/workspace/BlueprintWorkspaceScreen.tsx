@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, Share, Modal } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, interpolate,
 } from 'react-native-reanimated';
-import Svg, { Rect, Line, Path } from 'react-native-svg';
+import Svg, { Rect, Line, Path, Circle } from 'react-native-svg';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +26,7 @@ import { StaircasePromptSheet } from '../../components/blueprint/StaircasePrompt
 import { ImageToFurnitureSheet } from '../../components/blueprint/ImageToFurnitureSheet';
 import { CopyPasteSheet } from '../../components/blueprint/CopyPasteSheet';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { OvalButton } from '../../components/common/OvalButton';
 import { InHouseView } from '../../components/3d/InHouseView';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../../components/common/ArchText';
@@ -95,18 +96,32 @@ function ViewModeToggle({ mode, onSelect }: { mode: ViewMode; onSelect: (m: View
 function EmptyBlueprint({ onGenerate }: { onGenerate: () => void }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 }}>
-      <Svg width={80} height={80} viewBox="0 0 80 80" style={{ marginBottom: 20, opacity: 0.4 }}>
-        <Rect x="8" y="8" width="64" height="64" rx="4" stroke={DS.colors.primary} strokeWidth="2" fill="none" strokeDasharray="4 4" />
-        <Line x1="8" y1="30" x2="72" y2="30" stroke={DS.colors.primary} strokeWidth="1" strokeDasharray="2 4" />
-        <Line x1="30" y1="8" x2="30" y2="72" stroke={DS.colors.primary} strokeWidth="1" strokeDasharray="2 4" />
+      {/* Blueprint grid with compass rose */}
+      <Svg width={120} height={100} viewBox="0 0 120 100" style={{ marginBottom: 28 }}>
+        {/* Grid */}
+        <Rect x="8" y="8" width="104" height="84" rx="4" stroke={DS.colors.border} strokeWidth="1.5" fill="none" strokeDasharray="4 4" />
+        <Line x1="8" y1="32" x2="112" y2="32" stroke={DS.colors.border} strokeWidth="0.8" strokeDasharray="2 4" />
+        <Line x1="8" y1="58" x2="112" y2="58" stroke={DS.colors.border} strokeWidth="0.8" strokeDasharray="2 4" />
+        <Line x1="8" y1="82" x2="112" y2="82" stroke={DS.colors.border} strokeWidth="0.8" strokeDasharray="2 4" />
+        <Line x1="32" y1="8" x2="32" y2="92" stroke={DS.colors.border} strokeWidth="0.8" strokeDasharray="2 4" />
+        <Line x1="60" y1="8" x2="60" y2="92" stroke={DS.colors.border} strokeWidth="0.8" strokeDasharray="2 4" />
+        <Line x1="88" y1="8" x2="88" y2="92" stroke={DS.colors.border} strokeWidth="0.8" strokeDasharray="2 4" />
+        {/* House outline in center */}
+        <Path d="M40 56 L60 38 L80 56" stroke={DS.colors.primary} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Rect x="44" y="56" width="32" height="20" stroke={DS.colors.primary} strokeWidth="1.4" fill="none" />
+        <Rect x="55" y="64" width="10" height="12" stroke={DS.colors.primary} strokeWidth="1.1" fill="none" />
+        {/* Compass rose */}
+        <Circle cx="96" cy="16" r="10" stroke={DS.colors.border} strokeWidth="1" fill="none" strokeDasharray="2 2" />
+        <Path d="M96 8 L97.8 12.5 L96 11.5 L94.2 12.5 Z" fill={DS.colors.border} />
+        <Circle cx="96" cy="16" r="2.5" fill={DS.colors.border} />
       </Svg>
-      <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: DS.colors.primary, textAlign: 'center', marginBottom: 10 }}>No Blueprint Yet</ArchText>
-      <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 20, marginBottom: 28 }}>
-        Generate a building with AI, scan a room, or start drawing manually.
+      <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 22, color: DS.colors.primary, textAlign: 'center', marginBottom: 10 }}>
+        Start creating
       </ArchText>
-      <Pressable onPress={onGenerate} style={{ backgroundColor: DS.colors.primary, borderRadius: 50, paddingHorizontal: 24, paddingVertical: 12 }}>
-        <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 15, color: DS.colors.background }}>Generate with AI</ArchText>
-      </Pressable>
+      <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 20, marginBottom: 28 }}>
+        Generate a building with AI,{'\n'}scan a room, or start drawing manually.
+      </ArchText>
+      <OvalButton label="Generate with AI" variant="filled" onPress={onGenerate} />
     </View>
   );
 }
@@ -474,7 +489,9 @@ export function BlueprintWorkspaceScreen() {
               }}
             >
               <Text style={{ fontSize: 14 }}>📷</Text>
-              <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.warning }}>Photo → 3D</ArchText>
+              <View style={{ flexShrink: 1 }}>
+                <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.warning }} numberOfLines={1}>Photo → 3D</ArchText>
+              </View>
             </Pressable>
           )}
           {/* Copy/Paste — clipboard access */}
@@ -660,12 +677,15 @@ export function BlueprintWorkspaceScreen() {
               backgroundColor: DS.colors.surface,
             }}
           >
-            <ArchText
-              variant="body"
-              style={{ fontFamily: DS.font.heading, fontSize: 18, color: DS.colors.primary }}
-            >
-              Build Analysis
-            </ArchText>
+            <View style={{ flexShrink: 1 }}>
+              <ArchText
+                variant="body"
+                style={{ fontFamily: DS.font.heading, fontSize: 18, color: DS.colors.primary }}
+                numberOfLines={1}
+              >
+                Build Analysis
+              </ArchText>
+            </View>
             <Pressable
               onPress={() => setShowSimulation(false)}
               style={{

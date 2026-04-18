@@ -62,6 +62,8 @@ export function Toast({ message, title, type = 'info', onDismiss, duration = 300
   return (
     <GestureDetector gesture={swipeUp}>
       <Animated.View
+        accessibilityLiveRegion="polite"
+        accessibilityRole="alert"
         style={[
           animatedStyle,
           {
