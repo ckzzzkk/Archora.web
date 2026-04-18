@@ -189,10 +189,15 @@ function ARManualMeasureContent() {
   if (showResult && scanResult) {
     return (
       <ARResultScreen
-        result={scanResult}
-        onOpenInStudio={handleOpenInStudio}
+        visible={true}
+        isProcessing={false}
+        wallCount={scanResult.pointCount ?? points.length}
+        roomDimensions={scanResult.dimensions ? { width: scanResult.dimensions.width ?? 0, length: scanResult.dimensions.height ?? 0 } : undefined}
+        roomLabel={scanResult.roomType ?? 'Room'}
+        detectedObjects={[]}
+        onImportToStudio={handleOpenInStudio}
+        onSaveScan={() => {}}
         onScanAgain={handleReset}
-        onBack={handleBack}
       />
     );
   }
