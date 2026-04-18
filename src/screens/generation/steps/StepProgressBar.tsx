@@ -24,7 +24,7 @@ interface Props {
 
 function AnimatedDot({ index, current }: { index: number; current: number }) {
   const isActive = index < current;
-  const isCurrent = index === current - 1;
+  const isCurrent = index === Math.max(0, current - 1);
   const scale = useSharedValue(1);
   const width = useSharedValue(isActive ? 20 : 8);
 
@@ -71,7 +71,7 @@ export function StepProgressBar({ current, total, onBack }: Props) {
         paddingBottom: 12,
       }}
     >
-      {onBack && current > 1 ? (
+      {onBack && current > 0 ? (
         <Pressable
           onPress={() => { light(); onBack(); }}
           accessibilityLabel="Go back"
