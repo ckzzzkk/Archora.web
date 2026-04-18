@@ -191,6 +191,7 @@ export interface BuildingMetadata {
   enrichedPrompt?: string;
   simulationReport?: SimulationReport;
   structuralNotes?: string[];
+  architectInfluence?: string;
 }
 
 export type StaircaseType = 'straight' | 'l_shape' | 'spiral';
