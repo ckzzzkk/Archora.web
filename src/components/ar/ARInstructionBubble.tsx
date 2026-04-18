@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import Svg, { Circle } from 'react-native-svg';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../common/ArchText';
 
@@ -37,10 +38,10 @@ function QualityRing({ percent, size = 40 }: { percent: number; size?: number })
   const offset = circumference - (percent / 100) * circumference;
 
   return (
-    <View style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {/* Background track */}
-        <circle
+        <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -49,19 +50,19 @@ function QualityRing({ percent, size = 40 }: { percent: number; size?: number })
           fill="none"
         />
         {/* Progress arc */}
-        <circle
+        <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           stroke={DS.colors.success}
           strokeWidth={strokeWidth}
           fill="none"
-          strokeDasharray={circumference}
+          strokeDasharray={`${circumference}`}
           strokeDashoffset={offset}
           strokeLinecap="round"
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
-      </svg>
+      </Svg>
       <View
         style={{
           position: 'absolute',
