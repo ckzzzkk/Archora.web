@@ -1,0 +1,289 @@
+/**
+ * ai-render — Photorealistic render generation (Pro+)
+ *
+ * POST body: {
+ *   blueprintSummary: { buildingType, style, totalArea, roomCount, floors?, hasPool?, hasGarden?, exteriorFinish? },
+ *   atmosphere: 'golden_hour'|'overcast_day'|'night_interior'|'twilight'|'rain_storm'|'snow'|'sunny_midday',
+ *   viewType: 'exterior_front'|'exterior_aerial'|'interior_living'|'interior_kitchen'|'interior_bedroom'|'garden',
+ *   hemisphere?: 'northern'|'southern'
+ * }
+ *
+ * Pipeline:
+ *   1. Build scene description from blueprint summary
+ *   2. Claude Vision prompt engineer → SDXL prompt + negative prompt
+ *   3. Replicate SDXL generates render (if REPLICATE_API_KEY set)
+ *   4. Store render URL in renders table
+ *   5. Return { renderUrl, prompts }
+ */
+import { z } from 'https://esm.sh/zod@3.23.8';
+import { getAuthUser } from '../_shared/auth.ts';
+import { checkQuota } from '../_shared/quota.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { corsHeaders } from '../_shared/cors.ts';
+import { Errors } from '../_shared/errors.ts';
+import { logAudit } from '../_shared/audit.ts';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+
+const RequestSchema = z.object({
+  blueprintSummary: z.object({
+    buildingType: z.string(),
+    style: z.string(),
+    totalArea: z.number(),
+    roomCount: z.number(),
+    floors: z.number().optional(),
+    hasPool: z.boolean().optional(),
+    hasGarden: z.boolean().optional(),
+    exteriorFinish: z.string().optional(),
+  }),
+  atmosphere: z.enum([
+    'golden_hour', 'overcast_day', 'night_interior',
+    'twilight', 'rain_storm', 'snow', 'sunny_midday',
+  ]),
+  viewType: z.enum([
+    'exterior_front', 'exterior_aerial',
+    'interior_living', 'interior_kitchen', 'interior_bedroom',
+    'garden',
+  ]),
+  hemisphere: z.enum(['northern', 'southern']).optional(),
+});
+
+const RENDER_SYSTEM_PROMPT = `You are an architectural visualisation prompt engineer. Generate a detailed, photorealistic Stable Diffusion prompt for architectural renders.
+
+Your prompts must:
+1. Be specific about architecture style, materials, and construction details
+2. Include precise lighting description from the atmosphere module
+3. Reference real architectural photography techniques
+4. Include quality boosters appropriate for architecture renders
+5. Stay under 400 words
+
+ATMOSPHERE REFERENCE:
+- Golden Hour: "warm amber backlit sunlight at 10-degree elevation, long horizontal shadows, golden-hour photography, 2700K colour temperature, soft orange glow on facade materials, magic hour architecture photography"
+- Overcast Day: "soft overcast lighting, diffuse illumination, no harsh shadows, flat 5500K daylight, studio-quality even exposure, architectural documentation photography"
+- Night Interior: "warm interior lighting 2700K, glowing windows in dark exterior, atmospheric night architecture, uplighting on facade, city ambient glow on horizon"
+- Twilight: "blue hour photography, purple-blue sky gradient, warm interior window glow contrasting cool exterior, twilight architecture, 20 minutes after sunset"
+- Rainstorm: "dramatic stormlit sky, wet reflections on pavement, rain on glass, dark cumulus clouds, 4500K cool grey-green ambient, atmospheric moody architecture"
+- Snow: "winter architecture photography, snow-covered ground and roof, soft blue shadow tones, overcast white sky, serene winter light"
+- Sunny Midday: "bright direct sunlight, crisp shadows, blue sky with white clouds, vibrant colours, high-contrast architectural photography"
+
+QUALITY BOOSTERS (always append): "ultra-detailed, photorealistic render, 8K, architectural photography, professional DSLR, sharp focus, depth of field, volumetric lighting, award-winning architecture photo"
+
+NEGATIVE PROMPT (always include): "cartoon, illustration, low quality, blurry, distorted proportions, unrealistic, sketch, watercolour"
+
+Return ONLY valid JSON with keys: { "positivePrompt": "...", "negativePrompt": "...", "styleNotes": "..." }`;
+
+interface PromptResult {
+  positivePrompt: string;
+  negativePrompt: string;
+  styleNotes: string;
+}
+
+async function generatePrompts(
+  buildingType: string,
+  style: string,
+  totalArea: number,
+  roomCount: number,
+  exteriorFinish: string | undefined,
+  hasPool: boolean | undefined,
+  hasGarden: boolean | undefined,
+  atmosphere: string,
+  viewType: string,
+  hemisphere: string,
+  apiKey: string,
+): Promise<PromptResult> {
+  const features = [
+    hasPool ? 'swimming pool',
+    hasGarden ? 'landscaped garden',
+  ].filter(Boolean).join(', ') || 'none';
+
+  const userPrompt = `Generate an architectural render prompt for a ${buildingType}.
+Style: ${style}
+Floor area: ${totalArea}m² across approximately ${roomCount} rooms.
+Exterior finish: ${exteriorFinish ?? 'render/plaster'}
+Hemisphere: ${hemisphere}
+Features present: ${features}
+Atmosphere requested: ${atmosphere.replace(/_/g, ' ')}
+View requested: ${viewType.replace(/_/g, ' ')}
+
+Generate a highly detailed positive prompt and appropriate negative prompt for Stable Diffusion. Focus on the architectural photography quality, lighting, and materials.`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: RENDER_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }],
+    }),
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Claude API error: ${resp.status}`);
+  }
+
+  const data = await resp.json() as { content: Array<{ type: string; text: string }> };
+  const rawText = data.content.find((c) => c.type === 'text')?.text ?? '{}';
+
+  const cleaned = rawText
+    .replace(/^```(?:json)?\n?/m, '')
+    .replace(/\n?```$/m, '')
+    .trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    throw new Error(`Failed to parse prompt JSON: ${cleaned.slice(0, 200)}`);
+  }
+}
+
+async function generateReplicateRender(
+  positivePrompt: string,
+  negativePrompt: string,
+  apiKey: string,
+): Promise<string | null> {
+  const replicateResp = await fetch(
+    'https://api.replicate.com/v1/models/stability-ai/sdxl/predictions',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'wait',
+      },
+      body: JSON.stringify({
+        input: {
+          prompt: positivePrompt,
+          negative_prompt: negativePrompt,
+          width: 1024,
+          height: 768,
+          num_inference_steps: 30,
+          guidance_scale: 7.5,
+          num_outputs: 1,
+        },
+      }),
+    },
+  );
+
+  if (!replicateResp.ok) {
+    const errBody = await replicateResp.text();
+    console.error('[ai-render] Replicate error:', errBody.slice(0, 200));
+    return null;
+  }
+
+  const prediction = await replicateResp.json() as { output?: string[]; error?: string };
+  if (prediction.error) {
+    console.error('[ai-render] Replicate prediction error:', prediction.error);
+    return null;
+  }
+
+  return prediction.output?.[0] ?? null;
+}
+
+serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const user = await getAuthUser(req);
+
+    // Rate limit: 10 render requests per hour
+    const allowed = await checkRateLimit(`render:${user.id}`, 10, 3600);
+    if (!allowed) {
+      return Errors.rateLimited('Render rate limit exceeded — try again later');
+    }
+
+    const body = await req.json() as unknown;
+    const parsed = RequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return Errors.validation('Invalid request', parsed.error.issues);
+    }
+
+    const { blueprintSummary, atmosphere, viewType, hemisphere } = parsed.data;
+
+    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+    const replicateKey = Deno.env.get('REPLICATE_API_KEY');
+
+    if (!anthropicKey) {
+      return new Response(
+        JSON.stringify({ error: 'AI_NOT_CONFIGURED', message: 'AI service not available' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Step 1: Generate SDXL prompts via Claude
+    let prompts: PromptResult;
+    try {
+      prompts = await generatePrompts(
+        blueprintSummary.buildingType,
+        blueprintSummary.style,
+        blueprintSummary.totalArea,
+        blueprintSummary.roomCount,
+        blueprintSummary.exteriorFinish,
+        blueprintSummary.hasPool,
+        blueprintSummary.hasGarden,
+        atmosphere,
+        viewType,
+        hemisphere ?? 'northern',
+        anthropicKey,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Prompt generation failed';
+      return new Response(
+        JSON.stringify({ error: 'PROMPT_GENERATION_FAILED', message: msg }),
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Step 2: Generate render via Replicate (if key available)
+    let renderUrl: string | null = null;
+    if (replicateKey) {
+      renderUrl = await generateReplicateRender(prompts.positivePrompt, prompts.negativePrompt, replicateKey);
+    }
+
+    // Step 3: Store render if URL obtained
+    if (renderUrl) {
+      // Fire-and-forget — don't block response on DB write
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (supabaseUrl && supabaseKey) {
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        supabase.from('renders').insert({
+          user_id: user.id,
+          render_url: renderUrl,
+          atmosphere,
+          view_type: viewType,
+          created_at: new Date().toISOString(),
+        }).then(() => {}).catch(() => {});
+      }
+    }
+
+    await logAudit({
+      user_id: user.id,
+      action: 'ai_render',
+      resource_type: 'project',
+      resource_id: null,
+      meta: { atmosphere, viewType, hasRender: !!renderUrl },
+    });
+
+    return new Response(
+      JSON.stringify({
+        renderUrl,
+        prompts,
+        message: replicateKey
+          ? (renderUrl ? 'Render generated successfully' : 'Prompt generated — render pending')
+          : 'Replicate not configured — prompt generated only',
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  } catch (err) {
+    if (err instanceof Response) return err;
+    console.error('[ai-render]', err);
+    return Errors.internal();
+  }
+});
