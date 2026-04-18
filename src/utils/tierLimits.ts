@@ -15,6 +15,7 @@ export interface TierLimits {
 
   // AI quotas
   aiGenerationsPerMonth: number; // -1 = unlimited
+  aiEditsPerMonth: number;       // -1 = unlimited
   arScansPerMonth: number;       // -1 = unlimited
   arSessionsPerMonth: number;    // alias for arScansPerMonth
   photoImportsPerMonth: number;  // -1 = unlimited
@@ -82,11 +83,12 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxRooms: 4,
 
     aiGenerationsPerMonth: 10,
+    aiEditsPerMonth: 10,
     arScansPerMonth: 0,
     arSessionsPerMonth: 0,
     photoImportsPerMonth: 0,
     exportsPerMonth: 2,
-    rendersPerMonth: 0,
+    rendersPerMonth: 2,
     aiChatMessagesPerDay: 5,
 
     dailyEditTimeSeconds: 2700,
@@ -141,7 +143,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     savedProjects: 25,
     maxRooms: 15,
 
-    aiGenerationsPerMonth: 200,
+    aiGenerationsPerMonth: 40,
+    aiEditsPerMonth: 40,
     arScansPerMonth: 15,
     arSessionsPerMonth: 15,
     photoImportsPerMonth: 20,
@@ -201,12 +204,13 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     savedProjects: 50,
     maxRooms: 20,
 
-    aiGenerationsPerMonth: 500,
+    aiGenerationsPerMonth: 100,
+    aiEditsPerMonth: 100,
     arScansPerMonth: -1,
     arSessionsPerMonth: -1,
     photoImportsPerMonth: -1,
     exportsPerMonth: -1,
-    rendersPerMonth: -1,
+    rendersPerMonth: 30,
     aiChatMessagesPerDay: -1,
 
     dailyEditTimeSeconds: -1,
@@ -262,6 +266,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxRooms: -1,
 
     aiGenerationsPerMonth: -1,
+    aiEditsPerMonth: -1,
     arScansPerMonth: -1,
     arSessionsPerMonth: -1,
     photoImportsPerMonth: -1,
@@ -362,3 +367,10 @@ export function getUpgradeTierFromCurrent(tier: Tier): Tier | null {
   if (tier === 'pro') return 'architect';
   return null;
 }
+
+export const ARCHITECT_LIMITS = {
+  starter: 3,
+  creator: 7,
+  pro: 11,
+  architect: 12,
+} as const;

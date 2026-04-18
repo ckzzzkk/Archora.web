@@ -24,6 +24,7 @@ import { DS } from '../../theme/designSystem';
 import { useTierGate } from '../../hooks/useTierGate';
 import { useGenerationPreferences } from '../../hooks/useGenerationPreferences';
 
+import { Step0Architect } from './steps/Step0Architect';
 import { Step1BuildingType } from './steps/Step1BuildingType';
 import { Step2PlotSize } from './steps/Step2PlotSize';
 import { Step3Rooms } from './steps/Step3Rooms';
@@ -282,7 +283,10 @@ export function GenerationScreen() {
   const { preferences, loading: prefsLoading, prefilledFromDb, setPrefilledFromDb, save } = useGenerationPreferences();
 
   // Step state
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
+  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6 | 7>(0);
+
+  // Architect selection state
+  const [selectedArchitectId, setSelectedArchitectId] = useState<string | null>(null);
 
   // Payload state
   const [buildingType, setBuildingType] = useState<BuildingType | null>(null);
@@ -365,7 +369,7 @@ export function GenerationScreen() {
   }, [screenState]);
 
   const goBack = useCallback(() => {
-    if (step > 1) {
+    if (step > 0) {
       setStep((prev) => (prev - 1) as typeof step);
     }
   }, [step]);
@@ -387,6 +391,7 @@ export function GenerationScreen() {
       referenceImageUrl: referenceImageUrl ?? undefined,
       additionalNotes: notes,
       transcript,
+      architectId: selectedArchitectId ?? undefined,
     };
   };
 
@@ -434,7 +439,7 @@ export function GenerationScreen() {
   // ── Swipe-to-go-back gesture ─────────────────────────────────────────────
   const swipeTranslateX = useSV(0);
   const handleSwipeBack = useCallback(() => {
-    if (step > 1) {
+    if (step > 0) {
       setStep((prev) => (prev - 1) as typeof step);
     }
   }, [step]);
@@ -512,8 +517,8 @@ export function GenerationScreen() {
 
       <StepProgressBar
         current={step}
-        total={7}
-        onBack={step > 1 ? goBack : undefined}
+        total={8}
+        onBack={step > 0 ? goBack : undefined}
       />
 
       <ScrollView
@@ -522,6 +527,16 @@ export function GenerationScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {step === 0 && (
+          <Step0Architect
+            selectedId={selectedArchitectId}
+            onSelect={setSelectedArchitectId}
+            onContinue={goNext}
+            onUseDefault={() => { setSelectedArchitectId(null); goNext(); }}
+            userTier={user?.subscriptionTier ?? 'starter'}
+          />
+        )}
+
         {step === 1 && (
           <Step1BuildingType
             selected={buildingType}

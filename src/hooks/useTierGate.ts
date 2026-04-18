@@ -1,4 +1,5 @@
 import { useSession } from '../auth/useSession';
+import { getArchitectTierRequired } from '../data/architectProfiles';
 import { TIER_LIMITS, isFeatureAllowed, getUpgradeTier, type TierLimits } from '../utils/tierLimits';
 import type { SubscriptionTier } from '../types';
 
@@ -31,4 +32,10 @@ export function useTierGate(feature: keyof TierLimits): TierGateResult {
     limit: numericLimit,
     tier,
   };
+}
+
+export function isArchitectAllowed(architectId: string, userTier: SubscriptionTier): boolean {
+  const requiredTier = getArchitectTierRequired(architectId);
+  const TIER_ORDER: SubscriptionTier[] = ['starter', 'creator', 'pro', 'architect'];
+  return TIER_ORDER.indexOf(userTier) >= TIER_ORDER.indexOf(requiredTier);
 }

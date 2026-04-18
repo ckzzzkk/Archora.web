@@ -197,6 +197,12 @@ serve(async (req: Request) => {
       return Errors.rateLimited('Render rate limit exceeded — try again later');
     }
 
+    // Quota check for renders
+    const quotaOk = await checkQuota(user.id, 'render');
+    if (!quotaOk) {
+      return Errors.quotaExceeded('Monthly render quota reached.');
+    }
+
     const body = await req.json() as unknown;
     const parsed = RequestSchema.safeParse(body);
     if (!parsed.success) {
