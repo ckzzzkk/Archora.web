@@ -189,10 +189,15 @@ function ARManualMeasureContent() {
   if (showResult && scanResult) {
     return (
       <ARResultScreen
-        result={scanResult}
-        onOpenInStudio={handleOpenInStudio}
+        visible={true}
+        isProcessing={false}
+        wallCount={scanResult.pointCount ?? points.length}
+        roomDimensions={scanResult.dimensions ? { width: scanResult.dimensions.width ?? 0, length: scanResult.dimensions.height ?? 0 } : undefined}
+        roomLabel={scanResult.roomType ?? 'Room'}
+        detectedObjects={[]}
+        onImportToStudio={handleOpenInStudio}
+        onSaveScan={() => {}}
         onScanAgain={handleReset}
-        onBack={handleBack}
       />
     );
   }
@@ -204,18 +209,16 @@ function ARManualMeasureContent() {
     >
       {/* Instructions */}
       <ARInstructionBubble
-        instruction={
+        prompt={
           points.length === 0
             ? 'Tap to place first corner'
             : points.length < 3
             ? `Corner ${points.length + 1} — tap next corner`
             : 'Tap near first corner to close room'
         }
-        hint={
-          points.length === 0
-            ? 'Aim at floor corners where walls meet'
-            : undefined
-        }
+        wallCount={points.length}
+        totalWalls={4}
+        qualityPercent={Math.min((points.length / 4) * 100, 100)}
         step={points.length > 0 ? `Corner ${points.length}` : undefined}
       />
 

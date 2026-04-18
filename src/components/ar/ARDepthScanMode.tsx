@@ -11,12 +11,13 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Line, Rect, Text as SvgText, Polygon, Circle } from 'react-native-svg';
+import Svg, { Rect, Circle, Text as SvgText } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArchText } from '../common/ArchText';
 import { OvalButton } from '../common/OvalButton';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useARCore, useARPlanes } from '../../hooks/useARCore';
 import type { DetectedPlane } from '../../native/ARCoreModule';
 import { useBlueprintStore } from '../../stores/blueprintStore';
@@ -24,7 +25,9 @@ import { buildBlueprintFromAR } from '../../utils/ar/arToBlueprintConverter';
 import { wallPlanesToWallPairs, arPlaneToBlueprintRoom } from '../../utils/ar/arToBlueprintConverter';
 import { convertPointsToWalls } from '../../utils/ar/scanConverter';
 import { ARResultScreen } from './ARResultScreen';
+import { ARScanRing } from './ARScanRing';
 import { ARInstructionBubble } from './ARInstructionBubble';
+import { calculateScanQuality } from './scanQuality';
 
 export function ARDepthScanMode() {
   return (
@@ -34,78 +37,70 @@ export function ARDepthScanMode() {
   );
 }
 
+type ScanStage = 'idle' | 'scanning';
+
 function ARDepthScanContent() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { startSession, stopSession, state } = useARCore();
   const { wallPlanes, floorPlanes, refresh } = useARPlanes();
 
-  const [isScanning, setIsScanning] = useState(false);
-  const [capturedPlanes, setCapturedPlanes] = useState<DetectedPlane[]>([]);
+  const [stage, setStage] = useState<ScanStage>('idle');
+  const [capturedWalls, setCapturedWalls] = useState<DetectedPlane[]>([]);
   const [showResult, setShowResult] = useState(false);
-  const [scanResult, setScanResult] = useState<any>(null);
+  const [resultData, setResultData] = useState<{
+    blueprint: any;
+    roomDimensions: { width: number; length: number };
+    roomLabel: string;
+    wallCount: number;
+    detectedObjects: Array<{ label: string; width: number; length: number }>;
+  } | null>(null);
 
   // Start AR session
   useEffect(() => {
-    const initSession = async () => {
+    const init = async () => {
       await startSession();
     };
-    initSession();
-
+    init();
     return () => {
       stopSession();
     };
   }, [startSession, stopSession]);
 
-  // Auto-refresh planes while scanning
+  // Refresh planes while scanning + update prompt every 500ms
   useEffect(() => {
-    if (!isScanning) return;
-
-    const interval = setInterval(() => {
-      refresh();
-    }, 500);
-
+    if (stage !== 'scanning') return;
+    const interval = setInterval(refresh, 500);
     return () => clearInterval(interval);
-  }, [isScanning, refresh]);
+  }, [stage, refresh]);
+
+  const quality = calculateScanQuality(capturedWalls.length);
+  const canComplete = capturedWalls.length >= 3;
 
   const handleStartScan = useCallback(() => {
-    setIsScanning(true);
-    setCapturedPlanes([]);
+    setCapturedWalls([]);
+    setStage('scanning');
   }, []);
 
-  const handleCapture = useCallback(() => {
-    // Merge current wall planes with captured ones
-    setCapturedPlanes((prev) => {
-      const newPlanes = [...prev];
-      wallPlanes.forEach((plane) => {
-        if (!newPlanes.some((p) => p.id === plane.id)) {
-          newPlanes.push(plane);
-        }
-      });
-      return newPlanes;
+  const handleCapture = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setCapturedWalls((prev) => {
+      const newWalls = wallPlanes.filter((p) => !prev.some((c) => c.id === p.id));
+      return [...prev, ...newWalls];
     });
   }, [wallPlanes]);
 
   const handleComplete = useCallback(async () => {
-    setIsScanning(false);
+    if (capturedWalls.length < 2) return;
+    setStage('idle');
 
-    if (capturedPlanes.length < 2) {
-      // Not enough planes captured
-      return;
-    }
-
-    // Convert planes to walls
-    const wallPairs = wallPlanesToWallPairs(capturedPlanes);
+    const wallPairs = wallPlanesToWallPairs(capturedWalls);
     const walls = convertPointsToWalls(wallPairs);
-
-    // Get floor plane for room dimensions
     const floorPlane = floorPlanes[0];
     let room;
-
     if (floorPlane) {
       room = arPlaneToBlueprintRoom(floorPlane, walls.map((w) => w.id));
     } else {
-      // Estimate from walls
       room = {
         id: `room-${Date.now()}`,
         name: 'Scanned Room',
@@ -114,225 +109,264 @@ function ARDepthScanContent() {
         floorMaterial: 'hardwood' as const,
         ceilingHeight: 2.4,
         ceilingType: 'flat_white' as const,
-        area: Math.round(
-          capturedPlanes.reduce((sum, p) => sum + p.extentX * p.extentZ, 0) * 100
-        ) / 100,
+        area:
+          Math.round(
+            capturedWalls.reduce((sum, p) => sum + p.extentX * p.extentZ, 0) * 100,
+          ) / 100,
         centroid: { x: 0, y: 0 },
       };
     }
 
     const blueprint = buildBlueprintFromAR(walls, [room], []);
-
-    // Calculate dimensions
     const xs = walls.flatMap((w) => [w.start.x, w.end.x]);
     const ys = walls.flatMap((w) => [w.start.y, w.end.y]);
     const width = Math.max(...xs) - Math.min(...xs);
     const height = Math.max(...ys) - Math.min(...ys);
-    const area = width * height;
 
-    setScanResult({
+    setResultData({
       blueprint,
-      dimensions: { width, height, area },
-      roomType: room.type,
-      pointCount: walls.length,
+      roomDimensions: { width, length: height },
+      roomLabel: room.name,
+      wallCount: capturedWalls.length,
+      detectedObjects: [],
     });
-
     setShowResult(true);
-  }, [capturedPlanes, floorPlanes]);
+  }, [capturedWalls, floorPlanes]);
 
   const handleReset = useCallback(() => {
-    setCapturedPlanes([]);
+    setCapturedWalls([]);
     setShowResult(false);
-    setScanResult(null);
-    setIsScanning(false);
+    setResultData(null);
+    setStage('idle');
   }, []);
 
   const handleOpenInStudio = useCallback(() => {
-    if (scanResult?.blueprint) {
-      useBlueprintStore.getState().actions.loadBlueprint(scanResult.blueprint);
+    if (resultData?.blueprint) {
+      useBlueprintStore.getState().actions.loadBlueprint(resultData.blueprint);
       navigation.navigate('Workspace', { fromAR: true });
     }
-  }, [scanResult, navigation]);
+  }, [resultData, navigation]);
 
-  if (showResult && scanResult) {
+  // Result screen
+  if (showResult && resultData) {
     return (
       <ARResultScreen
-        result={scanResult}
-        onOpenInStudio={handleOpenInStudio}
+        visible={true}
+        isProcessing={false}
+        wallCount={resultData.wallCount}
+        roomDimensions={resultData.roomDimensions}
+        roomLabel={resultData.roomLabel}
+        detectedObjects={resultData.detectedObjects}
+        onImportToStudio={handleOpenInStudio}
+        onSaveScan={() => {}}
         onScanAgain={handleReset}
-        onBack={() => navigation.goBack()}
       />
     );
   }
 
+  const isScanning = stage === 'scanning';
+
   return (
     <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-      {/* Instructions */}
+      {/* Dynamic instruction bubble */}
       <ARInstructionBubble
-        instruction={
-          isScanning
-            ? `Detected ${capturedPlanes.length} walls`
-            : 'Auto-detect walls as you walk around'
-        }
-        hint={
-          isScanning
-            ? 'Tap Capture to save detected walls'
-            : 'Requires Depth API capable device'
-        }
-        step={isScanning ? `Walls: ${capturedPlanes.length}` : undefined}
+        prompt={isScanning ? quality.prompt : 'Walk around the room to map walls'}
+        wallCount={capturedWalls.length}
+        totalWalls={4}
+        qualityPercent={isScanning ? quality.qualityPercent : 0}
+        step={isScanning ? `Step ${capturedWalls.length} of 4` : undefined}
+        position="top"
       />
 
-      {/* Session status */}
+      {/* Session warning */}
       {!state.isSessionActive && (
         <View
           style={{
             position: 'absolute',
-            top: insets.top + 120,
+            top: insets.top + 130,
             left: 24,
             right: 24,
-            backgroundColor: 'rgba(34,34,34,0.9)',
-            borderRadius: DS.radius.card,
-            padding: 16,
+            backgroundColor: `${DS.colors.warning}15`,
+            borderRadius: 12,
+            padding: 12,
             borderWidth: 1,
-            borderColor: DS.colors.warning,
+            borderColor: `${DS.colors.warning}40`,
           }}
         >
           <ArchText
             variant="body"
             style={{
-              fontFamily: DS.font.medium,
-              fontSize: 14,
+              fontFamily: 'Inter_500Medium',
+              fontSize: 12,
               color: DS.colors.warning,
               textAlign: 'center',
             }}
           >
-            {state.error || 'Starting depth-enabled AR session...'}
+            {state.error || 'Starting depth session...'}
           </ArchText>
         </View>
       )}
 
-      {/* Plane visualization */}
+      {/* Live mini-map */}
+      <ScanningMiniMap
+        walls={capturedWalls}
+        wallCount={capturedWalls.length}
+        qualityPercent={quality.qualityPercent}
+      />
+
+      {/* Plane overlay */}
       <View style={{ flex: 1, pointerEvents: 'none' }}>
-        <PlaneOverlay planes={wallPlanes} captured={capturedPlanes} />
+        {wallPlanes.map((plane) => {
+          const isCaptured = capturedWalls.some((p) => p.id === plane.id);
+          return (
+            <View
+              key={plane.id}
+              style={{
+                position: 'absolute',
+                left: 80 + plane.centerX * 60,
+                top: 200 + plane.centerZ * 60,
+                width: Math.max(plane.extentX * 60, 8),
+                height: Math.max(plane.extentZ * 60, 8),
+                borderWidth: 2,
+                borderColor: isCaptured ? DS.colors.success : DS.colors.primary,
+                backgroundColor: isCaptured
+                  ? `${DS.colors.success}20`
+                  : `${DS.colors.primary}10`,
+                borderRadius: 4,
+              }}
+            />
+          );
+        })}
       </View>
 
-      {/* Mini map */}
-      <PlaneMiniMap planes={capturedPlanes} />
-
-      {/* Action buttons */}
+      {/* Bottom controls */}
       <View
         style={{
           position: 'absolute',
-          bottom: insets.bottom + 24,
-          left: 20,
-          right: 20,
-          gap: 10,
+          bottom: insets.bottom + 32,
+          left: 0,
+          right: 0,
+          alignItems: 'center',
+          gap: 16,
         }}
       >
+        <ARScanRing
+          isScanning={isScanning}
+          onCapture={handleCapture}
+          canCapture={isScanning && wallPlanes.length > 0}
+        />
         {!isScanning ? (
-          <OvalButton label="Start Scan" onPress={handleStartScan} variant="filled" fullWidth />
+          <OvalButton label="Start Scan" onPress={handleStartScan} variant="filled" />
         ) : (
-          <>
-            <OvalButton label="Capture Wall" onPress={handleCapture} variant="filled" fullWidth />
-            {capturedPlanes.length >= 2 && (
-              <OvalButton label="Complete Room" onPress={handleComplete} variant="success" fullWidth />
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <Pressable
+              onPress={() => setStage('idle')}
+              style={{ paddingHorizontal: 16, paddingVertical: 8, minWidth: 44, minHeight: 44, justifyContent: 'center' }}
+            >
+              <ArchText
+                variant="body"
+                style={{
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 13,
+                  color: DS.colors.primaryGhost,
+                }}
+              >
+                Stop
+              </ArchText>
+            </Pressable>
+            {canComplete && (
+              <OvalButton label="Complete Room" onPress={handleComplete} variant="success" />
             )}
-            <OvalButton label="Stop Scan" onPress={() => setIsScanning(false)} variant="ghost" fullWidth />
-          </>
+          </View>
         )}
       </View>
 
       {/* Back button */}
-      <View style={{ position: 'absolute', top: insets.top + 16, left: 20 }}>
+      <View style={{ position: 'absolute', top: insets.top + 70, left: 20 }}>
         <OvalButton label="← Back" onPress={() => navigation.goBack()} variant="outline" size="small" />
       </View>
     </View>
   );
 }
 
-
-interface PlaneOverlayProps {
-  planes: DetectedPlane[];
-  captured: DetectedPlane[];
+interface ScanningMiniMapProps {
+  walls: DetectedPlane[];
+  wallCount: number;
+  qualityPercent: number;
 }
 
-function PlaneOverlay({ planes, captured }: PlaneOverlayProps) {
-  return (
-    <View style={{ flex: 1, pointerEvents: 'none' }}>
-      {planes.map((plane) => {
-        const isCaptured = captured.some((p) => p.id === plane.id);
-
-        // Convert 3D plane to 2D visualization
-        // This is a simplified visualization - in production, use proper projection
-        const screenX = 100 + plane.centerX * 50;
-        const screenY = 200 + plane.centerZ * 50;
-        const width = plane.extentX * 50;
-        const height = plane.extentZ * 50;
-
-        return (
-          <View
-            key={plane.id}
-            style={{
-              position: 'absolute',
-              left: screenX - width / 2,
-              top: screenY - height / 2,
-              width,
-              height,
-              borderWidth: 2,
-              borderColor: isCaptured ? DS.colors.success : DS.colors.primary,
-              backgroundColor: isCaptured
-                ? `${DS.colors.success}20`
-                : `${DS.colors.primary}15`,
-            }}
-          >
-            <ArchText
-              variant="body"
-              style={{
-                fontFamily: DS.font.mono,
-                fontSize: 9,
-                color: isCaptured ? DS.colors.success : DS.colors.primary,
-                textAlign: 'center',
-              }}
-            >
-              {isCaptured ? '✓ ' : ''}
-              {plane.type}
-            </ArchText>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-
-interface PlaneMiniMapProps {
-  planes: DetectedPlane[];
-}
-
-function PlaneMiniMap({ planes }: PlaneMiniMapProps) {
+function ScanningMiniMap({ walls, wallCount, qualityPercent }: ScanningMiniMapProps) {
   const insets = useSafeAreaInsets();
-  if (planes.length === 0) return null;
-
   const SIZE = 88;
-  const PAD = 8;
-  const inner = SIZE - PAD * 2;
+  const PAD = 10;
 
-  // Find bounds
-  const xs = planes.map((p) => p.centerX);
-  const zs = planes.map((p) => p.centerZ);
+  if (walls.length === 0) {
+    return (
+      <View
+        style={{
+          position: 'absolute',
+          top: insets.top + 80,
+          right: 16,
+          width: SIZE + 8,
+          height: SIZE + 8,
+          backgroundColor: 'rgba(26,26,26,0.94)',
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: DS.colors.border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Svg width={SIZE} height={SIZE}>
+          <Rect
+            x={PAD}
+            y={PAD}
+            width={SIZE - PAD * 2}
+            height={SIZE - PAD * 2}
+            stroke={DS.colors.border}
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="3 3"
+          />
+        </Svg>
+        <ArchText
+          variant="body"
+          style={{
+            position: 'absolute',
+            bottom: 4,
+            fontFamily: 'JetBrainsMono_400Regular',
+            fontSize: 8,
+            color: DS.colors.primaryGhost,
+          }}
+        >
+          0/4 walls
+        </ArchText>
+      </View>
+    );
+  }
+
+  const xs = walls.map((p) => p.centerX);
+  const zs = walls.map((p) => p.centerZ);
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
   const minZ = Math.min(...zs);
   const maxZ = Math.max(...zs);
   const rangeX = maxX - minX || 1;
   const rangeZ = maxZ - minZ || 1;
-  const scale = (inner - PAD) / Math.max(rangeX, rangeZ);
+  const scale = Math.min(
+    (SIZE - PAD * 2) / rangeX,
+    (SIZE - PAD * 2) / rangeZ,
+  );
 
-  const normalize = (p: DetectedPlane) => ({
-    x: PAD + (p.centerX - minX) * scale + (inner - rangeX * scale) / 2,
-    y: PAD + (p.centerZ - minZ) * scale + (inner - rangeZ * scale) / 2,
-    width: Math.max(p.extentX * scale, 4),
-    height: Math.max(p.extentZ * scale, 4),
+  const toSvg = (x: number, z: number) => ({
+    x:
+      PAD +
+      (x - minX) * scale +
+      (SIZE - PAD * 2 - rangeX * scale) / 2,
+    y:
+      PAD +
+      (z - minZ) * scale +
+      (SIZE - PAD * 2 - rangeZ * scale) / 2,
   });
 
   return (
@@ -343,7 +377,7 @@ function PlaneMiniMap({ planes }: PlaneMiniMapProps) {
         right: 16,
         width: SIZE + 8,
         height: SIZE + 8,
-        backgroundColor: 'rgba(26,26,26,0.92)',
+        backgroundColor: 'rgba(26,26,26,0.94)',
         borderRadius: 16,
         borderWidth: 1,
         borderColor: DS.colors.border,
@@ -352,35 +386,55 @@ function PlaneMiniMap({ planes }: PlaneMiniMapProps) {
       }}
     >
       <Svg width={SIZE} height={SIZE}>
-        {planes.map((plane) => {
-          const pos = normalize(plane);
+        <Rect
+          x={PAD}
+          y={PAD}
+          width={SIZE - PAD * 2}
+          height={SIZE - PAD * 2}
+          stroke={DS.colors.border}
+          strokeWidth="0.8"
+          fill={`${DS.colors.primary}06`}
+        />
+        {walls.map((plane, i) => {
+          const center = toSvg(plane.centerX, plane.centerZ);
+          const hw = Math.max(plane.extentX * scale, 4);
+          const hd = Math.max(plane.extentZ * scale, 4);
           return (
             <Rect
-              key={plane.id}
-              x={pos.x - pos.width / 2}
-              y={pos.y - pos.height / 2}
-              width={pos.width}
-              height={pos.height}
-              fill={`${DS.colors.primary}20`}
-              stroke={DS.colors.primary}
-              strokeWidth="1"
+              key={i}
+              x={center.x - hw / 2}
+              y={center.y - hd / 2}
+              width={hw}
+              height={hd}
+              stroke={DS.colors.success}
+              strokeWidth="2"
+              fill={`${DS.colors.success}20`}
             />
           );
         })}
-        {/* Center point */}
-        <Circle cx={SIZE / 2} cy={SIZE / 2} r={3} fill={DS.colors.success} />
+        <SvgText
+          x={SIZE / 2}
+          y={PAD - 1}
+          textAnchor="middle"
+          fontSize="8"
+          fill={DS.colors.primaryGhost}
+          fontFamily="JetBrainsMono_400Regular"
+        >
+          N
+        </SvgText>
+        <Circle cx={SIZE / 2} cy={SIZE / 2} r={2} fill={DS.colors.success} />
       </Svg>
       <ArchText
         variant="body"
         style={{
           position: 'absolute',
           bottom: 4,
-          fontFamily: DS.font.mono,
+          fontFamily: 'JetBrainsMono_400Regular',
           fontSize: 8,
           color: DS.colors.primaryGhost,
         }}
       >
-        {planes.length} planes
+        {wallCount}/4 walls
       </ArchText>
     </View>
   );

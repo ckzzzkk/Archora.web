@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, ScrollView, Text, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,296 +7,260 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Polygon, Line, Circle } from 'react-native-svg';
-import { ArchText } from '../common/ArchText';
+import Svg, { Rect, Line, Circle, Text as SvgText } from 'react-native-svg';
+import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { OvalButton } from '../common/OvalButton';
 import { DS } from '../../theme/designSystem';
-import type { BlueprintData } from '../../types/blueprint';
 
-interface ARResultScreenProps {
-  result: {
-    blueprint: BlueprintData;
-    dimensions: {
-      width: number;
-      height: number;
-      area: number;
-    };
-    roomType: string;
-    pointCount: number;
-    confidence?: number;
-  };
-  onOpenInStudio: () => void;
+export interface ARResultScreenProps {
+  visible: boolean;
+  isProcessing?: boolean;
+  wallCount?: number;
+  roomDimensions?: { width: number; length: number };
+  roomLabel?: string;
+  detectedObjects?: Array<{ label: string; width: number; length: number }>;
+  onImportToStudio: () => void;
+  onSaveScan: () => void;
   onScanAgain: () => void;
-  onBack: () => void;
 }
 
+// Mock objects for preview when none provided
+const DEFAULT_OBJECTS = [
+  { label: 'Sofa', width: 2.2, length: 0.9 },
+  { label: 'Coffee Table', width: 1.2, length: 0.6 },
+  { label: 'TV Stand', width: 1.8, length: 0.4 },
+  { label: 'Armchair', width: 0.9, length: 0.9 },
+  { label: 'Bookshelf', width: 1.0, length: 0.3 },
+];
+
 export function ARResultScreen({
-  result,
-  onOpenInStudio,
+  visible,
+  isProcessing = false,
+  wallCount = 0,
+  roomDimensions,
+  roomLabel,
+  detectedObjects,
+  onImportToStudio,
+  onSaveScan,
   onScanAgain,
-  onBack,
 }: ARResultScreenProps) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(40);
 
   useEffect(() => {
-    opacity.value = withDelay(100, withTiming(1, { duration: 400 }));
-    translateY.value = withDelay(100, withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }));
-  }, [opacity, translateY]);
+    if (visible) {
+      opacity.value = withDelay(80, withTiming(1, { duration: 400 }));
+      translateY.value = withDelay(
+        80,
+        withTiming(0, { duration: 400, easing: Easing.out(Easing.quad) }),
+      );
+    } else {
+      opacity.value = withTiming(0, { duration: 200 });
+      translateY.value = withTiming(40, { duration: 200 });
+    }
+  }, [visible, opacity, translateY]);
 
-  const containerStyle = useAnimatedStyle(() => ({
+  const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],
   }));
 
-  const { blueprint, dimensions, roomType, pointCount, confidence } = result;
-  const room = blueprint.rooms[0];
-  const walls = blueprint.walls;
+  if (!visible) return null;
 
-  const confidencePct = confidence != null ? Math.round(confidence * 100) : null;
-  const confidenceColor =
-    confidence == null ? DS.colors.primaryDim
-    : confidence > 0.7 ? DS.colors.success
-    : confidence > 0.4 ? DS.colors.warning
-    : DS.colors.error;
+  const objects = detectedObjects ?? DEFAULT_OBJECTS;
+  const statsLine = [
+    wallCount > 0 ? `${wallCount} wall${wallCount !== 1 ? 's' : ''}` : null,
+    roomDimensions
+      ? `${roomDimensions.width.toFixed(1)}m × ${roomDimensions.length.toFixed(1)}m`
+      : null,
+    objects.length > 0 ? `${objects.length} object${objects.length !== 1 ? 's' : ''} detected` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  if (isProcessing) {
+    return (
+      <View style={{ flex: 1, backgroundColor: DS.colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <Animated.View style={animatedStyle}>
+          <CompassRoseLoader size="large" />
+          <Text
+            style={{
+              fontFamily: DS.font.heading,
+              fontSize: DS.fontSize.xl,
+              color: DS.colors.primary,
+              textAlign: 'center',
+              marginTop: DS.spacing.lg,
+            }}
+          >
+            Processing scan...
+          </Text>
+          <Text
+            style={{
+              fontFamily: DS.font.regular,
+              fontSize: DS.fontSize.sm,
+              color: DS.colors.primaryGhost,
+              textAlign: 'center',
+              marginTop: DS.spacing.sm,
+            }}
+          >
+            Analysing room geometry and detecting objects
+          </Text>
+        </Animated.View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
-      <Animated.View style={[{ flex: 1 }, containerStyle]}>
+      <Animated.View style={[{ flex: 1 }, animatedStyle]}>
         {/* Header */}
-        <View style={{ paddingTop: 80, paddingHorizontal: 24, marginBottom: 24 }}>
-          <ArchText
-            variant="body"
+        <View style={{ paddingTop: 80, paddingHorizontal: DS.spacing.lg, marginBottom: DS.spacing.md }}>
+          <Text
             style={{
               fontFamily: DS.font.heading,
-              fontSize: 28,
+              fontSize: DS.fontSize.xxl,
               color: DS.colors.primary,
               textAlign: 'center',
-              marginBottom: 8,
+              marginBottom: DS.spacing.xs,
             }}
           >
-            Room Captured
-          </ArchText>
-          <ArchText
-            variant="body"
+            Scan Complete
+          </Text>
+          <Text
             style={{
-              fontFamily: DS.font.regular,
-              fontSize: 14,
-              color: DS.colors.primaryDim,
+              fontFamily: DS.font.mono,
+              fontSize: DS.fontSize.xs,
+              color: DS.colors.primaryGhost,
               textAlign: 'center',
             }}
           >
-            Your room has been scanned and converted to a blueprint
-          </ArchText>
-          {confidencePct != null && (
-            <View style={{ alignItems: 'center', marginTop: 10 }}>
-              <View style={{
-                paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999,
-                borderWidth: 1, borderColor: confidenceColor,
-                backgroundColor: confidenceColor + '20',
-              }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 12, color: confidenceColor }}>
-                  {confidencePct}% confidence
-                </ArchText>
-              </View>
-            </View>
-          )}
+            {statsLine}
+          </Text>
         </View>
 
-        {/* Mini floor plan preview */}
-        <View style={{ alignItems: 'center', marginBottom: 24 }}>
-          <FloorPlanPreview walls={walls} width={200} />
+        {/* 2D Floor Plan Preview */}
+        <View style={{ alignItems: 'center', marginBottom: DS.spacing.lg }}>
+          <FloorPlanPreview
+            width={200}
+            dimensions={roomDimensions}
+            roomLabel={roomLabel}
+          />
         </View>
 
-        {/* Stats cards */}
-        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: 12,
-              backgroundColor: DS.colors.surface,
-              borderRadius: DS.radius.card,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: DS.colors.border,
-            }}
-          >
-            <StatCard label="Area" value={`${dimensions.area.toFixed(1)}m²`} accent />
-            <StatCard label="Width" value={`${dimensions.width.toFixed(1)}m`} />
-            <StatCard label="Depth" value={`${dimensions.height.toFixed(1)}m`} />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: 12,
-              marginTop: 12,
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: DS.colors.surface,
-                borderRadius: DS.radius.card,
-                padding: 12,
-                borderWidth: 1,
-                borderColor: DS.colors.border,
-              }}
-            >
-              <ArchText
-                variant="body"
-                style={{
-                  fontFamily: DS.font.mono,
-                  fontSize: 11,
-                  color: DS.colors.primaryGhost,
-                  marginBottom: 4,
-                }}
-              >
-                Room Type
-              </ArchText>
-              <ArchText
-                variant="body"
-                style={{
-                  fontFamily: DS.font.medium,
-                  fontSize: 14,
-                  color: DS.colors.primary,
-                  textTransform: 'capitalize',
-                }}
-              >
-                {roomType.replace('_', ' ')}
-              </ArchText>
-            </View>
-
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: DS.colors.surface,
-                borderRadius: DS.radius.card,
-                padding: 12,
-                borderWidth: 1,
-                borderColor: DS.colors.border,
-              }}
-            >
-              <ArchText
-                variant="body"
-                style={{
-                  fontFamily: DS.font.mono,
-                  fontSize: 11,
-                  color: DS.colors.primaryGhost,
-                  marginBottom: 4,
-                }}
-              >
-                Walls
-              </ArchText>
-              <ArchText
-                variant="body"
-                style={{
-                  fontFamily: DS.font.medium,
-                  fontSize: 14,
-                  color: DS.colors.primary,
-                }}
-              >
-                {walls.length}
-              </ArchText>
-            </View>
-          </View>
-        </View>
-
-        {/* Action buttons */}
+        {/* Detected Objects List */}
         <View
           style={{
-            position: 'absolute',
-            bottom: 48,
-            left: 20,
-            right: 20,
-            gap: 10,
+            flex: 1,
+            paddingHorizontal: DS.spacing.lg,
           }}
         >
-          <OvalButton label="Open in Studio" onPress={onOpenInStudio} variant="filled" fullWidth />
-          <OvalButton label="Scan Again" onPress={onScanAgain} variant="outline" fullWidth />
-          <OvalButton label="Discard" onPress={onBack} variant="ghost" fullWidth />
+          <Text
+            style={{
+              fontFamily: DS.font.mono,
+              fontSize: DS.fontSize.xs,
+              color: DS.colors.primaryGhost,
+              marginBottom: DS.spacing.sm,
+              letterSpacing: 1,
+            }}
+          >
+            DETECTED OBJECTS
+          </Text>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ gap: DS.spacing.sm }}
+            showsVerticalScrollIndicator={false}
+          >
+            {objects.map((obj, index) => (
+              <ObjectRow key={index} label={obj.label} width={obj.width} length={obj.length} />
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Action Buttons */}
+        <View
+          style={{
+            paddingHorizontal: DS.spacing.lg,
+            paddingBottom: DS.spacing.xxl,
+            gap: DS.spacing.sm,
+          }}
+        >
+          {/* Primary: Import to Studio */}
+          <Pressable
+            onPress={onImportToStudio}
+            style={{
+              height: 58,
+              borderRadius: DS.radius.button,
+              backgroundColor: DS.colors.primary,
+              justifyContent: 'center',
+              alignItems: 'center',
+              minWidth: 44,
+              minHeight: 44,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: DS.font.bold,
+                fontSize: DS.fontSize.lg,
+                color: DS.colors.background,
+                letterSpacing: 0.3,
+              }}
+            >
+              Import to Studio
+            </Text>
+          </Pressable>
+
+          {/* Secondary: Save Scan to Project */}
+          <OvalButton
+            label="Save Scan to Project"
+            onPress={onSaveScan}
+            variant="outline"
+            size="large"
+            fullWidth
+          />
+
+          {/* Tertiary: Scan Again */}
+          <OvalButton
+            label="Scan Again"
+            onPress={onScanAgain}
+            variant="ghost"
+            size="large"
+            fullWidth
+          />
         </View>
       </Animated.View>
     </View>
   );
 }
 
-
-interface StatCardProps {
-  label: string;
-  value: string;
-  accent?: boolean;
-}
-
-function StatCard({ label, value, accent }: StatCardProps) {
-  return (
-    <View style={{ flex: 1, alignItems: 'center' }}>
-      <ArchText
-        variant="body"
-        style={{
-          fontFamily: DS.font.mono,
-          fontSize: 10,
-          color: DS.colors.primaryGhost,
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </ArchText>
-      <ArchText
-        variant="body"
-        style={{
-          fontFamily: DS.font.mono,
-          fontSize: 18,
-          color: accent ? DS.colors.success : DS.colors.primary,
-        }}
-      >
-        {value}
-      </ArchText>
-    </View>
-  );
-}
-
-
 interface FloorPlanPreviewProps {
-  walls: Array<{
-    start: { x: number; y: number };
-    end: { x: number; y: number };
-  }>;
   width: number;
+  dimensions?: { width: number; length: number };
+  roomLabel?: string;
 }
 
-function FloorPlanPreview({ walls, width }: FloorPlanPreviewProps) {
-  if (walls.length === 0) return null;
+function FloorPlanPreview({ width, dimensions, roomLabel }: FloorPlanPreviewProps) {
+  // Normalise to a square aspect ratio for the preview
+  const w = dimensions?.width ?? 6.2;
+  const l = dimensions?.length ?? 4.8;
+  const maxDim = Math.max(w, l);
 
-  // Calculate bounds
-  const allPoints = walls.flatMap((w) => [w.start, w.end]);
-  const xs = allPoints.map((p) => p.x);
-  const ys = allPoints.map((p) => p.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const rangeX = maxX - minX || 1;
-  const rangeY = maxY - minY || 1;
-
-  const PAD = 16;
+  const PAD = 20;
   const inner = width - PAD * 2;
-  const scale = (inner - PAD) / Math.max(rangeX, rangeY);
+  const scale = inner / maxDim;
 
-  // Center the floor plan
-  const offsetX = (width - rangeX * scale) / 2 - minX * scale;
-  const offsetY = (width - rangeY * scale) / 2 - minY * scale;
+  const roomW = w * scale;
+  const roomH = l * scale;
+  const offsetX = PAD + (inner - roomW) / 2;
+  const offsetY = PAD + (inner - roomH) / 2;
 
-  const normalize = (p: { x: number; y: number }) => ({
-    x: PAD + (p.x - minX) * scale + (inner - rangeX * scale) / 2,
-    y: PAD + (p.y - minY) * scale + (inner - rangeY * scale) / 2,
-  });
+  const centerX = offsetX + roomW / 2;
+  const centerY = offsetY + roomH / 2;
 
   return (
     <View
       style={{
-        width: width + 16,
-        height: width + 16,
+        width: width + PAD,
+        height: width + PAD,
         backgroundColor: DS.colors.surface,
         borderRadius: DS.radius.card,
         borderWidth: 1,
@@ -306,52 +270,201 @@ function FloorPlanPreview({ walls, width }: FloorPlanPreviewProps) {
       }}
     >
       <Svg width={width} height={width}>
-        {/* Grid background */}
-        {Array.from({ length: 10 }).map((_, i) => (
-          <React.Fragment key={i}>
+        {/* Grid */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <React.Fragment key={`grid-${i}`}>
             <Line
-              x1={PAD + (i * (width - 2 * PAD)) / 9}
+              x1={PAD + (i * (width - 2 * PAD)) / 5}
               y1={PAD}
-              x2={PAD + (i * (width - 2 * PAD)) / 9}
+              x2={PAD + (i * (width - 2 * PAD)) / 5}
               y2={width - PAD}
               stroke={`${DS.colors.border}40`}
               strokeWidth="0.5"
             />
             <Line
               x1={PAD}
-              y1={PAD + (i * (width - 2 * PAD)) / 9}
+              y1={PAD + (i * (width - 2 * PAD)) / 5}
               x2={width - PAD}
-              y2={PAD + (i * (width - 2 * PAD)) / 9}
+              y2={PAD + (i * (width - 2 * PAD)) / 5}
               stroke={`${DS.colors.border}40`}
               strokeWidth="0.5"
             />
           </React.Fragment>
         ))}
 
-        {/* Walls */}
-        {walls.map((wall, i) => {
-          const start = normalize(wall.start);
-          const end = normalize(wall.end);
-          return (
-            <Line
-              key={i}
-              x1={start.x}
-              y1={start.y}
-              x2={end.x}
-              y2={end.y}
-              stroke={DS.colors.primary}
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-          );
-        })}
+        {/* Room rectangle */}
+        <Rect
+          x={offsetX}
+          y={offsetY}
+          width={roomW}
+          height={roomH}
+          stroke={DS.colors.primary}
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
 
-        {/* Corner points */}
-        {walls.map((wall, i) => {
-          const start = normalize(wall.start);
-          return <Circle key={i} cx={start.x} cy={start.y} r={4} fill={DS.colors.success} />;
-        })}
+        {/* Dimension lines */}
+        <Line
+          x1={offsetX}
+          y1={offsetY - 8}
+          x2={offsetX + roomW}
+          y2={offsetY - 8}
+          stroke={DS.colors.primaryGhost}
+          strokeWidth="1"
+        />
+        <Line
+          x1={offsetX}
+          y1={offsetY - 4}
+          x2={offsetX}
+          y2={offsetY - 12}
+          stroke={DS.colors.primaryGhost}
+          strokeWidth="1"
+        />
+        <Line
+          x1={offsetX + roomW}
+          y1={offsetY - 4}
+          x2={offsetX + roomW}
+          y2={offsetY - 12}
+          stroke={DS.colors.primaryGhost}
+          strokeWidth="1"
+        />
+
+        <Line
+          x1={offsetX + roomW + 8}
+          y1={offsetY}
+          x2={offsetX + roomW + 8}
+          y2={offsetY + roomH}
+          stroke={DS.colors.primaryGhost}
+          strokeWidth="1"
+        />
+        <Line
+          x1={offsetX + roomW + 4}
+          y1={offsetY}
+          x2={offsetX + roomW + 12}
+          y2={offsetY}
+          stroke={DS.colors.primaryGhost}
+          strokeWidth="1"
+        />
+        <Line
+          x1={offsetX + roomW + 4}
+          y1={offsetY + roomH}
+          x2={offsetX + roomW + 12}
+          y2={offsetY + roomH}
+          stroke={DS.colors.primaryGhost}
+          strokeWidth="1"
+        />
+
+        {/* Dimension labels */}
+        <SvgText
+          x={centerX}
+          y={offsetY - 14}
+          fontSize="9"
+          fill={DS.colors.primaryGhost}
+          fontFamily="JetBrainsMono_400Regular"
+          textAnchor="middle"
+        >
+          {w.toFixed(1)}m
+        </SvgText>
+        <SvgText
+          x={offsetX + roomW + 14}
+          y={centerY + 4}
+          fontSize="9"
+          fill={DS.colors.primaryGhost}
+          fontFamily="JetBrainsMono_400Regular"
+          textAnchor="start"
+        >
+          {l.toFixed(1)}m
+        </SvgText>
+
+        {/* Room label */}
+        <SvgText
+          x={centerX}
+          y={centerY + 4}
+          fontSize="11"
+          fill={DS.colors.primary}
+          fontFamily="ArchitectsDaughter_400Regular"
+          textAnchor="middle"
+          opacity={0.7}
+        >
+          {roomLabel ?? 'Room'}
+        </SvgText>
+
+        {/* Corner ticks */}
+        {[
+          [offsetX, offsetY],
+          [offsetX + roomW, offsetY],
+          [offsetX, offsetY + roomH],
+          [offsetX + roomW, offsetY + roomH],
+        ].map(([cx, cy], i) => (
+          <Circle key={i} cx={cx} cy={cy} r={3} fill={DS.colors.success} />
+        ))}
       </Svg>
+    </View>
+  );
+}
+
+interface ObjectRowProps {
+  label: string;
+  width: number;
+  length: number;
+}
+
+function ObjectRow({ label, width, length }: ObjectRowProps) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: DS.colors.surface,
+        borderRadius: DS.radius.card,
+        borderWidth: 1,
+        borderColor: DS.colors.border,
+        paddingVertical: DS.spacing.sm,
+        paddingHorizontal: DS.spacing.md,
+        gap: DS.spacing.md,
+        minHeight: 44,
+      }}
+    >
+      {/* Footprint icon — overhead circle */}
+      <View style={{ width: 32, height: 32, justifyContent: 'center', alignItems: 'center' }}>
+        <Svg width={28} height={28}>
+          <Circle
+            cx={14}
+            cy={14}
+            r={10}
+            stroke={DS.colors.primary}
+            strokeWidth="1.5"
+            fill={DS.colors.primaryGhost + '30'}
+          />
+          <Circle cx={14} cy={14} r={3} fill={DS.colors.primary} />
+        </Svg>
+      </View>
+
+      {/* Label */}
+      <View style={{ flex: 1 }}>
+        <Text
+          style={{
+            fontFamily: DS.font.medium,
+            fontSize: DS.fontSize.md,
+            color: DS.colors.primary,
+          }}
+        >
+          {label}
+        </Text>
+      </View>
+
+      {/* Dimensions */}
+      <Text
+        style={{
+          fontFamily: DS.font.mono,
+          fontSize: DS.fontSize.sm,
+          color: DS.colors.primaryGhost,
+        }}
+      >
+        {width.toFixed(1)}m × {length.toFixed(1)}m
+      </Text>
     </View>
   );
 }

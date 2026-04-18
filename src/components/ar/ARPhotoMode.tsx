@@ -163,10 +163,15 @@ function ARPhotoModeContent() {
   if (showResult && scanResult) {
     return (
       <ARResultScreen
-        result={scanResult}
-        onOpenInStudio={handleOpenInStudio}
+        visible={true}
+        isProcessing={false}
+        wallCount={scanResult.pointCount ?? 0}
+        roomDimensions={scanResult.dimensions ? { width: scanResult.dimensions.width, length: scanResult.dimensions.height } : undefined}
+        roomLabel={scanResult.roomType ?? 'Room'}
+        detectedObjects={[]}
+        onImportToStudio={handleOpenInStudio}
+        onSaveScan={() => {}}
         onScanAgain={handleReset}
-        onBack={() => navigation.goBack()}
       />
     );
   }
