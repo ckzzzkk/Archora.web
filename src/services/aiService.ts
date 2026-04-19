@@ -345,31 +345,61 @@ export const aiService = {
   }> {
     const headers = await getAuthHeader();
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-architect-chat`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        tier: params.tier,
-        architectId: params.architectId,
-        conversationHistory: params.conversationHistory,
-        currentPayload: params.currentPayload,
-        sessionId: params.sessionId,
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55_000);
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ error: 'Consultation failed' })) as { error: string };
-      throw Object.assign(new Error(err.error ?? 'Consultation failed'), { status: response.status });
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-architect-chat`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          tier: params.tier,
+          architectId: params.architectId,
+          conversationHistory: params.conversationHistory,
+          currentPayload: params.currentPayload,
+          sessionId: params.sessionId,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (response.status === 503) {
+        const body = await response.json() as { error?: string };
+        if (body.error === 'AI_NOT_CONFIGURED') {
+          throw Object.assign(new Error('AI features coming soon'), {
+            code: 'AI_NOT_CONFIGURED',
+            status: 503,
+          });
+        }
+      }
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: 'Consultation failed' })) as { error: string };
+        throw Object.assign(new Error(err.error ?? 'Consultation failed'), { status: response.status });
+      }
+
+      return response.json() as Promise<{
+        message: string;
+        suggestedReplies: string[];
+        updatedPayload: Partial<GenerationPayload>;
+        isComplete: boolean;
+        nextCategory: QuestionCategory;
+        sessionId: string;
+      }>;
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        const e = new Error('Request timed out') as Error & { code: string };
+        e.code = 'TIMEOUT';
+        throw e;
+      }
+      if (err instanceof TypeError && (err.message.includes('Network request failed') || err.message.includes('Failed to fetch'))) {
+        const e = new Error('Network error') as Error & { code: string };
+        e.code = 'NETWORK_ERROR';
+        throw e;
+      }
+      throw err;
     }
-
-    return response.json() as Promise<{
-      message: string;
-      suggestedReplies: string[];
-      updatedPayload: Partial<GenerationPayload>;
-      isComplete: boolean;
-      nextCategory: QuestionCategory;
-      sessionId: string;
-    }>;
   },
 };
 
