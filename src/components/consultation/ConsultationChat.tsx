@@ -5,8 +5,10 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  TextInput,
 } from 'react-native';
 import { randomUUID } from 'expo-crypto';
+import { Audio } from 'expo-av';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -14,6 +16,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 import { DS } from '../../theme/designSystem';
 import { aiService } from '../../services/aiService';
 import { ArchText } from '../common/ArchText';
@@ -408,6 +411,10 @@ export function ConsultationChat({
   const [suggestedReplies, setSuggestedReplies] = useState<string[]>([]);
   const [currentSummary, setCurrentSummary] = useState<ConsultationSummary | null>(null);
   const [updatedPayload, setUpdatedPayload] = useState<Partial<GenerationPayload>>({});
+  const [inputText, setInputText] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const recordingRef = useRef<Audio.Recording | null>(null);
 
   // Tracks the previous category to detect transitions
   const prevCategoryRef = useRef<QuestionCategory>('qualification');
@@ -509,6 +516,45 @@ export function ConsultationChat({
     }
   }, [currentSummary, updatedPayload, onComplete]);
 
+  // Voice recording
+  const startRecording = useCallback(async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') return;
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      recordingRef.current = recording;
+      setIsRecording(true);
+    } catch {
+      // silently fail
+    }
+  }, []);
+
+  const stopRecording = useCallback(async () => {
+    if (!recordingRef.current) return;
+    setIsRecording(false);
+    setIsTranscribing(true);
+    try {
+      await recordingRef.current.stopAndUnloadAsync();
+      const uri = recordingRef.current.getURI();
+      recordingRef.current = null;
+      if (!uri) return;
+      const text = await aiService.transcribeAudio(uri);
+      if (text) {
+        setInputText((prev) => (prev ? `${prev}\n${text}` : text).slice(0, 500));
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setIsTranscribing(false);
+    }
+  }, []);
+
+  const toggleRecording = useCallback(() => {
+    if (isRecording) void stopRecording();
+    else void startRecording();
+  }, [isRecording, startRecording, stopRecording]);
+
   // Build rendered messages with phase dividers
   const renderedItems: React.ReactNode[] = [];
   messages.forEach((msg, i) => {
@@ -605,6 +651,99 @@ export function ConsultationChat({
           <SummaryCard summary={currentSummary} onContinue={handleContinue} />
         )}
       </ScrollView>
+
+      {/* Input area */}
+      {!isComplete && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: DS.spacing.md,
+            paddingVertical: DS.spacing.sm,
+            borderTopWidth: 1,
+            borderTopColor: DS.colors.border,
+            backgroundColor: DS.colors.background,
+            gap: DS.spacing.sm,
+          }}
+        >
+          <TextInput
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Type your reply..."
+            placeholderTextColor={DS.colors.primaryGhost}
+            multiline
+            style={{
+              flex: 1,
+              backgroundColor: DS.colors.surfaceHigh,
+              borderRadius: DS.radius.input,
+              paddingHorizontal: DS.spacing.md,
+              paddingVertical: DS.spacing.sm,
+              fontFamily: 'Inter_400Regular',
+              fontSize: DS.fontSize.sm,
+              color: DS.colors.primary,
+              maxHeight: 80,
+              borderWidth: 1,
+              borderColor: DS.colors.border,
+            }}
+          />
+          {/* Mic button for voice input */}
+          <Pressable
+            onPress={toggleRecording}
+            disabled={isTranscribing}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: isRecording ? DS.colors.error : DS.colors.surface,
+              borderWidth: 1.5,
+              borderColor: isRecording ? DS.colors.error : DS.colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {isTranscribing ? (
+              <CompassRoseLoader size="small" />
+            ) : (
+              <Svg width={18} height={18} viewBox="0 0 24 24">
+                <Path
+                  d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"
+                  fill={isRecording ? DS.colors.background : DS.colors.primary}
+                />
+                <Path
+                  d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"
+                  fill={isRecording ? DS.colors.background : DS.colors.primary}
+                />
+              </Svg>
+            )}
+          </Pressable>
+          {/* Send button */}
+          <Pressable
+            onPress={() => {
+              const text = inputText.trim();
+              if (text) {
+                handleReply(text);
+                setInputText('');
+              }
+            }}
+            disabled={!inputText.trim() || isLoading}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: inputText.trim() ? DS.colors.primary : DS.colors.surface,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Svg width={18} height={18} viewBox="0 0 20 20">
+              <Path
+                d="M10 2 L11.5 7 L17 7 L12.5 10.5 L14 16 L10 13 L6 16 L7.5 10.5 L3 7 L8.5 7 Z"
+                fill={inputText.trim() ? DS.colors.background : DS.colors.primaryGhost}
+              />
+            </Svg>
+          </Pressable>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
