@@ -12,6 +12,7 @@ const RequestSchema = z.object({
   prompt: z.string().min(1).max(2000),
   blueprint: z.record(z.unknown()),
   architectId: z.string().optional(),
+  mode: z.enum(['edit', 'suggest']).optional().default('edit'),
 });
 
 const SYSTEM_PROMPT = `You are ARIA — a senior architect with 20 years of experience designing homes that people genuinely love living in. You've worked with young couples finding their first place together, growing families who need their home to flex with them, and retirees creating spaces that will serve them beautifully for decades.
@@ -119,7 +120,35 @@ When user requests style change, apply correct rules:
 - Return ONLY valid BlueprintData JSON — no markdown fences, no explanation outside the JSON
 - If something in the instruction conflicts with good design principles, make the better choice but don't explain it unless asked
 - When in doubt, preserve what's there. Trust the original designer's intent until told otherwise.
-- You're allowed one brief humanizing note if the change is significant — e.g., "Done. The kitchen island is now 2.4m wide — plenty of room for the kids to help with dinner."`
+- You're allowed one brief humanizing note if the change is significant — e.g., "Done. The kitchen island is now 2.4m wide — plenty of room for the kids to help with dinner."`;
+
+const SUGGEST_SYSTEM_PROMPT = `You are ARIA, ASORIA's AI design assistant. Analyze the provided blueprint and return 2-4 actionable suggestions for improvements.
+
+For Pro tier suggestions:
+- "I noticed you have [X bedrooms] but no dedicated [home office / study]. Want to explore converting one?"
+- "The living room faces [direction]. Consider adding a window on the [opposite] wall for better cross-ventilation."
+- "Kitchen is far from the dining area — consider opening up the wall between them."
+- "The master bedroom faces [worst light direction]. Consider repositioning for morning light."
+- "You have [X] bathrooms but only [Y] — ensure plumbing walls are shared."
+
+For Architect tier (adds to Pro):
+- Measurement: "The [room name] is [X]m² but furnished with [Y]m² of furniture — consider increasing room size or reducing furniture."
+- Cost: "Estimated cost for [master bedroom furniture]: based on standard pieces, approximately $X based on current selections."
+- Architect philosophy: "This layout doesn't reflect [Architect]'s principle of [specific rule]. Consider [alternative approach]."
+
+Return ONLY valid JSON. No markdown, no explanation.
+{
+  "suggestions": [
+    {
+      "id": "uuid",
+      "type": "nudge" | "measurement" | "cost" | "philosophy",
+      "title": "short label under 10 words",
+      "description": "1-2 sentence explanation",
+      "priority": "high" | "medium" | "low",
+      "actionable": true | false
+    }
+  ]
+}`
 
 function safeParseBlueprint(
   text: string,
@@ -178,19 +207,96 @@ serve(async (req: Request) => {
       return Errors.validation('Invalid request body', parsed.error.issues);
     }
 
-    const { prompt, blueprint, architectId } = parsed.data;
+    const { prompt, blueprint, architectId, mode } = parsed.data;
 
     // Inject architect influence if specified
     let effectiveSystemPrompt = SYSTEM_PROMPT;
+    let effectiveSuggestPrompt = SUGGEST_SYSTEM_PROMPT;
     if (architectId) {
       const architect = getArchitectById(architectId);
       if (architect) {
         effectiveSystemPrompt = `${buildArchitectPromptSection(architect)}
 
 ${SYSTEM_PROMPT}`;
+        effectiveSuggestPrompt = `${buildArchitectPromptSection(architect)}
+
+${SUGGEST_SYSTEM_PROMPT}`;
       }
     }
 
+    // Handle suggest mode
+    if (mode === 'suggest') {
+      const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+      if (!ANTHROPIC_KEY) {
+        return new Response(
+          JSON.stringify({ error: 'AI_NOT_CONFIGURED', message: 'AI generation coming soon — team is configuring the AI pipeline', fallback: true }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
+      let suggestions: unknown[] = [];
+
+      try {
+        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            'x-api-key': ANTHROPIC_KEY,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 4096,
+            system: effectiveSuggestPrompt,
+            messages: [
+              {
+                role: 'user',
+                content: `Analyze this blueprint and provide suggestions:\n${JSON.stringify(blueprint)}`,
+              },
+            ],
+          }),
+        });
+
+        clearTimeout(timeoutId);
+
+        if (claudeResponse.ok) {
+          const claudeData = await claudeResponse.json() as {
+            content: Array<{ type: string; text: string }>;
+          };
+          const textBlock = claudeData.content.find((b) => b.type === 'text');
+          if (textBlock) {
+            const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed_2 = JSON.parse(jsonMatch[0]) as { suggestions?: unknown[] };
+              if (Array.isArray(parsed_2.suggestions)) {
+                suggestions = parsed_2.suggestions;
+              }
+            }
+          }
+        }
+      } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        console.error('[ai-edit-blueprint:suggest]', fetchErr instanceof Error && fetchErr.name === 'AbortError' ? 'Request timed out' : fetchErr);
+      }
+
+      await logAudit({
+        user_id: user.id,
+        action: 'ai_suggest_blueprint',
+        resource_type: 'project',
+        resource_id: null,
+        meta: { mode: 'suggest', ...extractRequestMeta(req) },
+      });
+
+      return new Response(JSON.stringify({ suggestions }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Default: edit mode (existing logic)
     const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_KEY) {
       console.error('[ai-edit-blueprint] ANTHROPIC_API_KEY not set — returning 200 with fallback');
