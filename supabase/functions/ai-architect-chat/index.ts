@@ -414,14 +414,6 @@ function buildSystemPrompt(
     architect: 'full professional intake + measurement + budget + architect-philosophy-calibrated questions',
   };
 
-  const architectSection = architectId
-    ? (() => {
-        const arch = getArchitectById(architectId);
-        if (!arch) return '';
-        return `The client has selected ${arch.name} as their guiding architect. Their philosophy: ${arch.philosophySummary}`;
-      })()
-    : null;
-
   let prompt = `You are ARIA, ASORIA's AI architect consultation assistant. You're conducting a professional intake conversation with a client who is about to have their home designed.
 
 Your role: ask thoughtful, specific questions that reveal how the client actually lives, not just what they want superficially. A great architect asks questions a client wouldn't think to answer themselves.
@@ -434,7 +426,6 @@ Adjust your question depth and tone:
 - Architect: ${tierDepth.architect}
 
 ${buildWizardSummary(payload)}
-${architectSection ?? ''}
 
 Ask ONE question at a time. After each question, provide 2-4 suggested replies as short oval-pill chips (2-4 words each).
 Never ask two questions in one message.
