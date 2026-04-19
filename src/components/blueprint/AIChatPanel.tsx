@@ -276,7 +276,7 @@ export function AIChatPanel({ visible, onToggle, selectedArchitectId, architectN
       setIsLoading(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
-  }, [input, isLoading, blueprint, addChatMessage, selectedContext, measurementMode]);
+  }, [input, isLoading, blueprint, addChatMessage, selectedContext, measurementMode, setMeasurementMode]);
 
   const handleSuggestionAccept = useCallback((suggestionId: string) => {
     markSuggestionRead(suggestionId);

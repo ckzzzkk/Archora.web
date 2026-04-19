@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
+import Svg, { Circle, Path, G, Rect } from 'react-native-svg';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../common/ArchText';
 
@@ -19,11 +20,31 @@ interface SuggestionBubbleProps {
   onDismiss?: () => void;
 }
 
-const TYPE_ICONS: Record<SuggestionItem['type'], string> = {
-  nudge: '💡',
-  measurement: '📐',
-  cost: '💰',
-  philosophy: '🏛️',
+const TYPE_ICONS: Record<SuggestionItem['type'], React.FC<{ size?: number; color?: string }>> = {
+  nudge: ({ size = 18, color = DS.colors.primary }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  ),
+  measurement: ({ size = 18, color = DS.colors.primary }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="2" y="6" width="20" height="4" rx="1" stroke={color} strokeWidth="1.5" />
+      <Path d="M6 10v8M18 10v8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Path d="M8 10v4M16 10v4M10 10v6M14 10v6" stroke={color} strokeWidth="1" strokeLinecap="round" />
+    </Svg>
+  ),
+  cost: ({ size = 18, color = DS.colors.primary }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" />
+      <Path d="M12 7v10M9.5 9.5c0-1.1.9-2 2-2h1c1.1 0 2 .9 2 2 0 .7-.4 1.3-1 1.7-.6.4-1 1-1 1.8 0 1.4 1.3 2.3 2.5 2.5.6.1 1.2.4 1.2 1 0 .7-.6 1.2-1.5 1.2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </Svg>
+  ),
+  philosophy: ({ size = 18, color = DS.colors.primary }) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 21V10M4 10l8-6 8 6M8 21V14M16 21V14M12 10v11" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M4 10h16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    </Svg>
+  ),
 };
 
 const PRIORITY_COLORS: Record<SuggestionItem['priority'], string> = {
@@ -34,7 +55,7 @@ const PRIORITY_COLORS: Record<SuggestionItem['priority'], string> = {
 
 export function SuggestionBubble({ suggestion, onAccept, onDismiss }: SuggestionBubbleProps) {
   const priorityColor = PRIORITY_COLORS[suggestion.priority];
-  const icon = TYPE_ICONS[suggestion.type];
+  const IconComponent = TYPE_ICONS[suggestion.type];
 
   return (
     <View
@@ -50,7 +71,7 @@ export function SuggestionBubble({ suggestion, onAccept, onDismiss }: Suggestion
     >
       {/* Header row: icon + title + priority badge */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: DS.spacing.xs }}>
-        <ArchText variant="body" style={{ fontSize: 16, marginRight: DS.spacing.xs }}>{icon}</ArchText>
+        <View style={{ marginRight: DS.spacing.xs }}><IconComponent size={16} color={DS.colors.primary} /></View>
         <ArchText
           variant="heading"
           style={{
