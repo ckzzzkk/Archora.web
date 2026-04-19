@@ -12,6 +12,7 @@ import type {
 import type { ViewMode, SubscriptionTier } from '../types';
 import { clipboard } from '../utils/clipboard';
 import type { ClipboardItem } from '../utils/clipboard';
+import type { SuggestionItem } from '../components/consultation/SuggestionBubble';
 
 const STORAGE_KEY = 'blueprint_current';
 
@@ -38,6 +39,9 @@ interface BlueprintState {
   history: BlueprintData[];
   historyIndex: number;
   lastActionLabel: string;
+  // Suggestions
+  suggestions: SuggestionItem[];
+  unreadSuggestionCount: number;
   actions: {
     loadBlueprint: (data: BlueprintData, tier?: SubscriptionTier) => void;
     clearBlueprint: () => void;
@@ -101,6 +105,10 @@ interface BlueprintState {
     // Clipboard
     copyItem: (item: ClipboardItem) => void;
     clearClipboard: () => void;
+    // Suggestions
+    setSuggestions: (suggestions: SuggestionItem[]) => void;
+    markSuggestionRead: (suggestionId: string) => void;
+    clearSuggestions: () => void;
   };
 }
 
@@ -177,6 +185,8 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     history: [],
     historyIndex: -1,
     lastActionLabel: '',
+    suggestions: [],
+    unreadSuggestionCount: 0,
 
     actions: {
       loadBlueprint: (data, tier = 'starter') => {
@@ -617,6 +627,23 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
 
       clearClipboard: async () => {
         await clipboard.clear();
+      },
+
+      setSuggestions: (suggestions) => {
+        set({ suggestions, unreadSuggestionCount: suggestions.length });
+      },
+
+      markSuggestionRead: (suggestionId) => {
+        set((state) => ({
+          suggestions: state.suggestions.map(s =>
+            s.id === suggestionId ? { ...s, read: true } : s
+          ),
+          unreadSuggestionCount: Math.max(0, state.unreadSuggestionCount - 1),
+        }));
+      },
+
+      clearSuggestions: () => {
+        set({ suggestions: [], unreadSuggestionCount: 0 });
       },
     },
   };

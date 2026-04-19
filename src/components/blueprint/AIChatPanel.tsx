@@ -14,12 +14,15 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { AIProcessingIndicator } from '../common/AIProcessingIndicator';
 import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { ConfirmationCard } from './ConfirmationCard';
+import { SuggestionBubble } from '../consultation/SuggestionBubble';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { aiService } from '../../services/aiService';
 import { buildSelectedContext, sanitizePrompt } from '../../utils/promptSanitizer';
 import { validateChatMessage } from '../../utils/blueprintValidation';
 import type { ChatMessage, BlueprintData } from '../../types/blueprint';
 import { Audio } from 'expo-av';
+import { useTierGate } from '../../hooks/useTierGate';
+import type { SubscriptionTier } from '../../types';
 
 function ChatBubbleIcon({ color }: { color: string }) {
   return (
@@ -69,15 +72,24 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   );
 }
 
-interface Props { visible: boolean; onToggle: () => void; }
+interface AIChatPanelProps {
+  visible: boolean;
+  onToggle: () => void;
+  selectedArchitectId?: string | null;
+  architectName?: string;
+}
 
-export function AIChatPanel({ visible, onToggle }: Props) {
+type Tab = 'chat' | 'suggestions';
+
+export function AIChatPanel({ visible, onToggle, selectedArchitectId, architectName }: AIChatPanelProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [pendingBlueprint, setPendingBlueprint] = useState<BlueprintData | null>(null);
   const [pendingMessage, setPendingMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('chat');
+  const [measurementMode, setMeasurementMode] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const insets = useSafeAreaInsets();
@@ -87,8 +99,38 @@ export function AIChatPanel({ visible, onToggle }: Props) {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const selectedId = useBlueprintStore((s) => s.selectedId);
   const currentFloorIndex = useBlueprintStore((s) => s.currentFloorIndex);
+  const suggestions = useBlueprintStore((s) => s.suggestions);
+  const unreadSuggestionCount = useBlueprintStore((s) => s.unreadSuggestionCount);
   const addChatMessage = useBlueprintStore((s) => s.actions.addChatMessage);
   const loadBlueprint = useBlueprintStore((s) => s.actions.loadBlueprint);
+  const markSuggestionRead = useBlueprintStore((s) => s.actions.markSuggestionRead);
+  const setSuggestions = useBlueprintStore((s) => s.actions.setSuggestions);
+
+  // Tier gates
+  const suggestionsGate = useTierGate('walkthrough');   // proxy for suggestion nudges (Pro+)
+  const measurementGate = useTierGate('arMeasure');       // Architect only
+  const costGate = useTierGate('costEstimator');          // Architect only
+
+  const tier = suggestionsGate.tier;
+  const isProPlus = tier === 'pro' || tier === 'architect';
+  const isArchitect = tier === 'architect';
+
+  // Badge pulse animation for unread suggestions
+  const badgePulse = useSharedValue(1);
+  React.useEffect(() => {
+    if (unreadSuggestionCount > 0) {
+      badgePulse.value = withRepeat(
+        withTiming(1.2, { duration: 500 }),
+        -1,
+        true,
+      );
+    } else {
+      badgePulse.value = withTiming(1, { duration: 200 });
+    }
+  }, [unreadSuggestionCount, badgePulse]);
+
+  const badgePulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: badgePulse.value }] }));
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulseScale.value }] }));
 
   // Build selected-object context for AI (uses sanitized values)
   const selectedContext = buildSelectedContext({
@@ -114,8 +156,6 @@ export function AIChatPanel({ visible, onToggle }: Props) {
     prompts.push('"Add a window to the north wall"');
     return prompts.slice(0, 5);
   }, [blueprint, selectedId]);
-
-  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulseScale.value }] }));
 
   // Voice recording
   const startRecording = useCallback(async () => {
@@ -195,6 +235,11 @@ export function AIChatPanel({ visible, onToggle }: Props) {
     setInput('');
     setIsLoading(true);
 
+    // Inject measurement mode context if active (Architect tier)
+    const measurementContext = measurementMode
+      ? '\n\n[MEASUREMENT MODE] Please provide precise metric measurements for any changes. Check room-area proportionality.'
+      : '';
+
     const userMsg: ChatMessage = {
       id: `msg_${Date.now()}`,
       role: 'user',
@@ -206,7 +251,7 @@ export function AIChatPanel({ visible, onToggle }: Props) {
     try {
       // Sanitize context and combine with prompt
       const safeContext = selectedContext;
-      const enrichedPrompt = safeContext ? `${text}\n\n${safeContext}` : text;
+      const enrichedPrompt = safeContext ? `${text}\n\n${safeContext}${measurementContext}` : `${text}${measurementContext}`;
       const data = await aiService.editBlueprint({ prompt: enrichedPrompt, blueprint });
 
       if (data.blueprint) {
@@ -231,7 +276,28 @@ export function AIChatPanel({ visible, onToggle }: Props) {
       setIsLoading(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
-  }, [input, isLoading, blueprint, addChatMessage, selectedContext]);
+  }, [input, isLoading, blueprint, addChatMessage, selectedContext, measurementMode]);
+
+  const handleSuggestionAccept = useCallback((suggestionId: string) => {
+    markSuggestionRead(suggestionId);
+    // Apply suggestion action here (future: call AI service with suggestion context)
+  }, [markSuggestionRead]);
+
+  const handleSuggestionDismiss = useCallback((suggestionId: string) => {
+    markSuggestionRead(suggestionId);
+  }, [markSuggestionRead]);
+
+  const handleTabChange = useCallback((tab: Tab) => {
+    setActiveTab(tab);
+    if (tab === 'suggestions') {
+      // Mark all as read when switching to suggestions tab
+      suggestions.forEach(s => {
+        if (!s.read) markSuggestionRead(s.id);
+      });
+    }
+  }, [suggestions, markSuggestionRead]);
+
+  // ——— Render ———
 
   return (
     <>
@@ -245,110 +311,237 @@ export function AIChatPanel({ visible, onToggle }: Props) {
       {/* Panel */}
       {visible && (
         <Animated.View style={[panelStyle, { position: 'absolute', bottom: 0, left: 0, right: 0, height: 380, backgroundColor: 'rgba(240, 237, 232, 0.10)', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: DS.colors.border }]}>
+          {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(240, 237, 232, 0.08)' }}>
             <ChatBubbleIcon color={DS.colors.primary} />
-            <ArchText variant="heading" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primary, marginLeft: 8, flex: 1 }}>AI Blueprint Editor</ArchText>
+            <ArchText variant="heading" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primary, marginLeft: 8, flex: 1 }}>
+              AI Blueprint Editor
+            </ArchText>
+            {/* Architect philosophy label */}
+            {isArchitect && architectName && (
+              <View style={{ backgroundColor: DS.colors.accent + '20', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginRight: 6, borderWidth: 1, borderColor: DS.colors.accent + '40' }}>
+                <ArchText variant="caption" style={{ fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.accent }}>{architectName}</ArchText>
+              </View>
+            )}
+            {/* Measurement mode indicator */}
+            {isArchitect && measurementMode && (
+              <View style={{ backgroundColor: DS.colors.success + '20', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginRight: 6, borderWidth: 1, borderColor: DS.colors.success + '40' }}>
+                <ArchText variant="caption" style={{ fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.success }}>📐 MEASURE</ArchText>
+              </View>
+            )}
+            {/* Cost estimation indicator */}
+            {isArchitect && costGate.allowed && (
+              <View style={{ backgroundColor: DS.colors.warning + '20', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, marginRight: 6, borderWidth: 1, borderColor: DS.colors.warning + '40' }}>
+                <ArchText variant="caption" style={{ fontFamily: DS.font.mono, fontSize: 9, color: DS.colors.warning }}>💰 COST</ArchText>
+              </View>
+            )}
             <Pressable onPress={onToggle} style={{ padding: 8 }}><ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: 18 }}>✕</ArchText></Pressable>
           </View>
 
-          <ScrollView ref={scrollRef} style={{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }} showsVerticalScrollIndicator={false} onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
-            {recentMessages.length === 0 && (
-              <View style={{ marginTop: 16, marginBottom: 8 }}>
-                <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, textAlign: 'center' }}>
-                  Ask me to edit your blueprint
-                </ArchText>
-                <View style={{ marginTop: 12, gap: 6 }}>
-                  {examplePrompts.map((example) => (
-                    <Pressable
-                      key={example}
-                      onPress={() => setInput(example.replace(/^"|"$/g, ''))}
-                      style={{ backgroundColor: DS.colors.surfaceHigh, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'center', borderWidth: 1, borderColor: DS.colors.border + '60' }}
-                    >
-                      <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: DS.colors.primaryGhost }}>{example}</ArchText>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            )}
-            {recentMessages.map((msg) => <MessageBubble key={msg.id} msg={msg} />)}
-            {isLoading && (
-              <View style={{ alignSelf: 'flex-start', marginBottom: 8, marginTop: 4 }}>
-                <AIProcessingIndicator size="small" />
-              </View>
-            )}
-          </ScrollView>
+          {/* Tab bar */}
+          <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingTop: 10, gap: 8 }}>
+            <Pressable
+              onPress={() => handleTabChange('chat')}
+              style={{
+                flex: 1,
+                backgroundColor: activeTab === 'chat' ? DS.colors.primary + '20' : 'transparent',
+                borderRadius: DS.radius.chip,
+                paddingVertical: 6,
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: activeTab === 'chat' ? DS.colors.primary + '50' : DS.colors.border,
+              }}
+            >
+              <ArchText variant="label" style={{ fontFamily: DS.font.medium, fontSize: 12, color: activeTab === 'chat' ? DS.colors.primary : DS.colors.primaryGhost }}>
+                Chat
+              </ArchText>
+            </Pressable>
 
-          {/* Confirmation preview — shown only when AI returned a proposed change */}
-          {pendingBlueprint && (
-            <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-              <ConfirmationCard
-                original={blueprint!}
-                proposed={pendingBlueprint!}
-                currentFloorIndex={currentFloorIndex}
-                aiMessage={pendingMessage}
-                onAccept={() => {
-                  loadBlueprint(pendingBlueprint!);
-                  setPendingBlueprint(null);
-                  setPendingMessage('');
-                }}
-                onReject={() => {
-                  setPendingBlueprint(null);
-                  setPendingMessage('');
-                }}
-              />
-            </View>
-          )}
-
-          {/* Quick action chips */}
-          <View style={{ paddingHorizontal: 16, paddingTop: 10, flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-            {quickActions.map(({ label }) => (
+            {isProPlus && (
               <Pressable
-                key={label}
-                onPress={() => {
-                  const qa = quickActions.find((a) => a.label === label);
-                  if (qa) setInput(qa.template);
+                onPress={() => handleTabChange('suggestions')}
+                style={{
+                  flex: 1,
+                  backgroundColor: activeTab === 'suggestions' ? DS.colors.primary + '20' : 'transparent',
+                  borderRadius: DS.radius.chip,
+                  paddingVertical: 6,
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: activeTab === 'suggestions' ? DS.colors.primary + '50' : DS.colors.border,
                 }}
-                style={{ backgroundColor: `${DS.colors.primary}15`, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: `${DS.colors.primary}30` }}
               >
-                <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: DS.colors.primary }}>{label}</ArchText>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <ArchText variant="label" style={{ fontFamily: DS.font.medium, fontSize: 12, color: activeTab === 'suggestions' ? DS.colors.primary : DS.colors.primaryGhost }}>
+                    Suggestions
+                  </ArchText>
+                  {unreadSuggestionCount > 0 && (
+                    <Animated.View style={[
+                      badgePulseStyle,
+                      {
+                        backgroundColor: DS.colors.error,
+                        borderRadius: 8,
+                        minWidth: 16,
+                        height: 16,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingHorizontal: 4,
+                      },
+                    ]}>
+                      <ArchText variant="caption" style={{ fontFamily: DS.font.mono, fontSize: 9, color: '#fff', fontWeight: '700' }}>
+                        {unreadSuggestionCount > 9 ? '9+' : unreadSuggestionCount}
+                      </ArchText>
+                    </Animated.View>
+                  )}
+                </View>
               </Pressable>
-            ))}
+            )}
           </View>
 
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(12, insets.bottom + 8), borderTopWidth: 1, borderTopColor: 'rgba(240, 237, 232, 0.08)', backgroundColor: 'rgba(240, 237, 232, 0.03)', gap: 10 }}>
-              <TextInput
-                value={input} onChangeText={setInput}
-                placeholder="Describe your edit..." placeholderTextColor={DS.colors.primaryGhost}
-                multiline
-                style={{ flex: 1, backgroundColor: DS.colors.surfaceHigh, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primary, maxHeight: 80, borderWidth: 1, borderColor: DS.colors.border }}
-              />
-              {/* Mic button for voice input */}
-              <Animated.View style={pulseStyle}>
-                <Pressable
-                  onPress={toggleRecording}
-                  disabled={isTranscribing}
-                  style={{
-                    width: 36, height: 36, borderRadius: 18,
-                    backgroundColor: isRecording ? DS.colors.error : DS.colors.surface,
-                    borderWidth: 1.5,
-                    borderColor: isRecording ? DS.colors.error : DS.colors.border,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  {isTranscribing ? (
-                    <CompassRoseLoader size="small" />
-                  ) : (
-                    <Svg width={16} height={16} viewBox="0 0 24 24">
-                      <Path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill={DS.colors.primary} />
-                      <Path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" fill={DS.colors.primary} />
-                    </Svg>
+          {/* Content */}
+          {activeTab === 'chat' ? (
+            <>
+              <ScrollView ref={scrollRef} style={{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }} showsVerticalScrollIndicator={false} onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
+                {recentMessages.length === 0 && (
+                  <View style={{ marginTop: 16, marginBottom: 8 }}>
+                    <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, textAlign: 'center' }}>
+                      Ask me to edit your blueprint
+                    </ArchText>
+                    <View style={{ marginTop: 12, gap: 6 }}>
+                      {examplePrompts.map((example) => (
+                        <Pressable
+                          key={example}
+                          onPress={() => setInput(example.replace(/^"|"$/g, ''))}
+                          style={{ backgroundColor: DS.colors.surfaceHigh, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'center', borderWidth: 1, borderColor: DS.colors.border + '60' }}
+                        >
+                          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: DS.colors.primaryGhost }}>{example}</ArchText>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+                )}
+                {recentMessages.map((msg) => <MessageBubble key={msg.id} msg={msg} />)}
+                {isLoading && (
+                  <View style={{ alignSelf: 'flex-start', marginBottom: 8, marginTop: 4 }}>
+                    <AIProcessingIndicator size="small" />
+                  </View>
+                )}
+              </ScrollView>
+
+              {/* Confirmation preview */}
+              {pendingBlueprint && (
+                <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+                  <ConfirmationCard
+                    original={blueprint!}
+                    proposed={pendingBlueprint!}
+                    currentFloorIndex={currentFloorIndex}
+                    aiMessage={pendingMessage}
+                    onAccept={() => {
+                      loadBlueprint(pendingBlueprint!);
+                      setPendingBlueprint(null);
+                      setPendingMessage('');
+                    }}
+                    onReject={() => {
+                      setPendingBlueprint(null);
+                      setPendingMessage('');
+                    }}
+                  />
+                </View>
+              )}
+
+              {/* Quick action chips */}
+              <View style={{ paddingHorizontal: 16, paddingTop: 10, flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                {quickActions.map(({ label }) => (
+                  <Pressable
+                    key={label}
+                    onPress={() => {
+                      const qa = quickActions.find((a) => a.label === label);
+                      if (qa) setInput(qa.template);
+                    }}
+                    style={{ backgroundColor: `${DS.colors.primary}15`, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: `${DS.colors.primary}30` }}
+                  >
+                    <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: DS.colors.primary }}>{label}</ArchText>
+                  </Pressable>
+                ))}
+              </View>
+
+              <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: Math.max(12, insets.bottom + 8), borderTopWidth: 1, borderTopColor: 'rgba(240, 237, 232, 0.08)', backgroundColor: 'rgba(240, 237, 232, 0.03)', gap: 10 }}>
+                  {/* Measurement mode toggle for Architect */}
+                  {isArchitect && (
+                    <Pressable
+                      onPress={() => setMeasurementMode(m => !m)}
+                      style={{
+                        width: 36, height: 36, borderRadius: 18,
+                        backgroundColor: measurementMode ? DS.colors.success + '25' : DS.colors.surface,
+                        borderWidth: 1.5,
+                        borderColor: measurementMode ? DS.colors.success : DS.colors.border,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Svg width={16} height={16} viewBox="0 0 24 24">
+                        <Path d="M21 6H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z" stroke={measurementMode ? DS.colors.success : DS.colors.primary} strokeWidth="1.8" fill="none" />
+                        <Path d="M3 10h18M8 6v14M16 6v14" stroke={measurementMode ? DS.colors.success : DS.colors.primary} strokeWidth="1.8" fill="none" />
+                      </Svg>
+                    </Pressable>
                   )}
-                </Pressable>
-              </Animated.View>
-              <SendButton onPress={() => { void sendMessage(); }} loading={isLoading} />
-            </View>
-          </KeyboardAvoidingView>
+                  <TextInput
+                    value={input} onChangeText={setInput}
+                    placeholder="Describe your edit..." placeholderTextColor={DS.colors.primaryGhost}
+                    multiline
+                    style={{ flex: 1, backgroundColor: DS.colors.surfaceHigh, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primary, maxHeight: 80, borderWidth: 1, borderColor: DS.colors.border }}
+                  />
+                  {/* Mic button for voice input */}
+                  <Animated.View style={pulseStyle}>
+                    <Pressable
+                      onPress={toggleRecording}
+                      disabled={isTranscribing}
+                      style={{
+                        width: 36, height: 36, borderRadius: 18,
+                        backgroundColor: isRecording ? DS.colors.error : DS.colors.surface,
+                        borderWidth: 1.5,
+                        borderColor: isRecording ? DS.colors.error : DS.colors.border,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      {isTranscribing ? (
+                        <CompassRoseLoader size="small" />
+                      ) : (
+                        <Svg width={16} height={16} viewBox="0 0 24 24">
+                          <Path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill={DS.colors.primary} />
+                          <Path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" fill={DS.colors.primary} />
+                        </Svg>
+                      )}
+                    </Pressable>
+                  </Animated.View>
+                  <SendButton onPress={() => { void sendMessage(); }} loading={isLoading} />
+                </View>
+              </KeyboardAvoidingView>
+            </>
+          ) : (
+            /* Suggestions tab */
+            <ScrollView style={{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }} showsVerticalScrollIndicator={false}>
+              {suggestions.length === 0 ? (
+                <View style={{ marginTop: 24, alignItems: 'center' }}>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, textAlign: 'center' }}>
+                    No suggestions yet
+                  </ArchText>
+                  <ArchText variant="caption" style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: DS.colors.primaryGhost, textAlign: 'center', marginTop: 4 }}>
+                    Suggestions will appear as the AI analyses your blueprint
+                  </ArchText>
+                </View>
+              ) : (
+                suggestions.map((s) => (
+                  <SuggestionBubble
+                    key={s.id}
+                    suggestion={s}
+                    onAccept={s.actionable ? () => handleSuggestionAccept(s.id) : undefined}
+                    onDismiss={s.actionable ? () => handleSuggestionDismiss(s.id) : undefined}
+                  />
+                ))
+              )}
+              <View style={{ height: insets.bottom + 16 }} />
+            </ScrollView>
+          )}
         </Animated.View>
       )}
     </>
