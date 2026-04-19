@@ -30,6 +30,14 @@ CREATE POLICY "Users can manage own consultation sessions"
 
 CREATE INDEX idx_consultation_sessions_user_id ON consultation_sessions(user_id);
 CREATE INDEX idx_consultation_sessions_generation_session_id ON consultation_sessions(generation_session_id);
+CREATE INDEX idx_consultation_sessions_architect_id ON consultation_sessions(architect_id);
+CREATE INDEX idx_consultation_sessions_is_complete ON consultation_sessions(is_complete);
+CREATE INDEX idx_consultation_sessions_tier ON consultation_sessions(tier);
 
--- Add column to existing generation_sessions table
-ALTER TABLE generation_sessions ADD COLUMN consultation_session_id UUID REFERENCES consultation_sessions(id);
+-- Add column to existing generation_sessions table (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'generation_sessions' AND column_name = 'consultation_session_id') THEN
+    ALTER TABLE generation_sessions ADD COLUMN consultation_session_id UUID REFERENCES consultation_sessions(id) ON DELETE SET NULL;
+  END IF;
+END $$;
