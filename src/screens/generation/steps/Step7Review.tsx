@@ -173,6 +173,16 @@ export function Step7Review({ payload, consultationSummary, result, onGenerate }
                 <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{consultationSummary.sustainabilityInterest}</ArchText>
               </View>
             )}
+            {consultationSummary.architectInsights.length > 0 && (
+              <View style={{ flexDirection: 'row', gap: DS.spacing.xs, alignItems: 'flex-start' }}>
+                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, minWidth: 80 }}>Architect</ArchText>
+                <View style={{ flex: 1 }}>
+                  {consultationSummary.architectInsights.map((insight, i) => (
+                    <ArchText key={i} variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{insight}</ArchText>
+                  ))}
+                </View>
+              </View>
+            )}
           </View>
         </View>
       )}

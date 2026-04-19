@@ -651,6 +651,10 @@ export function GenerationScreen() {
               plotUnit: plotUnit,
               ...rooms,
               style: style ?? undefined,
+              referenceImageUrl: referenceImageUrl,
+              additionalNotes: notes,
+              transcript: transcript,
+              architectId: selectedArchitectId ?? undefined,
             }}
             onComplete={(summary, fullPayload) => {
               setConsultationSummary(summary);
