@@ -24,6 +24,8 @@ export interface GenerationPayload {
 
 export type GenerationStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
+export type QuestionCategory = 'qualification' | 'lifestyle' | 'future' | 'sustainability' | 'measurement' | 'budget' | 'architect_philosophy';
+
 export interface ConsultationSummary {
   tier: 'starter' | 'creator' | 'pro' | 'architect';
   architectId: string | null;

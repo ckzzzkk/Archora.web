@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabase';
 import type { BlueprintData } from '../types';
-import type { GenerationPayload } from '../types/generation';
+import type { GenerationPayload, QuestionCategory } from '../types/generation';
+import type { ChatMessage } from '../types/blueprint';
+import type { Tier } from '../utils/tierLimits';
 import { validateBlueprintData } from '../utils/blueprintValidation';
 
 export interface UserPreferences {
@@ -325,6 +327,49 @@ export const aiService = {
     } finally {
       await supabase.removeChannel(channel);
     }
+  },
+
+  async consultWithArchitect(params: {
+    tier: Tier;
+    architectId: string | null;
+    conversationHistory: ChatMessage[];
+    currentPayload: Partial<GenerationPayload>;
+    sessionId?: string;
+  }): Promise<{
+    message: string;
+    suggestedReplies: string[];
+    updatedPayload: Partial<GenerationPayload>;
+    isComplete: boolean;
+    nextCategory: QuestionCategory;
+    sessionId: string;
+  }> {
+    const headers = await getAuthHeader();
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-architect-chat`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        tier: params.tier,
+        architectId: params.architectId,
+        conversationHistory: params.conversationHistory,
+        currentPayload: params.currentPayload,
+        sessionId: params.sessionId,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Consultation failed' })) as { error: string };
+      throw Object.assign(new Error(err.error ?? 'Consultation failed'), { status: response.status });
+    }
+
+    return response.json() as Promise<{
+      message: string;
+      suggestedReplies: string[];
+      updatedPayload: Partial<GenerationPayload>;
+      isComplete: boolean;
+      nextCategory: QuestionCategory;
+      sessionId: string;
+    }>;
   },
 };
 
