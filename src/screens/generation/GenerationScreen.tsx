@@ -33,10 +33,11 @@ import { Step5Reference } from './steps/Step5Reference';
 import { Step6Notes } from './steps/Step6Notes';
 import { Step7Review } from './steps/Step7Review';
 import { StepProgressBar } from './steps/StepProgressBar';
+import { ConsultationChat } from '../../components/consultation/ConsultationChat';
 
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData } from '../../types/blueprint';
-import type { GenerationPayload } from '../../types/generation';
+import type { GenerationPayload, ConsultationSummary } from '../../types/generation';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type BuildingType = GenerationPayload['buildingType'];
@@ -307,6 +308,7 @@ export function GenerationScreen() {
   const [referenceImageUrl, setReferenceImageUrl] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>('');
   const [transcript, setTranscript] = useState<string>('');
+  const [consultationSummary, setConsultationSummary] = useState<ConsultationSummary | null>(null);
 
   // Screen state
   const [screenState, setScreenState] = useState<ScreenState>('idle');
@@ -639,28 +641,32 @@ export function GenerationScreen() {
           />
         )}
 
-        {step === 5 && (
-          <Step5Reference
-            referenceImageUrl={referenceImageUrl}
-            onImageUploaded={setReferenceImageUrl}
-            onSkip={goNext}
-            onNext={goNext}
-          />
-        )}
-
-        {step === 6 && (
-          <Step6Notes
-            notes={notes}
-            transcript={transcript}
-            onNotesChange={setNotes}
-            onTranscriptAppend={(v) => setTranscript((t) => t ? `${t} ${v}` : v)}
-            onNext={goNext}
+        {(step === 5 || step === 6) && (
+          <ConsultationChat
+            tier={user?.subscriptionTier ?? 'starter'}
+            architectId={selectedArchitectId}
+            structuredPayload={{
+              buildingType: buildingType ?? undefined,
+              plotSize: parseFloat(plotSize) || 0,
+              plotUnit: plotUnit,
+              ...rooms,
+              style: style ?? undefined,
+            }}
+            onComplete={(summary, fullPayload) => {
+              setConsultationSummary(summary);
+              if (summary.householdDescription) {
+                setNotes(prev => prev ? `${prev}\n\nHousehold: ${summary.householdDescription}` : `Household: ${summary.householdDescription}`);
+              }
+              setStep(7);
+            }}
+            onBack={goBack}
           />
         )}
 
         {step === 7 && reviewPayload && (
           <Step7Review
             payload={reviewPayload}
+            consultationSummary={consultationSummary}
             onGenerate={handleGenerate}
           />
         )}
