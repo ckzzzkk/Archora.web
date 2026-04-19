@@ -357,6 +357,60 @@ const COMPLETION_THRESHOLDS: Record<Tier, { min: number; categories: QuestionCat
 };
 
 // ──────────────────────────────────────────
+// All question banks merged for payload hint lookup
+// ──────────────────────────────────────────
+
+const ALL_QUESTIONS: Question[] = [
+  ...QUALIFICATION_QUESTIONS,
+  ...LIFESTYLE_QUESTIONS,
+  ...FUTURE_QUESTIONS,
+  ...SUSTAINABILITY_QUESTIONS,
+  ...MEASUREMENT_QUESTIONS,
+  ...BUDGET_QUESTIONS,
+  ...ARCHITECT_PHILOSOPHY_QUESTIONS,
+];
+
+// ──────────────────────────────────────────
+// Extract consultation insights from conversation history
+// (stateless approach — client sends full history each request)
+// ──────────────────────────────────────────
+
+function extractConsultationInsights(conversationHistory: ChatMessage[]): {
+  consultationInsights: Partial<GenerationPayload>;
+  updatedPayload: Partial<GenerationPayload>;
+} {
+  const consultationInsights: Partial<GenerationPayload> = {};
+
+  for (const msg of conversationHistory) {
+    if (msg.role !== 'user') continue;
+
+    const userText = msg.content.trim();
+    // Find which question this answer matches by looking for the closest
+    // prior assistant message that matches a known question
+    for (const q of ALL_QUESTIONS) {
+      const matchedReply = q.replies.find(r =>
+        userText.toLowerCase() === r.toLowerCase() ||
+        userText.toLowerCase().includes(r.toLowerCase()) ||
+        r.toLowerCase().includes(userText.toLowerCase())
+      );
+      if (matchedReply && Object.keys(q.payloadHints).length > 0) {
+        // Merge payload hints into consultationInsights
+        Object.assign(consultationInsights, q.payloadHints);
+        break;
+      }
+    }
+  }
+
+  // consultationInsights are stored as notes since payloadHints keys
+  // may not map 1:1 to GenerationPayload — append as structured notes
+  const updatedPayload: Partial<GenerationPayload> = {
+    ...consultationInsights,
+  };
+
+  return { consultationInsights, updatedPayload };
+}
+
+// ──────────────────────────────────────────
 // Input schema
 // ──────────────────────────────────────────
 
@@ -565,6 +619,12 @@ serve(async (req) => {
 
     const payload = currentPayload as Partial<GenerationPayload>;
 
+    // Extract consultation insights from conversation history (Issue 1)
+    const { consultationInsights, updatedPayload } = extractConsultationInsights(conversationHistory);
+
+    // Merge extracted insights into the base payload for the response
+    const finalPayload: Partial<GenerationPayload> = { ...payload, ...consultationInsights };
+
     // Generate or persist session ID
     const sessionId = existingSessionId ?? crypto.randomUUID();
 
@@ -605,7 +665,8 @@ serve(async (req) => {
         return new Response(JSON.stringify({
           message: parsed_1.message ?? "The AI consultation isn't quite ready yet. Check back soon!",
           suggestedReplies: ["I'll come back later", "Continue with what I have", "Tell me more about architects"],
-          updatedPayload: payload,
+          updatedPayload: finalPayload,
+          consultationInsights,
           isComplete: false,
           nextCategory: currentCategory,
           sessionId,
@@ -622,10 +683,12 @@ serve(async (req) => {
     // The response already contains suggested replies from the model — just pass it through
     const suggestedReplies = extractSuggestedReplies(rawResponse);
 
-    // Log audit
+    // Log audit — consultation_chat (not ai_generate, which is for floor-plan generation)
+// Session persistence is client-side (Approach C — stateless LLM-driven conversation
+// session). The sessionId is used for tracking/continuity only, not DB writes here.
     await logAudit({
       user_id: user.id,
-      action: 'ai_generate',
+      action: 'consultation_chat',
       resource_type: 'consultation',
       metadata: { tier, architectId, sessionId, questionsAsked },
     });
@@ -633,7 +696,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       message,
       suggestedReplies,
-      updatedPayload: payload,
+      updatedPayload: finalPayload,
+      consultationInsights,
       isComplete: isConversationComplete,
       nextCategory: currentCategory,
       sessionId,
