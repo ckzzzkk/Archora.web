@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { DS } from '../../../theme/designSystem';
-import { ArchText } from '../../../components/common/ArchText';
-import { View,  Pressable, Image, Alert } from 'react-native';
+import { View, Pressable, Image } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
+import { Camera } from 'lucide-react';
 
+import { DS } from '../../../theme/designSystem';
+import { BASE_COLORS } from '../../../theme/colors';
+import { ArchText } from '../../../components/common/ArchText';
+import { GridBackground } from '../../../components/common/GridBackground';
+import { CompassRoseLoader } from '../../../components/common/CompassRoseLoader';
 import { aiService } from '../../../services/aiService';
 import { useSession } from '../../../auth/useSession';
 import { useUIStore } from '../../../stores/uiStore';
 import { useTierGate } from '../../../hooks/useTierGate';
-import { CompassRoseLoader } from '../../../components/common/CompassRoseLoader';
 
 interface Props {
   referenceImageUrl: string | undefined;
@@ -27,17 +30,11 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
 
   const pickImage = async () => {
     if (!canUploadReference) {
-      Alert.alert(
-        'Creator Feature',
-        'Reference image upload is available on Creator plan and above. Upgrade to unlock this feature.',
-        [{ text: 'OK' }],
-      );
       return;
     }
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please allow access to your photo library.');
       return;
     }
 
@@ -57,12 +54,12 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
       if (!userId) throw new Error('Not authenticated');
       const publicUrl = await aiService.uploadReferenceImage(userId, asset.uri);
       if (!publicUrl) {
-        s.actions.showToast('Failed to upload reference image — generation will continue without it', 'warning');
+        s.actions.showToast('Failed to upload reference image', 'warning');
       } else {
         onImageUploaded(publicUrl);
       }
     } catch {
-      s.actions.showToast('Failed to upload reference image — generation will continue without it', 'warning');
+      s.actions.showToast('Failed to upload reference image', 'warning');
       setLocalUri(null);
     } finally {
       setUploading(false);
@@ -70,77 +67,68 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
   };
 
   return (
-    <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
-      <ArchText variant="body"
-        style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
-          fontSize: 24,
-          color: DS.colors.primary,
-          marginBottom: 24,
-        }}
-      >
-        Any inspiration images?
-      </ArchText>
+    <Animated.View entering={FadeIn.duration(150)} style={{ flex: 1 }}>
+      <GridBackground />
 
-      {localUri || referenceImageUrl ? (
-        <Pressable onPress={pickImage} style={{ marginBottom: 20 }}>
-          <Image
-            source={{ uri: localUri ?? referenceImageUrl }}
-            style={{ width: '100%', height: 200, borderRadius: 16 }}
-            resizeMode="cover"
-          />
-          {uploading && (
-            <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 16 }}>
-              <CompassRoseLoader size="medium" />
-            </View>
-          )}
-        </Pressable>
-      ) : (
-        <Pressable
-          onPress={pickImage}
-          style={{
-            borderRadius: 24,
-            borderWidth: 2,
-            borderColor: DS.colors.border,
-            borderStyle: 'dashed',
-            height: 180,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 20,
-          }}
-        >
-          {uploading ? (
-            <CompassRoseLoader size="medium" />
-          ) : (
-            <>
-              <ArchText variant="body" style={{ fontSize: 32, marginBottom: 8 }}>{'\u{1F4F7}'}</ArchText>
-              <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: DS.colors.primaryDim }}>
-                Upload a photo
-              </ArchText>
-            </>
-          )}
-        </Pressable>
-      )}
-
-      <Pressable onPress={onSkip} style={{ alignSelf: 'center', marginBottom: 24 }}>
-        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, textDecorationLine: 'underline' }}>
-          Skip this step
+      <View style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
+        <ArchText variant="heading" style={{ marginBottom: DS.spacing.xl }}>
+          add a reference image
         </ArchText>
-      </Pressable>
 
-      {(referenceImageUrl || localUri) && !uploading && (
-        <Pressable
-          onPress={onNext}
-          style={{
-            backgroundColor: DS.colors.primary,
-            borderRadius: 50,
-            paddingVertical: 16,
-            alignItems: 'center',
-          }}
-        >
-          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>Next</ArchText>
+        {localUri || referenceImageUrl ? (
+          <Pressable onPress={pickImage}>
+            <Image
+              source={{ uri: localUri ?? referenceImageUrl }}
+              style={{
+                width: '100%',
+                height: 200,
+                borderRadius: DS.radius.large,
+                borderWidth: 2,
+                borderColor: BASE_COLORS.textPrimary,
+              }}
+              resizeMode="cover"
+            />
+            {uploading && (
+              <View style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(26,26,26,0.6)', borderRadius: DS.radius.large }}>
+                <CompassRoseLoader size="medium" />
+              </View>
+            )}
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={pickImage}
+            style={{
+              borderRadius: DS.radius.card,
+              borderWidth: 2,
+              borderStyle: 'dashed',
+              borderColor: BASE_COLORS.textPrimary,
+              padding: DS.spacing.xl,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: DS.spacing.xl,
+            }}
+          >
+            {uploading ? (
+              <CompassRoseLoader size="medium" />
+            ) : (
+              <>
+                <Camera size={32} color={BASE_COLORS.textPrimary} strokeWidth={1.5} style={{ marginBottom: DS.spacing.sm }} />
+                <ArchText variant="body" style={{ fontFamily: DS.font.regular }}>
+                  Upload a photo
+                </ArchText>
+              </>
+            )}
+          </Pressable>
+        )}
+
+        <View style={{ flex: 1 }} />
+
+        <Pressable onPress={onSkip} style={{ alignSelf: 'center', marginBottom: DS.spacing.lg }}>
+          <ArchText variant="caption" style={{ textDecorationLine: 'underline' }}>
+            Skip this step
+          </ArchText>
         </Pressable>
-      )}
+      </View>
     </Animated.View>
   );
 }

@@ -1,22 +1,14 @@
 import React from 'react';
-import { DS } from '../../../theme/designSystem';
-import { ArchText } from '../../../components/common/ArchText';
-import { View, Pressable, Image } from 'react-native';
-import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { useHaptics } from '../../../hooks/useHaptics';
+import { View, ScrollView } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { DESIGN_STYLES } from '../../../data/designStyles';
+import { DS } from '../../../theme/designSystem';
+import { BASE_COLORS } from '../../../theme/colors';
+import { ArchText } from '../../../components/common/ArchText';
+import { GridBackground } from '../../../components/common/GridBackground';
+import { OvalButton } from '../../../components/common/OvalButton';
 import type { GenerationPayload, ConsultationSummary } from '../../../types/generation';
 import type { BlueprintData } from '../../../types/blueprint';
-
-const TYPE_EMOJI: Record<string, string> = {
-  house: '\u{1F3E0}',
-  apartment: '\u{1F3E2}',
-  office: '\u{1F3E2}',
-  studio: '\u{1F3A8}',
-  villa: '\u{1F3D6}',
-  commercial: '\u{1F3EA}',
-};
 
 interface Props {
   payload: GenerationPayload;
@@ -25,183 +17,156 @@ interface Props {
   onGenerate: () => void;
 }
 
-function GenerateButton({ onPress }: { onPress: () => void }) {
-  const { light } = useHaptics();
-  const scale = useSharedValue(1);
-  const btnStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  return (
-    <Pressable
-      onPressIn={() => { light(); scale.value = withSpring(0.95, { damping: 10, stiffness: 400 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 14, stiffness: 350 }); }}
-      onPress={() => { light(); onPress(); }}
-      accessibilityLabel="Create My Design, generate your floor plan with AI"
-      accessibilityRole="button"
-      accessibilityHint="Starts the AI generation process for your floor plan"
-    >
-      <Animated.View style={[btnStyle, {
-        backgroundColor: DS.colors.primary,
-        borderRadius: 50,
-        paddingVertical: 18,
-        alignItems: 'center',
-        height: 56,
-        justifyContent: 'center',
-      }]}>
-        <ArchText variant="body"
-          style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
-            fontSize: 18,
-            color: DS.colors.background,
-          }}
-        >
-          Create My Design
-        </ArchText>
-      </Animated.View>
-    </Pressable>
-  );
-}
+const SKETCH_SHADOW = {
+  shadowColor: BASE_COLORS.background,
+  shadowOffset: { width: 3, height: 4 },
+  shadowOpacity: 0.5,
+  shadowRadius: 2,
+};
 
 export function Step7Review({ payload, consultationSummary, result, onGenerate }: Props) {
-  const styleName = DESIGN_STYLES.find((s) => s.id === payload.style)?.name ?? payload.style;
+  const plotUnit = payload.plotUnit === 'm2' ? 'm\u00B2' : 'ft\u00B2';
+  const extras = [
+    payload.hasGarage && 'Garage',
+    payload.hasGarden && 'Garden',
+    payload.hasPool && `Pool (${payload.poolSize ?? 'medium'})`,
+    payload.hasHomeOffice && 'Office',
+    payload.hasUtilityRoom && 'Utility',
+  ].filter(Boolean);
 
   return (
-    <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
-      <ArchText variant="body"
-        style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
-          fontSize: 24,
-          color: DS.colors.primary,
-          marginBottom: 24,
-        }}
-      >
-        Review your brief
-      </ArchText>
+    <Animated.View entering={FadeIn.duration(150)} style={{ flex: 1 }}>
+      <GridBackground />
 
-      <View
-        style={{
-          backgroundColor: DS.colors.surface,
-          borderRadius: 24,
-          padding: 16,
-          marginBottom: 32,
-          gap: 12,
-        }}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: DS.spacing.lg, paddingBottom: DS.spacing.xxl }}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <ArchText variant="body" style={{ fontSize: 24 }}>{TYPE_EMOJI[payload.buildingType] ?? '\u{1F3E0}'}</ArchText>
-          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.primary, textTransform: 'capitalize' }}>
+        <ArchText variant="heading" style={{ marginBottom: DS.spacing.xl }}>
+          review your brief
+        </ArchText>
+
+        {/* Summary card */}
+        <View
+          style={{
+            borderRadius: DS.radius.card,
+            borderWidth: 2,
+            borderColor: BASE_COLORS.textPrimary,
+            backgroundColor: DS.colors.surface,
+            padding: DS.spacing.lg,
+            marginBottom: DS.spacing.xl,
+            ...SKETCH_SHADOW,
+          }}
+        >
+          <ArchText variant="label" style={{ marginBottom: DS.spacing.sm }}>
             {payload.buildingType}
           </ArchText>
-        </View>
 
-        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
-          {payload.plotSize} {payload.plotUnit === 'm2' ? 'm\u00B2' : 'ft\u00B2'}
-        </ArchText>
+          <View style={{ gap: DS.spacing.sm }}>
+            <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+              <ArchText variant="caption">Plot size</ArchText>
+              <ArchText variant="body">{payload.plotSize} {plotUnit}</ArchText>
+            </View>
 
-        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
-          {payload.bedrooms} bed {'\u00B7'} {payload.bathrooms} bath {'\u00B7'} {payload.livingAreas} living
-        </ArchText>
+            <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+              <ArchText variant="caption">Bedrooms</ArchText>
+              <ArchText variant="body">{payload.bedrooms}</ArchText>
+            </View>
 
-        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim }}>
-          Style: {styleName}
-        </ArchText>
+            <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+              <ArchText variant="caption">Bathrooms</ArchText>
+              <ArchText variant="body">{payload.bathrooms}</ArchText>
+            </View>
 
-        {(payload.hasGarage || payload.hasGarden || payload.hasPool || payload.hasHomeOffice || payload.hasUtilityRoom) && (
-          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost }}>
-            {[
-              payload.hasGarage && 'Garage',
-              payload.hasGarden && 'Garden',
-              payload.hasPool && `Pool (${payload.poolSize ?? 'medium'})`,
-              payload.hasHomeOffice && 'Office',
-              payload.hasUtilityRoom && 'Utility',
-            ].filter(Boolean).join(' \u00B7 ')}
-          </ArchText>
-        )}
+            <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+              <ArchText variant="caption">Living areas</ArchText>
+              <ArchText variant="body">{payload.livingAreas}</ArchText>
+            </View>
 
-        {payload.referenceImageUrl && (
-          <Image
-            source={{ uri: payload.referenceImageUrl }}
-            style={{ width: '100%', height: 100, borderRadius: 16, marginTop: 4 }}
-            resizeMode="cover"
-          />
-        )}
+            <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+              <ArchText variant="caption">Style</ArchText>
+              <ArchText variant="body">{payload.style}</ArchText>
+            </View>
 
-        {payload.additionalNotes ? (
-          <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost, fontStyle: 'italic' }} numberOfLines={3}>
-            &ldquo;{payload.additionalNotes}&rdquo;
-          </ArchText>
-        ) : null}
-      </View>
-
-      {consultationSummary && (
-        <View style={{ marginTop: DS.spacing.lg }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 14, color: DS.colors.primaryDim, marginBottom: DS.spacing.sm, textTransform: 'uppercase', letterSpacing: 2 }}>
-            AI Consultation Insights
-          </ArchText>
-          <View style={{ backgroundColor: DS.colors.surface, borderRadius: 16, padding: DS.spacing.md, gap: DS.spacing.xs }}>
-            {consultationSummary.householdDescription && (
-              <View style={{ flexDirection: 'row', gap: DS.spacing.xs }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, minWidth: 80 }}>Household</ArchText>
-                <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{consultationSummary.householdDescription}</ArchText>
-              </View>
-            )}
-            {consultationSummary.dailyRoutine && (
-              <View style={{ flexDirection: 'row', gap: DS.spacing.xs }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, minWidth: 80 }}>Routine</ArchText>
-                <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{consultationSummary.dailyRoutine}</ArchText>
-              </View>
-            )}
-            {consultationSummary.entertainingFrequency && (
-              <View style={{ flexDirection: 'row', gap: DS.spacing.xs }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, minWidth: 80 }}>Entertaining</ArchText>
-                <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{consultationSummary.entertainingFrequency}</ArchText>
-              </View>
-            )}
-            {consultationSummary.keyFrustrations.length > 0 && (
-              <View style={{ flexDirection: 'row', gap: DS.spacing.xs }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, minWidth: 80 }}>Key needs</ArchText>
-                <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{consultationSummary.keyFrustrations.join(', ')}</ArchText>
-              </View>
-            )}
-            {consultationSummary.futurePlans.length > 0 && (
-              <View style={{ flexDirection: 'row', gap: DS.spacing.xs }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, minWidth: 80 }}>Future</ArchText>
-                <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{consultationSummary.futurePlans.join(', ')}</ArchText>
-              </View>
-            )}
-            {consultationSummary.sustainabilityInterest !== 'none' && (
-              <View style={{ flexDirection: 'row', gap: DS.spacing.xs }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, minWidth: 80 }}>Sustainability</ArchText>
-                <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{consultationSummary.sustainabilityInterest}</ArchText>
-              </View>
-            )}
-            {consultationSummary.architectInsights.length > 0 && (
-              <View style={{ flexDirection: 'row', gap: DS.spacing.xs, alignItems: 'flex-start' }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.primaryGhost, minWidth: 80 }}>Architect</ArchText>
-                <View style={{ flex: 1 }}>
-                  {consultationSummary.architectInsights.map((insight, i) => (
-                    <ArchText key={i} variant="body" style={{ fontSize: 12, color: DS.colors.primary }}>{insight}</ArchText>
-                  ))}
-                </View>
+            {extras.length > 0 && (
+              <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+                <ArchText variant="caption">Extras</ArchText>
+                <ArchText variant="body">{extras.join(' \u00B7 ')}</ArchText>
               </View>
             )}
           </View>
         </View>
-      )}
 
-      {result && (
-        <ArchText variant="body"
-          style={{
-            fontFamily: 'Inter_400Regular',
-            fontSize: 13,
-            color: DS.colors.primaryGhost,
-            textAlign: 'center',
-            marginBottom: 12,
-          }}
-        >
-          Previous design loaded — generating will replace it
-        </ArchText>
-      )}
+        {/* Consultation insights */}
+        {consultationSummary && (
+          <View
+            style={{
+              borderRadius: DS.radius.large,
+              borderWidth: 2,
+              borderColor: BASE_COLORS.textPrimary,
+              backgroundColor: DS.colors.surfaceHigh,
+              padding: DS.spacing.lg,
+              marginBottom: DS.spacing.xl,
+            }}
+          >
+            <ArchText variant="label" style={{ marginBottom: DS.spacing.md }}>
+              consultation insights
+            </ArchText>
 
-      <GenerateButton onPress={onGenerate} />
+            <View style={{ gap: DS.spacing.sm }}>
+              {consultationSummary.householdDescription && (
+                <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+                  <ArchText variant="caption">Household</ArchText>
+                  <ArchText variant="body">{consultationSummary.householdDescription}</ArchText>
+                </View>
+              )}
+              {consultationSummary.dailyRoutine && (
+                <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+                  <ArchText variant="caption">Routine</ArchText>
+                  <ArchText variant="body">{consultationSummary.dailyRoutine}</ArchText>
+                </View>
+              )}
+              {consultationSummary.entertainingFrequency && (
+                <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+                  <ArchText variant="caption">Entertaining</ArchText>
+                  <ArchText variant="body">{consultationSummary.entertainingFrequency}</ArchText>
+                </View>
+              )}
+              {consultationSummary.keyFrustrations.length > 0 && (
+                <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
+                  <ArchText variant="caption">Key needs</ArchText>
+                  <ArchText variant="body">{consultationSummary.keyFrustrations.join(', ')}</ArchText>
+                </View>
+              )}
+              {consultationSummary.architectInsights.length > 0 && (
+                <View style={{ gap: DS.spacing.xs }}>
+                  <ArchText variant="caption">Architect insights</ArchText>
+                  {consultationSummary.architectInsights.map((insight, i) => (
+                    <ArchText key={i} variant="body">{insight}</ArchText>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {result && (
+          <ArchText variant="caption" style={{ textAlign: 'center', marginBottom: DS.spacing.md }}>
+            Previous design loaded — generating will replace it
+          </ArchText>
+        )}
+      </ScrollView>
+
+      <View style={{ paddingHorizontal: DS.spacing.lg, paddingBottom: DS.spacing.lg }}>
+        <OvalButton
+          label="generate your design"
+          onPress={onGenerate}
+          variant="amber"
+          size="lg"
+          fullWidth
+        />
+      </View>
     </Animated.View>
   );
 }
