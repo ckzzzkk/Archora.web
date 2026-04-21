@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import BlueprintHeroIllustration from '@/components/BlueprintHeroIllustration';
 import BlueprintCard from '@/components/BlueprintCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import {
@@ -76,10 +75,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="h-[400px] lg:h-[500px]">
-            <BlueprintHeroIllustration />
-          </div>
-        </div>
+                  </div>
       </section>
 
       {/* Feature highlights */}
