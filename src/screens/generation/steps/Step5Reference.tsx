@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Pressable, Image } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'lucide-react';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
 import { DS } from '../../../theme/designSystem';
 import { BASE_COLORS } from '../../../theme/colors';
@@ -112,7 +112,10 @@ export function Step5Reference({ referenceImageUrl, onImageUploaded, onSkip, onN
               <CompassRoseLoader size="medium" />
             ) : (
               <>
-                <Camera size={32} color={BASE_COLORS.textPrimary} strokeWidth={1.5} style={{ marginBottom: DS.spacing.sm }} />
+                <Svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke={BASE_COLORS.textPrimary} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: DS.spacing.sm }}>
+                  <Path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <Circle cx={12} cy={13} r={4} />
+                </Svg>
                 <ArchText variant="body" style={{ fontFamily: DS.font.regular }}>
                   Upload a photo
                 </ArchText>

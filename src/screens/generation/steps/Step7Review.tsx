@@ -162,8 +162,8 @@ export function Step7Review({ payload, consultationSummary, result, onGenerate }
         <OvalButton
           label="generate your design"
           onPress={onGenerate}
-          variant="amber"
-          size="lg"
+          variant="outline"
+          size="large"
           fullWidth
         />
       </View>

@@ -380,6 +380,10 @@ export interface ConsultationChatProps {
     hasHomeOffice?: boolean;
     hasUtilityRoom?: boolean;
     style?: string;
+    referenceImageUrl?: string;
+    additionalNotes?: string;
+    transcript?: string;
+    architectId?: string;
   };
   onComplete: (summary: ConsultationSummary, updatedPayload: GenerationPayload) => void;
   onBack: () => void;
