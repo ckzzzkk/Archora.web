@@ -100,6 +100,16 @@ export type CeilingType =
   | 'exposed_beams' | 'concrete' | 'wood_planks'
   | 'acoustic_panels' | 'barrel_vault' | 'dropped';
 
+export interface Ceiling {
+  id: string;
+  polygon: [number, number][];    // [x, z][] boundary
+  holes: [number, number][][];      // cutout holes
+  holeMetadata: { source: 'manual' | 'stair' | 'opening'; id?: string }[];
+  height: number;                  // ceiling height in metres (from floor)
+  ceilingType: CeilingType;        // 'flat_white' | 'flat_dark' | 'coffered' | 'tray' | 'vaulted' | 'exposed_beams' | 'concrete' | 'wood_planks' | 'acoustic_panels' | 'barrel_vault' | 'dropped'
+  autoFromWalls: boolean;          // compute polygon from enclosing walls
+}
+
 export type ExteriorFinish =
   | 'brick' | 'render' | 'stone' | 'timber_cladding'
   | 'metal_cladding' | 'glass_facade' | 'concrete' | 'stucco';
@@ -211,6 +221,34 @@ export interface ElevatorData {
   servesFloors: number[];
 }
 
+export interface Roof {
+  id: string;
+  position: Vector3D;       // [x, y, z] world position
+  rotation: number;         // Y-axis rotation in radians
+  children: string[];      // RoofSegmentId[] — segments belonging to this roof
+  style?: string;          // material/style hint
+}
+
+export interface RoofSegment {
+  id: string;
+  roofType: 'hip' | 'gable' | 'shed' | 'gambrel' | 'dutch' | 'mansard' | 'flat';
+  width: number;           // X dimension in metres
+  depth: number;           // Z dimension in metres
+  wallHeight: number;      // top of wall height (where roof starts)
+  roofHeight: number;      // peak height above wall top
+  wallThickness: number;  // for overhang computation
+  deckThickness: number;  // roof deck thickness
+  overhang: number;       // overhang beyond wall face
+  shingleThickness: number; // shingle layer thickness
+}
+
+export interface RoofMesh {
+  id: string;
+  roofId: string;          // parent roof
+  geometry: THREE.BufferGeometry;
+  materialGroup: number;   // which material group (0=wall, 1=edge, 2=inner void, 3=top/shingle)
+}
+
 export interface Slab {
   id: string;
   polygon: [number, number][];  // [x, z][] pairs forming closed polygon
@@ -231,6 +269,9 @@ export interface FloorData {
   staircases: StaircaseData[];
   elevators: ElevatorData[];
   slabs: Slab[];
+  ceilings: Ceiling[];
+  roofs: Roof[];
+  roofSegments: RoofSegment[];
 }
 
 export interface BlueprintData {

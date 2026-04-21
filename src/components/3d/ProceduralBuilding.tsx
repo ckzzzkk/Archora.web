@@ -1,6 +1,7 @@
 import React from 'react';
 import { ProceduralWall } from './ProceduralWall';
 import { ProceduralFloor } from './ProceduralFloor';
+import { ProceduralRoof } from './ProceduralRoof';
 import { getModelVariant } from '../../data/designStyles';
 
 // Base components
@@ -54,7 +55,8 @@ import { SpiralStaircase, LStaircase } from './furniture/StairsFurniture';
 
 import { getFloorYOffset } from '../../utils/floorHelpers';
 import { getFurnitureVariant } from '../../data/designStyles';
-import type { BlueprintData, FurniturePiece, FloorData, Room, Wall, Opening, Slab } from '../../types';
+import type { BlueprintData, FurniturePiece, FloorData, Room, Wall, Opening, Slab, Ceiling, Roof, RoofSegment } from '../../types';
+import { ProceduralCeiling } from './ProceduralCeiling';
 
 interface ProceduralBuildingProps {
   blueprint: BlueprintData;
@@ -233,6 +235,9 @@ function FloorGroup({
   openings = [],
   furniture,
   slabs = [],
+  ceilings = [],
+  roofs = [],
+  roofSegments = [],
   selectedId,
   showFurniture,
   wallColor,
@@ -245,6 +250,9 @@ function FloorGroup({
   openings?: Opening[];
   furniture: FurniturePiece[];
   slabs?: Slab[];
+  ceilings?: Ceiling[];
+  roofs?: Roof[];
+  roofSegments?: RoofSegment[];
   selectedId?: string | null;
   showFurniture: boolean;
   wallColor?: string;
@@ -301,6 +309,23 @@ function FloorGroup({
             />
           ))
         : null}
+      {ceilings.map((ceiling) => (
+        <ProceduralCeiling
+          key={ceiling.id}
+          ceiling={ceiling}
+          selected={!ghost && selectedId === ceiling.id}
+          opacity={ghost ? 0.2 : 1}
+        />
+      ))}
+      {roofs.map((roof) => (
+        <ProceduralRoof
+          key={roof.id}
+          roof={roof}
+          segments={roofSegments}
+          selected={!ghost && selectedId === roof.id}
+          opacity={ghost ? 0.2 : 1}
+        />
+      ))}
     </group>
   );
 }
@@ -329,6 +354,9 @@ export function ProceduralBuilding({
               openings={floor.openings}
               furniture={floor.furniture}
               slabs={floor.slabs}
+              ceilings={floor.ceilings}
+              roofs={floor.roofs}
+              roofSegments={floor.roofSegments}
               selectedId={selectedId}
               showFurniture={showFurniture}
               wallColor={wallColor}
