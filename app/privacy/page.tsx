@@ -146,13 +146,58 @@ export default function PrivacyPage() {
             <p className="text-text-secondary font-body text-sm leading-relaxed">
               If you have any questions about this Privacy Policy or our data practices, please contact our Data Protection team:
             </p>
-            <div className="mt-3 glass rounded-card p-6">
+            <div className="border border-sketch rounded-card bg-surface p-6">
               <p className="text-text font-body text-sm font-medium">Crokora</p>
               <p className="text-text-secondary font-body text-sm">Data Protection Inquiries</p>
-              <a href="mailto:crokora.official@gmail.com" className="text-primary font-body text-sm hover:text-accent transition-colors">
-                crokora.official@gmail.com
+              <a href="mailto:support@asoria.app" className="text-primary font-body text-sm hover:text-accent transition-colors">
+                support@asoria.app
               </a>
             </div>
+          </div>
+
+          <div>
+            <h2 className="font-heading text-xl text-text mb-3">13. Sub-Processors</h2>
+            <p className="text-text-secondary font-body text-sm leading-relaxed mb-4">
+              We share data with the following sub-processors only as necessary to operate the App:
+            </p>
+            <table className="w-full text-sm font-body border border-border rounded-card overflow-hidden">
+              <thead>
+                <tr className="border-b border-border bg-surface">
+                  <th className="text-left text-text-secondary px-4 py-3 font-medium">Service</th>
+                  <th className="text-left text-text-secondary px-4 py-3 font-medium">Purpose</th>
+                  <th className="text-left text-text-secondary px-4 py-3 font-medium">Privacy Policy</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                <tr><td className="px-4 py-3 text-text">Supabase</td><td className="px-4 py-3 text-text-secondary">Database, authentication, file storage</td><td className="px-4 py-3 text-primary">supabase.com/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">Stripe</td><td className="px-4 py-3 text-text-secondary">Payment processing and billing</td><td className="px-4 py-3 text-primary">stripe.com/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">Anthropic (Claude)</td><td className="px-4 py-3 text-text-secondary">AI floor plan generation</td><td className="px-4 py-3 text-primary">anthropic.com/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">OpenAI (Whisper)</td><td className="px-4 py-3 text-text-secondary">Voice-to-text transcription</td><td className="px-4 py-3 text-primary">openai.com/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">Replicate</td><td className="px-4 py-3 text-text-secondary">AI texture generation (Creator+)</td><td className="px-4 py-3 text-primary">replicate.com/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">Meshy</td><td className="px-4 py-3 text-text-secondary">3D furniture models (Architect)</td><td className="px-4 py-3 text-primary">meshy.ai/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">Upstash Redis</td><td className="px-4 py-3 text-text-secondary">Anonymous rate-limit counters</td><td className="px-4 py-3 text-primary">upstash.com/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">Cloudflare CDN</td><td className="px-4 py-3 text-text-secondary">Static asset delivery</td><td className="px-4 py-3 text-primary">cloudflare.com/privacy</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h2 className="font-heading text-xl text-text mb-3">14. Device Permissions</h2>
+            <p className="text-text-secondary font-body text-sm leading-relaxed mb-3">
+              The App requests the following device permissions:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-text-secondary font-body text-sm">
+              <li><strong className="text-text">Camera</strong> — for AR room scanning. Images are processed on-device and used only to construct a room layout.</li>
+              <li><strong className="text-text">Microphone</strong> — for voice-to-prompt. Audio is sent to OpenAI Whisper for transcription then discarded.</li>
+              <li><strong className="text-text">Photo Library</strong> — to save exported design renders. We do not read existing photos.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="font-heading text-xl text-text mb-3">15. Security</h2>
+            <p className="text-text-secondary font-body text-sm leading-relaxed">
+              All data in transit is encrypted via TLS. Data at rest is encrypted by Supabase (AES-256). Authentication tokens are stored in the device secure enclave (iOS Keychain / Android Keystore). Row-Level Security policies ensure users can only access their own data. No method of transmission over the internet or electronic storage is 100% secure; while we strive to use commercially acceptable means to protect your data, we cannot guarantee absolute security.
+            </p>
           </div>
         </div>
       </div>

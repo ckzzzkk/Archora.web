@@ -46,10 +46,10 @@ export default function Footer() {
               <span className="text-text-secondary">Crokora</span>
             </p>
             <a
-              href="mailto:crokora.official@gmail.com"
+              href="mailto:support@asoria.app"
               className="text-primary text-sm font-body hover:text-accent transition-colors block"
             >
-              crokora.official@gmail.com
+              support@asoria.app
             </a>
             {/* Social links */}
             <div className="flex gap-4 pt-2">

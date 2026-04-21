@@ -34,10 +34,10 @@ export default function ContactPage() {
               </div>
               <h3 className="font-heading text-lg text-text mb-1">Email</h3>
               <a
-                href="mailto:crokora.official@gmail.com"
+                href="mailto:support@asoria.app"
                 className="text-primary font-body text-sm hover:text-accent transition-colors"
               >
-                crokora.official@gmail.com
+                support@asoria.app
               </a>
             </div>
 

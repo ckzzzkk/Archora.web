@@ -145,8 +145,8 @@ export default function TermsPage() {
             <div className="mt-3 glass rounded-card p-6">
               <p className="text-text font-body text-sm font-medium">Crokora</p>
               <p className="text-text-secondary font-body text-sm">Legal Inquiries</p>
-              <a href="mailto:crokora.official@gmail.com" className="text-primary font-body text-sm hover:text-accent transition-colors">
-                crokora.official@gmail.com
+              <a href="mailto:support@asoria.app" className="text-primary font-body text-sm hover:text-accent transition-colors">
+                support@asoria.app
               </a>
             </div>
           </div>
