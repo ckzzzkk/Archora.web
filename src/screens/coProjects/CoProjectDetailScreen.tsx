@@ -10,6 +10,7 @@ import { useHaptics } from '../../hooks/useHaptics';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { OvalButton } from '../../components/common/OvalButton';
+import { TierGate } from '../../components/common/TierGate';
 import { ActivityFeed } from '../../components/coProjects/ActivityFeed';
 import { MemberList } from '../../components/coProjects/MemberList';
 import { InviteModal } from '../../components/coProjects/InviteModal';
@@ -141,6 +142,7 @@ export function CoProjectDetailScreen() {
         {/* Codesign CTA */}
         {activeProject.blueprintId && (
           <View style={{ marginHorizontal: DS.spacing.lg, marginBottom: DS.spacing.lg }}>
+            <TierGate feature="codesignEnabled" featureLabel="Codesign Sessions">
             <OvalButton
               label="Enter Codesign Session"
               variant="filled"
@@ -150,6 +152,7 @@ export function CoProjectDetailScreen() {
                 navigation.navigate('Workspace' as any, { projectId: activeProject.blueprintId } as any);
               }}
             />
+            </TierGate>
           </View>
         )}
 

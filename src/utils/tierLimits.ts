@@ -46,6 +46,8 @@ export interface TierLimits {
   exportWatermark: boolean;
   publishTemplates: boolean;
   vipSupport: boolean;
+  coProjectsEnabled: boolean;
+  codesignEnabled: boolean;
 
   // Collaboration
   maxCollaborators: number;     // 0 = none
@@ -112,6 +114,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     exportWatermark: true,
     publishTemplates: false,
     vipSupport: false,
+    coProjectsEnabled: false,
+    codesignEnabled: false,
 
     maxCollaborators: 0,
     collaborationLimit: 0,
@@ -173,6 +177,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     exportWatermark: false,
     publishTemplates: true,
     vipSupport: false,
+    coProjectsEnabled: false,
+    codesignEnabled: false,
 
     maxCollaborators: 1,
     collaborationLimit: 1,
@@ -234,6 +240,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     exportWatermark: false,
     publishTemplates: true,
     vipSupport: false,
+    coProjectsEnabled: false,
+    codesignEnabled: false,
 
     maxCollaborators: 1,
     collaborationLimit: 1,
@@ -295,6 +303,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     exportWatermark: false,
     publishTemplates: true,
     vipSupport: true,
+    coProjectsEnabled: true,
+    codesignEnabled: true,
 
     maxCollaborators: 5,
     collaborationLimit: 5,

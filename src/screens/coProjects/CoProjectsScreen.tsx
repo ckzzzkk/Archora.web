@@ -12,6 +12,7 @@ import { useHaptics } from '../../hooks/useHaptics';
 import { ScreenHeader } from '../../components/common/ScreenHeader';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { OvalButton } from '../../components/common/OvalButton';
+import { TierGate } from '../../components/common/TierGate';
 import { CoProjectCard } from '../../components/coProjects/CoProjectCard';
 import { DS } from '../../theme/designSystem';
 import type { RootStackParamList } from '../../navigation/types';
@@ -146,6 +147,7 @@ export function CoProjectsScreen() {
   );
 
   return (
+    <TierGate feature="coProjectsEnabled">
     <View style={{ flex: 1, backgroundColor: C.background }}>
       <ScreenHeader
         title="Co-Projects"
@@ -177,5 +179,6 @@ export function CoProjectsScreen() {
         onCreate={handleCreate}
       />
     </View>
+    </TierGate>
   );
 }
