@@ -35,6 +35,8 @@ interface BlueprintState {
   isDirty: boolean;
   currentFloorIndex: number;
   saveStatus: 'saved' | 'saving' | 'unsaved';
+  // Dirty nodes — Set of node IDs pending geometry update (throttled by useDirtyProcessor)
+  dirtyNodes: string[];
   // Undo/redo
   history: BlueprintData[];
   historyIndex: number;
@@ -109,6 +111,10 @@ interface BlueprintState {
     setSuggestions: (suggestions: SuggestionItem[]) => void;
     markSuggestionRead: (suggestionId: string) => void;
     clearSuggestions: () => void;
+    // Dirty node tracking — drives useDirtyProcessor batch updates
+    markDirty: (id: string) => void;
+    clearDirty: (id: string) => void;
+    clearAllDirty: () => void;
   };
 }
 
@@ -164,6 +170,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
   function mutate(
     label: string,
     updater: (state: BlueprintState) => BlueprintData | null,
+    affectedNodeIds?: string[],
   ): void {
     const state = get();
     if (!state.blueprint) return;
@@ -172,6 +179,11 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     const tier = getCurrentTier();
     const historyUpdate = pushHistory(state, newBlueprint, label);
     scheduleSave(newBlueprint, tier);
+    // Collect affected node IDs from this mutation
+    const dirtyIds = affectedNodeIds ?? [];
+    if (dirtyIds.length > 0) {
+      set((s) => ({ dirtyNodes: [...new Set([...s.dirtyNodes, ...dirtyIds])] }));
+    }
     set({ blueprint: newBlueprint, isDirty: true, ...historyUpdate });
   }
 
@@ -182,6 +194,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     isDirty: false,
     currentFloorIndex: 0,
     saveStatus: 'saved',
+    dirtyNodes: [],
     history: [],
     historyIndex: -1,
     lastActionLabel: '',
@@ -217,6 +230,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           isDirty: false,
           currentFloorIndex: 0,
           saveStatus: 'saved',
+          dirtyNodes: [],
           history: [repaired],
           historyIndex: 0,
         });
@@ -227,7 +241,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         if (saveTimer) clearTimeout(saveTimer);
         set({
           blueprint: null, selectedId: null, isDirty: false, currentFloorIndex: 0,
-          saveStatus: 'saved', history: [], historyIndex: -1,
+          saveStatus: 'saved', dirtyNodes: [], history: [], historyIndex: -1,
         });
         blueprintStorage.delete(STORAGE_KEY);
       },
@@ -341,7 +355,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, walls: f.walls.map((w) => w.id === id ? { ...w, ...updates } : w),
           }));
-        });
+        }, [id]);
       },
 
       deleteWall: (id) => {
@@ -351,7 +365,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, walls: f.walls.filter((w) => w.id !== id),
           }));
-        });
+        }, [id]);
       },
 
       addRoom: (room) => {
@@ -359,7 +373,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           const { blueprint, currentFloorIndex } = state;
           if (!blueprint) return null;
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({ ...f, rooms: [...f.rooms, room] }));
-        });
+        }, [room.id]);
       },
 
       updateRoom: (id, updates) => {
@@ -369,7 +383,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, rooms: f.rooms.map((r) => r.id === id ? { ...r, ...updates } : r),
           }));
-        });
+        }, [id]);
       },
 
       deleteRoom: (id) => {
@@ -379,7 +393,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, rooms: f.rooms.filter((r) => r.id !== id),
           }));
-        });
+        }, [id]);
       },
 
       addOpening: (opening) => {
@@ -389,7 +403,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, openings: [...f.openings, opening],
           }));
-        });
+        }, [opening.id]);
       },
 
       updateOpening: (id, updates) => {
@@ -399,7 +413,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, openings: f.openings.map((o) => o.id === id ? { ...o, ...updates } : o),
           }));
-        });
+        }, [id]);
       },
 
       deleteOpening: (id) => {
@@ -409,7 +423,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, openings: f.openings.filter((o) => o.id !== id),
           }));
-        });
+        }, [id]);
       },
 
       addFurniture: (piece) => {
@@ -419,7 +433,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, furniture: [...f.furniture, piece],
           }));
-        });
+        }, [piece.id]);
       },
 
       addFurnitureFromAR: (items) => {
@@ -456,7 +470,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, furniture: f.furniture.map((p) => p.id === id ? { ...p, ...updates } : p),
           }));
-        });
+        }, [id]);
       },
 
       deleteFurniture: (id) => {
@@ -466,7 +480,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, furniture: f.furniture.filter((p) => p.id !== id),
           }));
-        });
+        }, [id]);
       },
 
       setWallTexture: (wallId, texture) => {
@@ -644,6 +658,20 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
 
       clearSuggestions: () => {
         set({ suggestions: [], unreadSuggestionCount: 0 });
+      },
+
+      // --- Dirty node tracking (scene registry + useDirtyProcessor) ---
+
+      markDirty: (id: string) => {
+        set((state) => ({ dirtyNodes: [...new Set([...state.dirtyNodes, id])] }));
+      },
+
+      clearDirty: (id: string) => {
+        set((state) => ({ dirtyNodes: state.dirtyNodes.filter((n) => n !== id) }));
+      },
+
+      clearAllDirty: () => {
+        set({ dirtyNodes: [] });
       },
     },
   };
