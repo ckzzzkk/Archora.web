@@ -204,6 +204,7 @@ export function buildBlueprintFromAR(
     furniture,
     staircases: [],
     elevators: [],
+    slabs: [],
   };
 
   return {

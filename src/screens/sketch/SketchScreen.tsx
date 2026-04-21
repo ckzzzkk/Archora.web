@@ -348,6 +348,7 @@ function sketchToBlueprintData(
       furniture: [],
       staircases: [],
       elevators: [],
+      slabs: [],
     };
 
   return {

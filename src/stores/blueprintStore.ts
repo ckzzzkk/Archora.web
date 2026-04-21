@@ -269,7 +269,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
             id: generateId(),
             label: getFloorLabel(newIndex),
             index: newIndex,
-            walls: [], rooms: [], openings: [], furniture: [], staircases: [], elevators: [],
+            walls: [], rooms: [], openings: [], furniture: [], staircases: [], elevators: [], slabs: [],
           };
           const floors = [
             ...blueprint.floors.slice(0, insertAfter + 1),
@@ -309,6 +309,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
             furniture: source.furniture.map((f) => ({ ...f, id: generateId() })),
             staircases: [],
             elevators: [],
+            slabs: source.slabs.map((s) => ({ ...s, id: generateId() })),
           };
           const floors = [...blueprint.floors, copy];
           const newCurrentIndex = floors.length - 1;

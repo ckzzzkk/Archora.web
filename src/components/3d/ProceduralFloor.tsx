@@ -1,16 +1,15 @@
 import React, { useMemo } from 'react';
-import { getRoomCenter } from '../../utils/procedural/geometry';
-import { MATERIAL_COLORS } from '../../utils/procedural/geometry';
-import type { Room, Wall, MaterialType } from '../../types';
+import { buildSlabGeometry } from '../../utils/procedural/slabGeometry';
+import type { Slab, Wall } from '../../types';
 
-interface ProceduralFloorProps {
-  room: Room;
-  walls: Wall[];
+interface SlabMeshProps {
+  slab: Slab;
+  walls?: Wall[];
   selected?: boolean;
   opacity?: number;
 }
 
-const FLOOR_COLORS: Record<MaterialType, string> = {
+const FLOOR_COLORS: Record<string, string> = {
   hardwood: '#7C4E28',
   tile: '#B0B0B0',
   carpet: '#6A5A7A',
@@ -36,7 +35,7 @@ const FLOOR_COLORS: Record<MaterialType, string> = {
   herringbone_parquet: '#906830',
   chevron_parquet: '#8C6428',
   rubber: '#484848',
-  // New entries
+  // Extended hardwoods
   oak_hardwood: '#A07040',
   walnut_hardwood: '#5C3A1E',
   pine_hardwood: '#C8A464',
@@ -64,19 +63,32 @@ const FLOOR_COLORS: Record<MaterialType, string> = {
   rubber_floor: '#484848',
 };
 
-export function ProceduralFloor({ room, walls, selected = false, opacity = 1 }: ProceduralFloorProps) {
-  const center = useMemo(() => getRoomCenter(room, walls), [room, walls]);
-  const color = selected ? '#4A90D9' : FLOOR_COLORS[room.floorMaterial] ?? '#808080';
-  const side = Math.sqrt(Math.max(room.area, 1));
+interface ProceduralFloorProps {
+  slab: Slab;
+  walls?: Wall[];
+  selected?: boolean;
+  opacity?: number;
+  floorMaterial?: string;
+}
+
+export function ProceduralFloor({
+  slab,
+  walls = [],
+  selected = false,
+  opacity = 1,
+  floorMaterial = 'concrete',
+}: ProceduralFloorProps) {
+  const geometry = useMemo(
+    () => buildSlabGeometry(slab.polygon, slab.holes, slab.elevation),
+    [slab.polygon, slab.holes, slab.elevation],
+  );
+
+  const color = selected ? '#4A90D9' : FLOOR_COLORS[floorMaterial] ?? '#808080';
   const isTransparent = opacity < 1;
 
   return (
-    <mesh
-      position={[center.x, 0.01, center.z]}
-      rotation={[-Math.PI / 2, 0, 0]}
-      receiveShadow={!isTransparent}
-    >
-      <planeGeometry args={[side, side]} />
+    // @ts-expect-error geometry prop is valid for R3F mesh but types are incomplete
+    <mesh geometry={geometry} receiveShadow={!isTransparent}>
       <meshStandardMaterial
         color={color}
         roughness={0.9}

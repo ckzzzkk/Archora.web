@@ -54,7 +54,7 @@ import { SpiralStaircase, LStaircase } from './furniture/StairsFurniture';
 
 import { getFloorYOffset } from '../../utils/floorHelpers';
 import { getFurnitureVariant } from '../../data/designStyles';
-import type { BlueprintData, FurniturePiece, FloorData, Room, Wall, Opening } from '../../types';
+import type { BlueprintData, FurniturePiece, FloorData, Room, Wall, Opening, Slab } from '../../types';
 
 interface ProceduralBuildingProps {
   blueprint: BlueprintData;
@@ -232,6 +232,7 @@ function FloorGroup({
   walls,
   openings = [],
   furniture,
+  slabs = [],
   selectedId,
   showFurniture,
   wallColor,
@@ -243,6 +244,7 @@ function FloorGroup({
   walls: Wall[];
   openings?: Opening[];
   furniture: FurniturePiece[];
+  slabs?: Slab[];
   selectedId?: string | null;
   showFurniture: boolean;
   wallColor?: string;
@@ -252,15 +254,32 @@ function FloorGroup({
 }) {
   return (
     <group>
-      {rooms.map((room) => (
-        <ProceduralFloor
-          key={`floor-${room.id}`}
-          room={room}
-          walls={walls}
-          selected={!ghost && selectedId === room.id}
-          opacity={ghost ? 0.2 : 1}
-        />
-      ))}
+      {slabs.length > 0
+        ? slabs.map((slab) => (
+            <ProceduralFloor
+              key={`slab-${slab.id}`}
+              slab={slab}
+              selected={!ghost && selectedId === slab.id}
+              opacity={ghost ? 0.2 : 1}
+            />
+          ))
+        : rooms.map((room) => (
+            <ProceduralFloor
+              key={`floor-${room.id}`}
+              slab={{
+                id: room.id,
+                polygon: [],
+                holes: [],
+                holeMetadata: [],
+                elevation: 0.05,
+                autoFromWalls: false,
+              }}
+              walls={walls}
+              selected={!ghost && selectedId === room.id}
+              opacity={ghost ? 0.2 : 1}
+              floorMaterial={room.floorMaterial}
+            />
+          ))}
       {walls.map((wall) => (
         <ProceduralWall
           key={wall.id}
@@ -309,6 +328,7 @@ export function ProceduralBuilding({
               walls={floor.walls}
               openings={floor.openings}
               furniture={floor.furniture}
+              slabs={floor.slabs}
               selectedId={selectedId}
               showFurniture={showFurniture}
               wallColor={wallColor}
