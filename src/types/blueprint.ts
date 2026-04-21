@@ -117,6 +117,8 @@ export interface Wall {
   exteriorFinish?: ExteriorFinish;
   isLoadbearing?: boolean;
   material?: string;
+  /** Curve offset for curved walls (arc deviation in metres) */
+  curveOffset?: number;
 }
 
 export interface Opening {
@@ -209,6 +211,15 @@ export interface ElevatorData {
   servesFloors: number[];
 }
 
+export interface Slab {
+  id: string;
+  polygon: [number, number][];  // [x, z][] pairs forming closed polygon
+  holes: [number, number][][];   // array of hole polygons [x, z][]
+  holeMetadata: { source: 'manual' | 'stair' | 'opening'; id?: string }[];
+  elevation: number;             // height above floor level in metres (default 0.05)
+  autoFromWalls: boolean;       // auto-compute polygon from enclosing wall loop
+}
+
 export interface FloorData {
   id: string;
   label: string;         // 'B2' | 'B1' | 'G' | '1' | '2' ...
@@ -219,6 +230,7 @@ export interface FloorData {
   furniture: FurniturePiece[];
   staircases: StaircaseData[];
   elevators: ElevatorData[];
+  slabs: Slab[];
 }
 
 export interface BlueprintData {
