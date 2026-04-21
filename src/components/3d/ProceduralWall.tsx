@@ -10,6 +10,12 @@ import {
   type Point2D,
   type WallMiterData,
 } from '../../utils/procedural/wallMitering'
+import {
+  isCurvedWall,
+  getWallCurveFrameAt,
+  buildCurvedWallGeometry,
+  getWallSurfacePolygon,
+} from '../../utils/procedural/wallCurve'
 
 interface Segment {
   x: number   // local X center (in wall group space)
@@ -98,6 +104,52 @@ function getMiterData(walls: Wall[]): WallMiterData {
   return miterData
 }
 
+/**
+ * Builds geometry for curved walls (curveOffset !== 0)
+ * The arc body uses buildCurvedWallGeometry, with miter overrides at endpoints
+ */
+function buildCurvedWallGeometryWithMiters(
+  wall: Wall,
+  miterData: WallMiterData,
+  numSegments = 24,
+): THREE.BufferGeometry {
+  const boundaryPoints = getWallMiterBoundaryPoints(wall, miterData)
+
+  const polygon = getWallSurfacePolygon(
+    wall,
+    numSegments,
+    {
+      startLeft: boundaryPoints.startLeft,
+      startRight: boundaryPoints.startRight,
+      endLeft: boundaryPoints.endLeft,
+      endRight: boundaryPoints.endRight,
+    },
+  )
+
+  if (polygon.length < 3) {
+    return new THREE.BufferGeometry()
+  }
+
+  // Build THREE.Shape in world coordinates
+  const shape = new THREE.Shape()
+  shape.moveTo(polygon[0]!.x, polygon[0]!.y)
+  for (let i = 1; i < polygon.length; i++) {
+    shape.lineTo(polygon[i]!.x, polygon[i]!.y)
+  }
+  shape.closePath()
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: wall.height,
+    bevelEnabled: false,
+  })
+
+  // Rotate so extrusion direction (Z) becomes height direction (Y)
+  geometry.rotateX(-Math.PI / 2)
+  geometry.computeVertexNormals()
+
+  return geometry
+}
+
 function buildMiteredWallGeometry(wall: Wall, miterData: WallMiterData): THREE.BufferGeometry {
   const start: Point2D = { x: wall.start.x, y: wall.start.y }
   const end: Point2D = { x: wall.end.x, y: wall.end.y }
@@ -111,6 +163,11 @@ function buildMiteredWallGeometry(wall: Wall, miterData: WallMiterData): THREE.B
   }
 
   const wallAngle = Math.atan2(dy, dx)
+
+  // For curved walls, use sagitta-based arc geometry with mitered endpoints
+  if (isCurvedWall(wall)) {
+    return buildCurvedWallGeometryWithMiters(wall, miterData)
+  }
 
   // Get mitered polygon footprint
   const polygon = getWallMiterFootprint(wall, miterData)
