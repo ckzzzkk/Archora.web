@@ -62,6 +62,14 @@ const TermsScreen = lazyScreen(() =>
 const NotificationPreferencesScreen = lazyScreen(() =>
   import('../screens/account/NotificationPreferencesScreen')
     .then((m) => ({ default: m.NotificationPreferencesScreen })));
+
+const CoProjectsScreen = lazyScreen(() =>
+  import('../screens/coProjects/CoProjectsScreen')
+    .then((m) => ({ default: m.CoProjectsScreen })));
+
+const CoProjectDetailScreen = lazyScreen(() =>
+  import('../screens/coProjects/CoProjectDetailScreen')
+    .then((m) => ({ default: m.CoProjectDetailScreen })));
 import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
 import { Storage } from '../utils/storage';
 import type { RootStackParamList } from './types';
@@ -243,6 +251,16 @@ export function RootNavigator() {
             name="NotificationPreferences"
             component={NotificationPreferencesScreen}
             options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="CoProjects"
+            component={CoProjectsScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
+          />
+          <Stack.Screen
+            name="CoProjectDetail"
+            component={CoProjectDetailScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
           />
         </>
       )}

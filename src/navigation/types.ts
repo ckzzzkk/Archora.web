@@ -35,6 +35,8 @@ export type RootStackParamList = {
   ThemeCustomiser: undefined;
   PublishTemplate: { projectId: string };
   PurchaseTemplate: { templateId: string };
+  CoProjects: undefined;
+  CoProjectDetail: { projectId: string };
   HelpFAQ: undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;
@@ -65,3 +67,5 @@ export type HelpFAQScreenProps           = NativeStackScreenProps<RootStackParam
 export type PrivacyPolicyScreenProps     = NativeStackScreenProps<RootStackParamList, 'PrivacyPolicy'>;
 export type TermsScreenProps             = NativeStackScreenProps<RootStackParamList, 'Terms'>;
 export type NotificationPreferencesScreenProps = NativeStackScreenProps<RootStackParamList, 'NotificationPreferences'>;
+export type CoProjectsScreenProps        = NativeStackScreenProps<RootStackParamList, 'CoProjects'>;
+export type CoProjectDetailScreenProps   = NativeStackScreenProps<RootStackParamList, 'CoProjectDetail'>;
