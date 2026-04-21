@@ -12,7 +12,7 @@ export default function LoginPage() {
     <section className="min-h-[80vh] flex items-center justify-center px-6 py-20">
       <div className="w-full max-w-md">
         <Suspense fallback={
-          <div className="glass rounded-card p-12 text-center">
+          <div className="border border-sketch rounded-card bg-surface p-12 text-center">
             <p className="text-text-dim font-body">Loading...</p>
           </div>
         }>

@@ -19,7 +19,7 @@ export default function PricingCard({ tier, interval, isLoading, onSubscribe }: 
 
   return (
     <div
-      className={`relative glass rounded-card p-8 flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl group ${
+      className={`relative border border-sketch rounded-card bg-surface p-8 flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl group ${
         isMostPopular ? 'ring-2 ring-primary' : ''
       }`}
       style={{
@@ -95,10 +95,10 @@ export default function PricingCard({ tier, interval, isLoading, onSubscribe }: 
         disabled={isLoading}
         className={`w-full py-3.5 rounded-button font-body font-semibold text-sm transition-all duration-300 disabled:opacity-60 ${
           isStarter
-            ? 'bg-surface-top text-text-secondary hover:bg-elevated hover:text-text border border-glass-border'
+            ? 'bg-surface text-text-secondary hover:bg-elevated hover:text-text border border-border'
             : isMostPopular
               ? 'bg-primary text-background hover:bg-accent'
-              : 'bg-glass-prominent text-text hover:bg-primary hover:text-background border border-glass-border hover:border-primary'
+              : 'bg-elevated text-text hover:bg-primary hover:text-background border border-border hover:border-primary'
         }`}
       >
         {isLoading ? 'Loading...' : isStarter ? 'Download App' : 'Subscribe'}

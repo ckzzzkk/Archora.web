@@ -46,7 +46,7 @@ export default function ContactForm() {
 
   if (status === 'success') {
     return (
-      <div className="glass rounded-card p-12 text-center">
+      <div className="border border-sketch rounded-card bg-surface p-12 text-center">
         <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-success/20 flex items-center justify-center">
           <svg className="w-8 h-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -67,7 +67,7 @@ export default function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass rounded-card p-8 md:p-12 space-y-6">
+    <form onSubmit={handleSubmit} className="border border-sketch rounded-card bg-surface p-8 md:p-12 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-body text-text-secondary mb-2">
@@ -79,7 +79,7 @@ export default function ContactForm() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-surface border border-glass-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+            className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
             placeholder="Your name"
           />
         </div>
@@ -93,7 +93,7 @@ export default function ContactForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-surface border border-glass-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+            className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
             placeholder="you@example.com"
           />
         </div>
@@ -109,7 +109,7 @@ export default function ContactForm() {
           required
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          className="w-full bg-surface border border-glass-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+          className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
           placeholder="What is this about?"
         />
       </div>
@@ -124,7 +124,7 @@ export default function ContactForm() {
           rows={5}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="w-full bg-surface border border-glass-border rounded-card px-5 py-4 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors resize-none"
+          className="w-full bg-surface border border-border rounded-card px-5 py-4 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors resize-none"
           placeholder="Tell us how we can help..."
         />
       </div>

@@ -40,7 +40,7 @@ export default function FAQ() {
         return (
           <div
             key={i}
-            className="glass rounded-card overflow-hidden transition-all duration-300"
+            className="border border-sketch rounded-card bg-surface overflow-hidden transition-all duration-300"
           >
             <button
               onClick={() => setOpenIndex(isOpen ? null : i)}

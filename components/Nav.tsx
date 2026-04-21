@@ -116,7 +116,7 @@ export default function Nav() {
               {link.label}
             </Link>
           ))}
-          <hr className="border-glass-border" />
+          <hr className="border-border" />
           <Link
             href="/login"
             className="text-base font-body text-text-secondary hover:text-text transition-colors py-2"

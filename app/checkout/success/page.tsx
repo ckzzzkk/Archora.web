@@ -44,7 +44,7 @@ export default function CheckoutSuccessPage() {
           </a>
           <Link
             href="/account"
-            className="glass font-body font-medium text-text px-8 py-4 rounded-button text-sm hover:bg-glass-prominent transition-colors inline-block"
+            className="border border-sketch bg-surface font-body font-medium text-text px-8 py-4 rounded-button text-sm hover:bg-elevated transition-colors inline-block"
           >
             Go to Account
           </Link>

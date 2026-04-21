@@ -60,7 +60,7 @@ export default function FeatureSection({
           style={{ direction: 'ltr' }}
         >
           {children ?? (
-            <div className="w-full aspect-[4/3] glass rounded-card flex items-center justify-center">
+            <div className="w-full aspect-[4/3] border border-sketch rounded-card bg-surface flex items-center justify-center">
               <svg
                 className="w-24 h-24 text-primary/20"
                 fill="none"

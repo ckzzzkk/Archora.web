@@ -67,7 +67,7 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="glass rounded-card p-8 md:p-12 w-full max-w-md mx-auto">
+    <div className="border border-sketch rounded-card bg-surface p-8 md:p-12 w-full max-w-md mx-auto">
       <h2 className="font-heading text-2xl text-text text-center mb-2">
         {mode === 'login' ? 'Welcome back' : 'Create account'}
       </h2>
@@ -81,7 +81,7 @@ export default function AuthForm() {
       <button
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-3 bg-surface border border-glass-border rounded-button py-3.5 text-text font-body text-sm hover:bg-elevated transition-colors disabled:opacity-50 mb-6"
+        className="w-full flex items-center justify-center gap-3 bg-surface border border-border rounded-button py-3.5 text-text font-body text-sm hover:bg-elevated transition-colors disabled:opacity-50 mb-6"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path
@@ -105,9 +105,9 @@ export default function AuthForm() {
       </button>
 
       <div className="flex items-center gap-4 mb-6">
-        <div className="flex-1 h-px bg-glass-border" />
+        <div className="flex-1 h-px bg-border" />
         <span className="text-text-dim text-xs font-body">or</span>
-        <div className="flex-1 h-px bg-glass-border" />
+        <div className="flex-1 h-px bg-border" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -122,7 +122,7 @@ export default function AuthForm() {
               required
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full bg-surface border border-glass-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+              className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
               placeholder="Your name"
             />
           </div>
@@ -138,7 +138,7 @@ export default function AuthForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-surface border border-glass-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+            className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
             placeholder="you@example.com"
           />
         </div>
@@ -154,7 +154,7 @@ export default function AuthForm() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-surface border border-glass-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+            className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
             placeholder={mode === 'signup' ? 'At least 6 characters' : 'Your password'}
           />
         </div>

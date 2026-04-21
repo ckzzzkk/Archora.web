@@ -20,7 +20,7 @@ export default function BillingToggle({ interval, onChange }: BillingToggleProps
 
       <button
         onClick={() => onChange(interval === 'monthly' ? 'annual' : 'monthly')}
-        className="relative w-16 h-8 rounded-button bg-surface-top border border-glass-border transition-colors"
+        className="relative w-16 h-8 rounded-button bg-surface-top border border-border transition-colors"
         aria-label="Toggle billing interval"
       >
         <span

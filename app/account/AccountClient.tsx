@@ -47,7 +47,7 @@ export default function AccountClient({ email, displayName, tier }: AccountClien
         </p>
 
         {/* Profile card */}
-        <div className="glass rounded-card p-8 mb-8">
+        <div className="border border-sketch rounded-card bg-surface p-8 mb-8">
           <div className="flex items-center gap-4 mb-6">
             <div
               className="w-14 h-14 rounded-full flex items-center justify-center font-heading text-xl text-background"
@@ -82,7 +82,7 @@ export default function AccountClient({ email, displayName, tier }: AccountClien
         </div>
 
         {/* Usage placeholder */}
-        <div className="glass rounded-card p-8 mb-8">
+        <div className="border border-sketch rounded-card bg-surface p-8 mb-8">
           <h2 className="font-heading text-xl text-text mb-6">Usage</h2>
           <div className="grid grid-cols-2 gap-6">
             <div>
@@ -104,7 +104,7 @@ export default function AccountClient({ email, displayName, tier }: AccountClien
             <button
               onClick={handleManageSubscription}
               disabled={loading}
-              className="w-full glass rounded-card p-5 flex items-center justify-between hover:bg-glass-prominent transition-colors disabled:opacity-50 group"
+              className="w-full border border-sketch rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors disabled:opacity-50 group"
             >
               <div className="text-left">
                 <p className="font-body font-medium text-text">Manage Subscription</p>
@@ -117,7 +117,7 @@ export default function AccountClient({ email, displayName, tier }: AccountClien
           ) : (
             <a
               href="/pricing"
-              className="w-full glass rounded-card p-5 flex items-center justify-between hover:bg-glass-prominent transition-colors group block"
+              className="w-full border border-sketch rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors group block"
             >
               <div className="text-left">
                 <p className="font-body font-medium text-text">Upgrade Plan</p>
@@ -131,7 +131,7 @@ export default function AccountClient({ email, displayName, tier }: AccountClien
 
           <a
             href="asoria://home"
-            className="w-full glass rounded-card p-5 flex items-center justify-between hover:bg-glass-prominent transition-colors group block"
+            className="w-full border border-sketch rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors group block"
           >
             <div className="text-left">
               <p className="font-body font-medium text-text">Open in App</p>
@@ -144,7 +144,7 @@ export default function AccountClient({ email, displayName, tier }: AccountClien
 
           <button
             onClick={handleSignOut}
-            className="w-full glass rounded-card p-5 flex items-center justify-between hover:bg-error/10 transition-colors group"
+            className="w-full border border-sketch rounded-card bg-surface p-5 flex items-center justify-between hover:bg-error/10 transition-colors group"
           >
             <div className="text-left">
               <p className="font-body font-medium text-text group-hover:text-error transition-colors">Sign Out</p>

@@ -116,11 +116,11 @@ export default function PricingPage() {
               showComparison ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
             }`}
           >
-            <div className="glass rounded-card overflow-hidden">
+            <div className="border border-sketch rounded-card bg-surface overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm font-body">
                   <thead>
-                    <tr className="border-b border-glass-border">
+                    <tr className="border-b border-border">
                       <th className="text-left p-4 text-text-secondary font-medium">Feature</th>
                       {TIERS.map((tier) => (
                         <th
@@ -137,8 +137,8 @@ export default function PricingPage() {
                     {FEATURE_COMPARISON.map((row, i) => (
                       <tr
                         key={row.label}
-                        className={`border-b border-glass-border/50 ${
-                          i % 2 === 0 ? 'bg-glass-bg/30' : ''
+                        className={`border-b border-border/50 ${
+                          i % 2 === 0 ? 'bg-surface/30' : ''
                         }`}
                       >
                         <td className="p-4 text-text-secondary">{row.label}</td>
