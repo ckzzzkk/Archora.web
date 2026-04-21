@@ -29,6 +29,9 @@ export function migrateToMultiFloor(data: BlueprintData): BlueprintData {
     staircases: [],
     elevators: [],
     slabs: [],
+    ceilings: [],
+    roofs: [],
+    roofSegments: [],
   };
   return { ...data, floors: [groundFloor] };
 }

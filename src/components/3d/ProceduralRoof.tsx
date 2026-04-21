@@ -118,7 +118,6 @@ export function ProceduralRoof({
       {geometries.map((geo, geoIndex) => (
         <mesh
           key={`${roof.id}-geo-${geoIndex}`}
-          // @ts-expect-error R3F mesh supports geometry prop
           geometry={geo}
           material={materials}
           castShadow
@@ -129,7 +128,6 @@ export function ProceduralRoof({
       {/* Selection highlight */}
       {selected && geometries.length > 0 && (
         <mesh
-          // @ts-expect-error R3F mesh supports geometry prop
           geometry={geometries[0]}
         >
           <meshBasicMaterial
@@ -137,7 +135,6 @@ export function ProceduralRoof({
             transparent
             opacity={0.15 * opacity}
             wireframe={false}
-            // @ts-expect-error depthWrite is valid on MeshBasicMaterial
             depthWrite={false}
           />
         </mesh>

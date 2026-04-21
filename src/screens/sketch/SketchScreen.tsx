@@ -349,6 +349,9 @@ function sketchToBlueprintData(
       staircases: [],
       elevators: [],
       slabs: [],
+      ceilings: [],
+      roofs: [],
+      roofSegments: [],
     };
 
   return {

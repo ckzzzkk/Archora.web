@@ -208,11 +208,34 @@ export interface BuildingMetadata {
 
 export type StaircaseType = 'straight' | 'l_shape' | 'spiral';
 
+export interface StairSegment {
+  id: string;
+  segmentType: 'stair' | 'landing';
+  width: number;
+  length: number;
+  height: number;
+  stepCount: number;
+  attachmentSide?: 'front' | 'left' | 'right';
+  thickness: number;
+  fillToFloor: boolean;
+}
+
 export interface StaircaseData {
   id: string;
   type: StaircaseType;
   position: Vector2D;
   connectsFloors: [number, number];
+  width?: number;              // stair width in metres (default 0.9)
+  totalRise?: number;          // total rise height in metres (default 3.0)
+  stepCount?: number;          // number of steps (default 12)
+  thickness?: number;          // tread/thickness in metres (default 0.025)
+  fillToFloor?: boolean;       // fill void below stairs (default true)
+  innerRadius?: number;        // for curved/spiral: inner radius (default 0.3)
+  sweepAngle?: number;         // for curved: total sweep in radians (default PI/2)
+  railingMode?: 'none' | 'left' | 'right' | 'both';  // default 'left'
+  railingHeight?: number;      // railing height in metres (default 0.9)
+  slabOpeningMode?: 'none' | 'below' | 'above' | 'both';  // default 'below'
+  children?: string[];         // StairSegmentId[] for multi-segment stairs
 }
 
 export interface ElevatorData {

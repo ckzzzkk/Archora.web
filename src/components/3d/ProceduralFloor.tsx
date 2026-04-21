@@ -87,7 +87,6 @@ export function ProceduralFloor({
   const isTransparent = opacity < 1;
 
   return (
-    // @ts-expect-error geometry prop is valid for R3F mesh but types are incomplete
     <mesh geometry={geometry} receiveShadow={!isTransparent}>
       <meshStandardMaterial
         color={color}

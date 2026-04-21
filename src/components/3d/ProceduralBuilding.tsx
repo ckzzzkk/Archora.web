@@ -208,7 +208,6 @@ function FurnitureMesh({
 
   const handleClick = onSelect ? () => onSelect(piece.id) : undefined;
   const wrapper = (child: React.ReactNode) => (
-    // @ts-expect-error r3f group supports onClick events
     <group onClick={handleClick}>{child}</group>
   );
 

@@ -2,6 +2,8 @@
 // @types/react declares JSX inside `declare namespace React { namespace JSX {...} }`,
 // so this file must augment that same namespace. No imports — pure ambient script.
 
+import type * as THREE from 'three';
+
 declare namespace React {
   namespace JSX {
     interface IntrinsicElements {
@@ -14,6 +16,7 @@ declare namespace React {
         receiveShadow?: boolean;
         children?: React.ReactNode;
         onClick?: () => void;
+        geometry?: THREE.BufferGeometry;
       };
       group: {
         key?: React.Key;
