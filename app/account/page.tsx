@@ -11,10 +11,20 @@ export default async function AccountPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Fetch profile/tier from user metadata or profiles table
-  const tier = (user?.user_metadata?.tier as string) ?? 'starter';
   const email = user?.email ?? '';
   const displayName = (user?.user_metadata?.display_name as string) ?? email.split('@')[0];
+
+  // Get current subscription tier from subscriptions table
+  let tier = 'starter';
+  if (user) {
+    const { data: subData } = await supabase
+      .from('subscriptions')
+      .select('tier')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single();
+    tier = subData?.tier ?? 'starter';
+  }
 
   return (
     <AccountClient
