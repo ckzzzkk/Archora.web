@@ -245,7 +245,6 @@ export interface RoofSegment {
 export interface RoofMesh {
   id: string;
   roofId: string;          // parent roof
-  geometry: THREE.BufferGeometry;
   materialGroup: number;   // which material group (0=wall, 1=edge, 2=inner void, 3=top/shingle)
 }
 
