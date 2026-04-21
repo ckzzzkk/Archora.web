@@ -37,6 +37,7 @@ export type RootStackParamList = {
   PurchaseTemplate: { templateId: string };
   CoProjects: undefined;
   CoProjectDetail: { projectId: string };
+  CodesignSession: { sessionId?: string };
   HelpFAQ: undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;
@@ -69,3 +70,4 @@ export type TermsScreenProps             = NativeStackScreenProps<RootStackParam
 export type NotificationPreferencesScreenProps = NativeStackScreenProps<RootStackParamList, 'NotificationPreferences'>;
 export type CoProjectsScreenProps        = NativeStackScreenProps<RootStackParamList, 'CoProjects'>;
 export type CoProjectDetailScreenProps   = NativeStackScreenProps<RootStackParamList, 'CoProjectDetail'>;
+export type CodesignSessionScreenProps     = NativeStackScreenProps<RootStackParamList, 'CodesignSession'>;

@@ -70,6 +70,10 @@ const CoProjectsScreen = lazyScreen(() =>
 const CoProjectDetailScreen = lazyScreen(() =>
   import('../screens/coProjects/CoProjectDetailScreen')
     .then((m) => ({ default: m.CoProjectDetailScreen })));
+
+const CodesignSessionScreen = lazyScreen(() =>
+  import('../screens/codesign/CodesignSessionScreen')
+    .then((m) => ({ default: m.CodesignSessionScreen })));
 import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
 import { Storage } from '../utils/storage';
 import type { RootStackParamList } from './types';
@@ -260,6 +264,11 @@ export function RootNavigator() {
           <Stack.Screen
             name="CoProjectDetail"
             component={CoProjectDetailScreen}
+            options={{ animation: 'fade', animationDuration: 150 }}
+          />
+          <Stack.Screen
+            name="CodesignSession"
+            component={CodesignSessionScreen}
             options={{ animation: 'fade', animationDuration: 150 }}
           />
         </>
