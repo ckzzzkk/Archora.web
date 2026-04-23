@@ -51,4 +51,20 @@ export const subscriptionService = {
     if (!url) throw new Error('No checkout URL returned');
     return { url };
   },
+
+  async createCheckout(priceId: string): Promise<string> {
+    const headers = await getAuthHeader();
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/stripe-checkout`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ priceId }),
+    });
+    if (!response.ok) {
+      const body = await response.json() as { error?: string };
+      throw new Error(body.error ?? `Checkout failed (${response.status})`);
+    }
+    const { url } = await response.json() as { url: string };
+    if (!url) throw new Error('No checkout URL returned');
+    return url;
+  },
 };

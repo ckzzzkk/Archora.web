@@ -214,11 +214,32 @@ export function SubscriptionScreen({ navigation }: Props) {
     pillX.value = withSpring(interval === 'annual' ? 1 : 0, { damping: 20, stiffness: 300 });
   };
 
-  const handleUpgrade = async (_newTier: Exclude<SubscriptionTier, 'starter'>) => {
+  const handleUpgrade = async (newTier: Exclude<SubscriptionTier, 'starter'>) => {
+    const STRIPE_PRICE_IDS: Record<string, string> = {
+      creator_monthly:    process.env.EXPO_PUBLIC_STRIPE_PRICE_CREATOR_MONTHLY    ?? '',
+      creator_annual:     process.env.EXPO_PUBLIC_STRIPE_PRICE_CREATOR_ANNUAL     ?? '',
+      pro_monthly:       process.env.EXPO_PUBLIC_STRIPE_PRICE_PRO_MONTHLY       ?? '',
+      pro_annual:        process.env.EXPO_PUBLIC_STRIPE_PRICE_PRO_ANNUAL        ?? '',
+      architect_monthly: process.env.EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_MONTHLY ?? '',
+      architect_annual:  process.env.EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_ANNUAL  ?? '',
+    };
+    const priceIdKey = `${newTier}_${billing}`;
+    const priceId = STRIPE_PRICE_IDS[priceIdKey];
+    if (!priceId) {
+      console.error(`[SubscriptionScreen] Missing price ID for key: "${priceIdKey}" — env var not set or empty`);
+      Alert.alert('Configuration Error', 'Payment is not yet configured on this server. Please contact support.');
+      return;
+    }
+    setIsLoading(true);
     try {
-      await Linking.openURL('https://asoria.app/pricing');
-    } catch {
-      Alert.alert('Error', 'Could not open subscription page');
+      const url = await subscriptionService.createCheckout(priceId);
+      if (url) await Linking.openURL(url);
+    } catch (err) {
+      console.error('[SubscriptionScreen] checkout error:', err);
+      const message = err instanceof Error ? err.message : 'Could not start checkout. Please try again.';
+      Alert.alert('Payment Error', message);
+    } finally {
+      setIsLoading(false);
     }
   };
 

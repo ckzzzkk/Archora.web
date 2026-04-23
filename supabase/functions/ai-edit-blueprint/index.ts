@@ -228,9 +228,14 @@ ${SUGGEST_SYSTEM_PROMPT}`;
     if (mode === 'suggest') {
       const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
       if (!ANTHROPIC_KEY) {
+        console.warn('[ai-edit-blueprint] ANTHROPIC_API_KEY not configured');
         return new Response(
-          JSON.stringify({ error: 'AI_NOT_CONFIGURED', message: 'AI generation coming soon — team is configuring the AI pipeline', fallback: true }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          JSON.stringify({
+            error: 'AI not configured',
+            code: 'UPSTREAM_ERROR',
+            message: 'The AI service is not yet configured on this server. Please contact support.',
+          }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
       }
 
@@ -299,10 +304,14 @@ ${SUGGEST_SYSTEM_PROMPT}`;
     // Default: edit mode (existing logic)
     const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_KEY) {
-      console.error('[ai-edit-blueprint] ANTHROPIC_API_KEY not set — returning 200 with fallback');
+      console.warn('[ai-edit-blueprint] ANTHROPIC_API_KEY not configured');
       return new Response(
-        JSON.stringify({ error: 'AI_NOT_CONFIGURED', message: 'AI generation coming soon — team is configuring the AI pipeline', fallback: true }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        JSON.stringify({
+          error: 'AI not configured',
+          code: 'UPSTREAM_ERROR',
+          message: 'The AI service is not yet configured on this server. Please contact support.',
+        }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 

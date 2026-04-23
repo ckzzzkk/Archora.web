@@ -1,6 +1,9 @@
 import { supabase } from '../lib/supabase';
 import type { CursorPosition, Participant } from '../stores/codesignStore';
 
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
 export interface BlueprintDelta {
   userId: string;
   timestamp: number;
@@ -173,4 +176,119 @@ export async function publishBlueprintDelta(
     event: 'blueprint_delta',
     payload: delta,
   });
+}
+
+/**
+ * Persist a blueprint delta to the codesign-sync Edge Function with one automatic retry
+ * on VERSION_CONFLICT (409). The server does a shallow merge, so we do the same on the client
+ * before retrying with the new version number.
+ *
+ * Returns the new version number on success, or throws an error after the retry fails.
+ */
+export async function syncBlueprintDeltaWithRetry(
+  projectId: string,
+  floorIndex: number,
+  delta: Record<string, unknown>,
+  expectedVersion: number,
+): Promise<number> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? '';
+
+  async function attempt(
+    deltaToApply: Record<string, unknown>,
+    version: number,
+  ): Promise<number> {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/codesign-sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        projectId,
+        floorIndex,
+        delta: deltaToApply,
+        expectedVersion: version,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json() as { newVersion: number };
+      return data.newVersion;
+    }
+
+    if (response.status === 409) {
+      const body = await response.json() as {
+        error: string;
+        currentVersion: number;
+      };
+      if (body.error !== 'VERSION_CONFLICT') {
+        throw new Error(`codesign-sync failed: ${body.error}`);
+      }
+
+      // Fetch the current server state and shallow-merge our delta into it
+      const currentState = await fetchCurrentBlueprintState(projectId, floorIndex);
+      const mergedDelta = { ...currentState, ...deltaToApply };
+      const newVersion = body.currentVersion + 1;
+
+      // Retry once with the merged delta and the server's current version + 1
+      const retryResponse = await fetch(`${SUPABASE_URL}/functions/v1/codesign-sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId,
+          floorIndex,
+          delta: mergedDelta,
+          expectedVersion: newVersion,
+        }),
+      });
+
+      if (retryResponse.ok) {
+        const data = await retryResponse.json() as { newVersion: number };
+        return data.newVersion;
+      }
+
+      // Retry also failed — surface the error to the caller
+      const errorBody = await retryResponse.json() as { error: string; message?: string };
+      throw new Error(`codesign-sync retry failed: ${errorBody.message ?? errorBody.error}`);
+    }
+
+    // Non-409 error
+    const errorBody = await response.text();
+    throw new Error(`codesign-sync failed (${response.status}): ${errorBody}`);
+  }
+
+  return attempt(delta, expectedVersion);
+}
+
+async function fetchCurrentBlueprintState(
+  projectId: string,
+  floorIndex: number,
+): Promise<Record<string, unknown>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? '';
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/blueprint_state?project_id=eq.${projectId}&floor_index=eq.${floorIndex}&select=state`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        ' Prefer': 'return=representation',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    // If we can't fetch the current state, just return the delta as-is
+    return {};
+  }
+
+  const data = await response.json() as Array<{ state: Record<string, unknown> }>;
+  return data[0]?.state ?? {};
 }

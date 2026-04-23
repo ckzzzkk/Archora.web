@@ -1335,6 +1335,14 @@ Return ONLY valid JSON, no markdown.`;
     }
 
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!anthropicKey) {
+      console.warn('[ai-generate] ANTHROPIC_API_KEY not configured');
+      return new Response(JSON.stringify({
+        error: 'AI not configured',
+        code: 'UPSTREAM_ERROR',
+        message: 'The AI service is not yet configured on this server. Please contact support.',
+      }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     // Inject architect influence into system prompt if specified
     let effectiveSystemPrompt = SYSTEM_PROMPT;
@@ -1350,12 +1358,12 @@ ${SYSTEM_PROMPT}`;
     }
 
     if (!anthropicKey) {
-      // AI_NOT_CONFIGURED is a custom code not in Errors.* — kept as direct response
+      console.warn('[ai-generate] ANTHROPIC_API_KEY not configured');
       return new Response(JSON.stringify({
-        error: 'AI_NOT_CONFIGURED',
-        message: 'AI generation coming soon — team is configuring the AI pipeline',
-        fallback: true,
-      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        error: 'AI not configured',
+        code: 'UPSTREAM_ERROR',
+        message: 'The AI service is not yet configured on this server. Please contact support.',
+      }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const startMs = Date.now();

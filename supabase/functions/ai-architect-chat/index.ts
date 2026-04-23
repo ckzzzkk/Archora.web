@@ -571,6 +571,20 @@ serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  // Early API key validation — before any expensive operations
+  const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+  if (!anthropicApiKey) {
+    console.warn('[ai-architect-chat] ANTHROPIC_API_KEY not configured');
+    return new Response(
+      JSON.stringify({
+        error: 'AI not configured',
+        code: 'UPSTREAM_ERROR',
+        message: 'The AI service is not yet configured on this server. Please contact support.',
+      }),
+      { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
+
   try {
     let user;
     try {

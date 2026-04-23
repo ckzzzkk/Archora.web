@@ -6,6 +6,7 @@ import type { BlueprintDelta } from '../services/codesignService';
 
 export function useCursorReceive(sessionId: string) {
   const setParticipantCursor = useCodesignStore((s) => s.actions.setParticipantCursor);
+  const setChannelRef = useCodesignStore((s) => s.actions.setChannelRef);
   const blueprintActions = useBlueprintStore((s) => s.actions);
 
   useEffect(() => {
@@ -29,8 +30,14 @@ export function useCursorReceive(sessionId: string) {
       },
     });
 
-    return unsubscribe;
-  }, [sessionId, setParticipantCursor, blueprintActions]);
+    // Register the unsubscribe function so leaveSession can clean up the channel
+    setChannelRef(unsubscribe);
+
+    return () => {
+      unsubscribe();
+      setChannelRef(null);
+    };
+  }, [sessionId, setParticipantCursor, setChannelRef, blueprintActions]);
 }
 
 /**

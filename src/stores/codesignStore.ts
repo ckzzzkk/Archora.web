@@ -33,6 +33,7 @@ interface CodesignStore {
   localCursor: CursorPosition;
   isConnecting: boolean;
   connectionError: string | null;
+  _channelRef: (() => void) | null;
   actions: {
     createSession: (projectId: string) => Promise<string>;
     joinSession: (sessionId: string) => Promise<void>;
@@ -42,6 +43,8 @@ interface CodesignStore {
     setParticipantCursor: (userId: string, cursor: CursorPosition) => void;
     removeParticipant: (userId: string) => void;
     setConnectionState: (connecting: boolean, error?: string) => void;
+    setChannelRef: (ref: (() => void) | null) => void;
+    unsubscribe: () => void;
   };
 }
 
@@ -50,7 +53,7 @@ const PARTICIPANT_COLORS = [
 ];
 
 function generateId(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  return crypto.randomUUID();
 }
 
 export const useCodesignStore = create<CodesignStore>((set, get) => ({
@@ -63,6 +66,7 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
   },
   isConnecting: false,
   connectionError: null,
+  _channelRef: null,
 
   actions: {
     createSession: async (projectId: string) => {
@@ -146,8 +150,14 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
     },
 
     leaveSession: async () => {
-      const { session } = get();
+      const { session, _channelRef } = get();
       if (!session) return;
+
+      // Clean up the Realtime channel before clearing session state
+      if (_channelRef) {
+        _channelRef();
+        set({ _channelRef: null });
+      }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -204,6 +214,18 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
 
     setConnectionState: (connecting: boolean, error?: string) => {
       set({ isConnecting: connecting, connectionError: error ?? null });
+    },
+
+    setChannelRef: (ref: (() => void) | null) => {
+      set({ _channelRef: ref });
+    },
+
+    unsubscribe: () => {
+      const { _channelRef } = get();
+      if (_channelRef) {
+        _channelRef();
+        set({ _channelRef: null });
+      }
     },
   },
 }));

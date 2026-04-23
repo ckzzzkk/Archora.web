@@ -43,9 +43,12 @@ serve(async (req) => {
 
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiKey) {
-      return new Response(JSON.stringify({ fallback: 'device_speech' }), {
-        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.warn('[transcribe] OPENAI_API_KEY not configured');
+      return new Response(JSON.stringify({
+        error: 'AI not configured',
+        code: 'UPSTREAM_ERROR',
+        message: 'The AI service is not yet configured on this server. Please contact support.',
+      }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const whisperForm = new FormData();

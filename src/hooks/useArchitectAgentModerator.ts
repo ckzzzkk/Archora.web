@@ -147,6 +147,8 @@ export function useArchitectAgentModerator(
     }
   }, [blueprint, participants, emitSuggestion]);
 
+  const setChannelRef = useCodesignStore(s => s.actions.setChannelRef);
+
   useEffect(() => {
     if (!sessionId) return;
 
@@ -157,12 +159,20 @@ export function useArchitectAgentModerator(
       onBlueprintDelta: handleBlueprintDelta,
     });
 
+    // Register the channel ref so leaveSession can clean up
+    setChannelRef(unsubscribe);
+
     return () => {
       unsubscribe();
+      // Only clear if this is the same channel (don't clear a newer one)
+      const current = useCodesignStore.getState()._channelRef;
+      if (current === unsubscribe) {
+        setChannelRef(null);
+      }
       if (throttleTimer.current) clearTimeout(throttleTimer.current);
       flushCursorEvent(); // flush any pending cursor event
     };
-  }, [sessionId, handleCursorUpdate, handleParticipantJoin, handleParticipantLeave, handleBlueprintDelta, flushCursorEvent]);
+  }, [sessionId, handleCursorUpdate, handleParticipantJoin, handleParticipantLeave, handleBlueprintDelta, flushCursorEvent, setChannelRef]);
 
   const suggestions = sessionId ? getSessionSuggestions(sessionId) : [];
 
