@@ -43,3 +43,7 @@ npm-debug.log*
 
 # Worktrees (keep this)
 .worktrees
+
+# Build artifacts (GitHub 100MB limit)
+*.apk
+*.aab
