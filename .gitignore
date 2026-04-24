@@ -29,6 +29,9 @@ dist/
 # Keystores (NEVER commit)
 *.jks
 *.keystore
+asoria-release.jks
+@ckng__asoria.jks
+@ckng__asoria_OLD_1.jks
 
 # Gradle
 .gradle/
