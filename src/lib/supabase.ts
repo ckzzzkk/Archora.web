@@ -1,9 +1,10 @@
 /**
  * Supabase client using @supabase/supabase-js
- * Uses AsyncStorage for session persistence (the standard approach for RN).
+ * Uses expo-secure-store for encrypted JWT token persistence.
  * Replaces the old src/utils/supabaseClient.ts.
  */
 import { createClient } from '@supabase/supabase-js';
+import * as SecureStore from 'expo-secure-store';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -14,23 +15,36 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 /**
  * Factory to create a Supabase client.
- * Uses @react-native-async-storage/async-storage for token persistence.
+ * Uses expo-secure-store for encrypted JWT token persistence.
+ * expo-secure-store encrypts tokens at rest on device.
  */
 export function createSupabaseClient() {
   return createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       storage: {
         getItem: async (key: string): Promise<string | null> => {
-          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-          return AsyncStorage.getItem(key);
+          try {
+            return await SecureStore.getItemAsync(key);
+          } catch (err) {
+            console.warn('[supabase] SecureStore.getItem failed:', err);
+            return null;
+          }
         },
         setItem: async (key: string, value: string): Promise<void> => {
-          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-          return AsyncStorage.setItem(key, value);
+          try {
+            await SecureStore.setItemAsync(key, value, {
+              keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+            });
+          } catch (err) {
+            console.warn('[supabase] SecureStore.setItem failed:', err);
+          }
         },
         removeItem: async (key: string): Promise<void> => {
-          const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-          return AsyncStorage.removeItem(key);
+          try {
+            await SecureStore.deleteItemAsync(key);
+          } catch (err) {
+            console.warn('[supabase] SecureStore.removeItem failed:', err);
+          }
         },
       },
       autoRefreshToken: true,
