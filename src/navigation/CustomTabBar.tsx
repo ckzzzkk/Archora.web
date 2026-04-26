@@ -9,9 +9,7 @@ import Animated, {
   withSequence,
   Easing,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Rect, Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,106 +17,70 @@ import { useHaptics } from '../hooks/useHaptics';
 import { DS } from '../theme/designSystem';
 import type { RootStackParamList } from './types';
 import { useTabDirection } from './TabDirectionContext';
+import { CompassRose } from '../components/common/CompassRose';
+import { ScribbleCircle } from '../components/common/ScribbleCircle';
+import { useDeviceType } from '../hooks/useDeviceType';
+import { getResponsiveTokens } from '../theme/responsive';
 
-const AnimatedPath = Animated.createAnimatedComponent(Path);
-
-// Wobbly imperfect circle path (baked vertex noise) — 48x48 viewBox
-const WOBBLY_PATH = 'M 24 3 C 30 2.5 43 8 44 24 C 45 37 37 45 24 45 C 10 45.5 3 37 3 24 C 2.5 10 10 3.5 24 3 Z';
-const CIRCUMFERENCE = 135;
-
-// Hand-drawn SVG icons
-const ICONS: Record<string, (color: string) => React.ReactElement> = {
-  Home: (color) => (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Path d="M3 11 L12 3 L21 11" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M5 9.5 V21 H19 V9.5" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M9 21 V15 H15 V21" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+// Hand-drawn SVG icons (all stroke-only, sketchy style)
+const ICONS: Record<string, (color: string, size?: number, strokeWidth?: number) => React.ReactElement> = {
+  Home: (color, size = 18, sw = 2.2) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M3 11 L12 3 L21 11" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M5 9.5 V21 H19 V9.5" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M9 21 V15 H15 V21" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   ),
-  Inspo: (color) => (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Rect x="3" y="3" width="8" height="11" rx="1.5" stroke={color} strokeWidth="1.8" fill="none" />
-      <Rect x="13" y="3" width="8" height="7" rx="1.5" stroke={color} strokeWidth="1.8" fill="none" />
-      <Rect x="13" y="13" width="8" height="8" rx="1.5" stroke={color} strokeWidth="1.8" fill="none" />
-      <Rect x="3" y="17" width="8" height="4" rx="1.5" stroke={color} strokeWidth="1.8" fill="none" />
+  Create: (color, size = 18, sw = 2.2) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M12 5 V19 M5 12 H19" stroke={color} strokeWidth={sw} strokeLinecap="round" />
     </Svg>
   ),
-  AR: (color) => (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Path d="M2 8 V4 H6" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" />
-      <Path d="M18 4 H22 V8" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" />
-      <Path d="M2 16 V20 H6" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" />
-      <Path d="M18 20 H22 V16" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" />
-      <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth="1.5" fill="none" />
+  Inspo: (color, size = 18, sw = 2.2) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M3 3 H10 V10 H3 Z M14 3 H21 V10 H14 Z M14 14 H21 V21 H14 Z M3 14 H10 V21 H3 Z" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   ),
-  Create: (color) => (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Rect x="3" y="14" width="14" height="7" rx="1" stroke={color} strokeWidth="1.8" fill="none"/>
-      <Path d="M14 14 L19 9 L21 11 L16 16" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-      <Path d="M19 9 L21 7 L23 9 L21 11 Z" fill={color} opacity={0.7}/>
-      <Path d="M6 17 H11" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity={0.5}/>
+  AR: (color, size = 18, sw = 2.2) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M2 8 V4 H6" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" />
+      <Path d="M18 4 H22 V8" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" />
+      <Path d="M2 16 V20 H6" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" />
+      <Path d="M18 20 H22 V16" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" />
+      <Path d="M12 8 V16 M8 12 H16" stroke={color} strokeWidth={sw * 0.9} fill="none" strokeLinecap="round" />
     </Svg>
   ),
-  Account: (color) => (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      <Circle cx="12" cy="8" r="4" stroke={color} strokeWidth="1.8" fill="none" />
-      <Path d="M4 20 C4 16.686 7.582 14 12 14 C16.418 14 20 16.686 20 20"
-        stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" />
+  Account: (color, size = 18, sw = 2.2) => (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M12 8 C14.2 8 16 6.2 16 4 C16 1.8 14.2 0 12 0 C9.8 0 8 1.8 8 4 C8 6.2 9.8 8 12 8 Z" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M4 20 C4 16.7 7.6 14 12 14 C16.4 14 20 16.7 20 20" stroke={color} strokeWidth={sw} fill="none" strokeLinecap="round" />
     </Svg>
   ),
 };
 
 interface TabItemProps {
-  route: BottomTabBarProps['state']['routes'][0];
-  index: number;
+  routeName: string;
+  label: string;
   isFocused: boolean;
   onPress: () => void;
+  touchTarget: number;
+  iconSize: number;
 }
 
-// Human-readable accessibility labels for each route
-const ROUTE_ACCESSIBILITY_LABELS: Record<string, string> = {
-  Home: 'Home tab',
-  Create: 'Create tab',
-  Inspo: 'Inspiration tab',
-  AR: 'AR Scan tab',
-  Account: 'Account tab',
+const ROUTE_LABELS: Record<string, string> = {
+  Home: 'Home',
+  Create: 'Create',
+  Inspo: 'Inspiration',
+  AR: 'AR',
+  Account: 'Account',
 };
 
-function TabItem({ route, isFocused, onPress }: TabItemProps) {
-  const circleOpacity = useSharedValue(isFocused ? 1 : 0);
-  const pillOpacity = useSharedValue(isFocused ? 1 : 0);
-  const pillScale = useSharedValue(isFocused ? 1 : 0.7);
+function TabItem({ routeName, label, isFocused, onPress, touchTarget, iconSize }: TabItemProps) {
   const pressScale = useSharedValue(1);
 
-  useEffect(() => {
-    if (isFocused) {
-      circleOpacity.value = withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) });
-      pillOpacity.value = withTiming(1, { duration: 150 });
-      pillScale.value = withSpring(1, { damping: 14, stiffness: 280 });
-    } else {
-      circleOpacity.value = withTiming(0, { duration: 120 });
-      pillOpacity.value = withTiming(0, { duration: 100 });
-      pillScale.value = withSpring(0.7, { damping: 14, stiffness: 280 });
-    }
-  }, [isFocused, circleOpacity, pillOpacity, pillScale]);
-
-  const pillStyle = useAnimatedStyle(() => ({
-    opacity: pillOpacity.value,
-    transform: [{ scaleX: pillScale.value }],
-  }));
-
-  const pressScaleStyle = useAnimatedStyle(() => ({
+  const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pressScale.value }],
   }));
-
-  const circleStyle = useAnimatedStyle(() => ({
-    opacity: circleOpacity.value,
-    transform: [{ scale: 0.7 + 0.3 * circleOpacity.value }],
-  }));
-
-  const iconColor = isFocused ? DS.colors.primary : DS.colors.primaryGhost;
-  const iconRenderer = ICONS[route.name];
 
   const handlePressIn = () => {
     pressScale.value = withSpring(0.88, { damping: 12, stiffness: 400 });
@@ -128,55 +90,63 @@ function TabItem({ route, isFocused, onPress }: TabItemProps) {
     pressScale.value = withSpring(1, { damping: 14, stiffness: 380 });
   };
 
+  const iconColor = isFocused ? DS.colors.ink : DS.colors.mutedForeground;
+  const iconRenderer = ICONS[routeName];
+
   return (
     <Pressable
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      accessibilityLabel={ROUTE_ACCESSIBILITY_LABELS[route.name] ?? `${route.name} tab`}
+      accessibilityLabel={`${label} tab`}
       accessibilityRole="tab"
       accessibilityState={{ selected: isFocused }}
-      accessibilityHint="Double tap to navigate to this tab"
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 6, minHeight: 44, minWidth: 44 }}
+      style={{
+        width: touchTarget,
+        height: touchTarget,
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+      }}
     >
       <Animated.View
         style={[
           {
             position: 'absolute',
-            top: 0, left: 4, right: 4, bottom: 0,
-            backgroundColor: 'rgba(232,184,109,0.10)',
-            borderRadius: 20,
+            top: 2,
+            left: 2,
+            right: 2,
+            bottom: 2,
+            borderRadius: 22,
+            backgroundColor: isFocused ? 'rgba(212, 168, 75, 0.30)' : 'transparent',
           },
-          pillStyle,
+          animatedStyle,
         ]}
-      />
-
-      <Animated.View style={pressScaleStyle}>
-        {/* Animated focus circle */}
-        <Animated.View style={[{
-          position: 'absolute',
-          width: 44,
-          height: 44,
-          borderRadius: 22,
-          borderWidth: 1.5,
-          borderColor: DS.colors.primary,
-        }, circleStyle]} />
-        <View>
-          {iconRenderer ? iconRenderer(iconColor) : null}
-        </View>
+      >
+        {isFocused && (
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+            <ScribbleCircle size={40} color={DS.colors.ink} />
+          </View>
+        )}
       </Animated.View>
+
+      <View style={{ position: 'relative', zIndex: 10 }}>
+        {iconRenderer ? iconRenderer(iconColor, iconSize) : null}
+      </View>
     </Pressable>
   );
 }
 
-const FABButton = React.memo(function FABButton() {
-  const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+function FABButton({ onPress, fabSize }: { onPress?: () => void; fabSize: number }) {
   const { light } = useHaptics();
   const rotation = useSharedValue(0);
   const scale = useSharedValue(1);
 
   const fabStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
+    transform: [
+      { rotate: `${rotation.value}deg` },
+      { scale: scale.value },
+    ],
   }));
 
   const handlePressIn = () => {
@@ -184,9 +154,7 @@ const FABButton = React.memo(function FABButton() {
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1.08, { damping: 6, stiffness: 300 }, () => {
-      scale.value = withSpring(1, { damping: 12, stiffness: 400 });
-    });
+    scale.value = withSpring(1, { damping: 12, stiffness: 400 });
   };
 
   const handlePress = () => {
@@ -195,7 +163,7 @@ const FABButton = React.memo(function FABButton() {
       withSpring(90, { damping: 8, stiffness: 300 }),
       withSpring(0, { damping: 12, stiffness: 200 }),
     );
-    rootNav.navigate('Generation');
+    onPress?.();
   };
 
   return (
@@ -208,37 +176,40 @@ const FABButton = React.memo(function FABButton() {
       accessibilityHint="Opens the 7-step AI design generator"
     >
       <Animated.View style={fabStyle}>
-        <LinearGradient
-          colors={[DS.colors.accent, DS.colors.warning]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+        <View
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
+            width: fabSize,
+            height: fabSize,
+            borderRadius: fabSize / 2,
+            backgroundColor: DS.colors.amber,
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: DS.colors.accent,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.4,
-            shadowRadius: 12,
-            elevation: 16,
+            // Sketch shadow: 3px 4px 0 0 ink
+            shadowColor: DS.colors.ink,
+            shadowOffset: { width: 3, height: 4 },
+            shadowOpacity: 1,
+            shadowRadius: 0,
+            elevation: 0,
+            borderWidth: 2,
+            borderColor: DS.colors.ink,
           }}
         >
-          <Svg width={22} height={22} viewBox="0 0 24 24">
-            <Path d="M12 5v14M5 12h14" stroke={DS.colors.background} strokeWidth="2" strokeLinecap="round" />
-          </Svg>
-        </LinearGradient>
+          <CompassRose size={Math.round(fabSize * 0.58)} color={DS.colors.paper} />
+        </View>
       </Animated.View>
     </Pressable>
   );
-});
+}
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { medium } = useHaptics();
   const insets = useSafeAreaInsets();
   const { setDirection } = useTabDirection();
   const prevIndexRef = useRef(state.index);
+  const rootNav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const device = useDeviceType();
+  const tokens = getResponsiveTokens(device.layout);
 
   useEffect(() => {
     prevIndexRef.current = state.index;
@@ -250,39 +221,56 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     return null;
   }
 
+  // Route order: Home, Create, Inspo, AR, Account
+  // FAB is between Create and Inspo
+  const tabs = [
+    { name: 'Home', routeIndex: 0 },
+    { name: 'Create', routeIndex: 1 },
+    // FAB inserted here
+    { name: 'Inspo', routeIndex: 2 },
+    { name: 'AR', routeIndex: 3 },
+    { name: 'Account', routeIndex: 4 },
+  ];
+
   return (
     <View
       accessibilityRole="tablist"
       style={{
         position: 'absolute',
-        bottom: Math.max(insets.bottom, 16) + 8,
-        left: 24,
-        right: 24,
-        height: 64,
-        borderRadius: 32,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: 'rgba(240, 237, 232, 0.18)',
-        shadowColor: DS.colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-        elevation: 16,
+        bottom: device.isTablet
+          ? Math.max(insets.bottom, 16) + 12
+          : Math.max(insets.bottom, 12) + 8,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        zIndex: 50,
       }}
     >
-      <BlurView
-        intensity={40}
-        tint="dark"
+      {/* Floating oval pill */}
+      <View
         style={{
-          flex: 1,
-          backgroundColor: 'rgba(26, 26, 26, 0.90)',
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 8,
+          paddingHorizontal: device.isTablet ? 12 : 8,
+          paddingVertical: 6,
+          borderRadius: 50,
+          borderWidth: 2,
+          borderColor: DS.colors.ink,
+          backgroundColor: DS.colors.card,
+          // Sketch shadow: 2px 2px 0 0 ink
+          shadowColor: DS.colors.ink,
+          shadowOffset: { width: 2, height: 2 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
+          elevation: 0,
+          gap: 0,
+          maxWidth: device.isTablet ? 420 : 280,
+          width: '100%',
         }}
       >
-        {state.routes.map((route, index) => {
-          const isFocused = state.index === index;
+        {tabs.slice(0, 2).map((tab) => {
+          const route = state.routes[tab.routeIndex];
+          const isFocused = state.index === tab.routeIndex;
 
           const onPress = () => {
             const event = navigation.emit({
@@ -292,7 +280,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
             });
             if (!isFocused && !event.defaultPrevented) {
               medium();
-              setDirection(index > prevIndexRef.current ? 'right' : 'left');
+              setDirection(tab.routeIndex > prevIndexRef.current ? 'right' : 'left');
               navigation.navigate(route.name, route.params);
             }
           };
@@ -300,17 +288,51 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           return (
             <TabItem
               key={route.key}
-              route={route}
-              index={index}
+              routeName={tab.name}
+              label={ROUTE_LABELS[tab.name]}
               isFocused={isFocused}
               onPress={onPress}
+              touchTarget={device.touchTarget}
+              iconSize={device.iconSize}
             />
           );
         })}
 
-        {/* FAB — gradient button on the right */}
-        <FABButton />
-      </BlurView>
+        {/* FAB compass — raised above the bar */}
+        <View style={{ marginTop: -(device.fabSize / 2) - 4, marginHorizontal: 2 }}>
+          <FABButton onPress={() => rootNav.navigate('Generation')} fabSize={device.fabSize} />
+        </View>
+
+        {tabs.slice(2).map((tab) => {
+          const route = state.routes[tab.routeIndex];
+          const isFocused = state.index === tab.routeIndex;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!isFocused && !event.defaultPrevented) {
+              medium();
+              setDirection(tab.routeIndex > prevIndexRef.current ? 'right' : 'left');
+              navigation.navigate(route.name, route.params);
+            }
+          };
+
+          return (
+            <TabItem
+              key={route.key}
+              routeName={tab.name}
+              label={ROUTE_LABELS[tab.name]}
+              isFocused={isFocused}
+              onPress={onPress}
+              touchTarget={device.touchTarget}
+              iconSize={device.iconSize}
+            />
+          );
+        })}
+      </View>
     </View>
   );
 }
