@@ -37,6 +37,7 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
   const { colors } = useTheme();
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const selectedId = useBlueprintStore((s) => s.selectedId);
+  const setSelectedId = useBlueprintStore((s) => s.actions.setSelectedId);
   const viewMode = useBlueprintStore((s) => s.viewMode);
 
   const {
@@ -95,6 +96,8 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
           blueprint={blueprint}
           selectedId={selectedId}
           showFurniture={showFurniture}
+          onSelectWall={(id) => { setSelectedId(id); }}
+          onSelectFurniture={(id) => { setSelectedId(id); }}
         />
 
         {viewMode !== 'FirstPerson' ? (
