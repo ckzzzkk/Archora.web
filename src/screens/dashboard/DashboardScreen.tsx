@@ -21,6 +21,8 @@ import { useThemeColors } from '../../hooks/useThemeColors';
 import { NotificationPanel } from '../../components/dashboard/NotificationPanel';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
+import { CompassRose } from '../../components/common/CompassRose';
+import { BlueprintThumbnail as SharedBlueprintThumbnail } from '../../components/common/BlueprintThumbnail';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { SkeletonLoader, SkeletonItem } from '../../components/common/SkeletonLoader';
 import {
@@ -29,6 +31,8 @@ import {
   unsubscribeFromNotifications,
 } from '../../services/notificationService';
 import { DS } from '../../theme/designSystem';
+import { useDeviceType } from '../../hooks/useDeviceType';
+import { getResponsiveTokens } from '../../theme/responsive';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BuildingType } from '../../types';
@@ -208,37 +212,34 @@ function DailyChallengeBanner({ C }: { C: ReturnType<typeof useThemeColors> }) {
   return (
     <Animated.View style={[bannerStyle, { marginHorizontal: DS.spacing.lg, marginBottom: DS.spacing.md }]}>
       <View style={{
-        borderRadius: DS.radius.medium, // 16px — accent banner card
-        borderWidth: 1,
-        borderColor: `${DS.colors.accent}30`,
-        backgroundColor: `${DS.colors.accent}08`,
+        borderRadius: DS.radius.large,
+        borderWidth: 2, borderColor: DS.colors.ink,
+        backgroundColor: DS.colors.amber,
         padding: DS.spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
         gap: DS.spacing.sm,
+        shadowColor: DS.colors.ink, shadowOffset: { width: 3, height: 4 }, shadowOpacity: 1, shadowRadius: 0,
       }}>
         <View style={{
           width: 36, height: 36, borderRadius: 18,
-          backgroundColor: `${DS.colors.accent}15`,
-          borderWidth: 1, borderColor: `${DS.colors.accent}30`,
+          backgroundColor: DS.colors.background,
+          borderWidth: 2, borderColor: DS.colors.ink,
           alignItems: 'center', justifyContent: 'center',
         }}>
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
             <Path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z"
-              stroke={DS.colors.accent} strokeWidth="1.5" strokeLinejoin="round" />
+              stroke={DS.colors.ink} strokeWidth="1.5" strokeLinejoin="round" />
           </Svg>
         </View>
         <View style={{ flex: 1 }}>
-          <ArchText variant="body" style={{ fontSize: 10, color: DS.colors.accent, fontFamily: DS.font.mono, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 2 }}>
+          <ArchText variant="label" style={{ fontSize: 9, color: DS.colors.paper }}>
             Daily Challenge
           </ArchText>
-          <ArchText variant="body" style={{ fontSize: 12, color: C.primary, fontFamily: DS.font.regular, lineHeight: 17 }}>
+          <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.paper, fontFamily: DS.font.bold }}>
             {challenge}
           </ArchText>
         </View>
-        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-          <Path d="M9 18l6-6-6-6" stroke={C.primaryGhost} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
       </View>
     </Animated.View>
   );
@@ -313,8 +314,6 @@ function InlineProjectCard({ project, onPress, index }: { project: Project; onPr
     .toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const roomCount = project.roomCount ?? project.blueprintData?.rooms?.length ?? 0;
   const btype = (project.buildingType ?? 'studio') as BuildingType;
-  const thumbColor = ProjectThumbnailColors[btype] ?? '#C9FFFD';
-  const thumbBg = btype === 'apartment' || btype === 'villa' ? '#0A2020' : '#081818';
 
   return (
     <Animated.View style={animStyle}>
@@ -324,50 +323,48 @@ function InlineProjectCard({ project, onPress, index }: { project: Project; onPr
         accessibilityRole="button"
         accessibilityHint="Opens this design in the workspace"
         style={{
-          backgroundColor: C.surface,
-          borderRadius: DS.radius.card, // 24px — oval-first design system
+          backgroundColor: DS.colors.card,
+          borderRadius: DS.radius.large,
           marginHorizontal: DS.spacing.lg,
           marginBottom: DS.spacing.sm,
-          borderWidth: 1,
-          borderColor: C.border,
+          borderWidth: 2, borderColor: DS.colors.ink,
           overflow: 'hidden',
+          shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
         }}
       >
-        {/* Thumbnail with SVG line-art */}
+        {/* Thumbnail with BlueprintThumbnail SVG */}
         <View style={{
-          height: 88,
-          backgroundColor: thumbBg,
+          height: 100,
+          backgroundColor: DS.colors.background,
           alignItems: 'center',
           justifyContent: 'center',
+          borderBottomWidth: 2, borderBottomColor: DS.colors.ink,
         }}>
-          <BlueprintThumbnail type={btype} color={thumbColor} size={60} />
+          <SharedBlueprintThumbnail kind={btype} color={DS.colors.ink} size={90} animate={true} />
         </View>
 
         <View style={{ padding: DS.spacing.md }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <ArchText variant="body" style={{ fontFamily: DS.font.semibold, fontSize: DS.fontSize.md, color: C.primary, flex: 1 }}>
+            <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: DS.fontSize.md, color: DS.colors.ink, flex: 1 }}>
               {project.name}
             </ArchText>
-            <ArchText variant="body" style={{ fontSize: 11, color: C.primaryGhost, fontFamily: DS.font.mono }}>
-              {formattedDate}
-            </ArchText>
+            <ArchText variant="label" style={{ fontSize: 10 }}>{formattedDate}</ArchText>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <View style={{
-                backgroundColor: `${thumbColor}15`,
-                borderWidth: 1, borderColor: `${thumbColor}25`,
+                borderWidth: 1, borderColor: DS.colors.ink,
                 borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2,
               }}>
-                <ArchText variant="body" style={{ fontSize: 10, color: thumbColor, fontFamily: DS.font.mono }}>
-                  {roomCount} {roomCount === 1 ? 'room' : 'rooms'}
+                <ArchText variant="mono" style={{ fontSize: 10, color: DS.colors.ink }}>
+                  {roomCount} rooms
                 </ArchText>
               </View>
               <View style={{
-                backgroundColor: `${C.border}`,
+                borderWidth: 1, borderColor: DS.colors.ink,
                 borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2,
               }}>
-                <ArchText variant="body" style={{ fontSize: 10, color: C.primaryDim, fontFamily: DS.font.mono, textTransform: 'capitalize' }}>
+                <ArchText variant="mono" style={{ fontSize: 10, color: DS.colors.mutedForeground, textTransform: 'capitalize' }}>
                   {btype}
                 </ArchText>
               </View>
@@ -401,34 +398,35 @@ function NewProjectModal({ visible, onClose, onCreate }: {
       <View style={{ flex: 1, backgroundColor: DS.colors.overlay, justifyContent: 'flex-end' }}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={{
-            backgroundColor: C.surface,
-            borderTopLeftRadius: 28, borderTopRightRadius: 28,
-            borderTopWidth: 1, borderColor: DS.colors.border,
+            backgroundColor: DS.colors.card,
+            borderTopLeftRadius: 40, borderTopRightRadius: 40,
+            borderTopWidth: 2, borderColor: DS.colors.ink,
+            borderLeftWidth: 2, borderRightWidth: 2,
             paddingHorizontal: DS.spacing.lg,
             paddingTop: DS.spacing.lg,
             paddingBottom: Math.max(DS.spacing.xxl, modalInsets.bottom + DS.spacing.lg),
           }}>
             {/* Handle */}
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(240, 237, 232, 0.25)', alignSelf: 'center', marginBottom: DS.spacing.lg }} />
-            <ArchText variant="heading" style={{ fontSize: 22, color: C.primary, marginBottom: DS.spacing.lg }}>
-              New Design
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: DS.colors.ink, opacity: 0.3, alignSelf: 'center', marginBottom: DS.spacing.lg }} />
+            <ArchText variant="title" style={{ fontSize: 22, color: DS.colors.ink, marginBottom: DS.spacing.lg }}>
+              new project
             </ArchText>
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="Name your project..."
-              placeholderTextColor={C.primaryGhost}
+              placeholder="name your project..."
+              placeholderTextColor={DS.colors.mutedForeground}
               autoFocus
               style={{
-                backgroundColor: C.background,
-                borderRadius: 50, borderWidth: 1, borderColor: C.border,
+                backgroundColor: DS.colors.background,
+                borderRadius: 50, borderWidth: 2, borderColor: DS.colors.ink,
                 paddingHorizontal: DS.spacing.lg, paddingVertical: 14,
-                fontFamily: DS.font.regular, fontSize: 15, color: C.primary,
+                fontFamily: DS.font.heading, fontSize: 15, color: DS.colors.ink,
                 marginBottom: DS.spacing.lg,
               }}
             />
-            <ArchText variant="body" style={{ fontSize: 12, color: C.primaryDim, fontFamily: DS.font.mono, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: DS.spacing.sm }}>
-              Building Type
+            <ArchText variant="label" style={{ fontSize: 10, color: DS.colors.mutedForeground, marginBottom: DS.spacing.sm }}>
+              building type
             </ArchText>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: DS.spacing.sm, marginBottom: DS.spacing.xl }}>
               {BUILDING_TYPES.map((bt) => (
@@ -441,20 +439,20 @@ function NewProjectModal({ visible, onClose, onCreate }: {
                   accessibilityHint="Double tap to select this building type"
                   style={{
                     paddingHorizontal: DS.spacing.md, paddingVertical: DS.spacing.sm,
-                    borderRadius: 50, borderWidth: 1,
-                    borderColor: buildingType === bt.key ? C.primary : C.border,
-                    backgroundColor: buildingType === bt.key ? `${C.primary}15` : 'transparent',
+                    borderRadius: 50, borderWidth: 2,
+                    borderColor: buildingType === bt.key ? DS.colors.ink : DS.colors.border,
+                    backgroundColor: buildingType === bt.key ? DS.colors.amber : 'transparent',
                   }}
                 >
-                  <ArchText variant="body" style={{ fontSize: 13, color: buildingType === bt.key ? C.primary : C.primaryDim }}>
+                  <ArchText variant="body" style={{ fontSize: 13, fontFamily: DS.font.heading, color: buildingType === bt.key ? DS.colors.paper : DS.colors.mutedForeground }}>
                     {bt.label}
                   </ArchText>
                 </Pressable>
               ))}
             </View>
-            <OvalButton label="Create Design" variant="filled" onPress={handleCreate} disabled={!name.trim()} />
+            <OvalButton label="create design" variant="amber" onPress={handleCreate} disabled={!name.trim()} fullWidth />
             <Pressable onPress={onClose} style={{ marginTop: DS.spacing.md, alignItems: 'center' }}>
-              <ArchText variant="body" style={{ fontSize: 14, color: C.primaryDim }}>Cancel</ArchText>
+              <ArchText variant="body" style={{ fontSize: 14, color: DS.colors.mutedForeground }}>Cancel</ArchText>
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -484,29 +482,23 @@ function DashboardHeader({
 }) {
   const greeting = getDayGreeting();
   return (
-    <LinearGradient
-      colors={['#1F3030', '#1C2828', DS.colors.background]}
-      locations={[0, 0.5, 1]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <View
+      style={{
+        paddingTop: insets.top + 12,
+        paddingHorizontal: DS.spacing.lg,
+        paddingBottom: DS.spacing.lg,
+        backgroundColor: DS.colors.background,
+      }}
     >
       {/* Top bar */}
       <View style={{
-        paddingTop: insets.top + 12,
-        paddingHorizontal: DS.spacing.lg,
-        paddingBottom: DS.spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: DS.spacing.lg,
       }}>
-        <View style={{ flex: 1 }}>
-          <ArchText variant="body" style={{ fontSize: 11, color: `${C.primary}60`, fontFamily: DS.font.mono, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
-            {greeting}
-          </ArchText>
-          <View style={{ flexShrink: 1 }}>
-            <ArchText variant="heading" style={{ fontSize: 22, color: C.primary }} numberOfLines={1}>
-              ASORIA
-            </ArchText>
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: DS.spacing.sm }}>
+          <CompassRose size={28} color={DS.colors.ink} />
+          <ArchText variant="title" style={{ fontSize: 22 }}>ASORIA</ArchText>
         </View>
         <View style={{ flexDirection: 'row', gap: DS.spacing.sm }}>
           <Pressable
@@ -515,14 +507,15 @@ function DashboardHeader({
             accessibilityRole="button"
             accessibilityHint="Opens the new project dialog"
             style={{
-              width: 44, height: 44, borderRadius: 20,
-              backgroundColor: `${C.primary}12`,
-              borderWidth: 1, borderColor: `${C.primary}30`,
+              width: 44, height: 44, borderRadius: 22,
+              borderWidth: 2, borderColor: DS.colors.ink,
+              backgroundColor: DS.colors.card,
               alignItems: 'center', justifyContent: 'center',
+              shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
             }}
           >
             <Svg width={18} height={18} viewBox="0 0 24 24">
-              <Path d="M12 5v14M5 12h14" stroke={C.primary} strokeWidth="1.8" strokeLinecap="round" />
+              <Path d="M12 5v14M5 12h14" stroke={DS.colors.ink} strokeWidth="2" strokeLinecap="round" />
             </Svg>
           </Pressable>
           <Pressable
@@ -531,27 +524,26 @@ function DashboardHeader({
             accessibilityRole="button"
             accessibilityHint="Opens the notifications panel"
             style={{
-              width: 44, height: 44, borderRadius: 20,
-              backgroundColor: `${C.primary}12`,
-              borderWidth: 1, borderColor: `${C.primary}30`,
+              width: 44, height: 44, borderRadius: 22,
+              borderWidth: 2, borderColor: DS.colors.ink,
+              backgroundColor: DS.colors.card,
               alignItems: 'center', justifyContent: 'center',
+              shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
             }}
           >
             <Svg width={18} height={18} viewBox="0 0 24 24">
               <Path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"
-                stroke={C.primary} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                stroke={DS.colors.ink} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
             {hasUnread && (
-              <View style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: C.success }} />
+              <View style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: DS.colors.amber, borderWidth: 1, borderColor: DS.colors.ink }} />
             )}
           </Pressable>
         </View>
       </View>
 
-      {/* Streak + stats strip */}
+      {/* Streak + stats strip — ink bordered cards with sketch shadow */}
       <View style={{
-        marginHorizontal: DS.spacing.lg,
-        marginBottom: DS.spacing.lg,
         flexDirection: 'row',
         gap: DS.spacing.sm,
       }}>
@@ -561,18 +553,18 @@ function DashboardHeader({
           flexDirection: 'row',
           alignItems: 'center',
           gap: DS.spacing.sm,
-          backgroundColor: 'rgba(240, 237, 232, 0.03)',
-          borderWidth: 1, borderColor: 'rgba(240, 237, 232, 0.10)',
-          borderRadius: 14, paddingHorizontal: DS.spacing.md, paddingVertical: 10,
+          backgroundColor: DS.colors.card,
+          borderWidth: 2, borderColor: DS.colors.ink,
+          borderRadius: 24, paddingHorizontal: DS.spacing.md, paddingVertical: 10,
+          shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
         }}>
-          <ArchText variant="body" style={{ fontSize: 18 }}>🔥</ArchText>
+          <Svg width={18} height={18} viewBox="0 0 24 24">
+            <Path d="M12 2C12 2 8 6 8 10C8 12.2 9.5 14 12 14C14.5 14 16 12.2 16 10C16 6 12 2 12 2Z" fill={DS.colors.amber} stroke={DS.colors.ink} strokeWidth="1" />
+            <Path d="M10 14C10 14 8 16 8 18C8 20 10 22 12 22C14 22 16 20 16 18C16 16 14 14 14 14" stroke={DS.colors.ink} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+          </Svg>
           <View>
-            <ArchText variant="body" style={{ fontSize: 15, color: C.primary, fontFamily: DS.font.mono, fontWeight: '700' }}>
-              {streakCount}
-            </ArchText>
-            <ArchText variant="body" style={{ fontSize: 10, color: C.primaryDim, fontFamily: DS.font.mono, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              day streak
-            </ArchText>
+            <ArchText variant="mono" style={{ fontSize: 16, fontFamily: DS.font.bold, color: DS.colors.ink }}>{streakCount}</ArchText>
+            <ArchText variant="label" style={{ fontSize: 9 }}>day streak</ArchText>
           </View>
         </View>
         {/* Points */}
@@ -580,35 +572,29 @@ function DashboardHeader({
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'rgba(240, 237, 232, 0.03)',
-          borderWidth: 1, borderColor: 'rgba(240, 237, 232, 0.10)',
-          borderRadius: 14, paddingVertical: 10,
+          backgroundColor: DS.colors.card,
+          borderWidth: 2, borderColor: DS.colors.ink,
+          borderRadius: 24, paddingVertical: 10,
+          shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
         }}>
-          <ArchText variant="body" style={{ fontSize: 14, color: DS.colors.accent, fontFamily: DS.font.mono, fontWeight: '700' }}>
-            {points.toLocaleString()}
-          </ArchText>
-          <ArchText variant="body" style={{ fontSize: 10, color: C.primaryDim, fontFamily: DS.font.mono, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            pts
-          </ArchText>
+          <ArchText variant="mono" style={{ fontSize: 14, fontFamily: DS.font.bold, color: DS.colors.amber }}>{points.toLocaleString()}</ArchText>
+          <ArchText variant="label" style={{ fontSize: 9 }}>pts</ArchText>
         </View>
         {/* Projects */}
         <View style={{
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'rgba(240, 237, 232, 0.03)',
-          borderWidth: 1, borderColor: 'rgba(240, 237, 232, 0.10)',
-          borderRadius: 14, paddingVertical: 10,
+          backgroundColor: DS.colors.card,
+          borderWidth: 2, borderColor: DS.colors.ink,
+          borderRadius: 24, paddingVertical: 10,
+          shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
         }}>
-          <ArchText variant="body" style={{ fontSize: 14, color: C.primary, fontFamily: DS.font.mono, fontWeight: '700' }}>
-            {projectCount}
-          </ArchText>
-          <ArchText variant="body" style={{ fontSize: 10, color: C.primaryDim, fontFamily: DS.font.mono, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            designs
-          </ArchText>
+          <ArchText variant="mono" style={{ fontSize: 14, fontFamily: DS.font.bold, color: DS.colors.ink }}>{projectCount}</ArchText>
+          <ArchText variant="label" style={{ fontSize: 9 }}>designs</ArchText>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -625,6 +611,9 @@ export function DashboardScreen() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
+
+  const device = useDeviceType();
+  const tokens = getResponsiveTokens(device.layout);
 
   const { streakCount } = useStreak();
   const points = user?.pointsTotal ?? 0;
@@ -719,44 +708,46 @@ export function DashboardScreen() {
           <SkeletonCards C={C} />
         </>
       ) : (
-        <FlashList
-          data={projects}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={listHeader}
-          ListEmptyComponent={refreshError ? (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, paddingHorizontal: 32 }}>
-              <Svg width={56} height={56} viewBox="0 0 56 56" style={{ marginBottom: DS.spacing.md }}>
-                <Circle cx="28" cy="28" r="22" stroke={C.border} strokeWidth="1.5" fill="none" />
-                <Path d="M20 20 L36 36 M36 20 L20 36" stroke={C.primaryDim} strokeWidth="1.8" strokeLinecap="round" />
-                <Circle cx="28" cy="44" r="2" fill={C.primaryDim} />
-              </Svg>
-              <ArchText variant="heading" style={{ fontSize: 20, color: C.primary, textAlign: 'center', marginBottom: DS.spacing.xs }}>
-                Connection hiccup
-              </ArchText>
-              <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, textAlign: 'center', lineHeight: 20, marginBottom: DS.spacing.lg }}>
-                Could not reach the server. Check your connection and try again.
-              </ArchText>
-              <OvalButton label="Retry" variant="outline" size="small" onPress={() => { void handleRefresh(); }} />
-            </View>
-          ) : (
-            <EmptyState onPress={handleNewProject} />
-          )}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => { void handleRefresh(); }}
-              tintColor={C.primary}
-            />
-          }
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: Math.max(120, insets.bottom + 88) }}
-          showsVerticalScrollIndicator={false}
-          // @ts-expect-error -- FlashList v2 performance props not in types
-          windowSize={5}
-          maxToRenderPerBatch={8}
-          initialNumToRender={6}
-          updateCellsBatchingPeriod={50}
-        />
+        <View style={{ paddingHorizontal: tokens.horizontalPadding }}>
+          <FlashList
+            data={projects}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={listHeader}
+            ListEmptyComponent={refreshError ? (
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, paddingHorizontal: 32 }}>
+                <Svg width={56} height={56} viewBox="0 0 56 56" style={{ marginBottom: DS.spacing.md }}>
+                  <Circle cx="28" cy="28" r="22" stroke={C.border} strokeWidth="1.5" fill="none" />
+                  <Path d="M20 20 L36 36 M36 20 L20 36" stroke={C.primaryDim} strokeWidth="1.8" strokeLinecap="round" />
+                  <Circle cx="28" cy="44" r="2" fill={C.primaryDim} />
+                </Svg>
+                <ArchText variant="heading" style={{ fontSize: 20, color: C.primary, textAlign: 'center', marginBottom: DS.spacing.xs }}>
+                  Connection hiccup
+                </ArchText>
+                <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim, textAlign: 'center', lineHeight: 20, marginBottom: DS.spacing.lg }}>
+                  Could not reach the server. Check your connection and try again.
+                </ArchText>
+                <OvalButton label="Retry" variant="outline" size="small" onPress={() => { void handleRefresh(); }} />
+              </View>
+            ) : (
+              <EmptyState onPress={handleNewProject} />
+            )}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => { void handleRefresh(); }}
+                tintColor={C.primary}
+              />
+            }
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingBottom: Math.max(120, insets.bottom + 88) }}
+            showsVerticalScrollIndicator={false}
+            // @ts-expect-error -- FlashList v2 performance props not in types
+            windowSize={5}
+            maxToRenderPerBatch={8}
+            initialNumToRender={6}
+            updateCellsBatchingPeriod={50}
+          />
+        </View>
       )}
 
       <NewProjectModal
