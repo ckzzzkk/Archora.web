@@ -24,10 +24,10 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { ToastContainer } from './src/components/common/ToastContainer';
 import { supabase } from './src/lib/supabase';
-// authStore removed — now using AuthProvider
 import { AuthProvider } from './src/auth/AuthProvider';
 import { navigationRef } from './src/navigation/navigationRef';
 import { setupPushListeners } from './src/hooks/useNotifications';
+import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 
 // React Navigation linking config — maps deep link paths to screens.
 // Cast to any: RootStackParamList types Auth as undefined (no nested params),
@@ -60,15 +60,29 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false);
   const pushListenersRef = useRef<(() => void) | null>(null);
 
-  // Global error handler — surfaces unhandled JS errors in Metro (dev) for debugging
+  // Global error handler — catches unhandled JS errors and auth state failures
   useEffect(() => {
     const originalHandler = ErrorUtils.getGlobalHandler();
     ErrorUtils.setGlobalHandler((error, isFatal) => {
-      if (__DEV__) {
-        console.error('[GlobalError]', isFatal ? 'FATAL' : 'error', error?.message ?? error);
-      }
+      console.error('[GlobalError]', isFatal ? 'FATAL' : 'error', error?.message ?? error);
       originalHandler(error, isFatal);
     });
+
+    // Listen for auth token refresh failures — redirect to login gracefully
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION' && !session) {
+        // Token refresh failed (session became null unexpectedly) — reset nav to auth
+        navigationRef.current?.reset({ index: 0, routes: [{ name: 'Auth' }] });
+      }
+      if (event === 'USER_UPDATED') {
+        // User data changed — trigger a session reload so auth state is consistent
+        void supabase.auth.getSession();
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   // Handle deep links for Stripe subscription callback only
@@ -102,20 +116,22 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ExpoStatusBar style="light" backgroundColor="#1A1A1A" />
-        <AuthProvider>
-          <NavigationContainer
-            linking={linking}
-            ref={(ref) => { navigationRef.current = ref as typeof navigationRef.current; }}
-            onReady={() => {
-              // Register push listeners only once
-              if (pushListenersRef.current) return;
-              pushListenersRef.current = setupPushListeners();
-            }}
-          >
-            <ToastContainer />
-            <RootNavigator />
-          </NavigationContainer>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <NavigationContainer
+              linking={linking}
+              ref={(ref) => { navigationRef.current = ref as typeof navigationRef.current; }}
+              onReady={() => {
+                // Register push listeners only once
+                if (pushListenersRef.current) return;
+                pushListenersRef.current = setupPushListeners();
+              }}
+            >
+              <ToastContainer />
+              <RootNavigator />
+            </NavigationContainer>
+          </AuthProvider>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

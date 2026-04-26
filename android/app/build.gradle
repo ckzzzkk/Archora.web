@@ -106,9 +106,9 @@ android {
         }
         release {
             storeFile file('../../asoria-release.jks')
-            storePassword project.findProperty('KEYSTORE_PASSWORD') ?: 'asoria123'
+            storePassword project.findProperty('KEYSTORE_PASSWORD') ?: ''
             keyAlias project.findProperty('KEY_ALIAS') ?: 'asoria'
-            keyPassword project.findProperty('KEY_PASSWORD') ?: 'asoria123'
+            keyPassword project.findProperty('KEY_PASSWORD') ?: ''
         }
     }
     buildTypes {

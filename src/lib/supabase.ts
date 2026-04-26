@@ -10,7 +10,11 @@ const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('[supabase] Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY');
+  throw new Error(
+    'Missing required environment variables: EXPO_PUBLIC_SUPABASE_URL and ' +
+    'EXPO_PUBLIC_SUPABASE_ANON_KEY must be set. App cannot function without ' +
+    'Supabase configuration. Check your .env file or Expo secrets.',
+  );
 }
 
 /**

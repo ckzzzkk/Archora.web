@@ -35,7 +35,7 @@ interface CodesignStore {
   connectionError: string | null;
   _channelRef: (() => void) | null;
   actions: {
-    createSession: (projectId: string) => Promise<string>;
+    createSession: (projectId: string) => Promise<string | undefined>;
     joinSession: (sessionId: string) => Promise<void>;
     leaveSession: () => Promise<void>;
     updateCursor: (cursor: Partial<CursorPosition>) => void;
@@ -70,30 +70,37 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
 
   actions: {
     createSession: async (projectId: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      set({ isConnecting: true, connectionError: null });
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
 
-      const sessionId = generateId();
-      const participant: Participant = {
-        userId: user.id,
-        displayName: user.user_metadata?.display_name ?? user.email ?? 'Host',
-        avatarUrl: user.user_metadata?.avatar_url,
-        cursorPosition: get().localCursor,
-        lastSeen: Date.now(),
-        color: PARTICIPANT_COLORS[0],
-      };
+        const sessionId = generateId();
+        const participant: Participant = {
+          userId: user.id,
+          displayName: user.user_metadata?.display_name ?? user.email ?? 'Host',
+          avatarUrl: user.user_metadata?.avatar_url,
+          cursorPosition: get().localCursor,
+          lastSeen: Date.now(),
+          color: PARTICIPANT_COLORS[0],
+        };
 
-      const session: CodesignSession = {
-        id: sessionId,
-        projectId,
-        hostUserId: user.id,
-        participants: [participant],
-        isActive: true,
-        connectedAt: Date.now(),
-      };
+        const session: CodesignSession = {
+          id: sessionId,
+          projectId,
+          hostUserId: user.id,
+          participants: [participant],
+          isActive: true,
+          connectedAt: Date.now(),
+        };
 
-      set({ session, isConnecting: false, connectionError: null });
-      return sessionId;
+        set({ session, isConnecting: false, connectionError: null });
+        return sessionId;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to create session';
+        set({ isConnecting: false, connectionError: msg });
+        return undefined;
+      }
     },
 
     joinSession: async (sessionId: string) => {
@@ -145,7 +152,7 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Failed to join session';
         set({ isConnecting: false, connectionError: msg });
-        throw err;
+        // do not re-throw — callers handle connectionError state reactively
       }
     },
 

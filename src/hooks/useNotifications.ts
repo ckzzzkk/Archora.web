@@ -57,7 +57,9 @@ export function setupPushListeners(): () => void {
   });
 
   // Register push token on app launch
-  void pushNotificationService.registerToken();
+  pushNotificationService.registerToken().catch((e) => {
+    console.warn('[useNotifications] token registration failed:', e);
+  });
 
   return () => {
     receivedSub.remove();

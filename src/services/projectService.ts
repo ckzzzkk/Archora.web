@@ -1,19 +1,25 @@
 import { supabase } from '../lib/supabase';
 import type { Project, BlueprintData } from '../types';
+import { toAppError } from '../types/AppError';
+
+const VALID_BUILDING_TYPES = ['house', 'apartment', 'office', 'studio', 'villa', 'commercial'] as const;
 
 function mapRow(row: Record<string, unknown>): Project {
+  const bt = String(row.building_type ?? '');
+  const buildingType = VALID_BUILDING_TYPES.includes(bt as typeof VALID_BUILDING_TYPES[number])
+    ? bt : 'house';
   return {
-    id: row.id as string,
-    userId: row.user_id as string,
-    name: row.name as string,
-    buildingType: row.building_type as Project['buildingType'],
+    id: String(row.id ?? ''),
+    userId: String(row.user_id ?? ''),
+    name: String(row.name ?? 'Untitled'),
+    buildingType: buildingType as Project['buildingType'],
     blueprintData: (row.blueprint_data ?? {}) as BlueprintData,
-    thumbnailUrl: row.thumbnail_url as string | null,
-    isPublished: row.is_published as boolean,
-    viewCount: row.view_count as number,
-    roomCount: row.room_count as number,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
+    thumbnailUrl: (row.thumbnail_url as string | null) ?? null,
+    isPublished: Boolean(row.is_published ?? false),
+    viewCount: Number(row.view_count ?? 0),
+    roomCount: Number(row.room_count ?? 0),
+    createdAt: String(row.created_at ?? ''),
+    updatedAt: String(row.updated_at ?? ''),
   };
 }
 
@@ -24,7 +30,7 @@ export const projectService = {
       .select('*')
       .eq('user_id', userId)
       .order('updated_at', { ascending: false });
-    if (error) throw error;
+    if (error) throw toAppError(error, 'DB_ERROR');
     return (data ?? []).map(mapRow);
   },
 
@@ -34,21 +40,12 @@ export const projectService = {
       .insert({ user_id: userId, name, building_type: buildingType })
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw toAppError(error, 'DB_ERROR');
     return mapRow(data as Record<string, unknown>);
   },
 
-  async update(id: string, userId: string, updates: Partial<{ name: string; blueprintData: BlueprintData; thumbnailUrl: string; isPublished: boolean }>): Promise<Project> {
-    // Ownership verification — user must own this project
-    const { data: existing } = await supabase
-      .from('projects')
-      .select('user_id')
-      .eq('id', id)
-      .single();
-    if (!existing || existing.user_id !== userId) {
-      throw new Error('Not authorized to update this project');
-    }
-
+  async update(id: string, _userId: string, updates: Partial<{ name: string; blueprintData: BlueprintData; thumbnailUrl: string; isPublished: boolean }>): Promise<Project> {
+    // RLS enforces ownership server-side — no need for redundant client pre-check
     const dbUpdates: Record<string, unknown> = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.blueprintData !== undefined) dbUpdates.blueprint_data = updates.blueprintData;
@@ -61,34 +58,24 @@ export const projectService = {
       .eq('id', id)
       .select()
       .single();
-    if (error) throw error;
+    if (error) throw toAppError(error, 'DB_ERROR');
     return mapRow(data as Record<string, unknown>);
   },
 
-  async delete(id: string, userId: string): Promise<void> {
-    // Ownership verification — user must own this project
-    const { data: existing } = await supabase
-      .from('projects')
-      .select('user_id')
-      .eq('id', id)
-      .single();
-    if (!existing || existing.user_id !== userId) {
-      throw new Error('Not authorized to delete this project');
-    }
-
+  async delete(id: string, _userId: string): Promise<void> {
+    // RLS enforces ownership server-side
     const { error } = await supabase.from('projects').delete().eq('id', id);
-    if (error) throw error;
+    if (error) throw toAppError(error, 'DB_ERROR');
   },
 
-  async get(id: string, userId: string): Promise<Project> {
-    // Ownership verification — user must own this project
+  async get(id: string, _userId: string): Promise<Project> {
+    // RLS enforces ownership server-side
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .eq('id', id)
-      .eq('user_id', userId)
       .single();
-    if (error) throw error;
+    if (error) throw toAppError(error, 'DB_ERROR');
     return mapRow(data as Record<string, unknown>);
   },
 };

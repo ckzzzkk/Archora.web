@@ -99,18 +99,22 @@ export function useAuth(): AuthContextValue {
 }
 
 function mapDbUser(row: Record<string, unknown>): User {
+  const validTiers = ['starter', 'creator', 'pro', 'architect'] as const;
+  const validRoles = ['user', 'admin'] as const;
+  const tier = String(row.subscription_tier ?? '');
+  const role = String(row.role ?? '');
   return {
-    id: row.id as string,
-    email: row.email as string,
-    displayName: row.display_name as string | null,
-    avatarUrl: row.avatar_url as string | null,
-    subscriptionTier: (row.subscription_tier as 'starter' | 'creator' | 'pro' | 'architect') ?? 'starter',
-    aiGenerationsUsed: (row.ai_generations_used as number) ?? 0,
-    arScansUsed: (row.ar_scans_used as number) ?? 0,
+    id: String(row.id ?? ''),
+    email: String(row.email ?? ''),
+    displayName: (row.display_name as string | null) ?? null,
+    avatarUrl: (row.avatar_url as string | null) ?? null,
+    subscriptionTier: (validTiers.includes(tier as typeof validTiers[number]) ? tier : 'starter') as User['subscriptionTier'],
+    aiGenerationsUsed: Number(row.ai_generations_used ?? 0),
+    arScansUsed: Number(row.ar_scans_used ?? 0),
     quotaResetDate: (row.quota_reset_date as string) ?? new Date().toISOString(),
-    stripeCustomerId: row.stripe_customer_id as string | null,
-    role: row.role as 'user' | 'admin',
-    pointsTotal: (row.points_total as number) ?? 0,
-    streakCount: (row.streak_count as number) ?? 0,
+    stripeCustomerId: (row.stripe_customer_id as string | null) ?? null,
+    role: (validRoles.includes(role as typeof validRoles[number]) ? role : 'user') as User['role'],
+    pointsTotal: Number(row.points_total ?? 0),
+    streakCount: Number(row.streak_count ?? 0),
   };
 }

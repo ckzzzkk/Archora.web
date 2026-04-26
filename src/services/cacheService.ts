@@ -19,7 +19,8 @@ export const cacheService = {
       const entry = JSON.parse(raw) as CacheEntry<T>;
       if (Date.now() - entry.cachedAt > ttlMs) return null;
       return entry.data;
-    } catch {
+    } catch (e) {
+      console.warn('[cacheService] get failed, data may be corrupt:', e);
       return null;
     }
   },
@@ -34,7 +35,8 @@ export const cacheService = {
     try {
       const entry = JSON.parse(raw) as CacheEntry<T>;
       return entry.data;
-    } catch {
+    } catch (e) {
+      console.warn('[cacheService] getStale failed, data may be corrupt:', e);
       return null;
     }
   },
@@ -56,7 +58,8 @@ export const cacheService = {
     try {
       const entry = JSON.parse(raw) as CacheEntry<unknown>;
       return Date.now() - entry.cachedAt <= ttlMs;
-    } catch {
+    } catch (e) {
+      console.warn('[cacheService] isFresh failed, data may be corrupt:', e);
       return false;
     }
   },
@@ -86,8 +89,9 @@ export const cacheService = {
         }
       }
       Storage.set('cache:__index__', JSON.stringify(remaining));
-    } catch {
+    } catch (e) {
       // index corrupt — just proceed
+      console.warn('[cacheService] invalidatePrefix failed:', e);
     }
   },
 
@@ -102,8 +106,9 @@ export const cacheService = {
         index.push(key);
         Storage.set('cache:__index__', JSON.stringify(index));
       }
-    } catch {
+    } catch (e) {
       Storage.set('cache:__index__', JSON.stringify([key]));
+      console.warn('[cacheService] register index read failed, reset:', e);
     }
   },
 

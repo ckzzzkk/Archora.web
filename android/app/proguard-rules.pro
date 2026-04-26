@@ -7,12 +7,45 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# react-native-reanimated
+# === Asoria App Rules ===
+
+# Reanimated
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
-
-# Add any project specific keep options here:
 
 # ARCore
 -keep class com.google.ar.** { *; }
 -keep class com.asoria.ar.** { *; }
+
+# Supabase
+-keep class io.supabase.** { *; }
+-keep class org.openapitools.** { *; }
+-dontwarn io.supabase.**
+-dontwarn org.openapitools.**
+
+# Stripe
+-keep class com.stripe.** { *; }
+-dontwarn com.stripe.**
+
+# FlashList
+-keep class com.shopify.flashlist.** { *; }
+
+# Expo modules
+-keep class expo.** { *; }
+-dontwarn expo.modules.**
+
+# React Native core
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.hermes.** { *; }
+
+# Three.js / R3F (if bundled)
+-keep class org.threejs.** { *; }
+-dontwarn org.threejs.**
+
+# Firebase (Cloud Functions used by notifications)
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# Keep data classes used in network serialization
+-keep class asoria.app.types.** { *; }
+-keep class asoria.app.services.** { *; }
