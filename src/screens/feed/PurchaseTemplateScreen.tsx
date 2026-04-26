@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../../components/common/ArchText';
 import {
-  View, Image, ScrollView, Pressable, Dimensions, Linking, Alert,
+  View, Image, ScrollView, Pressable, useWindowDimensions, Linking, Alert,
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withSequence,
@@ -19,9 +19,6 @@ import { useHaptics } from '../../hooks/useHaptics';
 
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import type { Template } from '../../types';
-
-const SCREEN_W = Dimensions.get('window').width;
-const HERO_H = Math.min(SCREEN_W * 0.55, 320);
 
 const WHAT_YOU_GET = [
   'Full blueprint with all rooms and dimensions',
@@ -54,6 +51,8 @@ function StarIcon({ filled, color }: { filled: boolean; color: string }) {
 }
 
 export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateScreenProps) {
+  const { width: SCREEN_W } = useWindowDimensions();
+  const HERO_H = Math.min(SCREEN_W * 0.55, 320);
   const { templateId } = route.params;
   
   const { medium } = useHaptics();

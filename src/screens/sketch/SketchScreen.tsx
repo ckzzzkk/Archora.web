@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useReducer } from 'react';
-import { View, Pressable, FlatList, Dimensions, Alert } from 'react-native';
+import { View, Pressable, FlatList, useWindowDimensions, Alert } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,14 +26,13 @@ import { useHaptics } from '../../hooks/useHaptics';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../../components/common/ArchText';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
+import { useDeviceType } from '../../hooks/useDeviceType';
+import { getResponsiveTokens } from '../../theme/responsive';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData, Wall, Room, RoomType, Vector2D, FloorData } from '../../types/blueprint';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-// Reserve 240px for header + toolbar + bottom safe area; minimum 400px usable canvas
-const CANVAS_H = Math.max(SCREEN_H - 240, 400);
 const PIXELS_PER_METRE = 40;
 const SNAP_INTERVAL = 0.1;
 
@@ -496,6 +495,12 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
 // --- Main SketchScreen ---
 
 export function SketchScreen() {
+  const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
+  const device = useDeviceType();
+  const tokens = getResponsiveTokens(device.layout);
+  // Reserve 240px for header + toolbar + bottom safe area; minimum 400px usable canvas
+  const CANVAS_H = Math.max(SCREEN_H - 240, 400);
+
   const navigation = useNavigation<Nav>();
   const { light, medium } = useHaptics();
   const [mode, setMode] = useState<SketchMode>('draw');
@@ -890,7 +895,7 @@ export function SketchScreen() {
 
         {mode === 'draw' ? (
           /* --- Draw mode --- */
-          <Animated.View style={[canvasAnimStyle, { flex: 1 }]}>
+          <Animated.View style={[canvasAnimStyle, { flex: 1, maxWidth: 1200, alignSelf: 'center' }]}>
             <ErrorBoundary fallback={<View style={{ width: SCREEN_W, height: CANVAS_H, backgroundColor: '#1A1A1A' }} />}>
               <GestureDetector gesture={activeGesture}>
                 <Canvas style={{ width: SCREEN_W, height: CANVAS_H }}>

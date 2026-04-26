@@ -3,7 +3,7 @@ import { DS } from '../../theme/designSystem';
 import { ArchText } from '../../components/common/ArchText';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import {
-  View, Image, ScrollView, Pressable, Dimensions, Alert,
+  View, Image, ScrollView, Pressable, useWindowDimensions, Alert,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -30,9 +30,6 @@ import type { Template, Comment } from '../../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TemplateDetail'>;
 
-const SCREEN_H = Dimensions.get('window').height;
-const HERO_H = Math.min(SCREEN_H * 0.45, 400);
-
 function BackArrow({ color }: { color: string }) {
   return (
     <Svg width={24} height={24} viewBox="0 0 24 24">
@@ -48,6 +45,8 @@ function formatDate(dateStr: string): string {
 }
 
 export function TemplateDetailScreen({ navigation, route }: Props) {
+  const { height: SCREEN_H } = useWindowDimensions();
+  const HERO_H = Math.min(SCREEN_H * 0.45, 400);
   const { templateId } = route.params;
   
   const { medium } = useHaptics();
