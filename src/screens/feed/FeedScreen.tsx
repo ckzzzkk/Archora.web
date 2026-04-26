@@ -34,6 +34,7 @@ import { useHaptics } from '../../hooks/useHaptics';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useUIStore } from '../../stores/uiStore';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { useDeviceType } from '../../hooks/useDeviceType';
 import { DS } from '../../theme/designSystem';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Template } from '../../types';
@@ -313,6 +314,7 @@ export function FeedScreen() {
   const showToast = useUIStore((s) => s.actions.showToast);
   const [showNotifications, setShowNotifications] = useState(false);
   const { unreadCount } = useNotifications();
+  const device = useDeviceType();
 
   const {
     templates,
@@ -542,9 +544,9 @@ export function FeedScreen() {
       ) : (
         <FlashList
           data={templates}
-          numColumns={2}
+          numColumns={device.gridColumns}
           // @ts-expect-error -- FlashList v2 prop not in types
-          estimatedItemSize={230}
+          estimatedItemSize={device.layout === 'compact' ? 230 : 260}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           onEndReached={handleEndReached}
