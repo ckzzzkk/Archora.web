@@ -3,6 +3,11 @@ module.exports = {
   content: ['./App.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {
+    screens: {
+      'compact': { max: '599px' },
+      'standard': { min: '600px', max: '899px' },
+      'expanded': { min: '900px' },
+    },
     extend: {
       colors: {
         // Base — dark drafting paper
