@@ -9,7 +9,6 @@ import {
   Circle,
   Group,
   Text as SkiaText,
-  useFont,
   DashPathEffect,
 } from '@shopify/react-native-skia';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
@@ -39,7 +38,8 @@ import { ScaleBar } from '../../utils/geometry/ScaleBar';
 import { boundingBox } from '../../utils/geometry/polygonUtils';
 import { wallLength as calcWallLength } from '../../utils/geometry/wallGraph';
 import { MaterialCompiler } from '../../materials/MaterialCompiler';
-import type { Wall, Room, Opening, FurniturePiece } from '../../types';
+import { useSkiaFonts } from '../common/SkiaFontLoader';
+import type { Wall, Room, Opening, FurniturePiece, Vector2D } from '../../types';
 import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -88,10 +88,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   useImperativeHandle(ref, () => ({
     makeImageSnapshot: () => skiaCanvasRef.current?.makeImageSnapshot?.() as { encodeToBase64: () => string } | undefined,
   }));
-
-  // Using null for now (fonts loaded via useFonts at app level)
-  const dimFont = useFont(null, 10);
-  const roomFont = useFont(null, 12);
+  const { dimFont, roomFont } = useSkiaFonts();
 
   const wallDrawing = useWallDrawing();
   const placement = useFurniturePlacement(onFurniturePlaced);

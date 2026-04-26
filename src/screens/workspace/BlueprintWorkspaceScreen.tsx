@@ -16,6 +16,7 @@ import { TIER_LIMITS } from '../../utils/tierLimits';
 import { useSession } from '../../auth/useSession';
 import { useUIStore } from '../../stores/uiStore';
 import { Canvas2D } from '../../components/blueprint/Canvas2D';
+import { SkiaFontLoader } from '../../components/common/SkiaFontLoader';
 import type { Canvas2DHandle } from '../../components/blueprint/Canvas2D';
 import { FurnitureLibrarySheet } from '../../components/blueprint/FurnitureLibrarySheet';
 import { StyleSelectorSheet } from '../../components/blueprint/StyleSelectorSheet';
@@ -603,13 +604,15 @@ export function BlueprintWorkspaceScreen() {
           // 2D + 3D — both mounted, cross-fade driven by transitionProgress
           <>
             <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, canvas2DStyle]}>
-              <Canvas2D
-                ref={canvasRef}
-                showStructuralGrid={showStructuralGrid}
-                activeTool={activeTool}
-                pendingFurniturePlacement={pendingFurniturePlacement}
-                onFurniturePlaced={handleFurniturePlaced}
-              />
+              <SkiaFontLoader>
+                <Canvas2D
+                  ref={canvasRef}
+                  showStructuralGrid={showStructuralGrid}
+                  activeTool={activeTool}
+                  pendingFurniturePlacement={pendingFurniturePlacement}
+                  onFurniturePlaced={handleFurniturePlaced}
+                />
+              </SkiaFontLoader>
             </Animated.View>
             <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, viewer3DStyle]}>
               <React.Suspense fallback={<CompassRoseLoader size="large" />}>
