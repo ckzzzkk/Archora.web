@@ -87,6 +87,7 @@ interface BlueprintState {
     setWallTexture: (wallId: string, texture: WallTexture) => void;
     setRoomFloor: (roomId: string, material: MaterialType) => void;
     setRoomCeiling: (roomId: string, ceiling: CeilingType) => void;
+    applyMaterial: (surfaceId: string, materialId: string) => void;
     // Style
     applyStyle: (styleId: string, primaryColour: string) => void;
     // Custom assets
@@ -514,6 +515,35 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, rooms: f.rooms.map((r) => r.id === roomId ? { ...r, ceilingType: ceiling } : r),
           }));
+        });
+      },
+
+      applyMaterial: (surfaceId, materialId) => {
+        const prefix = surfaceId.split('_')[0];
+        mutate('Apply material', (state) => {
+          const { blueprint, currentFloorIndex } = state;
+          if (!blueprint) return null;
+          if (prefix === 'wall') {
+            return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
+              ...f, walls: f.walls.map((w) => w.id === surfaceId ? { ...w, materialId } : w),
+            }));
+          }
+          if (prefix === 'room') {
+            return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
+              ...f, rooms: f.rooms.map((r) => r.id === surfaceId ? { ...r, floorMaterialId: materialId } : r),
+            }));
+          }
+          if (prefix === 'slab') {
+            return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
+              ...f, slabs: f.slabs.map((s) => s.id === surfaceId ? { ...s, materialId } : s),
+            }));
+          }
+          if (prefix === 'ceiling') {
+            return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
+              ...f, ceilings: f.ceilings.map((c) => c.id === surfaceId ? { ...c, materialId } : c),
+            }));
+          }
+          return null;
         });
       },
 

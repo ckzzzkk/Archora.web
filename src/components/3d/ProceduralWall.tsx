@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import * as THREE from 'three'
 import type { Wall, Opening } from '../../types/blueprint'
+import { MaterialCompiler } from '../../materials/MaterialCompiler'
 import {
   calculateLevelMiters,
   getWallMiterBoundaryPoints,
@@ -206,6 +207,7 @@ interface ProceduralWallProps {
   openings?: Opening[]
   selected?: boolean
   color?: string
+  wallTexture?: string
   opacity?: number
   onClick?: () => void
 }
@@ -215,9 +217,14 @@ export function ProceduralWall({
   openings = [],
   selected = false,
   color = '#C8C8C8',
+  wallTexture,
   opacity = 1,
   onClick,
 }: ProceduralWallProps) {
+  const mat = MaterialCompiler.compile(wallTexture ?? 'wall_drywall', 'threejs');
+  const baseRoughness = mat.roughness ?? 0.8;
+  const baseMetalness = mat.metalness ?? 0.05;
+  const compiledColor = mat.color;
   const { position, rotation, length } = useMemo(() => {
     // Compute position and rotation from wall start/end
     const start = { x: wall.start.x, y: wall.start.y }
@@ -261,7 +268,7 @@ export function ProceduralWall({
     [length, wall.height, wall.thickness, openings],
   )
 
-  const wallColor = selected ? '#4A90D9' : color
+  const wallColor = selected ? '#4A90D9' : (color ?? compiledColor)
   const isTransparent = opacity < 1
 
   // r3f group accepts onClick at runtime; cast to silence TS
@@ -279,8 +286,8 @@ export function ProceduralWall({
         const isWindow = seg.kind === 'window'
         const segColor = isDoor ? '#1A1A1A' : isWindow ? '#88B8D0' : wallColor
         const segOpacity = isWindow ? 0.55 : (isTransparent ? opacity : 1)
-        const segRoughness = isWindow ? 0.05 : 0.8
-        const segMetalness = isWindow ? 0.6 : 0.05
+        const segRoughness = isWindow ? 0.05 : (isDoor ? 0.5 : baseRoughness)
+        const segMetalness = isWindow ? 0.6 : (isDoor ? 0.05 : baseMetalness)
 
         return (
           <mesh

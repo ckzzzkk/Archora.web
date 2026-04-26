@@ -107,6 +107,7 @@ export interface Ceiling {
   holeMetadata: { source: 'manual' | 'stair' | 'opening'; id?: string }[];
   height: number;                  // ceiling height in metres (from floor)
   ceilingType: CeilingType;        // 'flat_white' | 'flat_dark' | 'coffered' | 'tray' | 'vaulted' | 'exposed_beams' | 'concrete' | 'wood_planks' | 'acoustic_panels' | 'barrel_vault' | 'dropped'
+  materialId?: string;             // references materialLibrary id
   autoFromWalls: boolean;          // compute polygon from enclosing walls
 }
 
@@ -127,6 +128,7 @@ export interface Wall {
   exteriorFinish?: ExteriorFinish;
   isLoadbearing?: boolean;
   material?: string;
+  materialId?: string; // references materialLibrary id
   /** Curve offset for curved walls (arc deviation in metres) */
   curveOffset?: number;
 }
@@ -148,6 +150,7 @@ export interface Room {
   type: RoomType;
   wallIds: string[];
   floorMaterial: MaterialType;
+  floorMaterialId?: string; // references materialLibrary id
   ceilingHeight: number;
   ceilingType?: CeilingType;
   area: number;
@@ -278,6 +281,7 @@ export interface Slab {
   holeMetadata: { source: 'manual' | 'stair' | 'opening'; id?: string }[];
   elevation: number;             // height above floor level in metres (default 0.05)
   autoFromWalls: boolean;       // auto-compute polygon from enclosing wall loop
+  materialId?: string;         // references materialLibrary id
 }
 
 export interface FloorData {

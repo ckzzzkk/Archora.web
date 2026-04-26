@@ -38,6 +38,7 @@ import {
 import { ScaleBar } from '../../utils/geometry/ScaleBar';
 import { boundingBox } from '../../utils/geometry/polygonUtils';
 import { wallLength as calcWallLength } from '../../utils/geometry/wallGraph';
+import { MaterialCompiler } from '../../materials/MaterialCompiler';
 import type { Wall, Room, Opening, FurniturePiece } from '../../types';
 import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
 
@@ -466,24 +467,62 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
 
               {/* ── Layer 3: Room fills ────────────────────────────────── */}
               {(blueprint?.rooms ?? []).map((room) => {
-                const cx = toPixelX(room.centroid.x);
-                const cy = toPixelY(room.centroid.y);
-                // Approximate room bounding box from area
-                const halfSide = Math.sqrt(room.area) * PIXELS_PER_METRE * 0.5;
+                const wallMap = new Map((blueprint?.walls ?? []).map((w: Wall) => [w.id, w]));
+                const roomWalls = room.wallIds
+                  .map((id: string) => wallMap.get(id))
+                  .filter((w: Wall | undefined): w is Wall => !!w);
+
+                if (roomWalls.length < 3) return null;
+
+                // Sort walls into a proper closed loop using endpoint continuity
+                const sortedWalls: Wall[] = [];
+                const usedIds = new Set<string>();
+                let currentWall = roomWalls[0];
+                sortedWalls.push(currentWall);
+                usedIds.add(currentWall.id);
+
+                while (sortedWalls.length < roomWalls.length) {
+                  const lastEnd: Vector2D = sortedWalls[sortedWalls.length - 1].end;
+                  let found: Wall | null = null;
+                  for (const w of roomWalls) {
+                    if (usedIds.has(w.id)) continue;
+                    if (Math.hypot(w.start.x - lastEnd.x, w.start.y - lastEnd.y) < 0.15) {
+                      found = w;
+                      break;
+                    }
+                    if (Math.hypot(w.end.x - lastEnd.x, w.end.y - lastEnd.y) < 0.15) {
+                      // reverse wall direction
+                      found = { ...w, start: w.end, end: w.start };
+                      break;
+                    }
+                  }
+                  if (!found) break;
+                  sortedWalls.push(found);
+                  usedIds.add(found.id);
+                }
+
+                if (sortedWalls.length < 3) return null;
+
+                // Build pixel-space polygon path
                 const roomPath = Skia.Path.Make();
-                roomPath.addRect({
-                  x: cx - halfSide,
-                  y: cy - halfSide,
-                  width: halfSide * 2,
-                  height: halfSide * 2,
-                });
+                const first = sortedWalls[0];
+                roomPath.moveTo(toPixelX(first.start.x), toPixelY(first.start.y));
+                for (const w of sortedWalls) {
+                  roomPath.lineTo(toPixelX(w.end.x), toPixelY(w.end.y));
+                }
+                roomPath.close();
+
+                const mat = MaterialCompiler.compile(
+                  room.floorMaterialId ?? room.floorMaterial,
+                  'skia',
+                );
                 const isSmall = room.area < SMALL_ROOM_AREA;
                 return (
                   <Path
                     key={`rf_${room.id}`}
                     path={roomPath}
-                    color={isSmall ? DS.colors.error : colors.primary}
-                    opacity={0.08}
+                    color={isSmall ? DS.colors.error : mat.color}
+                    opacity={0.15}
                     style="fill"
                   />
                 );
