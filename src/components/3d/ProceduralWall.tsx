@@ -28,6 +28,106 @@ interface Segment {
   kind: 'wall' | 'door' | 'window' | 'lintel'
 }
 
+/** Renders a proper 3D door or window inside the wall group. */
+function OpeningMesh({
+  opening,
+  wallHeight,
+  wallThickness,
+}: {
+  opening: Opening;
+  wallHeight: number;
+  wallThickness: number;
+}) {
+  const isDoor = opening.type === 'door' || opening.type === 'sliding_door' || opening.type === 'french_door';
+  const FRAME = 0.06; // frame thickness
+  const depth = wallThickness * 0.25; // thin panel depth (matches existing door/window)
+
+  // Door frame: outer dimensions
+  const frameX = 0; // already in wall-local space from parent
+  const frameY = (opening.sillHeight + opening.height / 2) - wallHeight / 2;
+  const frameW = opening.width;
+  const frameH = opening.height;
+
+  if (isDoor) {
+    // Door leaf: full opening minus frame gap
+    const leafH = frameH - FRAME * 2;
+    const leafW = frameW - FRAME * 2;
+    const leafY = frameY; // centred in opening
+    const leafZ = depth / 2; // forward of wall centre
+
+    return (
+      <group position={[frameX, frameY, 0]}>
+        {/* Frame top */}
+        <mesh position={[0, frameH / 2 - FRAME / 2, 0]} castShadow>
+          <boxGeometry args={[frameW, FRAME, depth]} />
+          <meshStandardMaterial color="#5C4033" roughness={0.7} metalness={0.1} />
+        </mesh>
+        {/* Frame left */}
+        <mesh position={[-frameW / 2 + FRAME / 2, 0, 0]} castShadow>
+          <boxGeometry args={[FRAME, frameH, depth]} />
+          <meshStandardMaterial color="#5C4033" roughness={0.7} metalness={0.1} />
+        </mesh>
+        {/* Frame right */}
+        <mesh position={[frameW / 2 - FRAME / 2, 0, 0]} castShadow>
+          <boxGeometry args={[FRAME, frameH, depth]} />
+          <meshStandardMaterial color="#5C4033" roughness={0.7} metalness={0.1} />
+        </mesh>
+        {/* Door leaf */}
+        <mesh position={[0, 0, leafZ]} castShadow>
+          <boxGeometry args={[leafW, leafH, 0.04]} />
+          <meshStandardMaterial color="#8B6352" roughness={0.6} metalness={0.05} />
+        </mesh>
+        {/* Door handle (small sphere) */}
+        <mesh position={[leafW / 2 - 0.08, 0, leafZ + 0.04]}>
+          <sphereGeometry args={[0.025, 8, 8]} />
+          <meshStandardMaterial color="#C0C0C0" roughness={0.3} metalness={0.8} />
+        </mesh>
+      </group>
+    );
+  }
+
+  // Window: frame + glass
+  const glassH = frameH - FRAME * 2;
+  const glassW = frameW - FRAME * 2;
+  const glassZ = depth / 2;
+
+  return (
+    <group position={[frameX, frameY, 0]}>
+      {/* Frame top */}
+      <mesh position={[0, frameH / 2 - FRAME / 2, 0]} castShadow>
+        <boxGeometry args={[frameW, FRAME, depth]} />
+        <meshStandardMaterial color="#E0E0E0" roughness={0.4} metalness={0.3} />
+      </mesh>
+      {/* Frame bottom */}
+      <mesh position={[0, -frameH / 2 + FRAME / 2, 0]} castShadow>
+        <boxGeometry args={[frameW, FRAME, depth]} />
+        <meshStandardMaterial color="#E0E0E0" roughness={0.4} metalness={0.3} />
+      </mesh>
+      {/* Frame left */}
+      <mesh position={[-frameW / 2 + FRAME / 2, 0, 0]} castShadow>
+        <boxGeometry args={[FRAME, frameH, depth]} />
+        <meshStandardMaterial color="#E0E0E0" roughness={0.4} metalness={0.3} />
+      </mesh>
+      {/* Frame right */}
+      <mesh position={[frameW / 2 - FRAME / 2, 0, 0]} castShadow>
+        <boxGeometry args={[FRAME, frameH, depth]} />
+        <meshStandardMaterial color="#E0E0E0" roughness={0.4} metalness={0.3} />
+      </mesh>
+      {/* Glass pane */}
+      <mesh position={[0, 0, glassZ]}>
+        <boxGeometry args={[glassW, glassH, 0.01]} />
+        <meshStandardMaterial
+          color="#88B8D0"
+          roughness={0.05}
+          metalness={0.1}
+          transparent
+          opacity={0.45}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function buildSegments(length: number, height: number, thickness: number, openings: Opening[]): Segment[] {
   if (openings.length === 0) {
     return [{ x: 0, y: 0, z: 0, w: length, h: height, d: thickness, kind: 'wall' }]
@@ -307,6 +407,15 @@ export function ProceduralWall({
           </mesh>
         )
       })}
+      {/* 3D opening meshes (doors + windows) */}
+      {openings.map((opening) => (
+        <OpeningMesh
+          key={`opening_${opening.id}`}
+          opening={opening}
+          wallHeight={wall.height}
+          wallThickness={wall.thickness}
+        />
+      ))}
     </Group>
   )
 }
