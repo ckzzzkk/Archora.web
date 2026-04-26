@@ -15,6 +15,7 @@ import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { SkeletonLoader } from '../../components/common/SkeletonLoader';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { CompassRose } from '../../components/common/CompassRose';
 import { authService } from '../../services/authService';
 import { subscriptionService } from '../../services/subscriptionService';
 import { supabase } from '../../lib/supabase';
@@ -31,12 +32,8 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 function SectionLabel({ title, C }: { title: string; C: ReturnType<typeof useThemeColors> }) {
   return (
-    <ArchText variant="body" style={{
-      fontFamily: DS.font.medium,
-      fontSize: 12,
-      color: C.primaryGhost,
-      letterSpacing: 1.5,
-      textTransform: 'uppercase',
+    <ArchText variant="label" style={{
+      color: DS.colors.mutedForeground,
       marginBottom: DS.spacing.sm,
       marginLeft: 4,
       marginTop: DS.spacing.md,
@@ -73,17 +70,17 @@ function SettingsRow({
       minHeight: 52,
     }}>
       <View style={{ flexShrink: 1, marginRight: 8 }}>
-        <ArchText variant="body" style={{ fontSize: DS.fontSize.md, color: danger ? C.error : C.primary }} numberOfLines={2}>
+        <ArchText variant="body" style={{ fontSize: DS.fontSize.md, color: danger ? DS.colors.error : DS.colors.ink }} numberOfLines={2}>
           {label}
         </ArchText>
       </View>
       {right != null ? right : (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.xs }}>
           {value != null && (
-            <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: C.primaryDim }}>{value}</ArchText>
+            <ArchText variant="body" style={{ fontSize: DS.fontSize.sm, color: DS.colors.mutedForeground }}>{value}</ArchText>
           )}
           {onPress != null && (
-            <ArchText variant="body" style={{ fontSize: 18, color: C.primaryGhost }}>›</ArchText>
+            <ArchText variant="body" style={{ fontSize: 18, color: DS.colors.mutedForeground }}>›</ArchText>
           )}
         </View>
       )}
@@ -102,7 +99,7 @@ function SettingsRow({
         >{content}</Pressable>
       ) : content}
       {!last && (
-        <View style={{ height: 1, backgroundColor: C.border, marginHorizontal: 20 }} />
+        <View style={{ height: 1, backgroundColor: DS.colors.border, marginHorizontal: 20, opacity: 0.3 }} />
       )}
     </View>
   );
@@ -111,11 +108,11 @@ function SettingsRow({
 function SettingsCard({ children, danger = false, C }: { children: React.ReactNode; danger?: boolean; C: ReturnType<typeof useThemeColors> }) {
   return (
     <View style={{
-      backgroundColor: danger ? `${C.error}15` : C.surface,
-      borderRadius: DS.radius.card, // 24px — oval-first design system
+      backgroundColor: danger ? `${C.error}15` : DS.colors.card,
+      borderRadius: DS.radius.large,
       overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: danger ? `${C.error}30` : C.border,
+      borderWidth: 2,
+      borderColor: danger ? DS.colors.error : DS.colors.ink,
     }}>
       {children}
     </View>
@@ -210,9 +207,9 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
                 borderRadius: 50,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: active ? C.primary : 'transparent',
-                borderWidth: 1.5,
-                borderColor: active ? C.primary : C.borderLight,
+                backgroundColor: active ? DS.colors.ink : 'transparent',
+                borderWidth: 2,
+                borderColor: active ? DS.colors.ink : DS.colors.border,
               }}
             >
               <ArchText
@@ -220,7 +217,7 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
                 style={{
                   fontFamily: DS.font.bold,
                   fontSize: 13,
-                  color: active ? C.background : C.primaryDim,
+                  color: active ? DS.colors.paper : DS.colors.mutedForeground,
                   letterSpacing: 0.3,
                 }}
               >
@@ -234,7 +231,7 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
         variant="body"
         style={{
           fontSize: 11,
-          color: C.primaryGhost,
+          color: DS.colors.mutedForeground,
           marginTop: 8,
           textAlign: 'center',
         }}
@@ -315,10 +312,10 @@ export function AccountScreen() {
   const tierLabel = (user.subscriptionTier ?? 'starter').charAt(0).toUpperCase() + (user.subscriptionTier ?? 'starter').slice(1);
 
   const tierBadgeColors = {
-    starter:   { border: C.border,      text: C.primaryDim },
-    creator:   { border: '#7AB87A80',   text: C.success    },
-    pro:       { border: '#C8C8C850',   text: C.accent     },
-    architect: { border: '#D4A84B80',   text: C.warning    },
+    starter:   { border: DS.colors.border, text: DS.colors.mutedForeground },
+    creator:   { border: DS.colors.success, text: DS.colors.success },
+    pro:       { border: DS.colors.ink,     text: DS.colors.ink     },
+    architect: { border: DS.colors.amber,  text: DS.colors.amber   },
   };
   const tierColors = tierBadgeColors[user.subscriptionTier ?? 'starter'] ?? tierBadgeColors.starter;
 
@@ -431,29 +428,29 @@ export function AccountScreen() {
           >
             <View style={{
               width: 88, height: 88, borderRadius: 44,
-              backgroundColor: C.surfaceHigh,
+              backgroundColor: DS.colors.surfaceHigh,
               alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden',
               borderWidth: 2,
-              borderColor: C.border,
+              borderColor: DS.colors.ink,
             }}>
               {user.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={{ width: 88, height: 88 }} />
+                <Image source={{ uri: user.avatarUrl }} style={{ width: 88, height: 88, resizeMode: 'cover' }} />
               ) : (
-                <ArchText variant="heading" style={{ fontSize: 34, color: C.primary }}>{initial}</ArchText>
+                <ArchText variant="heading" style={{ fontSize: 34, color: DS.colors.ink }}>{initial}</ArchText>
               )}
             </View>
             {/* Camera badge */}
             <View style={{
               position: 'absolute', bottom: 0, right: 0,
               width: 28, height: 28, borderRadius: 14,
-              backgroundColor: C.primary,
+              backgroundColor: DS.colors.amber,
               alignItems: 'center', justifyContent: 'center',
-              borderWidth: 2, borderColor: C.background,
+              borderWidth: 2, borderColor: DS.colors.ink,
             }}>
               <Svg width={14} height={14} viewBox="0 0 24 24">
-                <Path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke={C.background} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                <Circle cx="12" cy="13" r="4" stroke={C.background} strokeWidth="1.8" fill="none" />
+                <Path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke={DS.colors.paper} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <Circle cx="12" cy="13" r="4" stroke={DS.colors.paper} strokeWidth="1.8" fill="none" />
               </Svg>
             </View>
           </Pressable>

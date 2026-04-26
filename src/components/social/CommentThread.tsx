@@ -49,7 +49,7 @@ function CommentItem({ comment, depth = 0, onReply }: CommentItemProps) {
           }}
         >
           {comment.authorAvatarUrl ? (
-            <Image source={{ uri: comment.authorAvatarUrl }} style={{ width: 32, height: 32, borderRadius: 16 }} />
+            <Image source={{ uri: comment.authorAvatarUrl }} style={{ width: 32, height: 32, borderRadius: 16, resizeMode: 'cover' }} />
           ) : (
             <Text style={{ color: DS.colors.background, fontSize: 13, fontFamily: 'Inter_400Regular' }}>
               {comment.authorDisplayName?.[0]?.toUpperCase() ?? '?'}

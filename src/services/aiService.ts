@@ -4,6 +4,7 @@ import type { GenerationPayload, QuestionCategory } from '../types/generation';
 import type { ChatMessage } from '../types/blueprint';
 import type { Tier } from '../utils/tierLimits';
 import { validateBlueprintData } from '../utils/blueprintValidation';
+import { toAppError } from '../types/AppError';
 
 export interface UserPreferences {
   user_id: string;
@@ -99,7 +100,7 @@ export const aiService = {
         e.code = 'NETWORK';
         throw e;
       }
-      throw err;
+      throw toAppError(err, 'GENERATION_FAILED');
     }
   },
 
@@ -124,22 +125,27 @@ export const aiService = {
       if (response.status === 503) {
         const body = await response.json() as { error?: string };
         if (body.error === 'AI_NOT_CONFIGURED') {
-          throw Object.assign(new Error('AI features coming soon'), { code: 'AI_NOT_CONFIGURED' });
+          throw Object.assign(new Error('AI features coming soon'), { code: 'AI_NOT_CONFIGURED', status: 503 });
         }
       }
 
       if (!response.ok) {
-        const err = await response.json() as { error: string };
-        throw Object.assign(new Error(err.error ?? 'AI blueprint edit failed'), { status: response.status });
+        const err = await response.json() as { error: string; code?: string };
+        const e = new Error(err.error ?? 'AI blueprint edit failed') as Error & { code?: string; status?: number };
+        e.code = 'AI_EDIT_FAILED';
+        e.status = response.status;
+        throw e;
       }
 
       return response.json() as Promise<{ message: string; blueprint?: BlueprintData }>;
     } catch (err: unknown) {
       clearTimeout(timeoutId);
       if (err instanceof Error && err.name === 'AbortError') {
-        throw Object.assign(new Error('Request timed out'), { code: 'TIMEOUT' });
+        const e = new Error('Request timed out') as Error & { code: string };
+        e.code = 'TIMEOUT';
+        throw e;
       }
-      throw err instanceof Error ? err : new Error('Blueprint edit failed');
+      throw toAppError(err, 'AI_EDIT_FAILED');
     }
   },
 
@@ -160,8 +166,8 @@ export const aiService = {
         has_utility_room: payload.hasUtilityRoom ?? false,
         last_used_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
-    } catch {
-      throw new Error('Failed to save preferences');
+    } catch (err: unknown) {
+      throw toAppError(err, 'PREFERENCES_FAILED');
     }
   },
 
@@ -186,8 +192,8 @@ export const aiService = {
       if (error) return null;
       const { data } = supabase.storage.from('reference-images').getPublicUrl(path);
       return data.publicUrl;
-    } catch {
-      return null;
+    } catch (err: unknown) {
+      throw toAppError(err, 'IMAGE_UPLOAD_FAILED');
     }
   },
 
@@ -219,7 +225,7 @@ export const aiService = {
 
       return data.transcript ?? '';
     } catch (err) {
-      throw err instanceof Error ? err : new Error('Transcription failed');
+      throw toAppError(err, 'TRANSCRIPTION_FAILED');
     }
   },
 
@@ -230,7 +236,7 @@ export const aiService = {
       .insert({ user_id: userId, status: 'pending', iteration: 0, total_iterations: 3 })
       .select('id')
       .single();
-    if (error || !data) throw new Error('Could not create generation session');
+    if (error || !data) throw toAppError(error, 'SESSION_FAILED');
     return (data as { id: string }).id;
   },
 
@@ -290,7 +296,7 @@ export const aiService = {
       if (response.status === 503) {
         const body = await response.json() as { error?: string };
         if (body.error === 'AI_NOT_CONFIGURED') {
-          throw Object.assign(new Error('AI features coming soon'), { code: 'AI_NOT_CONFIGURED' });
+          throw Object.assign(new Error('AI features coming soon'), { code: 'AI_NOT_CONFIGURED', status: 503 });
         }
         throw Object.assign(new Error('Service unavailable'), { code: body.error ?? 'UNAVAILABLE' });
       }
@@ -318,12 +324,16 @@ export const aiService = {
     } catch (err: unknown) {
       clearTimeout(timeoutId);
       if (err instanceof Error && err.name === 'AbortError') {
-        throw Object.assign(new Error('Request timed out'), { code: 'TIMEOUT' });
+        const e = new Error('Request timed out') as Error & { code: string };
+        e.code = 'TIMEOUT';
+        throw e;
       }
       if (err instanceof TypeError && err.message.includes('Network')) {
-        throw Object.assign(new Error('Network error'), { code: 'NETWORK' });
+        const e = new Error('Network error') as Error & { code: string };
+        e.code = 'NETWORK';
+        throw e;
       }
-      throw err;
+      throw toAppError(err, 'GENERATION_FAILED');
     } finally {
       await supabase.removeChannel(channel);
     }
@@ -375,7 +385,10 @@ export const aiService = {
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: 'Consultation failed' })) as { error: string };
-        throw Object.assign(new Error(err.error ?? 'Consultation failed'), { status: response.status });
+        const e = new Error(err.error ?? 'Consultation failed') as Error & { code?: string; status?: number };
+        e.code = 'CONSULT_FAILED';
+        e.status = response.status;
+        throw e;
       }
 
       return response.json() as Promise<{
@@ -395,10 +408,10 @@ export const aiService = {
       }
       if (err instanceof TypeError && (err.message.includes('Network request failed') || err.message.includes('Failed to fetch'))) {
         const e = new Error('Network error') as Error & { code: string };
-        e.code = 'NETWORK_ERROR';
+        e.code = 'NETWORK';
         throw e;
       }
-      throw err;
+      throw toAppError(err, 'CONSULT_FAILED');
     }
   },
 };
