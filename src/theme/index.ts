@@ -1,6 +1,7 @@
 export * from './colors';
 export * from './spacing';
 export * from './shapes';
+export * from './responsive';
 
 // Premium layered shadows — each tier adds depth + subtle color glow
 // Usage: import { SHADOW } from '../../theme'
