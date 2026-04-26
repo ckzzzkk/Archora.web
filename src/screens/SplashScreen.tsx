@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Dimensions } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { DS } from '../theme/designSystem';
 import Animated, {
   useSharedValue,
@@ -12,10 +12,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import Svg, { Circle, Line } from 'react-native-svg';
-
-const { width: SW, height: SH } = Dimensions.get('window');
-const CX = SW / 2;
-const CY = SH / 2;
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedLine = Animated.createAnimatedComponent(Line);
@@ -32,6 +28,9 @@ interface Props {
 }
 
 export function SplashScreen({ appReady, onComplete }: Props) {
+  const { width: SW, height: SH } = useWindowDimensions();
+  const CX = SW / 2;
+  const CY = SH / 2;
   const screenOp = useSharedValue(1);
   const outerP = useSharedValue(0);
   const innerP = useSharedValue(0);

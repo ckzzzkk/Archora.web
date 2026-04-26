@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Dimensions } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -10,9 +10,6 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-
-const { height: SCREEN_H } = Dimensions.get('window');
-const DISMISS_THRESHOLD = SCREEN_H * 0.25; // 25% of screen height
 
 interface UseSwipeToDismissOptions {
   onDismiss: () => void;
@@ -25,6 +22,8 @@ interface UseSwipeToDismissOptions {
  * Shows a backdrop dimming effect and a subtle overlay translate during drag.
  */
 export function useSwipeToDismiss({ onDismiss, enabled = true }: UseSwipeToDismissOptions) {
+  const { height: SCREEN_H } = useWindowDimensions();
+  const DISMISS_THRESHOLD = SCREEN_H * 0.25; // 25% of screen height
   const translateY = useSharedValue(0);
   const overlayOpacity = useSharedValue(0);
   const isActive = useSharedValue(false);

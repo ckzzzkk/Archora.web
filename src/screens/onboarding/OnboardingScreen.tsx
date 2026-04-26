@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, FlatList, Pressable, Dimensions } from 'react-native';
+import { View, FlatList, Pressable, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
 } from 'react-native-reanimated';
@@ -13,8 +13,6 @@ import { GridBackground } from '../../components/common/GridBackground';
 import { DS } from '../../theme/designSystem';
 import { Storage } from '../../utils/storage';
 import type { RootStackParamList } from '../../navigation/types';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface Slide {
   id: string;
@@ -153,6 +151,7 @@ function Dot({ active }: { active: boolean }) {
 
 export function OnboardingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList<Slide>>(null);

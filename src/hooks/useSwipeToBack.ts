@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Dimensions } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -7,9 +7,6 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-
-const { width: SCREEN_W } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_W * 0.25; // 25% of screen width
 
 interface UseSwipeToBackOptions {
   onSwipeBack: () => void;
@@ -22,6 +19,8 @@ interface UseSwipeToBackOptions {
  * Also shows a subtle rightward translate during the drag.
  */
 export function useSwipeToBack({ onSwipeBack, enabled = true }: UseSwipeToBackOptions) {
+  const { width: SCREEN_W } = useWindowDimensions();
+  const SWIPE_THRESHOLD = SCREEN_W * 0.25; // 25% of screen width
   const translateX = useSharedValue(0);
   const isSwiping = useSharedValue(false);
 
