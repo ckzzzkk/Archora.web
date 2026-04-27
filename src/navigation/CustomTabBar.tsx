@@ -211,6 +211,25 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   const device = useDeviceType();
   const tokens = getResponsiveTokens(device.layout);
 
+  // Sliding active indicator shared values
+  const indicatorX = useSharedValue(0);
+  const pillPadding = device.isTablet ? 12 : 8;
+  const tabWidth = device.touchTarget;
+
+  // Initialize indicator position on first render
+  useEffect(() => {
+    indicatorX.value = pillPadding + state.index * tabWidth;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Animate indicator when focused tab changes
+  useEffect(() => {
+    indicatorX.value = withSpring(pillPadding + state.index * tabWidth, {
+      damping: 20,
+      stiffness: 250,
+    });
+  }, [state.index, device.touchTarget, device.isTablet]);
+
   useEffect(() => {
     prevIndexRef.current = state.index;
   }, [state.index]);
@@ -268,6 +287,19 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           width: '100%',
         }}
       >
+        {/* Sliding active indicator — behind tabs */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 2,
+            bottom: 2,
+            width: device.touchTarget - 4,
+            left: indicatorX,
+            borderRadius: (device.touchTarget - 4) / 2,
+            backgroundColor: 'rgba(212, 168, 75, 0.25)',
+          }}
+        />
+
         {tabs.slice(0, 2).map((tab) => {
           const route = state.routes[tab.routeIndex];
           const isFocused = state.index === tab.routeIndex;
