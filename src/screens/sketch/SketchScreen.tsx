@@ -838,6 +838,30 @@ export function SketchScreen() {
 
   const accentColor = DS.colors.primary;
 
+  // Mode toggle press animation
+  const modePressScale = useSharedValue(1);
+  const modeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: modePressScale.value }],
+  }));
+  const handleModePressIn = () => {
+    modePressScale.value = withSpring(0.97, { damping: 14, stiffness: 300 });
+  };
+  const handleModePressOut = () => {
+    modePressScale.value = withSpring(1, { damping: 14, stiffness: 300 });
+  };
+
+  // Bottom toolbar press animation
+  const toolPressScale = useSharedValue(1);
+  const toolAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: toolPressScale.value }],
+  }));
+  const handleToolPressIn = () => {
+    toolPressScale.value = withSpring(0.97, { damping: 14, stiffness: 300 });
+  };
+  const handleToolPressOut = () => {
+    toolPressScale.value = withSpring(1, { damping: 14, stiffness: 300 });
+  };
+
   const TOOLS: { id: DrawTool; label: string }[] = [
     { id: 'wall', label: 'Wall' },
     { id: 'line', label: 'Line' },
@@ -860,19 +884,24 @@ export function SketchScreen() {
           </View>
 
           {/* Mode toggle pill */}
-          <View style={{
-            flexDirection: 'row',
-            backgroundColor: DS.colors.surfaceHigh,
-            borderRadius: 999,
-            padding: 3,
-            borderWidth: 1,
-            borderColor: DS.colors.border,
-            alignSelf: 'flex-start',
-          }}>
+          <Animated.View style={[
+            modeAnimatedStyle,
+            {
+              flexDirection: 'row',
+              backgroundColor: DS.colors.surfaceHigh,
+              borderRadius: 999,
+              padding: 3,
+              borderWidth: 1,
+              borderColor: DS.colors.border,
+              alignSelf: 'flex-start',
+            },
+          ]}>
             {(['draw', 'presets'] as SketchMode[]).map((m) => (
               <Pressable
                 key={m}
                 onPress={() => { light(); setMode(m); }}
+                onPressIn={handleModePressIn}
+                onPressOut={handleModePressOut}
                 style={{
                   paddingHorizontal: 14,
                   paddingVertical: 6,
@@ -890,7 +919,7 @@ export function SketchScreen() {
                 </ArchText>
               </Pressable>
             ))}
-          </View>
+          </Animated.View>
         </Animated.View>
 
         {mode === 'draw' ? (
@@ -1104,7 +1133,7 @@ export function SketchScreen() {
 
             {/* Bottom toolbar */}
             <Animated.View style={[
-              toolbarAnimStyle,
+              toolAnimatedStyle,
               {
                 position: 'absolute',
                 bottom: 90,
@@ -1124,10 +1153,13 @@ export function SketchScreen() {
                 elevation: 8,
               },
             ]}>
+              <Animated.View style={toolbarAnimStyle}>
               {TOOLS.map((t) => (
                 <Pressable
                   key={t.id}
                   onPress={() => { light(); setTool(t.id); }}
+                  onPressIn={handleToolPressIn}
+                  onPressOut={handleToolPressOut}
                   style={{
                     flex: 1,
                     paddingVertical: 10,
@@ -1152,6 +1184,8 @@ export function SketchScreen() {
               {/* Send to Blueprint */}
               <Pressable
                 onPress={handleSend}
+                onPressIn={handleToolPressIn}
+                onPressOut={handleToolPressOut}
                 style={{
                   paddingHorizontal: 16,
                   paddingVertical: 10,
@@ -1164,6 +1198,7 @@ export function SketchScreen() {
                   Send ↗
                 </ArchText>
               </Pressable>
+              </Animated.View>
             </Animated.View>
           </Animated.View>
         ) : (
