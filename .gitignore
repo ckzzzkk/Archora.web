@@ -50,3 +50,6 @@ npm-debug.log*
 # Build artifacts (GitHub 100MB limit)
 *.apk
 *.aab
+
+# React Native CSS Interop cache
+node_modules/react-native-css-interop/.cache/
