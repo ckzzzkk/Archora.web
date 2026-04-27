@@ -1,16 +1,20 @@
-import React, { useMemo } from 'react';
-import { View, Pressable, ScrollView, Modal } from 'react-native';
+import React, { useMemo, useEffect } from 'react';
+import { View, Pressable, ScrollView, Modal, Dimensions } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArchText } from './ArchText';
 import { DS } from '../../theme/designSystem';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import type { CostLineItem } from '../../utils/costEstimator';
 import {
   generateCostEstimate,
   formatCurrency,
   LABOUR_MULTIPLIER,
   CONTINGENCY_PCT,
-  type CostLineItem,
 } from '../../utils/costEstimator';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SHEET_SPRING = { damping: 22, stiffness: 280 } as const;
 
 interface CostEstimatorModalProps {
   visible: boolean;
@@ -80,15 +84,28 @@ function SummaryRow({ label, amount, highlight = false }: { label: string; amoun
 export function CostEstimatorModal({ visible, onClose }: CostEstimatorModalProps) {
   const insets = useSafeAreaInsets();
   const blueprint = useBlueprintStore((s) => s.blueprint);
+  const translateY = useSharedValue(SCREEN_HEIGHT);
+  const backdropOpacity = useSharedValue(0);
 
   const estimate = useMemo(() => {
     if (!blueprint) return null;
     return generateCostEstimate(blueprint);
   }, [blueprint]);
 
-  if (!estimate) {
-    return null;
-  }
+  useEffect(() => {
+    if (visible && estimate) {
+      backdropOpacity.value = withSpring(1, SHEET_SPRING);
+      translateY.value = withSpring(0, SHEET_SPRING);
+    } else {
+      backdropOpacity.value = withSpring(0, SHEET_SPRING);
+      translateY.value = withSpring(SCREEN_HEIGHT, SHEET_SPRING);
+    }
+  }, [visible, estimate]);
+
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
+
+  if (!estimate) return null;
 
   const grouped = {
     flooring: estimate.lineItems.filter(l => l.category === 'flooring'),
@@ -99,75 +116,85 @@ export function CostEstimatorModal({ visible, onClose }: CostEstimatorModalProps
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' }}>
+    <>
+      <Animated.View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', opacity: backdropOpacity }}>
         <Pressable style={{ flex: 1 }} onPress={onClose} />
-        <View style={{
-          backgroundColor: DS.colors.surface,
-          borderTopLeftRadius: 24, borderTopRightRadius: 24,
-          paddingTop: 16,
-          paddingBottom: insets.bottom + 16,
-          maxHeight: '88%',
-        }}>
-          {/* Drag handle */}
-          <View style={{ alignItems: 'center', marginBottom: 12 }}>
-            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: DS.colors.border }} />
-          </View>
-
-          {/* Header */}
-          <View style={{ paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <View>
-              <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary }}>
-                Cost Estimate
-              </ArchText>
-              <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: DS.colors.primaryDim, marginTop: 2 }}>
-                {estimate.totalAreaM2} m² total floor area · {formatCurrency(estimate.costPerM2)}/m²
-              </ArchText>
-            </View>
-            <Pressable
-              onPress={onClose}
-              style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DS.colors.surfaceHigh, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: DS.colors.border }}
-            >
-              <ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: 14 }}>✕</ArchText>
-            </Pressable>
-          </View>
-
-          <ScrollView style={{ paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 16 }}>
-            {(['flooring', 'walls', 'ceiling', 'exterior', 'fixtures'] as const).map(cat => {
-              const items = grouped[cat];
-              if (items.length === 0) return null;
-              return (
-                <View key={cat}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, marginBottom: 6 }}>
-                    <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: DS.colors.primaryDim, textTransform: 'uppercase', letterSpacing: 1 }}>
-                      {cat}
-                    </ArchText>
-                    <View style={{ flex: 1, height: 1, backgroundColor: DS.colors.border }} />
-                  </View>
-                  {items.map((item, i) => <CostRow key={i} item={item} />)}
-                </View>
-              );
-            })}
-
-            {/* Summary */}
-            <View style={{ marginTop: 20, paddingTop: 16, borderTopWidth: 1.5, borderTopColor: DS.colors.primary, gap: 4 }}>
-              <SummaryRow label="Materials" amount={estimate.subtotalMaterials} />
-              <SummaryRow label={`Labour (${Math.round(LABOUR_MULTIPLIER * 100)}%)`} amount={estimate.subtotalLabour} />
-              <SummaryRow label={`Contingency (${CONTINGENCY_PCT * 100}%)`} amount={estimate.contingency} />
-              <View style={{ height: 8 }} />
-              <SummaryRow label="Grand Total" amount={estimate.grandTotal} highlight />
-            </View>
-
-            <ArchText variant="body" style={{
-              fontFamily: 'Inter_400Regular', fontSize: 10, color: DS.colors.primaryDim,
-              textAlign: 'center', marginTop: 16, lineHeight: 14,
-            }}>
-              Estimates are indicative only. Final costs depend on location,
-              contractor, and material choices. Includes {CONTINGENCY_PCT * 100}% contingency buffer.
-            </ArchText>
-          </ScrollView>
+      </Animated.View>
+      <Animated.View
+        style={[
+          sheetStyle,
+          {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: DS.colors.surface,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            paddingTop: 16,
+            paddingBottom: insets.bottom + 16,
+            maxHeight: '88%',
+          },
+        ]}
+      >
+        {/* Drag handle */}
+        <View style={{ alignItems: 'center', marginBottom: 12 }}>
+          <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: DS.colors.border }} />
         </View>
-      </View>
-    </Modal>
-  );
-}
+
+        {/* Header */}
+        <View style={{ paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <View>
+            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary }}>
+              Cost Estimate
+            </ArchText>
+            <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: DS.colors.primaryDim, marginTop: 2 }}>
+              {estimate.totalAreaM2} m² total floor area · {formatCurrency(estimate.costPerM2)}/m²
+            </ArchText>
+          </View>
+          <Pressable
+            onPress={onClose}
+            style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DS.colors.surfaceHigh, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: DS.colors.border }}
+          >
+            <ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: 14 }}>✕</ArchText>
+          </Pressable>
+        </View>
+
+        <ScrollView style={{ paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 16 }}>
+          {(['flooring', 'walls', 'ceiling', 'exterior', 'fixtures'] as const).map(cat => {
+            const items = grouped[cat];
+            if (items.length === 0) return null;
+            return (
+              <View key={cat}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, marginBottom: 6 }}>
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: DS.colors.primaryDim, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    {cat}
+                  </ArchText>
+                  <View style={{ flex: 1, height: 1, backgroundColor: DS.colors.border }} />
+                </View>
+                {items.map((item, i) => <CostRow key={i} item={item} />)}
+              </View>
+            );
+          })}
+
+          {/* Summary */}
+          <View style={{ marginTop: 20, paddingTop: 16, borderTopWidth: 1.5, borderTopColor: DS.colors.primary, gap: 4 }}>
+            <SummaryRow label="Materials" amount={estimate.subtotalMaterials} />
+            <SummaryRow label={`Labour (${Math.round(LABOUR_MULTIPLIER * 100)}%)`} amount={estimate.subtotalLabour} />
+            <SummaryRow label={`Contingency (${CONTINGENCY_PCT * 100}%)`} amount={estimate.contingency} />
+            <View style={{ height: 8 }} />
+            <SummaryRow label="Grand Total" amount={estimate.grandTotal} highlight />
+          </View>
+
+          <ArchText variant="body" style={{
+            fontFamily: 'Inter_400Regular', fontSize: 10, color: DS.colors.primaryDim,
+            textAlign: 'center', marginTop: 16, lineHeight: 14,
+          }}>
+            Estimates are indicative only. Final costs depend on location,
+            contractor, and material choices. Includes {CONTINGENCY_PCT * 100}% contingency buffer.
+          </ArchText>
+        </ScrollView>
+      </Animated.View>
+      </>
+    );
+  }

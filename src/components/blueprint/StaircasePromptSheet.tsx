@@ -1,9 +1,13 @@
 import { DS } from '../../theme/designSystem';
-import React from 'react';
-import { View, Text, Pressable, Modal } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Pressable, Dimensions } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import Svg, { Path, Line, Rect } from 'react-native-svg';
 import type { StaircaseType } from '../../types/blueprint';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const SHEET_SPRING = { damping: 22, stiffness: 280 } as const;
 
 interface Props {
   visible: boolean;
@@ -103,11 +107,30 @@ function OptionCard({
 }
 
 export function StaircasePromptSheet({ visible, floorCount, onSelect, onAddElevator, onDismiss }: Props) {
+  const translateY = useSharedValue(SCREEN_HEIGHT);
+
+  useEffect(() => {
+    translateY.value = withSpring(visible ? 0 : SCREEN_HEIGHT, SHEET_SPRING);
+  }, [visible]);
+
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }));
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
+    <>
       <Pressable
-        style={{ flex: 1, backgroundColor: DS.colors.overlay, justifyContent: 'flex-end' }}
+        style={{ position: 'absolute', inset: 0, backgroundColor: DS.colors.overlay }}
         onPress={onDismiss}
+      />
+      <Animated.View
+        style={[
+          animatedStyle,
+          {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+          },
+        ]}
       >
         <Pressable onPress={(e) => e.stopPropagation()}>
           <View
@@ -178,7 +201,7 @@ export function StaircasePromptSheet({ visible, floorCount, onSelect, onAddEleva
             </Pressable>
           </View>
         </Pressable>
-      </Pressable>
-    </Modal>
+      </Animated.View>
+    </>
   );
 }
