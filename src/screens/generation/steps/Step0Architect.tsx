@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { ArchText } from '../../../components/common/ArchText';
 import { OvalButton } from '../../../components/common/OvalButton';
 import { DS } from '../../../theme/designSystem';
@@ -30,6 +31,10 @@ function ArchitectCard({
   tierRequired: SubscriptionTier;
   onSelect: () => void;
 }) {
+  const pressScale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: pressScale.value }] }));
+  const handlePressIn = () => { if (!locked) pressScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); };
+  const handlePressOut = () => { pressScale.value = withSpring(1, { damping: 14, stiffness: 300 }); };
   const iconMap: Record<string, string> = {
     'frank-lloyd-wright': '🏠',
     'zaha-hadid': '⚡',
@@ -49,8 +54,10 @@ function ArchitectCard({
 
   return (
     <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={locked ? undefined : onSelect}
-      style={{
+      style={[{
         flex: 1,
         minWidth: 140,
         backgroundColor: locked ? `${DS.colors.surface}60` : DS.colors.surface,
@@ -59,7 +66,7 @@ function ArchitectCard({
         borderWidth: 2,
         borderColor: selected ? DS.colors.accent : DS.colors.border,
         opacity: locked ? 0.5 : 1,
-      }}
+      }, animatedStyle]}
     >
       {selected && (
         <View style={{ position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: DS.colors.accent, alignItems: 'center', justifyContent: 'center' }}>
@@ -119,6 +126,10 @@ function isTierUnlocked(architectTier: SubscriptionTier, userTier: SubscriptionT
 
 export function Step0Architect({ selectedId, onSelect, onContinue, onUseDefault, userTier }: Props) {
   const visibleArchitects = ARCHITECT_CARDS.slice(0, TIER_ARCHITECT_COUNT[userTier]);
+  const blendedScale = useSharedValue(1);
+  const blendedAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: blendedScale.value }] }));
+  const handleBlendedPressIn = () => { blendedScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); };
+  const handleBlendedPressOut = () => { blendedScale.value = withSpring(1, { damping: 14, stiffness: 300 }); };
 
   return (
     <View style={{ flex: 1, paddingHorizontal: 20 }}>
@@ -157,7 +168,12 @@ export function Step0Architect({ selectedId, onSelect, onContinue, onUseDefault,
             fullWidth
           />
         )}
-        <Pressable onPress={onUseDefault} style={{ alignItems: 'center' }}>
+        <Pressable
+          onPressIn={handleBlendedPressIn}
+          onPressOut={handleBlendedPressOut}
+          onPress={onUseDefault}
+          style={[blendedAnimatedStyle, { alignItems: 'center' }]}
+        >
           <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryGhost }}>
             Use blended philosophy — no specific architect
           </ArchText>

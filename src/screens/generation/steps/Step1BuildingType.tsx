@@ -2,7 +2,7 @@ import React from 'react';
 import { DS } from '../../../theme/designSystem';
 import { ArchText } from '../../../components/common/ArchText';
 import { View, Pressable } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import type { GenerationPayload } from '../../../types/generation';
@@ -31,14 +31,20 @@ const TYPES: { key: BuildingType; label: string }[] = [
 function BuildingTypeCard({ type, label, isActive, onPress }: {
   type: BuildingType; label: string; isActive: boolean; onPress: () => void;
 }) {
+  const pressScale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: pressScale.value }] }));
+  const handlePressIn = () => { pressScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); };
+  const handlePressOut = () => { pressScale.value = withSpring(1, { damping: 14, stiffness: 300 }); };
   return (
     <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={onPress}
       accessibilityLabel={`${label} building type${isActive ? ', selected' : ''}`}
       accessibilityRole="radio"
       accessibilityState={{ selected: isActive }}
       accessibilityHint="Double tap to select this building type"
-      style={{
+      style={[{
         width: '47%',
         backgroundColor: DS.colors.surface,
         borderRadius: 24,
@@ -47,7 +53,7 @@ function BuildingTypeCard({ type, label, isActive, onPress }: {
         borderWidth: isActive ? 2 : 1,
         borderColor: isActive ? DS.colors.primary : DS.colors.border,
         minHeight: 44,
-      }}
+      }, animatedStyle]}
     >
       {/* SVG building line art */}
       <View style={{ marginBottom: 8 }}>

@@ -2,7 +2,7 @@ import React, { useRef, useCallback } from 'react';
 import { DS } from '../../../theme/designSystem';
 import { ArchText } from '../../../components/common/ArchText';
 import { View,  Pressable, ScrollView } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 import { DESIGN_STYLES } from '../../../data/designStyles';
 import { useSession } from '../../../auth/useSession';
@@ -18,6 +18,14 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const tier = useSession().user?.subscriptionTier ?? 'starter';
   const available = getAvailableStyles(tier);
+  const cardScale = useSharedValue(1);
+  const nextScale = useSharedValue(1);
+  const cardAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
+  const nextAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: nextScale.value }] }));
+  const handleCardPressIn = () => { cardScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); };
+  const handleCardPressOut = () => { cardScale.value = withSpring(1, { damping: 14, stiffness: 300 }); };
+  const handleNextPressIn = () => { nextScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); };
+  const handleNextPressOut = () => { nextScale.value = withSpring(1, { damping: 14, stiffness: 300 }); };
 
   const handleSelect = useCallback((id: string, index: number) => {
     onSelect(id);
@@ -52,12 +60,14 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
           return (
             <Pressable
               key={style.id}
+              onPressIn={handleCardPressIn}
+              onPressOut={handleCardPressOut}
               onPress={() => !isLocked && handleSelect(style.id, idx)}
               accessibilityLabel={`${style.name} style${isActive ? ', selected' : ''}${isLocked ? ', locked' : ''}`}
               accessibilityRole="radio"
               accessibilityState={{ selected: isActive, disabled: isLocked }}
               accessibilityHint={isLocked ? 'Upgrade your plan to unlock this style' : 'Double tap to select this style'}
-              style={{
+              style={[{
                 width: 120,
                 height: 140,
                 borderRadius: 24,
@@ -67,7 +77,7 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
                 borderWidth: isActive ? 2 : 1,
                 borderColor: isActive ? DS.colors.primary : DS.colors.border,
                 opacity: isLocked ? 0.4 : 1,
-              }}
+              }, cardAnimatedStyle]}
             >
               <View
                 style={{
@@ -99,18 +109,20 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
 
       <View style={{ paddingHorizontal: DS.spacing.lg, marginTop: 32 }}>
         <Pressable
+          onPressIn={handleNextPressIn}
+          onPressOut={handleNextPressOut}
           onPress={onNext}
           disabled={!selected}
           accessibilityLabel={selected ? 'Next, proceed to next step' : 'Next, select a style first'}
           accessibilityRole="button"
           accessibilityState={{ disabled: !selected }}
           accessibilityHint="Proceeds to the reference image upload step"
-          style={{
+          style={[{
             backgroundColor: selected ? DS.colors.primary : DS.colors.border,
             borderRadius: 50,
             paddingVertical: 16,
             alignItems: 'center',
-          }}
+          }, nextAnimatedStyle]}
         >
           <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>Next</ArchText>
         </Pressable>

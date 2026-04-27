@@ -318,6 +318,12 @@ export function GenerationScreen() {
     status: 'generating', iteration: 1, message: 'Preparing design session...', scores: [],
   });
 
+  // ARIA suggestion chip press animation
+  const chipScale = useSV(1);
+  const chipAnimatedStyle = useAS(() => ({ transform: [{ scale: chipScale.value }] }));
+  const handleChipPressIn = () => { chipScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); };
+  const handleChipPressOut = () => { chipScale.value = withSpring(1, { damping: 14, stiffness: 300 }); };
+
   // Pre-fill from saved user preferences on mount
   useEffect(() => {
     if (prefsLoading || prefilledFromDb || !preferences) return;
@@ -609,15 +615,17 @@ export function GenerationScreen() {
                   ].map((chip) => (
                     <Pressable
                       key={chip.label}
+                      onPressIn={handleChipPressIn}
+                      onPressOut={handleChipPressOut}
                       onPress={chip.action}
-                      style={{
+                      style={[{
                         paddingHorizontal: 14,
                         paddingVertical: 7,
                         borderRadius: 999,
                         backgroundColor: 'rgba(240, 237, 232, 0.03)',
                         borderWidth: 1,
                         borderColor: 'rgba(240, 237, 232, 0.10)',
-                      }}
+                      }, chipAnimatedStyle]}
                     >
                       <ArchText
                         variant="body"

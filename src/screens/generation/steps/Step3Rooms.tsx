@@ -110,6 +110,14 @@ function ToggleRow({ label, value, onChange }: { label: string; value: boolean; 
 const POOL_SIZES: ('small' | 'medium' | 'large')[] = ['small', 'medium', 'large'];
 
 export function Step3Rooms(props: Props) {
+  const poolSizeScale = useSharedValue(1);
+  const nextScale = useSharedValue(1);
+  const poolSizeAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: poolSizeScale.value }] }));
+  const nextAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: nextScale.value }] }));
+  const handlePoolSizePressIn = () => { poolSizeScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); };
+  const handlePoolSizePressOut = () => { poolSizeScale.value = withSpring(1, { damping: 14, stiffness: 300 }); };
+  const handleNextPressIn = () => { nextScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); };
+  const handleNextPressOut = () => { nextScale.value = withSpring(1, { damping: 14, stiffness: 300 }); };
   return (
     <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
       <ArchText variant="body"
@@ -138,13 +146,15 @@ export function Step3Rooms(props: Props) {
           {POOL_SIZES.map((s) => (
             <Pressable
               key={s}
+              onPressIn={handlePoolSizePressIn}
+              onPressOut={handlePoolSizePressOut}
               onPress={() => props.onPoolSizeChange(s)}
-              style={{
+              style={[{
                 paddingHorizontal: 14, paddingVertical: 6, borderRadius: 50,
                 borderWidth: 1,
                 borderColor: props.poolSize === s ? DS.colors.primary : DS.colors.border,
                 backgroundColor: props.poolSize === s ? `${DS.colors.primary}20` : 'transparent',
-              }}
+              }, poolSizeAnimatedStyle]}
             >
               <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim, textTransform: 'capitalize' }}>
                 {s}
@@ -160,14 +170,16 @@ export function Step3Rooms(props: Props) {
       <View style={{ flex: 1 }} />
 
       <Pressable
+        onPressIn={handleNextPressIn}
+        onPressOut={handleNextPressOut}
         onPress={props.onNext}
-        style={{
+        style={[{
           backgroundColor: DS.colors.primary,
           borderRadius: 50,
           paddingVertical: 16,
           alignItems: 'center',
           marginTop: 20,
-        }}
+        }, nextAnimatedStyle]}
       >
         <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>Next</ArchText>
       </Pressable>
