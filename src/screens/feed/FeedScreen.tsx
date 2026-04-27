@@ -53,6 +53,12 @@ function TrendingCarousel({
   onPress: (id: string) => void;
   C: ReturnType<typeof useThemeColors>;
 }) {
+  const pressScale = useSharedValue(1);
+
+  const itemAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+
   const trending = useMemo(
     () => templates
       .filter((t) => (t.likeCount ?? 0) > 0)
@@ -88,14 +94,19 @@ function TrendingCarousel({
           <Pressable
             key={t.id}
             onPress={() => onPress(t.id)}
-            style={{
-              width: CARD_W,
-              borderRadius: DS.radius.card, // 24px — oval-first design system
-              backgroundColor: C.surface,
-              borderWidth: 1,
-              borderColor: idx === 0 ? '#FFEE8C40' : C.border,
-              overflow: 'hidden',
-            }}
+            onPressIn={() => { pressScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); }}
+            onPressOut={() => { pressScale.value = withSpring(1, { damping: 14, stiffness: 300 }); }}
+            style={[
+              {
+                width: CARD_W,
+                borderRadius: DS.radius.card, // 24px — oval-first design system
+                backgroundColor: C.surface,
+                borderWidth: 1,
+                borderColor: idx === 0 ? '#FFEE8C40' : C.border,
+                overflow: 'hidden',
+              },
+              itemAnimatedStyle,
+            ]}
           >
             {/* Color thumbnail */}
             <View style={{
@@ -188,6 +199,13 @@ function FilterChipsRow({
   onChipPress: (chip: ChipConfig) => void;
 }) {
   const C = useThemeColors();
+
+  const pressScale = useSharedValue(1);
+
+  const chipAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+
   return (
     <ScrollView
       horizontal
@@ -204,18 +222,23 @@ function FilterChipsRow({
           <Pressable
             key={chip.label}
             onPress={() => onChipPress(chip)}
+            onPressIn={() => { pressScale.value = withSpring(0.97, { damping: 14, stiffness: 300 }); }}
+            onPressOut={() => { pressScale.value = withSpring(1, { damping: 14, stiffness: 300 }); }}
             accessibilityLabel={chip.label}
             accessibilityRole="radio"
             accessibilityState={{ selected: active }}
             accessibilityHint="Double tap to filter by this category"
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 6,
-              borderRadius: 999,
-              borderWidth: 1.5,
-              borderColor: active ? C.primary : C.border,
-              backgroundColor: active ? C.accentGlow : 'transparent',
-            }}
+            style={[
+              {
+                paddingHorizontal: 14,
+                paddingVertical: 6,
+                borderRadius: 999,
+                borderWidth: 1.5,
+                borderColor: active ? C.primary : C.border,
+                backgroundColor: active ? C.accentGlow : 'transparent',
+              },
+              chipAnimatedStyle,
+            ]}
           >
             <View style={{ flexShrink: 1 }}>
               <ArchText variant="body" style={{
