@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSpring, Easing,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle, Path as SvgPath } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -47,17 +47,23 @@ function SettingsRow({
   label,
   value,
   onPress,
+  onPressIn,
+  onPressOut,
   last = false,
   danger = false,
   right,
+  animatedStyle,
   C,
 }: {
   label: string;
   value?: string;
   onPress?: () => void;
+  onPressIn?: () => void;
+  onPressOut?: () => void;
   last?: boolean;
   danger?: boolean;
   right?: React.ReactNode;
+  animatedStyle?: object;
   C: ReturnType<typeof useThemeColors>;
 }) {
   const content = (
@@ -92,10 +98,12 @@ function SettingsRow({
       {onPress != null ? (
         <Pressable
           onPress={onPress}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
           accessibilityLabel={danger ? `${label}, warning: this action cannot be undone` : label}
           accessibilityRole="button"
           accessibilityHint={danger ? 'This action cannot be undone' : undefined}
-          style={{ minHeight: 44, justifyContent: 'center' }}
+          style={[{ minHeight: 44, justifyContent: 'center' }, animatedStyle]}
         >{content}</Pressable>
       ) : content}
       {!last && (
@@ -188,6 +196,17 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
   const mode    = useAppearanceStore((s) => s.mode);
   const setMode = useAppearanceStore((s) => s.setMode);
 
+  const appearancePressScale = useSharedValue(1);
+  const appearanceAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: appearancePressScale.value }],
+  }));
+  const handleAppearancePressIn = () => {
+    appearancePressScale.value = withSpring(0.97, { damping: 14, stiffness: 300 });
+  };
+  const handleAppearancePressOut = () => {
+    appearancePressScale.value = withSpring(1, { damping: 14, stiffness: 300 });
+  };
+
   return (
     <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -197,11 +216,13 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
             <Pressable
               key={m}
               onPress={() => setMode(m)}
+              onPressIn={handleAppearancePressIn}
+              onPressOut={handleAppearancePressOut}
               accessibilityLabel={`${label} appearance mode`}
               accessibilityRole="radio"
               accessibilityState={{ selected: active }}
               accessibilityHint="Double tap to select this appearance mode"
-              style={{
+              style={[{
                 flex: 1,
                 paddingVertical: 10,
                 borderRadius: 50,
@@ -210,7 +231,7 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
                 backgroundColor: active ? DS.colors.ink : 'transparent',
                 borderWidth: 2,
                 borderColor: active ? DS.colors.ink : DS.colors.border,
-              }}
+              }, appearanceAnimatedStyle]}
             >
               <ArchText
                 variant="body"
@@ -257,6 +278,18 @@ export function AccountScreen() {
   const [notifLoading, setNotifLoading] = useState(false);
 
   const limits = TIER_LIMITS[user?.subscriptionTier ?? 'starter'] ?? TIER_LIMITS.starter;
+
+  // Settings row press animation
+  const settingsPressScale = useSharedValue(1);
+  const settingsAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: settingsPressScale.value }],
+  }));
+  const handleSettingsPressIn = () => {
+    settingsPressScale.value = withSpring(0.97, { damping: 14, stiffness: 300 });
+  };
+  const handleSettingsPressOut = () => {
+    settingsPressScale.value = withSpring(1, { damping: 14, stiffness: 300 });
+  };
 
   // Entry animations
   const headerOp = useSharedValue(0);
@@ -529,6 +562,9 @@ export function AccountScreen() {
               <SettingsRow
                 label={portalLoading ? 'Opening…' : 'Manage Subscription'}
                 onPress={() => { medium(); void handleManageSubscription(); }}
+                onPressIn={handleSettingsPressIn}
+                onPressOut={handleSettingsPressOut}
+                animatedStyle={settingsAnimatedStyle}
                 last
                 C={C}
               />
@@ -536,6 +572,9 @@ export function AccountScreen() {
               <SettingsRow
                 label="Upgrade Plan"
                 onPress={() => { medium(); navigation.navigate('Subscription'); }}
+                onPressIn={handleSettingsPressIn}
+                onPressOut={handleSettingsPressOut}
+                animatedStyle={settingsAnimatedStyle}
                 last
                 C={C}
               />
@@ -548,6 +587,9 @@ export function AccountScreen() {
             <SettingsRow
               label="Edit Profile"
               onPress={() => setEditing(true)}
+              onPressIn={handleSettingsPressIn}
+              onPressOut={handleSettingsPressOut}
+              animatedStyle={settingsAnimatedStyle}
               C={C}
             />
             <SettingsRow
@@ -579,21 +621,33 @@ export function AccountScreen() {
                   ],
                 );
               }}
+              onPressIn={handleSettingsPressIn}
+              onPressOut={handleSettingsPressOut}
+              animatedStyle={settingsAnimatedStyle}
               C={C}
             />
             <SettingsRow
               label="Export Data"
               onPress={() => { light(); handleExportData(); }}
+              onPressIn={handleSettingsPressIn}
+              onPressOut={handleSettingsPressOut}
+              animatedStyle={settingsAnimatedStyle}
               C={C}
             />
             <SettingsRow
               label="Theme"
               onPress={() => { light(); navigation.navigate('ThemeCustomiser'); }}
+              onPressIn={handleSettingsPressIn}
+              onPressOut={handleSettingsPressOut}
+              animatedStyle={settingsAnimatedStyle}
               C={C}
             />
             <SettingsRow
               label="Notifications"
               onPress={() => { light(); navigation.navigate('NotificationPreferences'); }}
+              onPressIn={handleSettingsPressIn}
+              onPressOut={handleSettingsPressOut}
+              animatedStyle={settingsAnimatedStyle}
               last
               C={C}
               right={
@@ -622,10 +676,10 @@ export function AccountScreen() {
           {/* SUPPORT */}
           <SectionLabel title="Support" C={C} />
           <SettingsCard C={C}>
-            <SettingsRow label="Help & FAQ"        onPress={() => { light(); navigation.navigate('HelpFAQ'); }}         C={C} />
-            <SettingsRow label="Privacy Policy"    onPress={() => { light(); navigation.navigate('PrivacyPolicy'); }}   C={C} />
-            <SettingsRow label="Terms of Service"  onPress={() => { light(); navigation.navigate('Terms'); }}           C={C} />
-            <SettingsRow label="Contact Support"   onPress={() => { light(); void Linking.openURL('mailto:support@asoria.app'); }} last C={C} />
+            <SettingsRow label="Help & FAQ"        onPress={() => { light(); navigation.navigate('HelpFAQ'); }}         onPressIn={handleSettingsPressIn} onPressOut={handleSettingsPressOut} animatedStyle={settingsAnimatedStyle} C={C} />
+            <SettingsRow label="Privacy Policy"    onPress={() => { light(); navigation.navigate('PrivacyPolicy'); }}   onPressIn={handleSettingsPressIn} onPressOut={handleSettingsPressOut} animatedStyle={settingsAnimatedStyle} C={C} />
+            <SettingsRow label="Terms of Service"  onPress={() => { light(); navigation.navigate('Terms'); }}           onPressIn={handleSettingsPressIn} onPressOut={handleSettingsPressOut} animatedStyle={settingsAnimatedStyle} C={C} />
+            <SettingsRow label="Contact Support"   onPress={() => { light(); void Linking.openURL('mailto:support@asoria.app'); }} onPressIn={handleSettingsPressIn} onPressOut={handleSettingsPressOut} animatedStyle={settingsAnimatedStyle} last C={C} />
           </SettingsCard>
 
           {/* USAGE */}
@@ -648,8 +702,8 @@ export function AccountScreen() {
           {/* DANGER ZONE */}
           <SectionLabel title="Danger Zone" C={C} />
           <SettingsCard danger C={C}>
-            <SettingsRow label="Sign Out"       danger onPress={handleSignOut}       C={C} />
-            <SettingsRow label="Delete Account" danger onPress={handleDeleteAccount} last C={C} />
+            <SettingsRow label="Sign Out"       danger onPress={handleSignOut}       onPressIn={handleSettingsPressIn} onPressOut={handleSettingsPressOut} animatedStyle={settingsAnimatedStyle} C={C} />
+            <SettingsRow label="Delete Account" danger onPress={handleDeleteAccount} last onPressIn={handleSettingsPressIn} onPressOut={handleSettingsPressOut} animatedStyle={settingsAnimatedStyle} C={C} />
           </SettingsCard>
 
           {/* DEV only */}
