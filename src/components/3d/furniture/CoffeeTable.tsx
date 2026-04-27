@@ -24,7 +24,6 @@ export function CoffeeTable({
   modelVariant = 'standard',
   selected = false,
 }: CoffeeTableProps) {
-  const c = selected ? '#4A90D9' : color;
   const { x: w, y: h, z: d } = dimensions;
   const topH = 0.04;
   const legH = h - topH;
@@ -32,16 +31,18 @@ export function CoffeeTable({
   const isModern = modelVariant === 'modern';
   const isGlass = modelVariant === 'glass';
   const isClassic = modelVariant === 'classic';
+  const isMidCentury = modelVariant === 'mid_century';
+
+  // Mid-century walnut tones
+  const ctColor = isMidCentury ? '#8B6914' : color;
+  const ctSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : ctColor;
 
   return (
     <group position={[position.x, position.y, position.z]} rotation={[rotation.x, rotation.y, rotation.z]}>
       {/* Tabletop */}
       <mesh position={[0, h - topH / 2, 0]} castShadow receiveShadow>
-        {isGlass ? (
-          <boxGeometry args={[w, topH, d]} />
-        ) : (
-          <boxGeometry args={[w, topH, d]} />
-        )}
+        <boxGeometry args={[w, topH, d]} />
         <meshStandardMaterial
           color={isGlass ? '#C0D8E8' : c}
           roughness={isGlass ? 0.05 : roughness}
@@ -55,7 +56,7 @@ export function CoffeeTable({
       {!isModern && (
         <mesh position={[0, h * 0.22, 0]} receiveShadow>
           <boxGeometry args={[w * 0.75, 0.025, d * 0.75]} />
-          <meshStandardMaterial color={isClassic ? secondaryColor : c} roughness={roughness + 0.1} metalness={metalness} />
+          <meshStandardMaterial color={isClassic ? ctSec : c} roughness={roughness + 0.1} metalness={metalness} />
         </mesh>
       )}
 
@@ -65,7 +66,7 @@ export function CoffeeTable({
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.05), legH / 2, sz * (d / 2 - 0.05)]} castShadow>
             <cylinderGeometry args={[0.018, 0.018, legH, 6]} />
-            <meshStandardMaterial color={secondaryColor} roughness={0.2} metalness={0.8} />
+            <meshStandardMaterial color={ctSec} roughness={0.2} metalness={0.8} />
           </mesh>
         ))
       ) : isGlass ? (
@@ -76,12 +77,20 @@ export function CoffeeTable({
             <meshStandardMaterial color="#D0D0D0" roughness={0.1} metalness={0.1} transparent opacity={0.6} />
           </mesh>
         ))
+      ) : isMidCentury ? (
+        // Tapered mid-century legs
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
+          <mesh key={i} position={[sx * (w / 2 - 0.05), legH / 2, sz * (d / 2 - 0.05)]} castShadow>
+            <cylinderGeometry args={[0.032, 0.018, legH, 8]} />
+            <meshStandardMaterial color={ctSec} roughness={0.5} metalness={0.08} />
+          </mesh>
+        ))
       ) : (
-        // Wooden tapered legs
+        // Wooden tapered legs (standard/classic)
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.05), legH / 2, sz * (d / 2 - 0.05)]} castShadow>
             <cylinderGeometry args={[0.03, 0.02, legH, 8]} />
-            <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+            <meshStandardMaterial color={ctSec} roughness={roughness} metalness={metalness} />
           </mesh>
         ))
       )}

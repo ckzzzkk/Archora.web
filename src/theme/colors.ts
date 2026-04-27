@@ -1,3 +1,45 @@
+/**
+ * ASORIA — Ink Blueprint Design System
+ * Based on the ink-blueprint-magic reference aesthetic.
+ * Pure chalkboard dark = oklch(0.12 0 0), Pure paper light = oklch(0.99 0 0)
+ * All ink-like, scribbly, wobbly. Amber accent throughout.
+ */
+
+// ─── Ink/Paper palette (CSS custom-property equivalents) ───────────────────
+// Dark theme = chalkboard
+export const INK = '#F0EDE8';   // pure white ink (oklch 0.99)
+export const PAPER = '#1A1A1A'; // chalkboard dark (oklch 0.12)
+
+// Base colors — ink-on-chalkboard dark mode
+export const BASE_COLORS = {
+  background:    '#1A1A1A',  // chalkboard
+  surface:       '#222222',  // card background
+  surfaceHigh:   '#2C2C2C',  // elevated surfaces
+  border:        '#F0EDE8',  // ink border (pure white, not grey)
+  textPrimary:   '#F0EDE8',  // ink white
+  textSecondary: '#9A9590',  // dim ink
+  textDim:       '#5A5550',  // very dim
+  // Semantic
+  ink:           '#F0EDE8',  // alias for border/primary
+  amber:         '#D4A84B',  // warm gold accent
+  success:       '#7AB87A',  // unchanged
+  warning:       '#D4A84B',  // same as amber
+  error:         '#C0604A',  // unchanged
+  // Additional reference tokens
+  card:          '#222222',
+  cardForeground:'#F0EDE8',
+  muted:         '#2C2C2C',
+  mutedForeground:'#9A9590',
+  accent:        '#F0EDE8',
+  accentForeground:'#1A1A1A',
+  destructive:   '#F0EDE8',
+  destructiveForeground:'#1A1A1A',
+  input:         '#2C2C2C',
+  ring:          '#F0EDE8',
+} as const;
+
+// ─── Legacy theme color maps (for useTheme / ThemeCustomiser) ─────────────────
+// Re-exports for backward compatibility
 export type ThemeName = 'drafting' | 'blueprint' | 'sketchbook' | 'studio' | 'night_shift' | 'copper';
 
 export interface ColorTheme {
@@ -66,20 +108,6 @@ export const COLOR_THEMES: Record<ThemeName, ColorTheme> = {
     scratchLine: '#FFB870',
   },
 };
-
-// Base colors — grey-first dark mode palette
-export const BASE_COLORS = {
-  background:    '#1A1A1A',
-  surface:       '#222222',
-  surfaceHigh:   '#2C2C2C',
-  border:        '#333333',
-  textPrimary:   '#F0EDE8',
-  textSecondary: '#9A9590',
-  textDim:       '#5A5550',
-  success:       '#7AB87A',
-  warning:       '#D4A84B',
-  error:         '#C0604A',
-} as const;
 
 /** Add alpha to a hex color. Usage: withAlpha(BASE_COLORS.surface, 0.85) */
 export function withAlpha(hexColor: string, alpha: number): string {

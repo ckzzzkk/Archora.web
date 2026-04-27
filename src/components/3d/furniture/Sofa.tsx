@@ -24,15 +24,20 @@ export function Sofa({
   modelVariant = 'standard',
   selected = false,
 }: SofaProps) {
-  const c = selected ? '#4A90D9' : color;
-  const legColor = secondaryColor;
+  const isClassic = modelVariant === 'classic';
+  const isModern = modelVariant === 'modern';
+  const isMidCentury = modelVariant === 'mid_century';
+  const isSleeper = modelVariant === 'sleeper';
+
+  // Mid-century walnut tones
+  const sofaColor = isMidCentury ? '#8B6914' : color;
+  const sofaSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : sofaColor;
+  const legColor = sofaSec;
+
   const legRoughness = roughness * 0.8;
   const legMetalness = metalness + 0.1;
   const { x: w, y: h, z: d } = dimensions;
-
-  const isClassic = modelVariant === 'classic';
-  const isModern = modelVariant === 'modern';
-  const isSleeper = modelVariant === 'sleeper';
 
   // Base proportions vary by variant
   const baseH = isClassic ? h * 0.42 : isModern ? h * 0.38 : h * 0.45;
@@ -112,7 +117,7 @@ export function Sofa({
       {hasSkirt && (
         <mesh position={[0, 0.03, 0]}>
           <boxGeometry args={[w - 0.02, 0.06, d - 0.02]} />
-          <meshStandardMaterial color={secondaryColor} roughness={0.8} metalness={0.0} />
+          <meshStandardMaterial color={sofaSec} roughness={0.8} metalness={0.0} />
         </mesh>
       )}
 
@@ -139,7 +144,7 @@ export function Sofa({
       {isSleeper && (
         <mesh position={[0, baseH + 0.065, 0]}>
           <boxGeometry args={[w * 0.02, 0.01, d * 0.9]} />
-          <meshStandardMaterial color={secondaryColor} roughness={0.9} metalness={0} />
+          <meshStandardMaterial color={sofaSec} roughness={0.9} metalness={0} />
         </mesh>
       )}
 

@@ -6,7 +6,7 @@
  * then cross-fades to the full resolution image.
  */
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
@@ -48,12 +48,12 @@ export function ProgressiveImage({
   }));
 
   return (
-    <View style={[styles.container, { backgroundColor: placeholderColor }, style]}>
+    <View className="overflow-hidden" style={[{ backgroundColor: placeholderColor }, style]}>
       {uri && (
-        <Animated.View style={[StyleSheet.absoluteFill, imageStyle]}>
+        <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, imageStyle]}>
           <Image
             source={{ uri }}
-            style={StyleSheet.absoluteFill}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             contentFit={contentFit}
             transition={transitionDuration}
             onLoad={handleLoad}
@@ -64,8 +64,3 @@ export function ProgressiveImage({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-  },
-});

@@ -24,15 +24,20 @@ export function Wardrobe({
   modelVariant = 'standard',
   selected = false,
 }: WardrobeProps) {
-  const c = selected ? '#4A90D9' : color;
   const { x: w, y: h, z: d } = dimensions;
 
   const isModern = modelVariant === 'modern';
   const isClassic = modelVariant === 'classic';
+  const isMidCentury = modelVariant === 'mid_century';
   const hasCrownMolding = isClassic;
   const hasIntegratedHandle = isModern;
   const handleColor = isModern ? secondaryColor : '#C0C0C0';
   const handleMetalness = isModern ? 0.7 : 0.8;
+
+  // Mid-century walnut tones
+  const wardrobeColor = isMidCentury ? '#8B6914' : color;
+  const wardrobeSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : wardrobeColor;
 
   // Panel layout
   const panelCount = w > 1.4 ? 3 : 2;
@@ -50,14 +55,14 @@ export function Wardrobe({
       {hasCrownMolding && (
         <mesh position={[0, h + 0.04, 0]} castShadow>
           <boxGeometry args={[w + 0.04, 0.08, d + 0.04]} />
-          <meshStandardMaterial color={secondaryColor} roughness={roughness * 0.9} metalness={metalness} />
+          <meshStandardMaterial color={wardrobeSec} roughness={roughness * 0.9} metalness={metalness} />
         </mesh>
       )}
 
       {/* Kickplate at base */}
       <mesh position={[0, 0.04, 0]}>
         <boxGeometry args={[w - 0.04, 0.08, d - 0.02]} />
-        <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+        <meshStandardMaterial color={wardrobeSec} roughness={roughness} metalness={metalness} />
       </mesh>
 
       {/* Door panels */}
@@ -66,7 +71,7 @@ export function Wardrobe({
         return (
           <mesh key={i} position={[xPos, h * 0.5, d / 2 + 0.001]}>
             <boxGeometry args={[panelW - 0.04, h - 0.12, 0.015]} />
-            <meshStandardMaterial color={isClassic ? c : secondaryColor} roughness={roughness} metalness={metalness} />
+            <meshStandardMaterial color={isClassic ? wardrobeSec : wardrobeSec} roughness={roughness} metalness={metalness} />
           </mesh>
         );
       })}
@@ -75,7 +80,7 @@ export function Wardrobe({
       {Array.from({ length: panelCount - 1 }).map((_, i) => (
         <mesh key={`divider-${i}`} position={[-w / 2 + panelW * (i + 1), h * 0.5, d / 2 + 0.002]}>
           <boxGeometry args={[0.012, h - 0.12, 0.01]} />
-          <meshStandardMaterial color={secondaryColor} roughness={0.4} metalness={0.6} />
+          <meshStandardMaterial color={wardrobeSec} roughness={0.4} metalness={0.6} />
         </mesh>
       ))}
 

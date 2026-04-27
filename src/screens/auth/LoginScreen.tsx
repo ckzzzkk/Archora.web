@@ -275,21 +275,6 @@ export function LoginScreen() {
                 </>
               )}
             </Pressable>
-            {/* Google error — always visible when set */}
-            {error !== '' && (
-              <View style={{
-                backgroundColor: '#C0604A20',
-                borderWidth: 1,
-                borderColor: '#C0604A50',
-                borderRadius: 12,
-                padding: 12,
-                marginTop: 8,
-              }}>
-                <ArchText variant="body" style={{ color: DS.colors.error, fontSize: 13, textAlign: 'center' }}>
-                  {error}
-                </ArchText>
-              </View>
-            )}
             {/* Sign up link */}
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: DS.spacing.sm }}>
               <ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: DS.fontSize.sm }}>

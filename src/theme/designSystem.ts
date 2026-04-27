@@ -1,30 +1,36 @@
 /**
- * ASORIA Design System — single source of truth for all visual decisions.
+ * ASORIA Design System — ink blueprint aesthetic
  * Import as: import { DS } from '../../theme/designSystem'
  *
- * BASE_COLORS in colors.ts remain the authoritative colour tokens for existing code.
- * DS.colors mirrors and extends them for new components.
- *
- * Theme: Grey-first dark mode — Background #1A1A1A, Sketchy white line art accents
+ * Theme: Chalkboard dark (#1A1A1A) with pure white ink (#F0EDE8) and amber (#D4A84B)
+ * All hand-drawn, wobbly, sketchy aesthetic throughout.
  */
 export const DS = {
   colors: {
-    background:   '#1A1A1A',
-    surface:      '#222222',
-    surfaceHigh:  '#2C2C2C',
+    background:   '#1A1A1A',  // chalkboard
+    surface:      '#222222',  // card bg
+    surfaceHigh:  '#2C2C2C',  // elevated
     surfaceTop:   '#2C2C2C',
-    border:       '#333333',
-    borderLight:  'rgba(240, 237, 232, 0.12)',
-    primary:      '#C8C8C8',       // grey white
+    border:       '#F0EDE8',  // pure white ink border
+    borderLight:  'rgba(240, 237, 232, 0.18)',
+    primary:      '#F0EDE8',  // ink white
     primaryDim:   '#9A9590',
     primaryGhost: '#5A5550',
-    accent:       '#D4A84B',       // warm gold
-    accentGlow:   'rgba(200, 200, 200, 0.12)',
+    accent:       '#D4A84B',  // amber
+    accentGlow:   'rgba(212, 168, 75, 0.15)',
     success:      '#7AB87A',
     warning:      '#D4A84B',
     error:        '#C0604A',
     overlay:      'rgba(0,0,0,0.85)',
-    gridLine:     '#2C2C2C',
+    gridLine:     'rgba(240, 237, 232, 0.18)',
+    // Aliases matching reference
+    ink:          '#F0EDE8',
+    paper:        '#1A1A1A',
+    amber:        '#D4A84B',
+    card:         '#222222',
+    cardForeground:'#F0EDE8',
+    muted:        '#2C2C2C',
+    mutedForeground:'#9A9590',
   },
 
   radius: {
@@ -79,6 +85,7 @@ export const DS = {
   },
 
   shadow: {
+    // Blurred shadows (for elevated elements)
     small: {
       shadowColor:   '#000',
       shadowOffset:  { width: 0, height: 2 },
@@ -99,6 +106,29 @@ export const DS = {
       shadowOpacity: 0.5,
       shadowRadius:  16,
       elevation:     16,
+    },
+    // Sketch-style ink shadows (hand-drawn aesthetic)
+    // Uses hardcoded ink color #F0EDE8 to avoid circular reference
+    sketch: {
+      shadowColor:   '#F0EDE8',
+      shadowOffset:  { width: 3, height: 4 },
+      shadowOpacity: 1,
+      shadowRadius:  0,
+      elevation:     0,
+    },
+    sketchSm: {
+      shadowColor:   '#F0EDE8',
+      shadowOffset:  { width: 2, height: 2 },
+      shadowOpacity: 1,
+      shadowRadius:  0,
+      elevation:     0,
+    },
+    sketchLg: {
+      shadowColor:   '#F0EDE8',
+      shadowOffset:  { width: 5, height: 6 },
+      shadowOpacity: 1,
+      shadowRadius:  0,
+      elevation:     0,
     },
   },
 } as const;

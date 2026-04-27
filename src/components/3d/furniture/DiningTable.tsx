@@ -31,15 +31,21 @@ export function DiningTable({
 
   const isModern = modelVariant === 'modern';
   const isClassic = modelVariant === 'classic';
+  const isMidCentury = modelVariant === 'mid_century';
   const hasApron = !isModern;
-  const legStyle = isModern ? 'metal' : isClassic ? 'turned' : 'straight';
+  const legStyle = isModern ? 'metal' : isClassic ? 'turned' : isMidCentury ? 'tapered_mid' : 'straight';
+
+  // Mid-century walnut tones
+  const tableColor = isMidCentury ? '#8B6914' : color;
+  const tableSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const finalC = selected ? '#4A90D9' : tableColor;
 
   return (
     <group position={[position.x, position.y, position.z]} rotation={[rotation.x, rotation.y, rotation.z]}>
       {/* Tabletop */}
       <mesh position={[0, h - topH / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[w, topH, d]} />
-        <meshStandardMaterial color={c} roughness={roughness} metalness={metalness} />
+        <meshStandardMaterial color={finalC} roughness={roughness} metalness={metalness} />
       </mesh>
 
       {/* Apron/frame beneath tabletop */}
@@ -47,7 +53,7 @@ export function DiningTable({
         <>
           <mesh position={[0, h - topH - 0.04, 0]} castShadow>
             <boxGeometry args={[w - 0.08, 0.06, d - 0.08]} />
-            <meshStandardMaterial color={secondaryColor} roughness={roughness * 0.9} metalness={metalness * 0.5} />
+            <meshStandardMaterial color={tableSec} roughness={roughness * 0.9} metalness={metalness * 0.5} />
           </mesh>
         </>
       )}
@@ -58,7 +64,15 @@ export function DiningTable({
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.07), legH / 2, sz * (d / 2 - 0.07)]} castShadow>
             <cylinderGeometry args={[0.025, 0.02, legH, 8]} />
-            <meshStandardMaterial color={secondaryColor} roughness={0.2} metalness={0.8} />
+            <meshStandardMaterial color={tableSec} roughness={0.2} metalness={0.8} />
+          </mesh>
+        ))
+      ) : legStyle === 'tapered_mid' ? (
+        // Mid-century tapered legs (subtle taper, walnut tone)
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
+          <mesh key={i} position={[sx * (w / 2 - 0.06), legH / 2, sz * (d / 2 - 0.06)]} castShadow>
+            <cylinderGeometry args={[0.035, 0.02, legH, 8]} />
+            <meshStandardMaterial color={tableSec} roughness={0.5} metalness={0.08} />
           </mesh>
         ))
       ) : legStyle === 'turned' ? (
@@ -66,7 +80,7 @@ export function DiningTable({
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.07), legH / 2, sz * (d / 2 - 0.07)]} castShadow>
             <cylinderGeometry args={[0.04, 0.025, legH, 8]} />
-            <meshStandardMaterial color={secondaryColor} roughness={0.6} metalness={0.05} />
+            <meshStandardMaterial color={tableSec} roughness={0.6} metalness={0.05} />
           </mesh>
         ))
       ) : (
@@ -74,7 +88,7 @@ export function DiningTable({
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.06), legH / 2, sz * (d / 2 - 0.06)]} castShadow>
             <boxGeometry args={[0.05, legH, 0.05]} />
-            <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+            <meshStandardMaterial color={tableSec} roughness={roughness} metalness={metalness} />
           </mesh>
         ))
       )}

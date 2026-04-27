@@ -24,11 +24,16 @@ export function Bed({
   modelVariant = 'standard',
   selected = false,
 }: BedProps) {
-  const c = selected ? '#4A90D9' : color;
   const { x: w, y: h, z: d } = dimensions;
 
   const isPlatform = modelVariant === 'platform' || modelVariant === 'modern';
   const isClassic = modelVariant === 'classic';
+  const isMidCentury = modelVariant === 'mid_century';
+
+  // Mid-century walnut tones
+  const bedColor = isMidCentury ? '#8B6914' : color;
+  const bedSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : bedColor;
 
   const frameH = isPlatform ? h * 0.25 : h * 0.4;
   const mattressH = isPlatform ? h * 0.5 : h * 0.28;
@@ -45,7 +50,7 @@ export function Bed({
       {/* Frame */}
       <mesh position={[0, frameH / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[w, frameH, d]} />
-        <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+        <meshStandardMaterial color={bedSec} roughness={roughness} metalness={metalness} />
       </mesh>
 
       {/* Mattress */}
@@ -74,14 +79,14 @@ export function Bed({
       {/* Headboard */}
       <mesh position={[0, frameH + headboardH / 2, -d / 2 - headboardThick / 2]} castShadow>
         <boxGeometry args={[w, headboardH, headboardThick]} />
-        <meshStandardMaterial color={isPlatform ? c : secondaryColor} roughness={isPlatform ? roughness : roughness * 0.8} metalness={metalness} />
+        <meshStandardMaterial color={isPlatform ? c : bedSec} roughness={isPlatform ? roughness : roughness * 0.8} metalness={metalness} />
       </mesh>
 
       {/* Footboard */}
       {hasFootboard && (
         <mesh position={[0, frameH + h * 0.25 / 2, d / 2 + 0.025]} castShadow>
           <boxGeometry args={[w, h * 0.5, 0.05]} />
-          <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+          <meshStandardMaterial color={bedSec} roughness={roughness} metalness={metalness} />
         </mesh>
       )}
 
@@ -89,7 +94,7 @@ export function Bed({
       {hasBedroomBench && (
         <mesh position={[0, frameH * 0.3, d / 2 + 0.2]} castShadow receiveShadow>
           <boxGeometry args={[w * 0.55, frameH * 0.55, 0.38]} />
-          <meshStandardMaterial color={c} roughness={roughness + 0.1} metalness={metalness} />
+          <meshStandardMaterial color={bedSec} roughness={roughness + 0.1} metalness={metalness} />
         </mesh>
       )}
 
@@ -98,14 +103,14 @@ export function Bed({
         // Low platform base — no visible legs, just a thin base
         <mesh position={[0, 0.02, 0]}>
           <boxGeometry args={[w, 0.04, d]} />
-          <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+          <meshStandardMaterial color={bedSec} roughness={roughness} metalness={metalness} />
         </mesh>
       ) : (
         // Standard bed legs
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.07), 0.04, sz * (d / 2 - 0.07)]} castShadow>
             <boxGeometry args={[0.06, 0.08, 0.06]} />
-            <meshStandardMaterial color={secondaryColor} roughness={0.4} metalness={0.5} />
+            <meshStandardMaterial color={bedSec} roughness={0.4} metalness={0.5} />
           </mesh>
         ))
       )}

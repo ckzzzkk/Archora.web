@@ -24,13 +24,18 @@ export function Desk({
   modelVariant = 'standard',
   selected = false,
 }: DeskProps) {
-  const c = selected ? '#4A90D9' : color;
   const { x: w, y: h, z: d } = dimensions;
   const topH = 0.04;
   const legH = h - topH;
 
   const isModern = modelVariant === 'modern';
   const isClassic = modelVariant === 'classic';
+  const isMidCentury = modelVariant === 'mid_century';
+
+  // Mid-century walnut tones
+  const deskColor = isMidCentury ? '#8B6914' : color;
+  const deskSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : deskColor;
 
   return (
     <group
@@ -47,7 +52,7 @@ export function Desk({
       {!isModern && (
         <mesh position={[0, legH / 2, -d / 2 + 0.015]} castShadow>
           <boxGeometry args={[w - 0.08, legH * 0.8, 0.02]} />
-          <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+          <meshStandardMaterial color={deskSec} roughness={roughness} metalness={metalness} />
         </mesh>
       )}
 
@@ -69,7 +74,7 @@ export function Desk({
       {isClassic && (
         <mesh position={[-w / 2 + 0.14, legH * 0.4, 0]} castShadow>
           <boxGeometry args={[0.24, legH * 0.7, d - 0.06]} />
-          <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+          <meshStandardMaterial color={deskSec} roughness={roughness} metalness={metalness} />
         </mesh>
       )}
 
@@ -77,7 +82,7 @@ export function Desk({
       {isModern && (
         <mesh position={[0, h - topH - 0.03, d / 2 - 0.04]} castShadow>
           <boxGeometry args={[w * 0.6, 0.03, 0.06]} />
-          <meshStandardMaterial color={secondaryColor} roughness={0.3} metalness={0.6} />
+          <meshStandardMaterial color={deskSec} roughness={0.3} metalness={0.6} />
         </mesh>
       )}
 
@@ -87,7 +92,15 @@ export function Desk({
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.06), legH / 2, sz * (d / 2 - 0.06)]} castShadow>
             <cylinderGeometry args={[0.02, 0.02, legH, 8]} />
-            <meshStandardMaterial color={secondaryColor} roughness={0.2} metalness={0.8} />
+            <meshStandardMaterial color={deskSec} roughness={0.2} metalness={0.8} />
+          </mesh>
+        ))
+      ) : isMidCentury ? (
+        // Tapered mid-century legs
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
+          <mesh key={i} position={[sx * (w / 2 - 0.06), legH / 2, sz * (d / 2 - 0.06)]} castShadow>
+            <cylinderGeometry args={[0.03, 0.018, legH, 8]} />
+            <meshStandardMaterial color={deskSec} roughness={0.5} metalness={0.08} />
           </mesh>
         ))
       ) : isClassic ? (
@@ -95,7 +108,7 @@ export function Desk({
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.07), legH / 2, sz * (d / 2 - 0.07)]} castShadow>
             <cylinderGeometry args={[0.035, 0.022, legH, 8]} />
-            <meshStandardMaterial color={secondaryColor} roughness={0.6} metalness={0.05} />
+            <meshStandardMaterial color={deskSec} roughness={0.6} metalness={0.05} />
           </mesh>
         ))
       ) : (
@@ -103,7 +116,7 @@ export function Desk({
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => (
           <mesh key={i} position={[sx * (w / 2 - 0.05), legH / 2, sz * (d / 2 - 0.05)]} castShadow>
             <boxGeometry args={[0.05, legH, 0.05]} />
-            <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+            <meshStandardMaterial color={deskSec} roughness={roughness} metalness={metalness} />
           </mesh>
         ))
       )}

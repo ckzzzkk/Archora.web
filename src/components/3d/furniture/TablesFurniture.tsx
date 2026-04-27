@@ -16,8 +16,11 @@ interface Props {
 
 const outline = (selected?: boolean) => selected ? DS.colors.warning : 'transparent';
 
-export function RoundDiningTable({ position, rotation, dimensions, color = '#9A7850', secondaryColor = '#7A5830', roughness = 0.4, metalness = 0.05, selected }: Props) {
-  const c = selected ? '#4A90D9' : color;
+export function RoundDiningTable({ position, rotation, dimensions, color = '#9A7850', secondaryColor = '#7A5830', roughness = 0.4, metalness = 0.05, selected, modelVariant }: Props) {
+  const isMidCentury = modelVariant === 'mid_century';
+  const tableColor = isMidCentury ? '#8B6914' : color;
+  const tableSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : tableColor;
   const { x: w, y: h } = dimensions;
   const radius = w / 2;
   return (
@@ -35,7 +38,7 @@ export function RoundDiningTable({ position, rotation, dimensions, color = '#9A7
       {/* Base */}
       <mesh position={[0, h * 0.05, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[radius * 0.4, radius * 0.4, h * 0.04, 16]} />
-        <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+        <meshStandardMaterial color={tableSec} roughness={roughness} metalness={metalness} />
       </mesh>
       {selected && (
         <mesh position={[0, h * 0.5, 0]}>
@@ -47,8 +50,11 @@ export function RoundDiningTable({ position, rotation, dimensions, color = '#9A7
   );
 }
 
-export function OvalDiningTable({ position, rotation, dimensions, color = '#9A7850', secondaryColor = '#7A5830', roughness = 0.4, metalness = 0.05, selected }: Props) {
-  const c = selected ? '#4A90D9' : color;
+export function OvalDiningTable({ position, rotation, dimensions, color = '#9A7850', secondaryColor = '#7A5830', roughness = 0.4, metalness = 0.05, selected, modelVariant }: Props) {
+  const isMidCentury = modelVariant === 'mid_century';
+  const tableColor = isMidCentury ? '#8B6914' : color;
+  const tableSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : tableColor;
   const { x: w, y: h, z: d } = dimensions;
   return (
     <group position={[position.x, position.y, position.z]} rotation={[rotation.x, rotation.y, rotation.z]}>
@@ -68,7 +74,7 @@ export function OvalDiningTable({ position, rotation, dimensions, color = '#9A78
       {[-0.3, 0.3].map((t) => (
         <mesh key={t} position={[t * w, h * 0.04, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.04, 0.04, d * 0.7]} />
-          <meshStandardMaterial color={secondaryColor} roughness={roughness} metalness={metalness} />
+          <meshStandardMaterial color={tableSec} roughness={roughness} metalness={metalness} />
         </mesh>
       ))}
       {selected && (
@@ -81,8 +87,11 @@ export function OvalDiningTable({ position, rotation, dimensions, color = '#9A78
   );
 }
 
-export function BarStool({ position, rotation, dimensions, color = '#6A4828', secondaryColor = '#A0A0A0', roughness = 0.7, metalness = 0.0, selected }: Props) {
-  const c = selected ? '#4A90D9' : color;
+export function BarStool({ position, rotation, dimensions, color = '#6A4828', secondaryColor = '#A0A0A0', roughness = 0.7, metalness = 0.0, selected, modelVariant }: Props) {
+  const isMidCentury = modelVariant === 'mid_century';
+  const stoolColor = isMidCentury ? '#8B6914' : color;
+  const stoolSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : stoolColor;
   const { x: w, y: h } = dimensions;
   return (
     <group position={[position.x, position.y, position.z]} rotation={[rotation.x, rotation.y, rotation.z]}>
@@ -94,17 +103,17 @@ export function BarStool({ position, rotation, dimensions, color = '#6A4828', se
       {/* Post */}
       <mesh position={[0, h * 0.5, 0]} castShadow>
         <cylinderGeometry args={[0.025, 0.025, h * 0.85, 8]} />
-        <meshStandardMaterial color={secondaryColor} roughness={0.2} metalness={0.7} />
+        <meshStandardMaterial color={stoolSec} roughness={0.2} metalness={0.7} />
       </mesh>
       {/* Footrest ring */}
       <mesh position={[0, h * 0.35, 0]} castShadow>
         <torusGeometry args={[w * 0.3, 0.015, 8, 24]} />
-        <meshStandardMaterial color={secondaryColor} roughness={0.2} metalness={0.7} />
+        <meshStandardMaterial color={stoolSec} roughness={0.2} metalness={0.7} />
       </mesh>
       {/* Base */}
       <mesh position={[0, h * 0.04, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[w * 0.35, w * 0.38, h * 0.03, 6]} />
-        <meshStandardMaterial color={secondaryColor} roughness={0.2} metalness={0.7} />
+        <meshStandardMaterial color={stoolSec} roughness={0.2} metalness={0.7} />
       </mesh>
       {selected && (
         <mesh position={[0, h * 0.5, 0]}>

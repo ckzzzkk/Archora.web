@@ -3,50 +3,74 @@ import { View, Dimensions } from 'react-native';
 import { DS } from '../../theme/designSystem';
 
 const { width: W, height: H } = Dimensions.get('window');
-const STEP = 32;
 
 /**
- * Subtle architectural graph-paper grid.
+ * Paper-grid dot pattern background — hand-drawn sketch aesthetic.
+ * Uses radial-gradient dots instead of grid lines.
  * Position: absolute, fills screen, non-interactive.
- * Uses Views instead of SVG to avoid Android compositing tint.
  */
-export const GridBackground = React.memo(function GridBackground() {
-  const hLines = Math.ceil(H / STEP) + 1;
-  const vLines = Math.ceil(W / STEP) + 1;
+export const GridBackground = React.memo(function GridBackground({
+  fine = false,
+}: {
+  fine?: boolean;
+}) {
+  // Paper-grid: 22px spacing, 1.2px dots at 18% opacity
+  // Paper-grid-fine: 14px spacing, 0.8px dots at 14% opacity
+  const gridSize = fine ? 14 : 22;
+  const dotSize = fine ? 0.8 : 1.2;
+  const opacity = fine ? 0.14 : 0.18;
+
+  const hCount = Math.ceil(H / gridSize) + 1;
+  const vCount = Math.ceil(W / gridSize) + 1;
 
   return (
     <View
       pointerEvents="none"
+      aria-hidden
       style={{
         position: 'absolute',
-        top: 0, left: 0,
-        width: W, height: H,
-        backgroundColor: 'transparent',
+        top: 0,
+        left: 0,
+        width: W,
+        height: H,
+        backgroundColor: DS.colors.background,
+        opacity: 0.7,
       }}
     >
-      {Array.from({ length: hLines }).map((_, i) => (
+      {Array.from({ length: hCount }).map((_, row) => (
         <View
-          key={`h${i}`}
+          key={`row-${row}`}
           style={{
             position: 'absolute',
-            top: i * STEP,
-            left: 0, right: 0,
-            height: 1,
-            backgroundColor: DS.colors.gridLine,
+            top: row * gridSize,
+            left: 0,
+            right: 0,
+            height: gridSize,
+            flexDirection: 'row',
           }}
-        />
-      ))}
-      {Array.from({ length: vLines }).map((_, i) => (
-        <View
-          key={`v${i}`}
-          style={{
-            position: 'absolute',
-            left: i * STEP,
-            top: 0, bottom: 0,
-            width: 1,
-            backgroundColor: DS.colors.gridLine,
-          }}
-        />
+        >
+          {Array.from({ length: vCount }).map((__, col) => (
+            <View
+              key={`col-${col}`}
+              style={{
+                width: gridSize,
+                height: gridSize,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: dotSize,
+                  height: dotSize,
+                  borderRadius: dotSize / 2,
+                  backgroundColor: DS.colors.ink,
+                  opacity,
+                }}
+              />
+            </View>
+          ))}
+        </View>
       ))}
     </View>
   );

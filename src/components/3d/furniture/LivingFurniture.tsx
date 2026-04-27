@@ -16,8 +16,11 @@ interface Props {
 
 const outline = (selected?: boolean) => selected ? DS.colors.warning : 'transparent';
 
-export function CurvedSofa({ position, rotation, dimensions, color = '#8A7A6A', secondaryColor = '#2D2D2D', roughness = 0.7, metalness = 0.0, selected }: Props) {
-  const c = selected ? '#4A90D9' : color;
+export function CurvedSofa({ position, rotation, dimensions, color = '#8A7A6A', secondaryColor = '#2D2D2D', roughness = 0.7, metalness = 0.0, selected, modelVariant }: Props) {
+  const isMidCentury = modelVariant === 'mid_century';
+  const sofaColor = isMidCentury ? '#8B6914' : color;
+  const sofaSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : sofaColor;
   const { x: w, y: h, z: d } = dimensions;
   return (
     <group position={[position.x, position.y, position.z]} rotation={[rotation.x, rotation.y, rotation.z]}>
@@ -48,8 +51,11 @@ export function CurvedSofa({ position, rotation, dimensions, color = '#8A7A6A', 
   );
 }
 
-export function LSofa({ position, rotation, dimensions, color = '#8A7A6A', secondaryColor = '#2D2D2D', roughness = 0.7, metalness = 0.0, selected }: Props) {
-  const c = selected ? '#4A90D9' : color;
+export function LSofa({ position, rotation, dimensions, color = '#8A7A6A', secondaryColor = '#2D2D2D', roughness = 0.7, metalness = 0.0, selected, modelVariant }: Props) {
+  const isMidCentury = modelVariant === 'mid_century';
+  const sofaColor = isMidCentury ? '#8B6914' : color;
+  const sofaSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : sofaColor;
   const { x: w, y: h, z: d } = dimensions;
   return (
     <group position={[position.x, position.y, position.z]} rotation={[rotation.x, rotation.y, rotation.z]}>
@@ -82,8 +88,11 @@ export function LSofa({ position, rotation, dimensions, color = '#8A7A6A', secon
   );
 }
 
-export function SectionalSofa({ position, rotation, dimensions, color = '#8A7A6A', secondaryColor = '#2D2D2D', roughness = 0.7, metalness = 0.0, selected }: Props) {
-  const c = selected ? '#4A90D9' : color;
+export function SectionalSofa({ position, rotation, dimensions, color = '#8A7A6A', secondaryColor = '#2D2D2D', roughness = 0.7, metalness = 0.0, selected, modelVariant }: Props) {
+  const isMidCentury = modelVariant === 'mid_century';
+  const sofaColor = isMidCentury ? '#8B6914' : color;
+  const sofaSec = isMidCentury ? '#5A4020' : secondaryColor;
+  const c = selected ? '#4A90D9' : sofaColor;
   const { x: w, y: h, z: d } = dimensions;
   return (
     <group position={[position.x, position.y, position.z]} rotation={[rotation.x, rotation.y, rotation.z]}>

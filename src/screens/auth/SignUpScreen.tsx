@@ -105,7 +105,7 @@ export function SignUpScreen() {
   }, [strengthScore, strengthWidth]);
 
   const strengthBarStyle = useAnimatedStyle(() => ({
-    width: `${strengthWidth.value}%` as unknown as number,
+    width: `${Math.min(100, Math.max(0, strengthWidth.value))}%`,
   }));
 
   const strengthColors = ['#333333', '#C0604A', '#B8860B', '#7AB87A', '#7AB87A', '#C8C8C8'];

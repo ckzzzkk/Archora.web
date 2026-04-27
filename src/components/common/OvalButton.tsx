@@ -11,7 +11,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { DS } from '../../theme/designSystem';
 
-export type OvalButtonVariant = 'filled' | 'outline' | 'ghost' | 'danger' | 'success';
+export type OvalButtonVariant = 'filled' | 'outline' | 'ghost' | 'danger' | 'amber' | 'success';
 export type OvalButtonSize   = 'small' | 'medium' | 'large';
 
 interface Props {
@@ -101,7 +101,9 @@ export function OvalButton({
     gap: 8,
   };
 
-  const labelColor = variant === 'filled' || variant === 'success'
+  const labelColor = variant === 'filled'
+    ? DS.colors.background
+    : variant === 'amber'
     ? DS.colors.background
     : variant === 'danger'
     ? DS.colors.error
@@ -158,8 +160,10 @@ export function OvalButton({
     ? { bg: 'rgba(240, 237, 232, 0.03)', border: 'rgba(240, 237, 232, 0.18)', borderWidth: 1 }
     : variant === 'danger'
     ? { bg: 'rgba(240, 237, 232, 0.03)', border: 'rgba(192, 96, 74, 0.30)', borderWidth: 1 }
+    : variant === 'amber'
+    ? { bg: DS.colors.amber, border: 'transparent', borderWidth: 0 }
     : variant === 'success'
-    ? { bg: '#7AB87A', border: 'transparent', borderWidth: 0 }
+    ? { bg: DS.colors.success, border: 'transparent', borderWidth: 0 }
     : { bg: 'transparent', border: 'transparent', borderWidth: 0 }; // ghost
 
   return (
