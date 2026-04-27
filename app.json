@@ -7,11 +7,19 @@
     // Native config is authoritative — values are in Info.plist and build.gradle.
     // Expo Go and dev use the fields below; EAS Build uses the native files.
 
+    "ios": {
+      "bundleIdentifier": "com.asoria.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+
     "name": "ASORIA - AI Architecture Design",
     "slug": "asoria",
     "description": "Design your dream space with AI. Generate floor plans, visualize in 3D, and walk through your creations.",
     "version": "1.0.0",
     "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "assetBundlePatterns": [
       "**/*"

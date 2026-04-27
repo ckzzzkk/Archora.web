@@ -35,7 +35,8 @@
       "extends": "base",
       "distribution": "internal",
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "credentialsSource": "local"
       },
       "android": {
         "buildType": "apk"
