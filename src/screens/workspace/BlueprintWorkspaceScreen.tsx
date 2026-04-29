@@ -26,7 +26,7 @@ import { FloorSelectorBar } from '../../components/blueprint/FloorSelectorBar';
 import { StaircasePromptSheet } from '../../components/blueprint/StaircasePromptSheet';
 import { ImageToFurnitureSheet } from '../../components/blueprint/ImageToFurnitureSheet';
 import { CopyPasteSheet } from '../../components/blueprint/CopyPasteSheet';
-import { RenderSheet } from '../../components/blueprint/RenderSheet';
+import { BlueprintRenderSheet } from '../../components/blueprint/BlueprintRenderSheet';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { OvalButton } from '../../components/common/OvalButton';
 import { InHouseView } from '../../components/3d/InHouseView';
@@ -511,20 +511,20 @@ export function BlueprintWorkspaceScreen() {
             <Text style={{ fontSize: 14 }}>📋</Text>
             <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.primary }}>Copy</ArchText>
           </Pressable>
-          {/* Creative Render — Pro+ only */}
-          {blueprint && aiGenerationsAllowed && (
+          {/* Blender Render — Architect only */}
+          {blueprint && walkthroughAllowed && (
             <Pressable
               onPress={() => setShowRenderSheet(true)}
               style={{
                 paddingHorizontal: 14, paddingVertical: 8, borderRadius: 50,
-                backgroundColor: `${DS.colors.accent}18`, borderWidth: 1,
-                borderColor: `${DS.colors.accent}40`, flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: `${DS.colors.amber}18`, borderWidth: 1,
+                borderColor: `${DS.colors.amber}40`, flexDirection: 'row', alignItems: 'center', gap: 4,
                 marginRight: 8,
               }}
             >
               <Text style={{ fontSize: 14 }}>🎨</Text>
               <View style={{ flexShrink: 1 }}>
-                <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.accent }} numberOfLines={1}>Render</ArchText>
+                <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.amber }} numberOfLines={1}>Render</ArchText>
               </View>
             </Pressable>
           )}
@@ -670,7 +670,7 @@ export function BlueprintWorkspaceScreen() {
       {showRenderSheet && (
         <Modal transparent animationType="slide" onRequestClose={() => setShowRenderSheet(false)}>
           <Pressable style={{ flex: 1 }} onPress={() => setShowRenderSheet(false)} />
-          <RenderSheet onClose={() => setShowRenderSheet(false)} />
+          <BlueprintRenderSheet onClose={() => setShowRenderSheet(false)} />
         </Modal>
       )}
       {blueprint && (
