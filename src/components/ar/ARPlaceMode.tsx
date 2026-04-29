@@ -11,10 +11,21 @@ import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
 import { useARCore } from '../../hooks/useARCore';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import { fetchCustomFurniture, type VigaMesh } from '../../services/vigaService';
 import type { Vector3D } from '../../native/ARCoreModule';
 import type { RootStackParamList } from '../../navigation/types';
 
-const FURNITURE_CATALOGUE = [
+interface CatalogueItem {
+  id: string;
+  label: string;
+  icon: string;
+  w: number;
+  d: number;
+  cat: string;
+  meshUrl?: string;
+}
+
+const BUILTIN_CATALOGUE: CatalogueItem[] = [
   { id: 'sofa',           label: 'Sofa',         icon: '🛋',  w: 2.2, d: 0.95, cat: 'living' },
   { id: 'armchair',       label: 'Armchair',     icon: '🪑',  w: 0.95, d: 0.95, cat: 'living' },
   { id: 'coffee_table',   label: 'Coffee Table', icon: '🟫',  w: 1.2,  d: 0.6,  cat: 'living' },
@@ -92,7 +103,9 @@ function ARPlaceModeContent() {
   const { width, height } = useWindowDimensions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [surfaceDetected, setSurfaceDetected] = useState(false);
-  const [selectedFurniture, setSelectedFurniture] = useState(FURNITURE_CATALOGUE[0]);
+  const [customItems, setCustomItems] = useState<CatalogueItem[]>([]);
+  const [combinedCatalogue, setCombinedCatalogue] = useState<CatalogueItem[]>(BUILTIN_CATALOGUE);
+  const [selectedFurniture, setSelectedFurniture] = useState<CatalogueItem>(BUILTIN_CATALOGUE[0]);
   const [placedItems, setPlacedItems] = useState<PlacedItem[]>([]);
   const [showCatalogue, setShowCatalogue] = useState(true);
 
@@ -109,6 +122,25 @@ function ARPlaceModeContent() {
     void startSession();
     return () => { void stopSession(); };
   }, [startSession, stopSession]);
+
+  // Load custom VIGA meshes and merge with built-in catalogue
+  useEffect(() => {
+    fetchCustomFurniture()
+      .then((meshes: VigaMesh[]) => {
+        const custom: CatalogueItem[] = meshes.map((m) => ({
+          id: m.id,
+          label: m.name,
+          icon: '🏠',
+          w: m.dimensions.x,
+          d: m.dimensions.z,
+          cat: m.category,
+          meshUrl: m.meshUrl,
+        }));
+        setCustomItems(custom);
+        setCombinedCatalogue([...BUILTIN_CATALOGUE, ...custom]);
+      })
+      .catch(() => {});
+  }, []);
 
   // Update surface detection from real AR planes
   useEffect(() => {
@@ -256,7 +288,7 @@ function ARPlaceModeContent() {
             )}
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
-            {FURNITURE_CATALOGUE.map((item) => (
+            {combinedCatalogue.map((item) => (
               <Pressable
                 key={item.id}
                 onPress={() => setSelectedFurniture(item)}
