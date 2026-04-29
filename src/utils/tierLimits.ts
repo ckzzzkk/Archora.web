@@ -18,6 +18,7 @@ export interface TierLimits {
   aiEditsPerMonth: number;       // -1 = unlimited
   arScansPerMonth: number;       // -1 = unlimited
   arSessionsPerMonth: number;    // alias for arScansPerMonth
+  vigaRequestsPerMonth: number; // -1 = unlimited (Architect tier)
   photoImportsPerMonth: number;  // -1 = unlimited
   exportsPerMonth: number;       // -1 = unlimited
   rendersPerMonth: number;       // -1 = unlimited
@@ -214,6 +215,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     aiEditsPerMonth: 100,
     arScansPerMonth: -1,
     arSessionsPerMonth: -1,
+    vigaRequestsPerMonth: 10,
     photoImportsPerMonth: -1,
     exportsPerMonth: -1,
     rendersPerMonth: 30,
@@ -277,10 +279,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     aiEditsPerMonth: -1,
     arScansPerMonth: -1,
     arSessionsPerMonth: -1,
-    photoImportsPerMonth: -1,
-    exportsPerMonth: -1,
-    rendersPerMonth: -1,
-    aiChatMessagesPerDay: -1,
+    vigaRequestsPerMonth: -1,
 
     dailyEditTimeSeconds: -1,
     maxUndoSteps: -1,
