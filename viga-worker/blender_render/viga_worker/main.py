@@ -27,7 +27,7 @@ tasks: dict[str, dict] = {}
 # Blender Scene Builder
 # ============================================================================
 
-def build_blender_python_script(blueprint_data: dict) -> str:
+def build_blender_python_script(blueprint_data: dict, meshy_mesh_url: str | None = None) -> str:
     """
     Generates a Blender Python script from Asoria BlueprintData JSON.
     Creates walls, floors, ceilings, and furniture from blueprint JSON.
@@ -144,6 +144,35 @@ bpy.ops.object.light_add(type='AMBIENT', location=(0, 0, 10))
 ambient = bpy.context.active_object
 ambient.data.energy = 0.3
 
+# Import Meshy reference mesh if provided
+if meshy_mesh_url:
+    try:
+        import urllib.request
+        import tempfile
+        import shutil
+
+        with tempfile.NamedTemporaryFile(suffix=".glb", delete=False) as tmp:
+            tmp_path = tmp.name
+        urllib.request.urlretrieve(meshy_mesh_url, tmp_path)
+        bpy.ops.import_scene.gltf(filepath=tmp_path)
+        imported = bpy.context.active_object
+        if imported:
+            imported.name = "MeshyReference"
+            imported.location = (0, 0, 0)
+            # Scale to fit blueprint volume (~15m wide)
+            bpy.ops.object.select_all(action='DESELECT')
+            imported.select_set(True)
+            bpy.context.view_layer.objects.active = imported
+            bpy.ops.object.origin_set(type='ORIGIN_CENTER')
+            max_dim = max(imported.dimensions)
+            if max_dim > 0:
+                imported.scale = (15 / max_dim, 15 / max_dim, 15 / max_dim)
+            bpy.ops.object.transform_apply(scale=True)
+        import os
+        os.unlink(tmp_path)
+    except Exception as e:
+        print(f"Meshy mesh import failed (non-fatal): {{e}}")
+
 print("Blender scene built successfully")
 '''
 
@@ -177,7 +206,7 @@ def run_blender_scene(script: str, output_glb: Path) -> bool:
 # Task Status
 # ============================================================================
 
-def render_blueprint(blueprint_data: dict, task_id: str, callback_url: str) -> dict:
+def render_blueprint(blueprint_data: dict, task_id: str, callback_url: str, meshy_mesh_url: str | None = None) -> dict:
     """Build scene, render to GLTF, upload to Supabase, fire callback."""
     supabase_url = os.environ["SUPABASE_URL"]
     supabase_key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
@@ -185,7 +214,7 @@ def render_blueprint(blueprint_data: dict, task_id: str, callback_url: str) -> d
     with tempfile.TemporaryDirectory() as tmpdir:
         output_glb = Path(tmpdir) / "output.glb"
 
-        script = build_blender_python_script(blueprint_data)
+        script = build_blender_python_script(blueprint_data, meshy_mesh_url)
         success = run_blender_scene(script, output_glb)
 
         if not success:
@@ -232,6 +261,7 @@ def render_blueprint(blueprint_data: dict, task_id: str, callback_url: str) -> d
 class RenderRequest(BaseModel):
     blueprint_id: str
     blueprint_data: dict
+    meshy_mesh_url: str | None = None
     callback_url: str
 
 
@@ -246,7 +276,7 @@ async def render(req: RenderRequest) -> RenderResponse:
 
     import concurrent.futures
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-    executor.submit(render_blueprint, req.blueprint_data, task_id, req.callback_url)
+    executor.submit(render_blueprint, req.blueprint_data, task_id, req.callback_url, req.meshy_mesh_url)
 
     return RenderResponse(task_id=task_id)
 
