@@ -17,6 +17,7 @@ export type MainTabParamList = {
   Create: undefined;
   Inspo: undefined;
   AR: undefined;
+  VIGA: undefined;
   Account: undefined;
 };
 
@@ -55,6 +56,7 @@ export type ResetPasswordScreenProps     = NativeStackScreenProps<AuthStackParam
 export type DashboardScreenProps   = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Home'>, NativeStackScreenProps<RootStackParamList>>;
 export type FeedScreenProps        = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Inspo'>, NativeStackScreenProps<RootStackParamList>>;
 export type ARScreenProps          = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'AR'>, NativeStackScreenProps<RootStackParamList>>;
+export type VIGAScreenProps        = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'VIGA'>, NativeStackScreenProps<RootStackParamList>>;
 export type AccountScreenProps     = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Account'>, NativeStackScreenProps<RootStackParamList>>;
 export type SketchScreenProps      = CompositeScreenProps<BottomTabScreenProps<MainTabParamList, 'Create'>, NativeStackScreenProps<RootStackParamList>>;
 

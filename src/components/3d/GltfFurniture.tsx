@@ -3,7 +3,7 @@
  * Used for VIGA-reconstructed furniture meshes stored in Supabase Storage.
  */
 import React, { useMemo } from 'react';
-import { useGLTF } from '@react-three/drei/native';
+import { useGLTF } from '@react-three/drei';
 import type { Group, Mesh } from 'three';
 
 interface GltfFurnitureProps {
