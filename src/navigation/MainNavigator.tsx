@@ -11,6 +11,9 @@ const SketchScreen  = lazyScreen(() =>
 const ARScanScreen  = lazyScreen(() =>
   import('../screens/ar/ARScanScreen').then((m) => ({ default: m.ARScanScreen })));
 
+const VIGAScreen    = lazyScreen(() =>
+  import('../screens/viga/VIGAScreen').then((m) => ({ default: m.VIGAScreen })));
+
 const FeedScreen    = lazyScreen(() =>
   import('../screens/feed/FeedScreen').then((m) => ({ default: m.FeedScreen })));
 
@@ -26,6 +29,7 @@ const HomeTab     = () => <ErrorBoundary><DashboardScreen /></ErrorBoundary>;
 const CreateTab    = () => <ErrorBoundary><SketchScreen /></ErrorBoundary>;
 const InspoTab     = () => <ErrorBoundary><FeedScreen /></ErrorBoundary>;
 const ARTab         = () => <ErrorBoundary><ARScanScreen /></ErrorBoundary>;
+const VIGATab       = () => <ErrorBoundary><VIGAScreen /></ErrorBoundary>;
 const AccountTab    = () => <ErrorBoundary><AccountScreen /></ErrorBoundary>;
 
 export function MainNavigator() {
@@ -48,6 +52,11 @@ export function MainNavigator() {
         <Tab.Screen
           name="AR"
           component={ARTab}
+          options={{ tabBarStyle: { display: 'none' } }}
+        />
+        <Tab.Screen
+          name="VIGA"
+          component={VIGATab}
           options={{ tabBarStyle: { display: 'none' } }}
         />
         <Tab.Screen name="Account" component={AccountTab} />
