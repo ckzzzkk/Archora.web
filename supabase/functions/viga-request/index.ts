@@ -40,12 +40,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
         user_id: user.id,
         project_id: projectId ?? null,
         status: 'pending',
-        input_image_url: imageUrl,
+        source_image_url: imageUrl,
         mode,
         name: name ?? null,
         category: category ?? null,
-        output_gltf_url: null,
-        worker_task_id: null,
+        gltf_url: null,
+        task_id: null,
         error_message: null,
       })
       .select()
@@ -85,7 +85,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Update task with worker task ID and processing status
     await supabase
       .from('viga_tasks')
-      .update({ status: 'processing', worker_task_id: workerTaskId })
+      .update({ status: 'processing', task_id: workerTaskId })
       .eq('id', task.id);
 
     return new Response(
