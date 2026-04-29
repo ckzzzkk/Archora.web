@@ -205,34 +205,59 @@ export function ARScanScreen() {
 
         {/* Scan mode options */}
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 40, gap: 16 }}>
-          {mode === 'scan' && (
-            <>
-              <ScanModeCard
-                title="Manual Measure"
-                description="Tap corners to measure your room wall by wall. Works on all devices."
-                available={hasAR && canScan}
-                requires={!canScan ? scanRequiredTier ?? 'Creator' : !hasAR ? 'AR' : undefined}
-                onPress={() => handleSelectScanMode('manual')}
-                delay={0}
-              />
-              <ScanModeCard
-                title="Auto Depth Scan"
-                description="Walk around and let AR automatically detect walls using Depth API or LiDAR."
-                available={hasAR && (hasDepthAPI || hasLiDAR) && canScan}
-                requires={!canScan ? scanRequiredTier ?? 'Creator' : !hasAR ? 'AR' : !hasDepthAPI && !hasLiDAR ? 'LiDAR/Depth' : undefined}
-                onPress={() => handleSelectScanMode('depth')}
-                delay={100}
-              />
-              <ScanModeCard
-                title="Photo Analysis"
-                description="Take photos of each wall and let AI analyze dimensions. Works on all devices."
-                available={canScan}
-                requires={!canScan ? scanRequiredTier ?? 'Creator' : undefined}
-                onPress={() => handleSelectScanMode('photo')}
-                delay={200}
-              />
-            </>
-          )}
+          {mode === 'scan' && (() => {
+            const hasLiDAROrDepth = hasLiDAR || hasDepthAPI;
+            const scanMethod = hasLiDAROrDepth ? 'LiDAR' : hasAR ? 'Depth' : 'Photo';
+            const capabilityText = hasLiDAROrDepth ? 'LiDAR Scan Available' : hasAR ? 'Depth Scan Available' : 'Photo Analysis';
+            const onPressScan = () => {
+              if (hasLiDAROrDepth) {
+                handleSelectScanMode('depth');
+              } else if (hasAR) {
+                handleSelectScanMode('depth');
+              } else {
+                handleSelectScanMode('photo');
+              }
+            };
+
+            return (
+              <View style={{ alignItems: 'center', paddingTop: 40, gap: 24 }}>
+                {/* Capability text */}
+                <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center' }}>
+                  {capabilityText}
+                </ArchText>
+
+                {/* Scan Room button */}
+                <OvalButton
+                  label="Scan Room"
+                  onPress={canScan ? onPressScan : () => {}}
+                  variant="filled"
+                />
+
+                {/* Capability badges */}
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {hasLiDAR && (
+                    <View style={{ backgroundColor: DS.colors.success + '20', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4 }}>
+                      <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.success }}>LiDAR</ArchText>
+                    </View>
+                  )}
+                  {hasAR && !hasLiDAR && (
+                    <View style={{ backgroundColor: DS.colors.primary + '20', borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4 }}>
+                      <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.primary }}>AR</ArchText>
+                    </View>
+                  )}
+                </View>
+
+                {/* Upgrade prompt for locked users */}
+                {!canScan && (
+                  <Pressable onPress={() => navigation.navigate('Subscription')}>
+                    <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 12, color: DS.colors.primaryDim, textDecorationLine: 'underline' }}>
+                      Upgrade to Creator to scan rooms
+                    </ArchText>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })()}
 
           {mode === 'place' && (
             <ScanModeCard
