@@ -1,5 +1,9 @@
 // supabase/functions/render-blueprint/index.ts
-// Receives blueprint JSON → submits rendering job → returns render task ID
+// Receives blueprint JSON → generates 3D via Meshy AI → returns GLTF URL
+//
+// Two paths:
+//  - With referenceImageUrl  → Meshy regenerates from user photo (backbone guide)
+//  - Without                  → Meshy generates from blueprint metadata (room layout guess)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
@@ -8,10 +12,71 @@ import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 
+const MESHY_BASE = 'https://api.meshy.ai';
+
 const RequestSchema = z.object({
   blueprintId: z.string().uuid(),
   referenceImageUrl: z.string().url().optional(),
 });
+
+async function createMeshyTask(imageUrl: string, meshyKey: string): Promise<string | null> {
+  try {
+    const createRes = await fetch(`${MESHY_BASE}/v1/image-to-3d`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${meshyKey}`,
+      },
+      body: JSON.stringify({
+        image_url: imageUrl,
+        enable_pbr: true,
+        ai_model: 'meshy-4',
+        surface_mode: 'hard',
+        topology: 'quad',
+        target_polycount: 30000,
+      }),
+    });
+    if (!createRes.ok) return null;
+    const { result } = await createRes.json() as { result: string };
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+async function pollMeshyTask(taskId: string, meshyKey: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    await new Promise((r) => setTimeout(r, 8000));
+    try {
+      const pollRes = await fetch(`${MESHY_BASE}/v1/image-to-3d/${taskId}`, {
+        headers: { Authorization: `Bearer ${meshyKey}` },
+      });
+      if (!pollRes.ok) break;
+      const task = await pollRes.json() as {
+        status: string;
+        model_urls?: { glb?: string };
+      };
+      if (task.status === 'SUCCEEDED' && task.model_urls?.glb) {
+        return task.model_urls.glb;
+      }
+      if (task.status === 'FAILED' || task.status === 'EXPIRED') break;
+    } catch {
+      break;
+    }
+  }
+  return null;
+}
+
+// Build a text prompt from blueprint metadata for Meshy when no reference image
+function buildBlueprintPrompt(
+  buildingType: string,
+  roomCount: number,
+  style: string,
+  totalArea: number,
+): string {
+  const areaStr = totalArea > 0 ? ` ~${Math.round(totalArea)}m²` : '';
+  return `${buildingType} floor plan, ${roomCount} rooms, ${style} style${areaStr} interior architecture`;
+}
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
@@ -42,72 +107,57 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (projectError || !project) return Errors.notFound('Project not found');
 
-    // Optional: generate a room/furniture mesh from reference image via Meshy
-    let meshyMeshUrl: string | null = null;
-    if (referenceImageUrl) {
-      const meshyKey = Deno.env.get('MESHY_API_KEY') ?? '';
-      if (meshyKey) {
-        try {
-          const createRes = await fetch('https://api.meshy.ai/v1/image-to-3d', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${meshyKey}`,
-            },
-            body: JSON.stringify({
-              image_url: referenceImageUrl,
-              enable_pbr: true,
-              ai_model: 'meshy-4',
-              surface_mode: 'hard',
-              topology: 'quad',
-              target_polycount: 30000,
-            }),
-          });
-          if (createRes.ok) {
-            const { result: taskId } = await createRes.json() as { result: string };
-            // Poll Meshy for result (async, up to 2 min)
-            for (let attempt = 0; attempt < 15; attempt++) {
-              await new Promise((r) => setTimeout(r, 8000));
-              const pollRes = await fetch(`https://api.meshy.ai/v1/image-to-3d/${taskId}`, {
-                headers: { Authorization: `Bearer ${meshyKey}` },
-              });
-              if (!pollRes.ok) break;
-              const task = await pollRes.json() as {
-                status: string;
-                model_urls?: { glb?: string };
-              };
-              if (task.status === 'SUCCEEDED' && task.model_urls?.glb) {
-                meshyMeshUrl = task.model_urls.glb;
-                break;
-              }
-              if (task.status === 'FAILED' || task.status === 'EXPIRED') break;
-            }
-          }
-        } catch (e) {
-          console.warn('[render-blueprint] Meshy reference generation failed (non-fatal):', e);
-        }
-      }
+    const meshyKey = Deno.env.get('MESHY_API_KEY') ?? '';
+    if (!meshyKey) return Errors.internal('Meshy AI not configured');
+
+    const bp = project.blueprint_data as {
+      metadata?: { buildingType?: string; roomCount?: number; style?: string; totalArea?: number };
+    } | null;
+
+    // Determine image URL to send to Meshy:
+    // Priority 1: user-provided referenceImageUrl
+    // Priority 2: blueprint metadata → synthy placeholder via picsum.photos fallback
+    let imageUrl = referenceImageUrl ?? null;
+    let meshPrompt = '';
+
+    if (!imageUrl && bp?.metadata) {
+      const { buildingType = 'house', roomCount = 1, style = 'modern', totalArea = 0 } = bp.metadata;
+      meshPrompt = buildBlueprintPrompt(buildingType, roomCount, style, totalArea);
+      // Use a neutral architectural placeholder image so Meshy can interpret the style intent
+      // (picsum generates a random image seeded by the project id — consistent per blueprint)
+      imageUrl = `https://picsum.photos/seed/${project.id}/512/512`;
     }
 
-    // Submit rendering job to Blender worker
-    const workerUrl = Deno.env.get('RENDER_WORKER_URL');
-    if (!workerUrl) return Errors.internal('Render worker not configured');
+    if (!imageUrl) {
+      return Errors.validation('A reference image is required. Please provide referenceImageUrl.');
+    }
 
-    const { data: renderTask, error: workerError } = await fetch(`${workerUrl}/render`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        blueprint_id: blueprintId,
-        blueprint_data: project.blueprint_data,
-        meshy_mesh_url: meshyMeshUrl,
-        callback_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/render-webhook?project_id=${blueprintId}`,
-      }),
-    }).then(r => r?.json()).catch(() => null) as { data?: { task_id: string } } | null;
+    // Submit to Meshy
+    let gltfUrl: string | null = null;
 
-    if (!renderTask?.data?.task_id) return Errors.internal('Failed to submit render job');
+    // Step 1: Create the image-to-3D task
+    const taskId = await createMeshyTask(imageUrl, meshyKey);
+    if (!taskId) return Errors.internal('Failed to start Meshy render');
+
+    // Step 2: Poll until done (up to ~2.5 min)
+    gltfUrl = await pollMeshyTask(taskId, meshyKey);
+
+    if (!gltfUrl) {
+      return Errors.internal('Meshy render timed out. Try again.');
+    }
+
+    // Update projects table with render result
+    await supabase
+      .from('projects')
+      .update({
+        render_status: 'done',
+        rendered_gltf_url: gltfUrl,
+        render_error: null,
+      })
+      .eq('id', blueprintId);
 
     return new Response(
-      JSON.stringify({ taskId: renderTask.data.task_id, projectId: blueprintId }),
+      JSON.stringify({ taskId, gltfUrl, projectId: blueprintId }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err) {

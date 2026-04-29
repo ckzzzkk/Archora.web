@@ -68,51 +68,17 @@ export function BlueprintRenderSheet({ onClose }: BlueprintRenderSheetProps) {
         throw new Error(err.message ?? 'Render request failed');
       }
 
-      const { taskId } = await resp.json() as { taskId: string };
+      const { gltfUrl } = await resp.json() as { taskId: string; gltfUrl: string; projectId: string };
 
-      // Poll via Realtime subscription on projects table
-      const channel = supabase
-        .channel(`render:${taskId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'projects',
-            filter: `id=eq.${projectId}`,
-          },
-          (payload) => {
-            const p = payload.new as {
-              render_status: string;
-              rendered_gltf_url: string | null;
-              render_error: string | null;
-            };
-            if (p.render_status === 'done' && p.rendered_gltf_url) {
-              setGltfUrl(p.rendered_gltf_url);
-              setStatus('done');
-              channel.unsubscribe();
-            } else if (p.render_status === 'failed') {
-              setError(p.render_error ?? 'Render failed');
-              setStatus('failed');
-              channel.unsubscribe();
-            }
-          },
-        )
-        .subscribe();
+      if (!gltfUrl) throw new Error('No GLTF URL returned');
 
-      // 10-minute timeout
-      setTimeout(() => {
-        if (status === 'rendering') {
-          setError('Render timed out. Try again.');
-          setStatus('failed');
-          channel.unsubscribe();
-        }
-      }, 600_000);
+      setGltfUrl(gltfUrl);
+      setStatus('done');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setStatus('failed');
     }
-  }, [projectId, status]);
+  }, [projectId]);
 
   return (
     <Animated.View
@@ -138,7 +104,7 @@ export function BlueprintRenderSheet({ onClose }: BlueprintRenderSheetProps) {
         Photorealistic View
       </ArchText>
       <Text style={{ color: DS.colors.mutedForeground, fontSize: 13, marginBottom: 20 }}>
-        Render your blueprint in high fidelity with PBR materials and real-time lighting.
+        Generate a photorealistic 3D mesh of your blueprint using AI reconstruction.
       </Text>
 
       {status === 'idle' && (
