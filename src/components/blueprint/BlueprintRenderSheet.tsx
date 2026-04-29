@@ -9,6 +9,9 @@ import Animated, {
   withTiming, withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
 import { ArchText } from '../common/ArchText';
 import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { DS } from '../../theme/designSystem';
@@ -25,6 +28,7 @@ interface BlueprintRenderSheetProps {
 
 export function BlueprintRenderSheet({ onClose }: BlueprintRenderSheetProps) {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const projectId = useBlueprintStore((s) => s.blueprint?.id);
   const [status, setStatus] = useState<RenderStatus>('idle');
@@ -171,7 +175,11 @@ export function BlueprintRenderSheet({ onClose }: BlueprintRenderSheetProps) {
             Render complete!
           </Text>
           <Pressable
-            onPress={() => {/* GLTF viewer wiring — TODO */}}
+            onPress={() => {
+              if (gltfUrl) {
+                navigation.navigate('BlueprintPhotoreal', { gltfUrl });
+              }
+            }}
             style={{
               backgroundColor: DS.colors.success,
               borderRadius: 50,

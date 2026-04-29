@@ -39,6 +39,7 @@ export type RootStackParamList = {
   CoProjects: undefined;
   CoProjectDetail: { projectId: string };
   CodesignSession: { sessionId?: string };
+  BlueprintPhotoreal: { gltfUrl: string };
   HelpFAQ: undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;

@@ -11,6 +11,10 @@ const BlueprintWorkspaceScreen = lazyScreen(() =>
   import('../screens/workspace/BlueprintWorkspaceScreen')
     .then((m) => ({ default: m.BlueprintWorkspaceScreen })));
 
+const BlueprintPhotorealScreen = lazyScreen(() =>
+  import('../screens/render/BlueprintPhotorealScreen')
+    .then((m) => ({ default: m.BlueprintPhotorealScreen })));
+
 const GenerationScreen = lazyScreen(() =>
   import('../screens/generation/GenerationScreen')
     .then((m) => ({ default: m.GenerationScreen })));
@@ -188,6 +192,15 @@ export function RootNavigator() {
             name="NotificationPreferences"
             component={NotificationPreferencesScreen}
             options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="BlueprintPhotoreal"
+            component={BlueprintPhotorealScreen}
+            options={{
+              presentation: 'fullScreenModal',
+              animation: 'fade',
+              animationDuration: 200,
+            }}
           />
         </>
       ) : (
