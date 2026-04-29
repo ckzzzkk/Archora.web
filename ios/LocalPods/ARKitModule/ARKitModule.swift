@@ -1,411 +1,435 @@
+//
+//  ARKitModule.swift
+//  ARKitModule
+//
+//  ARKit native module for ASORIA — mirrors ARCoreModule.kt API surface.
+//  Uses RCTEventEmitter (legacy bridge) for NativeEventEmitter compatibility.
+//
+
 import Foundation
 import ARKit
-import SceneKit
-import React
+import RealityKit
+import simd
 
-/// ASORIA ARKit Native Module
-/// Exposes ARKit capabilities to React Native for room scanning, furniture placement, and measurement.
-/// Mirrors the Android ARCoreModule API surface for cross-platform parity.
 @objc(ARKitModule)
 class ARKitModule: RCTEventEmitter {
 
-    // ── Types ─────────────────────────────────────────────────────────────────
+  // MARK: - Constants
 
-    struct Vector3D {
-        var x: Double
-        var y: Double
-        var z: Double
+  /// 5 cm grid snapping — matches GRID_SIZE_METERS in ARCoreModule.kt
+  private let gridSizeMeters: Float = 0.05
+
+  // MARK: - State
+
+  private var session: ARSession?
+  private var latestFrame: ARFrame?
+  private var hasListeners = false
+  private var sessionWasRunning = false
+
+  // MARK: - RCTEventEmitter
+
+  override static func requiresMainQueueSetup() -> Bool {
+    return true // ARSession must run on main thread
+  }
+
+  override func supportedEvents() -> [String] {
+    return [
+      "ARKitPlanesDetected",
+      "ARKitSessionInterrupted",
+      "ARKitSessionResumed",
+      "ARKitMeshUpdated"
+    ]
+  }
+
+  override func startObserving() {
+    hasListeners = true
+  }
+
+  override func stopObserving() {
+    hasListeners = false
+  }
+
+  override func name() -> String! {
+    return "ARKitModule"
+  }
+
+  // MARK: - Support Check
+
+  @objc
+  func checkSupport(_ resolve: @escaping RCTPromiseResolveBlock,
+                   rejecter reject: @escaping RCTPromiseRejectBlock) {
+    let hasARKit = ARWorldTrackingConfiguration.isSupported
+    let hasLiDAR = ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
+    var hasDepthAPI = false
+
+    if hasARKit {
+      let config = ARWorldTrackingConfiguration()
+      config.planeDetection = []
+      hasDepthAPI = ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth)
     }
 
-    struct DetectedPlane {
-        var id: String
-        var type: String      // "floor" | "wall" | "ceiling" | "unknown"
-        var centerX: Double
-        var centerY: Double
-        var centerZ: Double
-        var extentX: Double   // width in metres
-        var extentZ: Double  // height in metres
-        var confidence: Double
+    let result: [String: Any] = [
+      "hasARCore": hasARKit, // Reuse field name from ARCoreModule for JS compatibility
+      "hasDepthAPI": hasDepthAPI,
+      "hasLiDAR": hasLiDAR,
+      "availability": hasARKit ? "SUPPORTED" : "UNSUPPORTED",
+      "deviceModel": UIDevice.current.model
+    ]
+    resolve(result)
+  }
+
+  // MARK: - Camera Permission (iOS-specific)
+
+  @objc
+  func requestCameraPermission(_ resolve: @escaping RCTPromiseResolveBlock,
+                               rejecter reject: @escaping RCTPromiseRejectBlock) {
+    AVCaptureDevice.requestAccess(for: .video) { granted in
+      resolve(["granted": granted])
+    }
+  }
+
+  // MARK: - Session Lifecycle
+
+  @objc
+  func startSession(_ resolve: @escaping RCTPromiseResolveBlock,
+                   rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard ARWorldTrackingConfiguration.isSupported else {
+      reject("ARKIT_UNSUPPORTED", "ARKit is not supported on this device", nil)
+      return
     }
 
-    struct CameraPose {
-        var x: Double
-        var y: Double
-        var z: Double
-        var qx: Double
-        var qy: Double
-        var qz: Double
-        var qw: Double
+    let config = ARWorldTrackingConfiguration()
+    config.planeDetection = [.horizontal, .vertical]
+    config.environmentTexturing = .automatic
+
+    // Enable depth if available (LiDAR / depth camera)
+    if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
+      config.frameSemantics.insert(.sceneDepth)
     }
 
-    // ── Constants ─────────────────────────────────────────────────────────────
-
-    private let gridSizeMeters: Double = 0.05  // 5cm grid snapping
-    private let supportsLiDAR: Bool = ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
-
-    // ── State ────────────────────────────────────────────────────────────────
-
-    private var session: ARSession?
-    private var configuration: ARWorldTrackingConfiguration?
-    private var currentFrame: ARFrame?
-    private var detectedPlanes: [UUID: ARPlaneAnchor] = [:]
-    private var hasListeners = false
-
-    // ── RCTEventEmitter ──────────────────────────────────────────────────────
-
-    override static func moduleName() -> String! {
-        return "ARKitModule"
+    // Enable mesh reconstruction if device supports it
+    if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
+      config.sceneReconstruction = .mesh
     }
 
-    override static func requiresMainQueueSetup() -> Bool {
-        return true
+    session = ARSession()
+    session?.delegate = self
+    session?.run(config)
+
+    let depthEnabled = ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth)
+    let lidarEnabled = ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
+
+    resolve([
+      "success": true,
+      "depthEnabled": depthEnabled,
+      "lidarEnabled": lidarEnabled
+    ])
+  }
+
+  @objc
+  func stopSession(_ resolve: @escaping RCTPromiseResolveBlock,
+                  rejecter reject: @escaping RCTPromiseRejectBlock) {
+    session?.pause()
+    resolve(true)
+  }
+
+  // MARK: - Frame Update (called from JS on a ~100ms interval)
+
+  @objc
+  func updateFrame(_ resolve: @escaping RCTPromiseResolveBlock,
+                  rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard let frame = session?.currentFrame else {
+      resolve(false)
+      return
     }
 
-    override func supportedEvents() -> [String]! {
-        return ["ARKitPlanesDetected", "ARKitSessionInterrupted", "ARKitSessionResumed"]
+    latestFrame = frame
+
+    let planes = frame.anchors.compactMap { $0 as? ARPlaneAnchor }
+    if !planes.isEmpty && hasListeners {
+      sendEvent(withName: "ARKitPlanesDetected", body: ["count": planes.count])
     }
 
-    override func startObserving() {
-        hasListeners = true
+    resolve(true)
+  }
+
+  // MARK: - Hit Test
+
+  @objc
+  func hitTest(_ x: NSNumber, y: NSNumber,
+              resolver resolve: @escaping RCTPromiseResolveBlock,
+              rejecter reject: @escaping RCTPromiseRejectBlock) {
+
+    guard let frame = latestFrame ?? session?.currentFrame else {
+      resolve(NSNull())
+      return
     }
 
-    override func stopObserving() {
-        hasListeners = false
+    let screenPoint = CGPoint(x: x.doubleValue, y: y.doubleValue)
+
+    // 1. Try raycast (iOS 11.3+, preferred) — works with detected planes
+    if let query = frame.raycastQuery(from: screenPoint, allowing: .estimatedPlane, alignment: .any),
+       let result = session?.raycast(query).first {
+      let transform = result.worldTransform
+      let pos = simd_float4(
+        snapToGrid(transform.columns.3.x),
+        snapToGrid(transform.columns.3.y),
+        snapToGrid(transform.columns.3.z),
+        1
+      )
+      resolve(["x": Double(pos.x), "y": Double(pos.y), "z": Double(pos.z)])
+      return
     }
 
-    // ── Support Check ─────────────────────────────────────────────────────────
+    // 2. Fallback: ARFrame hitTest (feature points)
+    let hitResults = frame.hitTest(screenPoint, types: [.featurePoint, .estimatedHorizontalPlane, .estimatedVerticalPlane])
 
-    @objc
-    func checkSupport(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DispatchQueue.main.async {
-            let hasARKit = ARWorldTrackingConfiguration.isSupported
-            let hasLiDAR = ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
-            let hasDepth  = ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth)
-
-            let result: [String: Any] = [
-                "hasARCore": hasARKit,          // rename: means "ARKit available" on iOS
-                "hasDepthAPI": hasDepth || hasLiDAR,
-                "hasLiDAR": hasLiDAR,
-                "availability": hasARKit ? "supported" : "unsupported",
-                "deviceModel": UIDevice.current.model
-            ]
-            resolve(result)
-        }
+    if let hit = hitResults.first {
+      let transform = hit.worldTransform
+      let pos = simd_float4(
+        snapToGrid(transform.columns.3.x),
+        snapToGrid(transform.columns.3.y),
+        snapToGrid(transform.columns.3.z),
+        1
+      )
+      resolve(["x": Double(pos.x), "y": Double(pos.y), "z": Double(pos.z)])
+      return
     }
 
-    @objc
-    func requestCameraPermission(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        AVCaptureDevice.requestAccess(for: .video) { granted in
-            resolve(["granted": granted])
-        }
+    resolve(NSNull())
+  }
+
+  // MARK: - Detected Planes
+
+  @objc
+  func getDetectedPlanes(_ resolve: @escaping RCTPromiseResolveBlock,
+                        rejecter reject: @escaping RCTPromiseRejectBlock) {
+
+    guard let frame = latestFrame ?? session?.currentFrame else {
+      resolve([])
+      return
     }
 
-    // ── Session Lifecycle ──────────────────────────────────────────────────────
+    let planeAnchors = frame.anchors.compactMap { $0 as? ARPlaneAnchor }
+    var result: [[String: Any]] = []
 
-    @objc
-    func startSession(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
+    for anchor in planeAnchors {
+      guard anchor.isTracked else { continue }
 
-            guard ARWorldTrackingConfiguration.isSupported else {
-                reject("ARKIT_UNSUPPORTED", "ARKit is not supported on this device", nil)
-                return
-            }
+      let planeType: String
+      switch anchor.alignment {
+      case .horizontal:
+        // Y > 0.5m → ceiling, Y < 0.5m → floor (ARKit has no semantic classification)
+        planeType = anchor.transform.columns.3.y > 0.5 ? "ceiling" : "floor"
+      case .vertical:
+        planeType = "wall"
+      @unknown default:
+        planeType = "unknown"
+      }
 
-            let config = ARWorldTrackingConfiguration()
-            config.planeDetection = [.horizontal, .vertical]
-            config.environmentTexturing = .automatic
-            config.isLightEstimationEnabled = true
-
-            // Enable LiDAR mesh if available
-            if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
-                config.sceneReconstruction = .mesh
-            }
-
-            // Enable depth if available
-            if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
-                config.frameSemantics.insert(.sceneDepth)
-            }
-
-            self.configuration = config
-            self.session = ARSession()
-            self.session?.delegate = self
-            self.session?.run(config, options: [.resetTracking, .removeExistingAnchors])
-
-            // Deliver initial frame synchronously
-            if let frame = self.session?.currentFrame {
-                self.currentFrame = frame
-            }
-
-            resolve([
-                "success": true,
-                "depthEnabled": config.frameSemantics.contains(.sceneDepth) || (ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)),
-                "lidarEnabled": ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
-            ])
-        }
+      result.append([
+        "id": anchor.identifier.uuidString,
+        "type": planeType,
+        "centerX": Double(snapToGrid(anchor.center.x)),
+        "centerY": Double(snapToGrid(anchor.center.y)),
+        "centerZ": Double(snapToGrid(anchor.transform.columns.3.z)),
+        "extentX": Double(snapToGrid(anchor.planeExtent.width)),
+        "extentZ": Double(snapToGrid(anchor.planeExtent.height)),
+        "confidence": 1.0
+      ])
     }
 
-    @objc
-    func stopSession(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DispatchQueue.main.async { [weak self] in
-            self?.session?.pause()
-            self?.detectedPlanes.removeAll()
-            self?.currentFrame = nil
-            resolve(true)
-        }
+    resolve(result)
+  }
+
+  // MARK: - Distance Between Two Points
+
+  @objc
+  func distanceBetween(_ p1: NSDictionary, p2: NSDictionary,
+                      resolver resolve: @escaping RCTPromiseResolveBlock,
+                      rejecter reject: @escaping RCTPromiseRejectBlock) {
+
+    guard let x1 = p1["x"] as? NSNumber,
+          let y1 = p1["y"] as? NSNumber,
+          let z1 = p1["z"] as? NSNumber,
+          let x2 = p2["x"] as? NSNumber,
+          let y2 = p2["y"] as? NSNumber,
+          let z2 = p2["z"] as? NSNumber else {
+      reject("INVALID_PARAMS", "Points must have x, y, z fields", nil)
+      return
     }
 
-    @objc
-    func updateFrame(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self, let session = self.session else {
-                reject("NO_SESSION", "No active ARKit session", nil)
-                return
-            }
+    let dx = x2.floatValue - x1.floatValue
+    let dy = y2.floatValue - y1.floatValue
+    let dz = z2.floatValue - z1.floatValue
+    let distance = sqrt(dx*dx + dy*dy + dz*dz)
 
-            self.currentFrame = session.currentFrame
+    resolve(Double(snapToGrid(distance)))
+  }
 
-            // Collect updated planes
-            let updatedPlanes = session.currentFrame?.anchors.compactMap { $0 as? ARPlaneAnchor }
+  // MARK: - Camera Pose
 
-            // Emit plane detection event if planes changed
-            if self.hasListeners, let planes = updatedPlanes, !planes.isEmpty {
-                let planeArray = planes.map { self.planeToDict($0) }
-                self.sendEvent(withName: "ARKitPlanesDetected", body: [
-                    "count": planes.count,
-                    "planes": planeArray
-                ])
-            }
+  @objc
+  func getCameraPose(_ resolve: @escaping RCTPromiseResolveBlock,
+                    rejecter reject: @escaping RCTPromiseRejectBlock) {
 
-            resolve(true)
-        }
+    guard let frame = latestFrame ?? session?.currentFrame else {
+      reject("NO_FRAME", "No ARFrame available", nil)
+      return
     }
 
-    // ── Hit Testing ──────────────────────────────────────────────────────────
+    let camera = frame.camera
+    let transform = camera.transform
 
-    /// Performs a hit test at screen coordinates, intersecting with detected planes.
-    /// x, y are in screen pixels (from bottom-left origin to match ARKit convention).
-    @objc
-    func hitTest(_ x: NSNumber, y: NSNumber, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self, let frame = self.session?.currentFrame else {
-                resolve(nil)
-                return
-            }
+    let tx = transform.columns.3.x
+    let ty = transform.columns.3.y
+    let tz = transform.columns.3.z
 
-            // Convert screen point to normalized coordinates (-0.5 to 0.5)
-            // Using center of screen as reference for now; actual implementation
-            // would use the camera view's bounds
-            let screenPoint = CGPoint(x: x.doubleValue, y: y.doubleValue)
+    // Extract quaternion from rotation matrix (simd native conversion)
+    let quat = simd_quatf(transform)
 
-            // ARKit ray cast — most reliable method on LiDAR devices
-            if let query = frame.raycastQuery(from: screenPoint, allowing: .estimatedPlane, alignment: .any) {
-                let results = self.session?.raycast(query) ?? []
-                if let closest = results.first {
-                    let p = closest.worldTransform
-                    let pos = simd_make_float3(p.columns.3)
-                    resolve(self.makeVectorDict(
-                        x: self.snapToGrid(Double(pos.x)),
-                        y: self.snapToGrid(Double(pos.y)),
-                        z: self.snapToGrid(Double(pos.z))
-                    ))
-                    return
-                }
-            }
+    resolve([
+      "x": Double(snapToGrid(tx)),
+      "y": Double(snapToGrid(ty)),
+      "z": Double(snapToGrid(tz)),
+      "qx": Double(quat.imag.x),
+      "qy": Double(quat.imag.y),
+      "qz": Double(quat.imag.z),
+      "qw": Double(quat.real)
+    ])
+  }
 
-            // Fallback: feature point hit test (slower, less accurate)
-            let results = frame.hitTest(screenPoint, types: [.featurePoint, .estimatedHorizontalPlane, .estimatedVerticalPlane])
-            if let hit = results.first {
-                let p = hit.worldTransform
-                let pos = simd_make_float3(p.columns.3)
-                resolve(self.makeVectorDict(
-                    x: self.snapToGrid(Double(pos.x)),
-                    y: self.snapToGrid(Double(pos.y)),
-                    z: self.snapToGrid(Double(pos.z))
-                ))
-                return
-            }
+  // MARK: - Mesh Extraction (LiDAR)
 
-            resolve(nil)
-        }
+  @objc
+  func getMeshVertices(_ resolve: @escaping RCTPromiseResolveBlock,
+                      rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard let frame = latestFrame ?? session?.currentFrame else {
+      resolve([])
+      return
     }
 
-    // ── Plane Detection ──────────────────────────────────────────────────────
+    let meshAnchors = frame.anchors.compactMap { $0 as? ARMeshAnchor }
+    var vertices: [[String: Any]] = []
 
-    @objc
-    func getDetectedPlanes(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self, let frame = self.session?.currentFrame else {
-                resolve([])
-                return
-            }
+    for anchor in meshAnchors {
+      guard anchor.isTracked else { continue }
+      let geometry = anchor.geometry
+      let transform = anchor.transform
+      let verticesBuffer = geometry.vertices
 
-            let planeAnchors = frame.anchors.compactMap { $0 as? ARPlaneAnchor }
-            let result = planeAnchors.map { self.planeToDict($0) }
-            resolve(result)
-        }
+      for i in 0..<verticesBuffer.count {
+        let vertex = verticesBuffer[i]
+        let simdVertex = simd_float3(vertex.position)
+        let transformed = simd_mul(transform, simd_float4(simdVertex, 1))
+        vertices.append([
+          "x": Double(snapToGrid(transformed.x)),
+          "y": Double(snapToGrid(transformed.y)),
+          "z": Double(snapToGrid(transformed.z))
+        ])
+      }
     }
 
-    // ── Distance Calculation ─────────────────────────────────────────────────
+    resolve(vertices)
+  }
 
-    @objc
-    func distanceBetween(_ p1: NSDictionary, p2: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        guard let x1 = p1["x"] as? Double,
-              let y1 = p1["y"] as? Double,
-              let z1 = p1["z"] as? Double,
-              let x2 = p2["x"] as? Double,
-              let y2 = p2["y"] as? Double,
-              let z2 = p2["z"] as? Double else {
-            reject("INVALID_PARAMS", "Points must have x, y, z coordinates", nil)
-            return
-        }
-
-        let distance = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) + pow(z2 - z1, 2))
-        resolve(snapToGrid(distance))
+  @objc
+  func getMeshFaces(_ resolve: @escaping RCTPromiseResolveBlock,
+                    rejecter reject: @escaping RCTPromiseRejectBlock) {
+    guard let frame = latestFrame ?? session?.currentFrame else {
+      resolve([])
+      return
     }
 
-    // ── Camera Pose ──────────────────────────────────────────────────────────
+    let meshAnchors = frame.anchors.compactMap { $0 as? ARMeshAnchor }
+    var faces: [[Int]] = []
 
-    @objc
-    func getCameraPose(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self, let frame = self.session?.currentFrame else {
-                reject("NO_FRAME", "No ARKit frame available", nil)
-                return
-            }
+    for anchor in meshAnchors {
+      guard anchor.isTracked else { continue }
+      let geometry = anchor.geometry
+      let facesBuffer = geometry.faces
 
-            let camera = frame.camera
-            let transform = camera.transform
-
-            // Extract position from 4th column
-            let tx = transform.columns.3.x
-            let ty = transform.columns.3.y
-            let tz = transform.columns.3.z
-
-            // Extract rotation quaternion from camera matrix
-            let q = camera.orientation(using: .current)
-
-            resolve([
-                "x":  self.snapToGrid(Double(tx)),
-                "y":  self.snapToGrid(Double(ty)),
-                "z":  self.snapToGrid(Double(tz)),
-                "qx": Double(q.x),
-                "qy": Double(q.y),
-                "qz": Double(q.z),
-                "qw": Double(q.w)
-            ])
-        }
+      for i in 0..<facesBuffer.count {
+        let face = facesBuffer[i]
+        faces.append([Int(face[0]), Int(face[1]), Int(face[2])])
+      }
     }
 
-    // ── LiDAR Mesh ───────────────────────────────────────────────────────────
+    resolve(faces)
+  }
 
-    @objc
-    func getMeshVertices(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self, let frame = self.session?.currentFrame else {
-                resolve([])
-                return
-            }
+  // MARK: - Grid Snapping
 
-            guard ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) else {
-                resolve([])
-                return
-            }
+  private func snapToGrid(_ value: Float) -> Float {
+    return (value / gridSizeMeters).rounded() * gridSizeMeters
+  }
 
-            var vertices: [[String: Double]] = []
+  private func snapToGrid(_ value: Double) -> Double {
+    return (value / Double(gridSizeMeters)).rounded() * Double(gridSizeMeters)
+  }
 
-            frame.anchors.forEach { anchor in
-                guard let meshAnchor = anchor as? ARMeshAnchor else { return }
-                let geometry = meshAnchor.geometry
-                let verticesBuffer = geometry.vertices
-                let transform = meshAnchor.transform
+  // MARK: - Cleanup
 
-                let vertexCount = verticesBuffer.count
-                for i in 0..<vertexCount {
-                    let vertex = verticesBuffer[i]
-                    let transformed = simd_float3(
-                        simd_mul(transform, simd_float4(vertex.position, 1))
-                    )
-                    vertices.append([
-                        "x": self.snapToGrid(Double(transformed.x)),
-                        "y": self.snapToGrid(Double(transformed.y)),
-                        "z": self.snapToGrid(Double(transformed.z))
-                    ])
-                }
-            }
-
-            resolve(vertices)
-        }
-    }
-
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
-    private func snapToGrid(_ value: Double) -> Double {
-        return (value / gridSizeMeters).rounded() * gridSizeMeters
-    }
-
-    private func makeVectorDict(x: Double, y: Double, z: Double) -> [String: Double] {
-        return ["x": x, "y": y, "z": z]
-    }
-
-    private func planeToDict(_ plane: ARPlaneAnchor) -> [String: Any] {
-        let typeString: String
-        switch plane.alignment {
-        case .horizontal:
-            // Y > 0 → floor, Y < 0 → ceiling
-            typeString = plane.transform.columns.3.y > 0 ? "floor" : "ceiling"
-        case .vertical:
-            typeString = "wall"
-        @unknown default:
-            typeString = "unknown"
-        }
-
-        return [
-            "id": plane.identifier.uuidString,
-            "type": typeString,
-            "centerX": snapToGrid(Double(plane.center.x)),
-            "centerY": snapToGrid(Double(plane.center.y)),
-            "centerZ": snapToGrid(Double(plane.center.z)),
-            "extentX": snapToGrid(Double(plane.extent.x)),
-            "extentZ": snapToGrid(Double(plane.extent.z)),
-            "confidence": Double(plane.alignment == .horizontal ? 1.0 : 0.8)
-        ]
-    }
+  override func invalidate() {
+    session?.pause()
+    session = nil
+    latestFrame = nil
+    super.invalidate()
+  }
 }
 
-// ── ARSessionDelegate ────────────────────────────────────────────────────────
+// MARK: - ARSessionDelegate
 
 extension ARKitModule: ARSessionDelegate {
 
-    func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
-        anchors.compactMap { $0 as? ARPlaneAnchor }.forEach { plane in
-            detectedPlanes[plane.identifier] = plane
-        }
+  func session(_ session: ARSession, didFailWithError error: Error) {
+    RCTLogError("[ARKitModule] ARSession failed: \(error.localizedDescription)")
+    if hasListeners {
+      sendEvent(withName: "ARKitSessionInterrupted", body: ["reason": error.localizedDescription])
+    }
+  }
+
+  func sessionWasInterrupted(_ session: ARSession) {
+    sessionWasRunning = true
+    if hasListeners {
+      sendEvent(withName: "ARKitSessionInterrupted", body: [:])
+    }
+  }
+
+  func sessionInterruptionEnded(_ session: ARSession) {
+    if hasListeners {
+      sendEvent(withName: "ARKitSessionResumed", body: [:])
+    }
+  }
+
+  func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
+    let planeAnchors = anchors.compactMap { $0 as? ARPlaneAnchor }
+    if !planeAnchors.isEmpty && hasListeners {
+      sendEvent(withName: "ARKitPlanesDetected", body: ["count": planeAnchors.count])
     }
 
-    func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
-        anchors.compactMap { $0 as? ARPlaneAnchor }.forEach { plane in
-            detectedPlanes[plane.identifier] = plane
-        }
+    // NEW: Scene mesh update (LiDAR devices)
+    let meshAnchors = anchors.compactMap { $0 as? ARMeshAnchor }
+    if !meshAnchors.isEmpty && hasListeners {
+      let vertices = meshAnchors.flatMap { $0.geometry.vertices }
+      let faces = meshAnchors.flatMap { $0.geometry.faces }
+      let firstMesh = meshAnchors.first
+      sendEvent(withName: "ARKitMeshUpdated", body: [
+        "vertexCount": vertices.count,
+        "faceCount": faces.count,
+        "boundingBox": [
+          firstMesh?.boundingVolume.min.x ?? 0,
+          firstMesh?.boundingVolume.min.y ?? 0,
+          firstMesh?.boundingVolume.min.z ?? 0,
+          firstMesh?.boundingVolume.max.x ?? 0,
+          firstMesh?.boundingVolume.max.y ?? 0,
+          firstMesh?.boundingVolume.max.z ?? 0
+        ]
+      ])
     }
+  }
 
-    func session(_ session: ARSession, didRemove anchors: [ARAnchor]) {
-        anchors.forEach { detectedPlanes.removeValue(forKey: $0.identifier) }
-    }
-
-    func sessionWasInterrupted(_ session: ARSession) {
-        if hasListeners {
-            sendEvent(withName: "ARKitSessionInterrupted", body: ["reason": "system"])
-        }
-    }
-
-    func sessionInterruptionEnded(_ session: ARSession) {
-        if hasListeners {
-            sendEvent(withName: "ARKitSessionResumed", body: [:])
-        }
-        // Restart tracking
-        if let config = configuration {
-            session.run(config, options: [.resetTracking])
-        }
-    }
+  func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
+    // Could emit incremental updates here if needed
+  }
 }
