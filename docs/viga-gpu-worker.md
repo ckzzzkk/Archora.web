@@ -89,3 +89,33 @@ blender --background --python-expr "import bpy; bpy.ops.export_scene.gltf(filepa
 ```
 
 Upload the resulting GLTF to Supabase Storage (`viga-outputs` bucket) before calling the webhook.
+
+## Deployment Options
+
+### Option 1 — Modal (recommended for GPU)
+
+```bash
+modal deploy viga-worker/viga_worker/main.py
+```
+
+### Option 2 — Docker (bare metal / RunPod)
+
+```bash
+docker build -t asoria-viga-worker ./viga-worker
+docker run --gpus all -p 8000:8000 --env-file viga-worker/.env asoria-viga-worker
+```
+
+### Option 3 — Bare metal (conda environments)
+
+See `viga-worker/README.md` for full setup instructions.
+
+## Environment Variables (GPU Worker)
+
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | Asoria Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `VIGA_WORKER_URL` | Public URL of this worker |
+| `OPENAI_API_KEY` | For VIGA agent LLM calls |
+| `MESHY_API_KEY` | For optional Meshy post-processing |
+| `BLENDER_PATH` | Path to Blender binary (default: `blender`) |
