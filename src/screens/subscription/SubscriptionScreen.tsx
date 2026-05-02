@@ -28,7 +28,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Subscription'>;
 type BillingInterval = 'monthly' | 'annual';
 
 const PRICES: Record<Exclude<SubscriptionTier, 'starter'>, { monthly: number; annual: number; annualTotal: number }> = {
-  creator:   { monthly: 14.99, annual: 11.99, annualTotal: 143.90  },
+  creator:   { monthly: 14.99, annual: 14.99, annualTotal: 179.90  },
   pro:       { monthly: 24.99, annual: 19.99, annualTotal: 239.90  },
   architect: { monthly: 39.99, annual: 31.99, annualTotal: 383.90  },
 };
@@ -38,6 +38,7 @@ const FEATURES = [
   { label: 'Rooms / project',        starter: String(TIER_LIMITS.starter.maxRoomsPerProject),                       creator: String(TIER_LIMITS.creator.maxRoomsPerProject),                       pro: String(TIER_LIMITS.pro.maxRoomsPerProject),              architect: '∞'          },
   { label: 'Furniture / room',       starter: String(TIER_LIMITS.starter.maxFurniturePerRoom),                      creator: String(TIER_LIMITS.creator.maxFurniturePerRoom),                      pro: String(TIER_LIMITS.pro.maxFurniturePerRoom),             architect: '∞'          },
   { label: 'AI generations / mo',    starter: String(TIER_LIMITS.starter.aiGenerationsPerMonth),                    creator: String(TIER_LIMITS.creator.aiGenerationsPerMonth),                    pro: String(TIER_LIMITS.pro.aiGenerationsPerMonth),           architect: '∞'          },
+  { label: 'AI edits / mo',          starter: String(TIER_LIMITS.starter.aiEditsPerMonth),                            creator: String(TIER_LIMITS.creator.aiEditsPerMonth),                            pro: String(TIER_LIMITS.pro.aiEditsPerMonth),               architect: '∞'          },
   { label: 'Daily edit time',        starter: '45 min',                                                              creator: '∞',                                                                   pro: '∞',                                                    architect: '∞'          },
   { label: 'Undo steps',             starter: String(TIER_LIMITS.starter.maxUndoSteps),                             creator: String(TIER_LIMITS.creator.maxUndoSteps),                             pro: String(TIER_LIMITS.pro.maxUndoSteps),                    architect: '∞'          },
   { label: 'Auto-save',              starter: '–',                                                                   creator: '✓',                                                                   pro: '✓',                                                    architect: '✓'          },
@@ -62,9 +63,9 @@ const TIER_LABEL: Record<Exclude<SubscriptionTier, 'starter'>, string> = {
 };
 
 const TIER_PERKS: Record<Exclude<SubscriptionTier, 'starter'>, string[]> = {
-  creator:   [`${TIER_LIMITS.creator.maxProjects} projects`, `${TIER_LIMITS.creator.aiGenerationsPerMonth} AI designs/mo`, `${TIER_LIMITS.creator.arSessionsPerMonth} AR sessions`, 'Auto-save', '12 design styles'],
-  pro:       ['50 projects', '500 AI designs/mo', 'Unlimited AR', 'Custom textures', 'AI image reference'],
-  architect: ['Unlimited everything', 'Custom AI furniture', 'CAD export', '70% template revenue', 'VIP support'],
+  creator:   ['25 projects · 15 rooms', '40 AI generations/mo', '30 AI edits/mo', '15 AR scans/mo', 'Auto-save', '12 design styles'],
+  pro:       ['50 projects · 20 rooms', '100 AI generations/mo', '80 AI edits/mo', 'Unlimited AR (all modes)', 'Voice input (ARIA)', 'Custom textures', 'VIGA 3D (10/mo)'],
+  architect: ['100 projects · 50 rooms', '300 AI generations/mo', '300 AI edits/mo', '100 AR scans/mo', 'VIGA 3D (50/mo)', 'Meshy AI furniture', 'CAD export', '5 team members'],
 };
 
 function StarterCard({ isCurrent }: { isCurrent: boolean }) {
@@ -86,11 +87,17 @@ function StarterCard({ isCurrent }: { isCurrent: boolean }) {
       )}
       <View style={{ padding: DS.spacing.lg }}>
         <ArchText variant="heading" style={{ fontSize: 22, marginBottom: DS.spacing.xs }}>Starter</ArchText>
-        <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: DS.fontSize.xxxl, color: DS.colors.primary, marginBottom: DS.spacing.md }}>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 13, color: DS.colors.primaryGhost, marginBottom: DS.spacing.md }}>
+          Start designing your space
+        </ArchText>
+        <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: DS.fontSize.xxxl, color: DS.colors.primary, marginBottom: DS.spacing.xs }}>
           Free
         </ArchText>
+        <ArchText variant="body" style={{ fontFamily: DS.font.regular, fontSize: 12, color: DS.colors.primaryDim, marginBottom: DS.spacing.md }}>
+          No credit card required
+        </ArchText>
         <View style={{ gap: DS.spacing.xs, marginBottom: DS.spacing.md }}>
-          {['3 projects', '10 AI designs/mo', '3 design styles'].map((perk) => (
+          {['1 project · 2 rooms · 1 floor', '5 furniture per room', '3 design styles'].map((perk) => (
             <View key={perk} style={{ flexDirection: 'row', alignItems: 'center' }}>
               <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryGhost, marginRight: 8 }}>✓</ArchText>
               <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryDim }}>{perk}</ArchText>
@@ -99,7 +106,7 @@ function StarterCard({ isCurrent }: { isCurrent: boolean }) {
         </View>
         <View style={{ backgroundColor: DS.colors.border, borderRadius: 50, paddingVertical: 14, alignItems: 'center' }}>
           <ArchText variant="body" style={{ fontFamily: DS.font.medium, fontSize: 14, color: DS.colors.primaryGhost }}>
-            {isCurrent ? 'Current Plan' : "You're on Free"}
+            {isCurrent ? 'Current Plan' : 'Get Started Free'}
           </ArchText>
         </View>
       </View>
@@ -135,7 +142,7 @@ function TierCard({
       {isHighlighted && (
         <View style={{ backgroundColor: accent, paddingVertical: 6, alignItems: 'center' }}>
           <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: 11, color: DS.colors.background, letterSpacing: 1.5 }}>
-            {tier === 'creator' ? 'MOST POPULAR' : 'PROFESSIONAL'}
+            {tier === 'pro' ? 'MOST POPULAR' : tier === 'architect' ? 'BEST VALUE' : 'PROFESSIONAL'}
           </ArchText>
         </View>
       )}
@@ -189,7 +196,7 @@ function TierCard({
               fontSize: 15,
               color: isCurrent ? DS.colors.primaryGhost : DS.colors.background,
             }} numberOfLines={1}>
-              {isCurrent ? 'Current Plan' : `Upgrade to ${label}`}
+              {isCurrent ? 'Current Plan' : tier === 'creator' ? 'Start Creating' : tier === 'pro' ? 'Go Pro' : 'Go Architect'}
             </ArchText>
           </View>
         </Pressable>
@@ -340,8 +347,8 @@ export function SubscriptionScreen({ navigation }: Props) {
 
         {/* Tier cards */}
         <StarterCard isCurrent={tier === 'starter'} />
-        <TierCard tier="creator"   billing={billing} isCurrent={tier === 'creator'}   isHighlighted onUpgrade={handleUpgrade}   disabled={isLoading} />
-        <TierCard tier="pro"       billing={billing} isCurrent={tier === 'pro'}       isHighlighted={false} onUpgrade={handleUpgrade} disabled={isLoading} />
+        <TierCard tier="creator"   billing={billing} isCurrent={tier === 'creator'}   isHighlighted={false} onUpgrade={handleUpgrade}   disabled={isLoading} />
+        <TierCard tier="pro"       billing={billing} isCurrent={tier === 'pro'}       isHighlighted         onUpgrade={handleUpgrade} disabled={isLoading} />
         <TierCard tier="architect" billing={billing} isCurrent={tier === 'architect'} isHighlighted={false} onUpgrade={handleUpgrade} disabled={isLoading} />
 
         {/* Manage subscription for paying users */}
