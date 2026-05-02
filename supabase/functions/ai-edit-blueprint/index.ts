@@ -4,8 +4,10 @@ import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { checkQuota } from '../_shared/quota.ts';
 import { getArchitectById, buildArchitectPromptSection } from '../_shared/architects.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
+import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const RequestSchema = z.object({
@@ -226,17 +228,17 @@ ${SUGGEST_SYSTEM_PROMPT}`;
 
     // Handle suggest mode
     if (mode === 'suggest') {
-      const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-      if (!ANTHROPIC_KEY) {
-        console.warn('[ai-edit-blueprint] ANTHROPIC_API_KEY not configured');
-        return new Response(
-          JSON.stringify({
-            error: 'AI not configured',
-            code: 'UPSTREAM_ERROR',
-            message: 'The AI service is not yet configured on this server. Please contact support.',
-          }),
-          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        );
+      const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+      const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+      const tier = (tierData as string) ?? 'starter';
+      const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
+      const selectedModel = modelConfig.edits;
+
+      if (!selectedModel) {
+        return new Response(JSON.stringify({
+          error: 'AI_NOT_AVAILABLE',
+          message: 'Upgrade to Creator tier for AI editing',
+        }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       const controller = new AbortController();
@@ -245,41 +247,30 @@ ${SUGGEST_SYSTEM_PROMPT}`;
       let suggestions: unknown[] = [];
 
       try {
-        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        const reqConfig = buildAIRequest(
+          selectedModel,
+          effectiveSuggestPrompt,
+          [{ role: 'user', content: `Analyze this blueprint and provide suggestions:\n${JSON.stringify(blueprint)}` }],
+          4096,
+        );
+
+        const claudeResponse = await fetch(reqConfig.url, {
           method: 'POST',
           signal: controller.signal,
-          headers: {
-            'x-api-key': ANTHROPIC_KEY,
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 4096,
-            system: effectiveSuggestPrompt,
-            messages: [
-              {
-                role: 'user',
-                content: `Analyze this blueprint and provide suggestions:\n${JSON.stringify(blueprint)}`,
-              },
-            ],
-          }),
+          headers: reqConfig.headers,
+          body: JSON.stringify(reqConfig.body),
         });
 
         clearTimeout(timeoutId);
 
         if (claudeResponse.ok) {
-          const claudeData = await claudeResponse.json() as {
-            content: Array<{ type: string; text: string }>;
-          };
-          const textBlock = claudeData.content.find((b) => b.type === 'text');
-          if (textBlock) {
-            const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-              const parsed_2 = JSON.parse(jsonMatch[0]) as { suggestions?: unknown[] };
-              if (Array.isArray(parsed_2.suggestions)) {
-                suggestions = parsed_2.suggestions;
-              }
+          const responseData = await claudeResponse.json();
+          const { content: rawText } = parseAIResponse(reqConfig.provider, responseData);
+          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed_2 = JSON.parse(jsonMatch[0]) as { suggestions?: unknown[] };
+            if (Array.isArray(parsed_2.suggestions)) {
+              suggestions = parsed_2.suggestions;
             }
           }
         }
@@ -302,17 +293,17 @@ ${SUGGEST_SYSTEM_PROMPT}`;
     }
 
     // Default: edit mode (existing logic)
-    const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!ANTHROPIC_KEY) {
-      console.warn('[ai-edit-blueprint] ANTHROPIC_API_KEY not configured');
-      return new Response(
-        JSON.stringify({
-          error: 'AI not configured',
-          code: 'UPSTREAM_ERROR',
-          message: 'The AI service is not yet configured on this server. Please contact support.',
-        }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+    const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    const tier = (tierData as string) ?? 'starter';
+    const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
+    const selectedModel = modelConfig.edits;
+
+    if (!selectedModel) {
+      return new Response(JSON.stringify({
+        error: 'AI_NOT_AVAILABLE',
+        message: 'Upgrade to Creator tier for AI editing',
+      }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const controller = new AbortController();
@@ -321,27 +312,18 @@ ${SUGGEST_SYSTEM_PROMPT}`;
     let result: { message: string; blueprint?: Record<string, unknown> };
 
     try {
-      const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      const reqConfig = buildAIRequest(
+        selectedModel,
+        effectiveSystemPrompt,
+        [{ role: 'user', content: `Instruction: ${prompt}\n\nCurrent blueprint JSON:\n${JSON.stringify(blueprint)}` }],
+        8192,
+      );
+
+      const claudeResponse = await fetch(reqConfig.url, {
         method: 'POST',
         signal: controller.signal,
-        headers: {
-          'x-api-key': ANTHROPIC_KEY,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 8192,
-          system: effectiveSystemPrompt,
-          messages: [
-            {
-              role: 'user',
-              content:
-                `Instruction: ${prompt}\n\n` +
-                `Current blueprint JSON:\n${JSON.stringify(blueprint)}`,
-            },
-          ],
-        }),
+        headers: reqConfig.headers,
+        body: JSON.stringify(reqConfig.body),
       });
 
       clearTimeout(timeoutId);
@@ -353,12 +335,10 @@ ${SUGGEST_SYSTEM_PROMPT}`;
           blueprint: blueprint,
         };
       } else {
-        const claudeData = await claudeResponse.json() as {
-          content: Array<{ type: string; text: string }>;
-        };
-        const textBlock = claudeData.content.find((b) => b.type === 'text');
-        result = textBlock
-          ? safeParseBlueprint(textBlock.text, blueprint)
+        const responseData = await claudeResponse.json();
+        const { content: rawText } = parseAIResponse(reqConfig.provider, responseData);
+        result = rawText
+          ? safeParseBlueprint(rawText, blueprint)
           : { message: 'No response from AI. Please try again.', blueprint: blueprint };
       }
     } catch (fetchErr) {
@@ -383,7 +363,7 @@ ${SUGGEST_SYSTEM_PROMPT}`;
 
     // Fire-and-forget: increment ai_edits_used
     import('https://esm.sh/@supabase/supabase-js@2').then(({ createClient }) => {
-      const supabase2 = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      const supabase2 = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
       supabase2.from('users').update({ ai_edits_used: supabase2.sql`ai_edits_used + 1` }).eq('id', user.id).catch(() => {});
     });
 

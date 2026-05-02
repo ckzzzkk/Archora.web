@@ -1,12 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Anthropic from 'https://esm.sh/@anthropic-ai/sdk@0.27.3';
 import { z } from 'https://esm.sh/zod@3.23.8';
-import { getAuthUser } from '../_shared/auth.ts';
+import { getAuthUser, requireOwnership } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
+import { TIER_AI_MODELS } from '../_shared/aiLimits.ts';
 
 const RequestSchema = z.object({
   roomType: z.string().min(1),
@@ -25,7 +26,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const rateLimitOk = await checkRateLimit(`ai:${user.id}`, 10, 3600);
     if (!rateLimitOk) return Errors.rateLimited();
 
-    // Quota check
+    // Quota check — checkQuota() already increments ai_generations_used internally;
+    // do NOT call increment_quota here (would be double-increment)
     const quotaOk = await checkQuota(user.id, 'ai_generation');
     if (!quotaOk) return Errors.quotaExceeded();
 
@@ -34,6 +36,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!parsed.success) return Errors.validation('Invalid request', parsed.error.issues);
 
     const { roomType, roomId, style, count } = parsed.data;
+
+    // Verify user owns the room before returning furniture for it
+    const supabaseAdmin = createClient(
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+    );
+    await requireOwnership(supabaseAdmin, 'rooms', roomId, user.id);
+
+    // Tier-based model selection
+    const { data: tierData } = await supabaseAdmin.rpc('get_user_tier', { user_id: user.id });
+    const tier = (tierData as string) ?? 'starter';
+    const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
+    const selectedModel = modelConfig.generation;
+    if (!selectedModel) {
+      return new Response(JSON.stringify({ furniture: [], source: 'procedural', error: 'AI_NOT_AVAILABLE', message: 'AI generation not available on your tier' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicKey) {
@@ -104,7 +122,7 @@ Each item must have:
 Return ONLY the JSON array. No markdown. No explanation.`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: selectedModel,
       max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -119,8 +137,8 @@ Return ONLY the JSON array. No markdown. No explanation.`;
 
     // Increment quota
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
     await supabase.rpc('increment_quota', { p_user_id: user.id, p_field: 'ai_generations_used', p_amount: 1 });
 

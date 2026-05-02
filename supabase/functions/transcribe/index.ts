@@ -41,9 +41,9 @@ serve(async (req) => {
       });
     }
 
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiKey) {
-      console.warn('[transcribe] OPENAI_API_KEY not configured');
+    const groqKey = Deno.env.get('GROQ_API_KEY');
+    if (!groqKey) {
+      console.warn('[transcribe] GROQ_API_KEY not configured');
       return new Response(JSON.stringify({
         error: 'AI not configured',
         code: 'UPSTREAM_ERROR',
@@ -53,7 +53,7 @@ serve(async (req) => {
 
     const whisperForm = new FormData();
     whisperForm.append('file', audioFile, 'audio.m4a');
-    whisperForm.append('model', 'whisper-1');
+    whisperForm.append('model', 'whisper-large-v3-turbo');
     whisperForm.append('language', 'en');
 
     const quotaOk = await checkQuota(user.id, 'ai_generation');
@@ -68,10 +68,10 @@ serve(async (req) => {
 
     let whisperResponse: Response;
     try {
-      whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      whisperResponse = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
         method: 'POST',
         signal: controller.signal,
-        headers: { Authorization: `Bearer ${openaiKey}` },
+        headers: { Authorization: `Bearer ${groqKey}` },
         body: whisperForm,
       });
     } catch (fetchErr) {

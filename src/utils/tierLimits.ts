@@ -25,7 +25,7 @@ export interface TierLimits {
   aiChatMessagesPerDay: number;  // -1 = unlimited
 
   // Editing
-  dailyEditTimeSeconds: number;  // -1 = unlimited (Starter: 2700 = 45min)
+  dailyEditTimeSeconds: number;  // -1 = unlimited (Starter: 900 = 15min)
   maxUndoSteps: number;          // -1 = unlimited
   autoSave: boolean;
   autoSaveIntervalSeconds: number; // 0 if autoSave false
@@ -74,29 +74,37 @@ export interface TierLimits {
   creatorRevenueSplit: number;  // percentage 0-100 (legacy of templateRevenueShare × 100)
   prioritySupport: boolean;
   threeDSessionMinutes: number; // -1 = unlimited
+
+  // AI model routing
+  aiModelGeneration: string | null;   // null = not available for this tier
+  aiModelChat: string | null;
+  aiModelEdits: string | null;
+  aiChatFallbackModel: string | null;  // model to use when soft cap is hit
+  aiChatSoftCapPerDay: number;         // silent degradation threshold
 }
 
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
   starter: {
-    maxProjects: 3,
-    maxRoomsPerProject: 4,
-    maxFurniturePerRoom: 10,
+    // Heavy friction — manual mode only, no AI
+    maxProjects: 1,
+    maxRoomsPerProject: 2,
+    maxFurniturePerRoom: 5,
     maxFloors: 1,
-    savedProjects: 3,
-    maxRooms: 4,
+    savedProjects: 1,
+    maxRooms: 2,
 
-    aiGenerationsPerMonth: 10,
-    aiEditsPerMonth: 10,
+    aiGenerationsPerMonth: 0,      // NO AI generation — manual only
+    aiEditsPerMonth: 0,            // No AI editing
     arScansPerMonth: 0,
     arSessionsPerMonth: 0,
     vigaRequestsPerMonth: 0,
     photoImportsPerMonth: 0,
-    exportsPerMonth: 2,
-    rendersPerMonth: 2,
-    aiChatMessagesPerDay: 5,
+    exportsPerMonth: 1,            // Reduced exports
+    rendersPerMonth: 0,            // No AI renders
+    aiChatMessagesPerDay: 0,       // No AI chat
 
-    dailyEditTimeSeconds: 2700,
-    maxUndoSteps: 10,
+    dailyEditTimeSeconds: 900,    // 15 min/day only
+    maxUndoSteps: 5,
     autoSave: false,
     autoSaveIntervalSeconds: 0,
 
@@ -125,7 +133,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxPublishedTemplates: 0,
     templateRevenueShare: 0,
     availableStyles: ['minimalist', 'modern', 'rustic'],
-    templateAccess: 5,
+    templateAccess: 3,
 
     audioInput: false,
     blueprintUpload: false,
@@ -133,12 +141,19 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     firstPersonView: false,
     meshyFurniture: false,
     batchGeneration: false,
-    batchSize: 1,
+    batchSize: 0,
     buildingCodeCompliance: false,
     monetiseTemplates: false,
     creatorRevenueSplit: 0,
     prioritySupport: false,
-    threeDSessionMinutes: 5,
+    threeDSessionMinutes: 0,
+
+    // AI model routing
+    aiModelGeneration: null,
+    aiModelChat: null,
+    aiModelEdits: null,
+    aiChatFallbackModel: null,
+    aiChatSoftCapPerDay: 0,
   },
 
   creator: {
@@ -150,14 +165,14 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxRooms: 15,
 
     aiGenerationsPerMonth: 40,
-    aiEditsPerMonth: 40,
+    aiEditsPerMonth: 30,
     arScansPerMonth: 15,
     arSessionsPerMonth: 15,
     vigaRequestsPerMonth: 0,
-    photoImportsPerMonth: 20,
+    photoImportsPerMonth: 10,
     exportsPerMonth: 20,
-    rendersPerMonth: 10,
-    aiChatMessagesPerDay: 50,
+    rendersPerMonth: 5,
+    aiChatMessagesPerDay: 25,
 
     dailyEditTimeSeconds: -1,
     maxUndoSteps: 50,
@@ -191,18 +206,25 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     availableStyles: 'all',
     templateAccess: 'all',
 
-    audioInput: true,
+    audioInput: false,
     blueprintUpload: true,
-    uploadsPerMonth: 20,
+    uploadsPerMonth: 10,
     firstPersonView: true,
     meshyFurniture: false,
     batchGeneration: false,
-    batchSize: 1,
+    batchSize: 0,
     buildingCodeCompliance: false,
     monetiseTemplates: true,
     creatorRevenueSplit: 60,
     prioritySupport: false,
-    threeDSessionMinutes: -1,
+    threeDSessionMinutes: 30,
+
+    // AI model routing
+    aiModelGeneration: 'deepseek-chat',
+    aiModelChat: 'deepseek-chat',
+    aiModelEdits: 'deepseek-chat',
+    aiChatFallbackModel: null,
+    aiChatSoftCapPerDay: 25,
   },
 
   pro: {
@@ -214,7 +236,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     maxRooms: 20,
 
     aiGenerationsPerMonth: 100,
-    aiEditsPerMonth: 100,
+    aiEditsPerMonth: 80,
     arScansPerMonth: -1,
     arSessionsPerMonth: -1,
     vigaRequestsPerMonth: 10,
@@ -259,7 +281,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     blueprintUpload: true,
     uploadsPerMonth: -1,
     firstPersonView: true,
-    meshyFurniture: true,
+    meshyFurniture: false,
     batchGeneration: true,
     batchSize: 3,
     buildingCodeCompliance: true,
@@ -267,25 +289,32 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     creatorRevenueSplit: 60,
     prioritySupport: false,
     threeDSessionMinutes: -1,
+
+    // AI model routing
+    aiModelGeneration: 'deepseek-chat',
+    aiModelChat: 'claude-haiku-4-5-20251001',
+    aiModelEdits: 'deepseek-chat',
+    aiChatFallbackModel: 'deepseek-chat',
+    aiChatSoftCapPerDay: 50,
   },
 
   architect: {
-    maxProjects: -1,
-    maxRoomsPerProject: -1,
+    maxProjects: 100,
+    maxRoomsPerProject: 50,
     maxFurniturePerRoom: -1,
-    maxFloors: -1,
-    savedProjects: -1,
-    maxRooms: -1,
+    maxFloors: 20,
+    savedProjects: 100,
+    maxRooms: 50,
 
-    aiGenerationsPerMonth: -1,
-    aiEditsPerMonth: -1,
-    arScansPerMonth: -1,
-    arSessionsPerMonth: -1,
-    vigaRequestsPerMonth: -1,
-    photoImportsPerMonth: -1,
-    exportsPerMonth: -1,
-    rendersPerMonth: -1,
-    aiChatMessagesPerDay: -1,
+    aiGenerationsPerMonth: 300,
+    aiEditsPerMonth: 300,
+    arScansPerMonth: 100,
+    arSessionsPerMonth: 100,
+    vigaRequestsPerMonth: 50,
+    photoImportsPerMonth: 100,
+    exportsPerMonth: 50,
+    rendersPerMonth: 100,
+    aiChatMessagesPerDay: 200,
 
     dailyEditTimeSeconds: -1,
     maxUndoSteps: -1,
@@ -321,7 +350,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 
     audioInput: true,
     blueprintUpload: true,
-    uploadsPerMonth: -1,
+    uploadsPerMonth: 200,
     firstPersonView: true,
     meshyFurniture: true,
     batchGeneration: true,
@@ -330,7 +359,14 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     monetiseTemplates: true,
     creatorRevenueSplit: 70,
     prioritySupport: true,
-    threeDSessionMinutes: -1,
+    threeDSessionMinutes: 300,
+
+    // AI model routing
+    aiModelGeneration: 'claude-haiku-4-5-20251001',
+    aiModelChat: 'claude-sonnet-4-6',
+    aiModelEdits: 'claude-haiku-4-5-20251001',
+    aiChatFallbackModel: 'claude-haiku-4-5-20251001',
+    aiChatSoftCapPerDay: 50,
   },
 };
 

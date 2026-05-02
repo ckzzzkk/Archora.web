@@ -7,6 +7,8 @@ import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { logAudit } from '../_shared/audit.ts';
 import { Errors } from '../_shared/errors.ts';
 import { getArchitectById, buildArchitectPromptSection } from '../_shared/architects.ts';
+import { TIER_AI_MODELS, buildAIRequest, parseAIResponse, getModelProvider } from '../_shared/aiLimits.ts';
+import { requireEnv } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const RequestSchema = z.object({
@@ -1344,6 +1346,20 @@ Return ONLY valid JSON, no markdown.`;
       }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Get user tier for model routing
+    const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    const tier = (tierData as string) ?? 'starter';
+    const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
+    const selectedModel = modelConfig.generation;
+
+    if (!selectedModel) {
+      return new Response(JSON.stringify({
+        error: 'AI_NOT_AVAILABLE',
+        message: 'Upgrade to Creator tier for AI generation',
+      }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Inject architect influence into system prompt if specified
     let effectiveSystemPrompt = SYSTEM_PROMPT;
     if (architectId) {
@@ -1357,36 +1373,24 @@ ${SYSTEM_PROMPT}`;
       }
     }
 
-    if (!anthropicKey) {
-      console.warn('[ai-generate] ANTHROPIC_API_KEY not configured');
-      return new Response(JSON.stringify({
-        error: 'AI not configured',
-        code: 'UPSTREAM_ERROR',
-        message: 'The AI service is not yet configured on this server. Please contact support.',
-      }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
     const startMs = Date.now();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 55_000);
 
+    const reqConfig = buildAIRequest(
+      selectedModel,
+      effectiveSystemPrompt,
+      [{ role: 'user', content: userMessage }],
+      8000,
+    );
+
     let claudeResponse: Response;
     try {
-      claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      claudeResponse = await fetch(reqConfig.url, {
         method: 'POST',
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 8000,
-          temperature: 0,
-          system: effectiveSystemPrompt,
-          messages: [{ role: 'user', content: userMessage }],
-        }),
+        headers: reqConfig.headers,
+        body: JSON.stringify(reqConfig.body),
       });
     } catch (fetchErr) {
       clearTimeout(timeoutId);
@@ -1401,15 +1405,12 @@ ${SYSTEM_PROMPT}`;
 
     if (!claudeResponse.ok) {
       const errorBody = await claudeResponse.text();
-      console.error('Anthropic API error body:', errorBody);
-      throw new Error(`Claude API error: ${claudeResponse.status} — ${errorBody}`);
+      console.error('AI API error body:', errorBody);
+      throw new Error(`AI API error: ${claudeResponse.status} — ${errorBody}`);
     }
 
-    const claudeData = await claudeResponse.json() as {
-      content: Array<{ type: string; text: string }>;
-      usage?: { input_tokens?: number; output_tokens?: number };
-    };
-    const rawText = claudeData.content?.[0]?.text;
+    const responseData = await claudeResponse.json();
+    const { content: rawText, inputTokens, outputTokens } = parseAIResponse(reqConfig.provider, responseData);
 
     if (!rawText) {
       throw new Error('Empty response from AI');
@@ -1449,39 +1450,33 @@ Return ONLY valid JSON.`;
       const retryTimeoutId = setTimeout(() => retryController.abort(), 55_000);
 
       try {
-        const retryResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        const retryReqConfig = buildAIRequest(
+          selectedModel,
+          effectiveSystemPrompt,
+          [
+            { role: 'user', content: userMessage },
+            { role: 'assistant', content: rawText },
+            { role: 'user', content: retryMessage },
+          ],
+          8000,
+        );
+
+        const retryResponse = await fetch(retryReqConfig.url, {
           method: 'POST',
           signal: retryController.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': anthropicKey,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 8000,
-            temperature: 0,
-            system: effectiveSystemPrompt,
-            messages: [
-              { role: 'user', content: userMessage },
-              { role: 'assistant', content: rawText },
-              { role: 'user', content: retryMessage },
-            ],
-          }),
+          headers: retryReqConfig.headers,
+          body: JSON.stringify(retryReqConfig.body),
         });
         clearTimeout(retryTimeoutId);
 
         if (retryResponse.ok) {
-          const retryData = await retryResponse.json() as {
-            content: Array<{ type: string; text: string }>;
-            usage?: { input_tokens?: number; output_tokens?: number };
-          };
-          const retryText = retryData.content?.[0]?.text;
+          const retryData = await retryResponse.json();
+          const retryResult = parseAIResponse(retryReqConfig.provider, retryData);
+          const retryText = retryResult.content;
           if (retryText) {
             try {
               const retryBlueprint = parseBlueprint(retryText);
               const retryViolations = validateBlueprintBasic(retryBlueprint);
-              // Use retry if it has fewer violations
               if (retryViolations.length < violations.length) {
                 blueprintData = retryBlueprint;
                 console.log('[ai-generate] Retry improved: violations', violations.length, '→', retryViolations.length);
@@ -1507,20 +1502,20 @@ Return ONLY valid JSON.`;
 
     // Log to ai_generations table
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
 
     await supabase.from('ai_generations').insert({
       user_id: user.id,
       prompt,
       generation_type: 'floor_plan',
-      model:           'claude-sonnet-4-6',
-      input_tokens:    claudeData.usage?.input_tokens  ?? null,
-      output_tokens:   claudeData.usage?.output_tokens ?? null,
-      duration_ms:     Date.now() - startMs,
-      status:          'complete',
-      result_data:     blueprintData as Record<string, unknown>,
+      model: selectedModel,
+      input_tokens: inputTokens ?? null,
+      output_tokens: outputTokens ?? null,
+      duration_ms: Date.now() - startMs,
+      status: 'complete',
+      result_data: blueprintData as Record<string, unknown>,
     });
 
     await logAudit({
@@ -1533,8 +1528,8 @@ Return ONLY valid JSON.`;
     // Increment architect-specific generation counter
     if (architectId) {
       const supabase2 = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        requireEnv('SUPABASE_URL'),
+        requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
       );
       try {
         await supabase2.rpc('increment_architect_counter', {

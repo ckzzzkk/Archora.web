@@ -32,7 +32,7 @@ cp utils/_path.py.example utils/_path.py
 
 # Configure API keys
 cp utils/_api_keys.py.example utils/_api_keys.py
-# Edit utils/_api_keys.py with your OPENAI_API_KEY, MESHY_API_KEY
+# Edit utils/_api_keys.py with your ANTHROPIC_API_KEY, MESHY_API_KEY
 ```
 
 ## Environment Variables

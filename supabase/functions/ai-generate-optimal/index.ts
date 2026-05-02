@@ -5,8 +5,9 @@ import { getAuthUser } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { logAudit } from '../_shared/audit.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
 
 // ── Request schema ────────────────────────────────────────────────────────────
 
@@ -181,31 +182,18 @@ async function callClaude(
   userMessage: string,
   maxTokens: number,
   signal: AbortSignal,
+  selectedModel: string,
 ): Promise<unknown> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    signal,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: maxTokens,
-      temperature: 0,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    }),
-  });
+  const reqConfig = buildAIRequest(selectedModel, systemPrompt, [{ role: 'user', content: userMessage }], maxTokens);
+  const response = await fetch(reqConfig.url, { method: 'POST', signal, headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
 
   if (!response.ok) {
     const body = await response.text();
     throw new Error(`Claude API error ${response.status}: ${body.slice(0, 200)}`);
   }
 
-  const data = await response.json() as { content: Array<{ type: string; text: string }> };
-  const rawText = data.content?.[0]?.text ?? '';
+  const data = await response.json();
+  const { content: rawText } = parseAIResponse(reqConfig.provider, data);
 
   // Parse JSON — try direct first, then strip markdown fences
   try {
@@ -231,6 +219,7 @@ async function scoreBlueprint(
   apiKey: string,
   blueprint: unknown,
   signal: AbortSignal,
+  selectedModel: string,
 ): Promise<ScoreResult> {
   const result = await callClaude(
     apiKey,
@@ -238,6 +227,7 @@ async function scoreBlueprint(
     JSON.stringify(blueprint),
     600,
     signal,
+    selectedModel,
   ) as Partial<ScoreResult>;
 
   return {
@@ -360,10 +350,20 @@ serve(async (req) => {
       );
     }
 
+    // Tier-based model selection
+    const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    const tier = (tierData as string) ?? 'starter';
+    const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
+    const selectedModel = modelConfig.generation;
+    if (!selectedModel) {
+      return new Response(JSON.stringify({ error: 'AI_NOT_AVAILABLE', message: 'AI generation not available on your tier' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Supabase service client for session writes
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
 
     // 90s total budget across all iterations
@@ -395,7 +395,7 @@ serve(async (req) => {
           ? buildInitialUserMessage(p)
           : buildRefineUserMessage(bestBlueprint, lastScoreResult!, i);
 
-        const blueprint = await callClaude(anthropicKey, SYSTEM_PROMPT, userMessage, 5500, controller.signal);
+        const blueprint = await callClaude(anthropicKey, SYSTEM_PROMPT, userMessage, 5500, controller.signal, selectedModel);
 
         // ── Score ────────────────────────────────────────────────────────────
         await updateSession(supabase, sessionId, {
@@ -403,7 +403,7 @@ serve(async (req) => {
           current_message: `Iteration ${i} — checking structural integrity and flow...`,
         });
 
-        const scoreResult = await scoreBlueprint(anthropicKey, blueprint, controller.signal);
+        const scoreResult = await scoreBlueprint(anthropicKey, blueprint, controller.signal, selectedModel);
         lastScoreResult = scoreResult;
 
         const logEntry = {
@@ -451,7 +451,7 @@ serve(async (req) => {
         user_id:      user.id,
         prompt:       p.prompt,
         generation_type: 'floor_plan_optimal',
-        model:        'claude-sonnet-4-6',
+        model:        selectedModel,
         duration_ms:  0,
         status:       'complete',
         result_data:  bestBlueprint as Record<string, unknown>,

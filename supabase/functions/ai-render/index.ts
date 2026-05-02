@@ -11,7 +11,7 @@
  * Pipeline:
  *   1. Build scene description from blueprint summary
  *   2. Claude Vision prompt engineer → SDXL prompt + negative prompt
- *   3. Replicate SDXL generates render (if REPLICATE_API_KEY set)
+ *   3. fal.ai Flux Schnell generates render (if FAL_KEY set)
  *   4. Store render URL in renders table
  *   5. Return { renderUrl, prompts }
  */
@@ -23,6 +23,9 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 import { logAudit } from '../_shared/audit.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { TIER_AI_MODELS, buildAIRequest, parseAIResponse, getModelProvider } from '../_shared/aiLimits.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireEnv } from '../_shared/errors.ts';
 
 const RequestSchema = z.object({
   blueprintSummary: z.object({
@@ -89,6 +92,8 @@ async function generatePrompts(
   viewType: string,
   hemisphere: string,
   apiKey: string,
+  selectedModel: string,
+  maxTokens = 1024,
 ): Promise<PromptResult> {
   const features = [
     hasPool ? 'swimming pool',
@@ -106,27 +111,15 @@ View requested: ${viewType.replace(/_/g, ' ')}
 
 Generate a highly detailed positive prompt and appropriate negative prompt for Stable Diffusion. Focus on the architectural photography quality, lighting, and materials.`;
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: RENDER_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }],
-    }),
-  });
+  const reqConfig = buildAIRequest(selectedModel, RENDER_SYSTEM_PROMPT, [{ role: 'user', content: userPrompt }], maxTokens);
+  const resp = await fetch(reqConfig.url, { method: 'POST', headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
 
   if (!resp.ok) {
     throw new Error(`Claude API error: ${resp.status}`);
   }
 
-  const data = await resp.json() as { content: Array<{ type: string; text: string }> };
-  const rawText = data.content.find((c) => c.type === 'text')?.text ?? '{}';
+  const data = await resp.json();
+  const { content: rawText } = parseAIResponse(reqConfig.provider, data);
 
   const cleaned = rawText
     .replace(/^```(?:json)?\n?/m, '')
@@ -140,47 +133,33 @@ Generate a highly detailed positive prompt and appropriate negative prompt for S
   }
 }
 
-async function generateReplicateRender(
+async function generateFalRender(
   positivePrompt: string,
   negativePrompt: string,
   apiKey: string,
 ): Promise<string | null> {
-  const replicateResp = await fetch(
-    'https://api.replicate.com/v1/models/stability-ai/sdxl/predictions',
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'wait',
-      },
-      body: JSON.stringify({
-        input: {
-          prompt: positivePrompt,
-          negative_prompt: negativePrompt,
-          width: 1024,
-          height: 768,
-          num_inference_steps: 30,
-          guidance_scale: 7.5,
-          num_outputs: 1,
-        },
-      }),
+  const resp = await fetch('https://fal.run/fal-ai/flux/schnell', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Key ${apiKey}`,
+      'Content-Type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      prompt: positivePrompt,
+      image_size: 'landscape_4_3',
+      num_inference_steps: 4,
+      num_images: 1,
+    }),
+  });
 
-  if (!replicateResp.ok) {
-    const errBody = await replicateResp.text();
-    console.error('[ai-render] Replicate error:', errBody.slice(0, 200));
+  if (!resp.ok) {
+    const errBody = await resp.text();
+    console.error('[ai-render] fal.ai error:', errBody.slice(0, 200));
     return null;
   }
 
-  const prediction = await replicateResp.json() as { output?: string[]; error?: string };
-  if (prediction.error) {
-    console.error('[ai-render] Replicate prediction error:', prediction.error);
-    return null;
-  }
-
-  return prediction.output?.[0] ?? null;
+  const result = await resp.json() as { images: Array<{ url: string }> };
+  return result.images[0]?.url ?? null;
 }
 
 serve(async (req: Request) => {
@@ -212,13 +191,23 @@ serve(async (req: Request) => {
     const { blueprintSummary, atmosphere, viewType, hemisphere } = parsed.data;
 
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
-    const replicateKey = Deno.env.get('REPLICATE_API_KEY');
+    const falKey = Deno.env.get('FAL_KEY');
 
     if (!anthropicKey) {
       return new Response(
         JSON.stringify({ error: 'AI_NOT_CONFIGURED', message: 'AI service not available' }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
+    }
+
+    // Tier-based model selection
+    const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    const tier = (tierData as string) ?? 'starter';
+    const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
+    const selectedModel = modelConfig.generation;
+    if (!selectedModel) {
+      return new Response(JSON.stringify({ error: 'AI_NOT_AVAILABLE', message: 'AI generation not available on your tier' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Step 1: Generate SDXL prompts via Claude
@@ -235,7 +224,7 @@ serve(async (req: Request) => {
         atmosphere,
         viewType,
         hemisphere ?? 'northern',
-        anthropicKey,
+        selectedModel,
       );
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Prompt generation failed';
@@ -247,8 +236,8 @@ serve(async (req: Request) => {
 
     // Step 2: Generate render via Replicate (if key available)
     let renderUrl: string | null = null;
-    if (replicateKey) {
-      renderUrl = await generateReplicateRender(prompts.positivePrompt, prompts.negativePrompt, replicateKey);
+    if (falKey) {
+      renderUrl = await generateFalRender(prompts.positivePrompt, prompts.negativePrompt, falKey);
     }
 
     // Step 3: Store render if URL obtained
@@ -281,9 +270,9 @@ serve(async (req: Request) => {
       JSON.stringify({
         renderUrl,
         prompts,
-        message: replicateKey
+        message: falKey
           ? (renderUrl ? 'Render generated successfully' : 'Prompt generated — render pending')
-          : 'Replicate not configured — prompt generated only',
+          : 'fal.ai not configured — prompt generated only',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );

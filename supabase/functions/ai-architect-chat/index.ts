@@ -5,9 +5,10 @@ import { getAuthUser } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { logAudit } from '../_shared/audit.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { getArchitectById, buildArchitectPromptSection } from '../_shared/architects.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { TIER_AI_MODELS, resolveChatModel } from '../_shared/aiLimits.ts';
 
 // ──────────────────────────────────────────
 // Types
@@ -500,6 +501,7 @@ async function callClaude(
   systemPrompt: string,
   messages: ChatMessage[],
   architectId: string | null,
+  selectedModel: string,
 ): Promise<string> {
   const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
 
@@ -538,7 +540,7 @@ ${systemPrompt}`;
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: selectedModel,
         max_tokens: 1024,
         temperature: 0.7,
         system: effectiveSystemPrompt,
@@ -657,10 +659,20 @@ serve(async (req) => {
     // Build system prompt
     const systemPrompt = buildSystemPrompt(tier, architectId ?? null, payload, sessionId);
 
+    // Tier-based model selection with soft cap for chat
+    const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    const userTier = (tierData as string) ?? 'starter';
+    const todayCount = conversationHistory.filter(m => m.role === 'user' && m.content).length;
+    const { model: effectiveModel, provider } = resolveChatModel(userTier, todayCount);
+    if (!effectiveModel) {
+      return new Response(JSON.stringify({ error: 'AI_NOT_AVAILABLE', message: 'AI chat not available on your tier' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Call Claude
     let rawResponse: string;
     try {
-      rawResponse = await callClaude(systemPrompt, conversationHistory, architectId ?? null);
+      rawResponse = await callClaude(systemPrompt, conversationHistory, architectId ?? null, effectiveModel);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('[ai-architect-chat] Claude error:', msg);

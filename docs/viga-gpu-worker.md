@@ -78,7 +78,7 @@ The worker MUST call the `callback_url` with a POST request:
   - `VIGA_WORKER_URL` — public URL of this worker
   - `SUPABASE_URL` — Asoria Supabase project URL
   - `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key (for storage + webhook)
-  - `OPENAI_API_KEY` — for VIGA agent LLM calls
+  - `ANTHROPIC_API_KEY` — for VIGA agent LLM calls
   - `MESHY_API_KEY` — for optional post-processing
 
 ## GLTF Export
@@ -116,6 +116,6 @@ See `viga-worker/README.md` for full setup instructions.
 | `SUPABASE_URL` | Asoria Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
 | `VIGA_WORKER_URL` | Public URL of this worker |
-| `OPENAI_API_KEY` | For VIGA agent LLM calls |
+| `ANTHROPIC_API_KEY` | For VIGA agent LLM calls |
 | `MESHY_API_KEY` | For optional Meshy post-processing |
 | `BLENDER_PATH` | Path to Blender binary (default: `blender`) |

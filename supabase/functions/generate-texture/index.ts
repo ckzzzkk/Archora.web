@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { getAuthUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 import { checkQuota } from '../_shared/quota.ts';
@@ -41,9 +41,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!parsed.success) return Errors.validation('Invalid request', parsed.error.issues);
 
     const { prompt, surface, style } = parsed.data;
-    const replicateKey = Deno.env.get('REPLICATE_API_KEY');
+    const falKey = Deno.env.get('FAL_KEY');
 
-    if (!replicateKey) {
+    if (!falKey) {
       // Graceful fallback — return a curated texture suggestion
       const fallback = FALLBACK[surface];
       return new Response(
@@ -57,58 +57,35 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const quotaOk = await checkQuota(user.id, 'ai_generation');
     if (!quotaOk) return Errors.quotaExceeded('AI quota exceeded for texture generation');
 
-    // Submit prediction to Replicate SDXL
-    const submitRes = await fetch('https://api.replicate.com/v1/predictions', {
+    // Submit to fal.ai Flux Schnell (synchronous — no polling needed)
+    const falResp = await fetch('https://fal.run/fal-ai/flux/schnell', {
       method: 'POST',
       headers: {
-        Authorization: `Token ${replicateKey}`,
+        'Authorization': `Key ${falKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: 'ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4',
-        input: {
-          prompt: fullPrompt,
-          width: 1024,
-          height: 1024,
-          num_outputs: 1,
-          scheduler: 'K_EULER',
-          num_inference_steps: 30,
-          guidance_scale: 7.5,
-        },
+        prompt: fullPrompt,
+        image_size: 'landscape_4_3',
+        num_inference_steps: 4,
+        num_images: 1,
       }),
     });
 
-    if (!submitRes.ok) {
-      const err = await submitRes.text();
-      console.error('[generate-texture] Replicate submit error:', err);
+    if (!falResp.ok) {
+      const err = await falResp.text();
+      console.error('[generate-texture] fal.ai error:', err.slice(0, 200));
       return Errors.upstream('Texture generation service unavailable');
     }
 
-    const prediction = await submitRes.json() as { id: string; status: string; output?: string[] };
-
-    // Poll for completion (max 60s)
-    let result = prediction;
-    const deadline = Date.now() + 60_000;
-    while (result.status !== 'succeeded' && result.status !== 'failed' && Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 2000));
-      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${result.id}`, {
-        headers: { Authorization: `Token ${replicateKey}` },
-      });
-      if (pollRes.ok) {
-        result = await pollRes.json() as typeof result;
-      }
-    }
-
-    if (result.status !== 'succeeded' || !result.output?.[0]) {
-      return Errors.upstream('Texture generation timed out or failed');
-    }
-
-    const imageUrl = result.output[0];
+    const falResult = await falResp.json() as { images: Array<{ url: string }> };
+    const imageUrl = falResult.images[0]?.url;
+    if (!imageUrl) return Errors.upstream('Texture generation returned no image');
 
     // Upload to Supabase Storage renders bucket
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
 
     const imageRes = await fetch(imageUrl);

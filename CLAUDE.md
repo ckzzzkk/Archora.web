@@ -19,13 +19,12 @@ Gesture Handler · Skia (2D) · Three.js + R3F · expo-av (audio) · expo-sensor
 Zustand · Zod · MMKV · Expo SecureStore (JWT only)
 Supabase (Postgres + RLS + Auth + Storage + Edge Functions, Deno TS)
 Upstash Redis · Stripe · Cloudflare CDN
-AI: Claude claude-sonnet-4-6 · OpenAI Whisper · Replicate SDXL · Meshy · Roboflow · SAM
+AI: Claude claude-sonnet-4-6 · Groq Whisper · fal.ai Flux Schnell · Meshy · Roboflow · SAM
 
 ## Brand and Design Language
 Oval-first UI — every button, card, input, chip is soft-cornered. Never sharp corners.
 Border radius: buttons 50px · cards 20–24px · inputs 50px · tab bar pill 999px · modals 24px top
 Fonts: ArchitectsDaughter_400Regular (headings) · Inter (body) · JetBrainsMono (numbers/measurements)
-JetBrainsMono: install @expo-google-fonts/jetbrains-mono (not yet installed)
 Sketchy white line illustrations as accents on dark backgrounds — SVG stroke-only, never bitmap
 BASE_COLORS are final — never override. Theme variants in src/theme/colors.ts.
 Background #1A1A1A · Surface #222222 · Elevated #2C2C2C · Border #333333
@@ -48,7 +47,7 @@ Success #7AB87A · Warning #D4A84B · Error #C0604A · Primary #C8C8C8
 - JWT: 15min access + 7-day rotating refresh in Expo SecureStore
 - Rate limits: auth 5/min · AI 10/hr · else 300/min
 - Never use ActivityIndicator — use CompassRoseLoader everywhere
-- Supabase client: import from src/utils/supabaseClient.ts (NOT src/services/supabase)
+- Supabase client: import from src/utils/supabaseClient.ts (NOT src/services/supabase) — NOTE: actual canonical path is `src/lib/supabase.ts`
 - UIStore actions: always access via s.actions.showToast / s.actions.openModal
 
 ## Naming
@@ -83,25 +82,39 @@ TIER_LIMITS in src/utils/tierLimits.ts is the ONLY source of truth for all limit
 Always: useTierGate hook + TierGate component client-side AND server-side quota check.
 
 Starter (free):
-  3 projects · 4 rooms · 10 furniture · 10 AI/mo · 45min/day edit · 10 undo
-  3 styles (minimalist, modern, rustic) · no AR · manual save · community read-only
+  1 project · 2 rooms · 5 furniture/room · 1 floor
+  0 AI generations · 0 edits · 15 min/day edit · 5 undo · manual save
+  3 styles (minimalist, modern, rustic) · no AR · no renders · no AI chat
+  1 export/mo · community read-only · export watermark
 
 Creator ($14.99/mo · $179.90/yr):
-  25 projects · 15 rooms · 50 furniture · 200 AI/mo · unlimited edit · 50 undo
-  all 12 styles · AR furniture placement (15 sessions/mo) · auto-save 120s
-  community publish · walk-through mode · 50% template revenue · multi-floor up to 5
+  25 projects · 15 rooms · 50 furniture/room · 5 floors
+  40 AI gen/mo · 30 edits/mo · 25 AI chat/day
+  all 12 styles · AR furniture placement (15 scans/mo) · auto-save 120s
+  walk-through mode · cinematic tour (watermarked) · copy room
+  10 photo imports/mo · 20 exports/mo · 5 renders/mo
+  1 collaborator · publish 5 templates · 60% revenue share
 
-Pro ($24.99/mo · $239.90/yr) — NEW TIER:
-  50 projects · 20 rooms · 100 furniture · 500 AI/mo · unlimited edit · 100 undo
-  all styles · AR all modes (scan + place + measure) · auto-save 60s
-  custom texture gen (SDXL) · AI image upload reference · furniture image → model
-  60% template revenue · multi-floor up to 10 · community publish
-  Stripe: create product manually → add STRIPE_PRO_MONTHLY_PRICE_ID + STRIPE_PRO_ANNUAL_PRICE_ID
+Pro ($24.99/mo · $239.90/yr):
+  50 projects · 20 rooms · 100 furniture/room · 10 floors
+  100 AI gen/mo · 80 edits/mo · unlimited AI chat
+  all styles · AR all modes (scan + place + measure, unlimited) · auto-save 60s
+  custom textures (fal.ai) · walk-through + cinematic tour · copy room + layout
+  unlimited photo imports · unlimited exports · 30 renders/mo
+  unlimited first-person 3D sessions · batch generation (3)
+  1 collaborator · unlimited templates · 60% revenue share · cost estimator
+  CAD export · commercial buildings · building code compliance
+  audio input (Whisper transcription) · custom furniture
 
 Architect ($39.99/mo · $383.90/yr):
-  unlimited everything · custom AI furniture (Meshy) · professional annotations
-  CAD export · cost estimator · team 5 members · commercial buildings
-  70% template revenue · white-label exports · VIP support · auto-save 30s
+  100 projects · 50 rooms · unlimited furniture · 20 floors
+  300 AI gen/mo · 300 edits/mo · 200 AI chat/day
+  all styles · AR 100 scans/mo · auto-save 30s
+  Meshy AI furniture · cinematic tour (no watermark) · copy room + layout
+  100 photo imports/mo · 50 exports/mo · 100 renders/mo
+  5 collaborators · co-projects · co-design · CAD export
+  unlimited templates · 70% revenue share · cost estimator
+  commercial buildings · building code compliance · VIP support
 
 ## Engagement Systems
 - Points: src/services/pointsService.ts → award_points RPC → authStore.user.pointsTotal

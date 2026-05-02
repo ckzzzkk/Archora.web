@@ -2,8 +2,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
 
 const RequestSchema = z.object({
   blueprint: z.record(z.unknown()),
@@ -134,6 +136,16 @@ serve(async (req) => {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Tier-based model selection
+    const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    const tier = (tierData as string) ?? 'starter';
+    const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
+    const selectedModel = modelConfig.generation;
+    if (!selectedModel) {
+      return new Response(JSON.stringify({ error: 'AI_NOT_AVAILABLE', message: 'AI generation not available on your tier' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const userMessage = `Analyse this blueprint and return the simulation report as JSON.
 
 Climate Zone: ${climateZone}
@@ -147,22 +159,8 @@ ${JSON.stringify(blueprint, null, 2)}`;
 
     let claudeResponse: Response;
     try {
-      claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1500,
-          temperature: 0,
-          system: SIMULATION_PROMPT,
-          messages: [{ role: 'user', content: userMessage }],
-        }),
-      });
+      const reqConfig = buildAIRequest(selectedModel, SIMULATION_PROMPT, [{ role: 'user', content: userMessage }], 1500);
+      claudeResponse = await fetch(reqConfig.url, { method: 'POST', signal: controller.signal, headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
     } catch (fetchErr) {
       clearTimeout(timeoutId);
       const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
@@ -180,10 +178,8 @@ ${JSON.stringify(blueprint, null, 2)}`;
       throw new Error(`Claude API error: ${claudeResponse.status} — ${errorBody}`);
     }
 
-    const claudeData = await claudeResponse.json() as {
-      content: Array<{ type: string; text: string }>;
-    };
-    const rawText = claudeData.content?.[0]?.text;
+    const responseData = await claudeResponse.json();
+    const { content: rawText } = parseAIResponse(reqConfig.provider, responseData);
 
     if (!rawText) {
       throw new Error('Empty response from AI');

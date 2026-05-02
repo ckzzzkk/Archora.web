@@ -14,8 +14,9 @@ import { getAuthUser } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit } from '../_shared/audit.ts';
+import { TIER_AI_MODELS, getModelProvider } from '../_shared/aiLimits.ts';
 
 const ANTHROPIC_BASE = 'https://api.anthropic.com/v1';
 const MESHY_BASE = 'https://api.meshy.ai';
@@ -60,6 +61,7 @@ interface VisionIdentification {
 async function identifyFurnitureWithClaude(
   imageUrl: string,
   anthropicKey: string,
+  selectedModel: string,
 ): Promise<VisionIdentification> {
   const systemPrompt = `You are a furniture identification expert. Analyze the image and return a JSON object describing the furniture.
 Return ONLY valid JSON with this exact shape — no markdown, no explanation:
@@ -92,7 +94,7 @@ Categories: ${FURNITURE_CATEGORIES.join(', ')}`;
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model: selectedModel,
       max_tokens: 1024,
       messages: [message],
     }),
@@ -106,6 +108,7 @@ Categories: ${FURNITURE_CATEGORIES.join(', ')}`;
 
   const data = await response.json() as {
     content: { type: string; text?: string }[];
+    usage?: { input_tokens: number; output_tokens: number };
   };
 
   const textContent = data.content.find((c) => c.type === 'text');
@@ -240,10 +243,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
+  // Tier-based model selection
+  const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+  const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+  const tier = (tierData as string) ?? 'starter';
+  const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
+  const selectedModel = modelConfig.generation;
+  if (!selectedModel) {
+    return new Response(JSON.stringify({ error: 'AI_NOT_AVAILABLE', message: 'AI generation not available on your tier' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
   // ── Step 1: Identify furniture via Claude Vision ──────────────────────────
   let identification: VisionIdentification;
   try {
-    identification = await identifyFurnitureWithClaude(imageUrl, anthropicKey);
+    identification = await identifyFurnitureWithClaude(imageUrl, anthropicKey, selectedModel);
   } catch (err) {
     console.error('[generate-furniture-from-image] Vision identification failed:', err);
     return Errors.upstream('Furniture identification failed. Please try a clearer photo.');
@@ -268,8 +281,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // ── Step 3: Persist custom_furniture record ───────────────────────────────
   const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    requireEnv('SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
   );
 
   const dimensions = { x: identification.width, y: identification.height, z: identification.depth };
