@@ -8,12 +8,6 @@ interface CompassLogoProps {
   className?: string;
 }
 
-const COLORS = {
-  letterform: '#C8C8C8',
-  compassAccent: '#C8C8C8',
-  compassRing: '#9A9590',
-};
-
 export default function CompassLogo({ size = 24, showLabel = false, className = '' }: CompassLogoProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -21,16 +15,47 @@ export default function CompassLogo({ size = 24, showLabel = false, className = 
     setMounted(true);
   }, []);
 
+  // Logo lives in a 60x60 viewBox matching logo-final.svg proportions
+  // A apex at (40,12), base at y=65, crossbar at y=46
+  // Compass at (40,32) with r=10
   return (
     <div className={`flex items-center gap-2 transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'} ${className}`}>
       <svg
         width={size}
         height={size}
-        viewBox="0 0 60 60"
+        viewBox="0 0 80 80"
         fill="none"
         className="compass-logo"
-        style={{ overflow: 'visible' }}
       >
+        {/* Dark background */}
+        <rect width="80" height="80" fill="#1A1A1A" />
+
+        {/* Letterform: Narrow "A" — matching logo-final.svg */}
+        {/* Left leg: (28,12) to (20,65) · Right leg: (52,12) to (60,65) · Crossbar at y=46 */}
+        <path
+          d="M28,12 L20,65 M52,12 L60,65 M26,46 L54,46"
+          stroke="#C8C8C8"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+
+        {/* Compass outer ring */}
+        <circle cx="40" cy="32" r="10" stroke="#5A5550" strokeWidth="1" fill="none" />
+
+        {/* 4-point compass star (N, E, S, W) */}
+        <path
+          d="M40,22 L40,42 M30,32 L50,32"
+          stroke="#C8C8C8"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Compass center dot (Success Green) */}
+        <circle cx="40" cy="32" r="2.5" fill="#7AB87A" />
+
         <style>{`
           .compass-logo {
             animation: compassEntrance 0.6s ease-out forwards;
@@ -39,65 +64,7 @@ export default function CompassLogo({ size = 24, showLabel = false, className = 
             from { transform: scale(0.85) rotate(-10deg); opacity: 0; }
             to { transform: scale(1) rotate(0deg); opacity: 1; }
           }
-          .compass-north-pulse {
-            animation: northPulse 3s ease-in-out infinite;
-          }
-          @keyframes northPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.65; }
-          }
-          .compass-center-dot {
-            animation: centerPulse 3s ease-in-out infinite 0.5s;
-          }
-          @keyframes centerPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-          }
         `}</style>
-
-        {/* Outer ring */}
-        <circle cx="30" cy="30" r="28" stroke="#333333" strokeWidth="1" opacity="0.6" />
-        <circle cx="30" cy="30" r="22" stroke={COLORS.compassRing} strokeWidth="1" opacity="0.5" />
-
-        {/* Layered A — faint background */}
-        <g opacity="0.15">
-          <path d="M30,6 C34,12 38,22 40,30 C42,38 43,42 44,46" stroke={COLORS.compassRing} strokeWidth="4" strokeLinecap="round" fill="none" />
-          <path d="M30,6 C26,12 22,22 20,30 C18,38 17,42 16,46" stroke={COLORS.compassRing} strokeWidth="4" strokeLinecap="round" fill="none" />
-        </g>
-
-        {/* Main Wave A — left stroke */}
-        <path
-          d="M30,5 C34.5,11 38.5,21 40.5,29 C42.5,37 43.5,41 44.5,45"
-          stroke={COLORS.letterform}
-          strokeWidth="4.5"
-          strokeLinecap="round"
-          fill="none"
-          className="compass-north-pulse"
-        />
-        {/* Main Wave A — right stroke */}
-        <path
-          d="M30,5 C25.5,11 21.5,21 19.5,29 C17.5,37 16.5,41 15.5,45"
-          stroke={COLORS.letterform}
-          strokeWidth="4.5"
-          strokeLinecap="round"
-          fill="none"
-          className="compass-north-pulse"
-        />
-        {/* Crossbar */}
-        <line x1="22" y1="26" x2="38" y2="26" stroke={COLORS.letterform} strokeWidth="4" strokeLinecap="round" />
-
-        {/* Compass star */}
-        <line x1="30" y1="20" x2="30" y2="40" stroke={COLORS.compassRing} strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
-        <line x1="20" y1="30" x2="40" y2="30" stroke={COLORS.compassRing} strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
-
-        {/* Compass inner ring */}
-        <circle cx="30" cy="30" r="8" stroke={COLORS.compassRing} strokeWidth="1" fill="none" opacity="0.5" />
-
-        {/* Center dot */}
-        <circle cx="30" cy="30" r="2.5" fill={COLORS.compassAccent} className="compass-center-dot" opacity="0.9" />
-
-        {/* N label */}
-        <text x="27.5" y="3" fontFamily="monospace" fontSize="4.5" fill={COLORS.compassRing} opacity="0.7">N</text>
       </svg>
 
       {showLabel && (
