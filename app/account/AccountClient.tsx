@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
-import { getPortalUrl } from '@/lib/stripe';
+import { getPortalUrl, syncSubscription } from '@/lib/stripe';
 import { PRICING, type Tier } from '@/lib/pricing';
 
 interface AccountClientProps {
@@ -12,11 +12,23 @@ interface AccountClientProps {
   tier: string;
 }
 
-export default function AccountClient({ email, displayName, tier }: AccountClientProps) {
+export default function AccountClient({ email, displayName, tier: initialTier }: AccountClientProps) {
   const [loading, setLoading] = useState(false);
+  const [tier, setTier] = useState(initialTier);
   const router = useRouter();
   const tierData = PRICING[tier as Tier] ?? PRICING.starter;
   const isStarter = tier === 'starter';
+
+  // Sync subscription tier on mount (in case user just returned from Stripe checkout)
+  useEffect(() => {
+    syncSubscription()
+      .then(({ tier: syncedTier }) => {
+        if (syncedTier && syncedTier !== tier) {
+          setTier(syncedTier);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   async function handleManageSubscription() {
     setLoading(true);

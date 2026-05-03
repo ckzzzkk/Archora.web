@@ -149,8 +149,8 @@ export default function PrivacyPage() {
             <div className="border border-sketch rounded-card bg-surface p-6">
               <p className="text-text font-body text-sm font-medium">Crokora</p>
               <p className="text-text-secondary font-body text-sm">Data Protection Inquiries</p>
-              <a href="mailto:support@asoria.app" className="text-primary font-body text-sm hover:text-accent transition-colors">
-                support@asoria.app
+              <a href="mailto:asoria.app@gmail.com" className="text-primary font-body text-sm hover:text-accent transition-colors">
+                asoria.app@gmail.com
               </a>
             </div>
           </div>

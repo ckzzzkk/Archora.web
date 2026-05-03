@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import BlueprintHeroIllustration from '@/components/BlueprintHeroIllustration';
 import BlueprintCard from '@/components/BlueprintCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import AppWorkflowShowcase from '@/components/AppWorkflowShowcase';
