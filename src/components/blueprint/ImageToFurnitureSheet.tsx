@@ -165,7 +165,7 @@ export function ImageToFurnitureSheet({ onClose }: { onClose: () => void }) {
         <View style={{ alignItems: 'center', paddingVertical: 20 }}>
           <Text style={{ fontSize: 48, marginBottom: 16 }}>📷</Text>
           <ArchText variant="body" style={{ color: DS.colors.primaryGhost, textAlign: 'center', marginBottom: 24 }}>
-            Photograph any piece of furniture and we'll create a 3D model you can place in your designs.
+            Photograph any piece of furniture and we&apos;ll create a 3D model you can place in your designs.
           </ArchText>
           <View style={{ width: '100%', gap: 12 }}>
             <OvalButton variant="filled" onPress={takePhoto} label="Take a Photo" />

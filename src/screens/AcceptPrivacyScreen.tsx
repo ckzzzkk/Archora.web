@@ -84,7 +84,7 @@ export function AcceptPrivacyScreen() {
               textAlign: 'center',
             }}
           >
-            By tapping "Accept & Continue", you agree to our Privacy Policy and Terms of Service.
+            By tapping &quot;Accept & Continue&quot;, you agree to our Privacy Policy and Terms of Service.
           </ArchText>
 
           <Pressable

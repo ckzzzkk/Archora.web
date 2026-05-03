@@ -338,8 +338,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   });
 
   // ── Build CustomAsset for blueprintStore ──────────────────────────────────
+  const rec = record as Record<string, unknown>;
   const customAsset = {
-    id: ((record as Record<string, unknown>)?.id as string) ?? crypto.randomUUID(),
+    id: (rec?.id as string) ?? crypto.randomUUID(),
     name: identification.name,
     prompt: identification.furnitureType,
     style: identification.styleTags.join(', ') || identification.category,

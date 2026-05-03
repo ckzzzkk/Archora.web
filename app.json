@@ -1,21 +1,25 @@
 {
   "expo": {
-    // IMPORTANT: This project uses prebuild (android/ and ios/ folders are present).
-    // EAS Build does NOT sync the following app.json fields when native folders exist:
-    // backgroundColor, scheme, orientation, icon, userInterfaceStyle, primaryColor,
-    // splash, ios, android, plugins.
-    // Native config is authoritative — values are in Info.plist and build.gradle.
-    // Expo Go and dev use the fields below; EAS Build uses the native files.
-
     "ios": {
       "bundleIdentifier": "com.asoria.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "ASORIA needs camera access for AR features"
       }
     },
-
+    "android": {
+      "package": "com.asoria.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
+    },
     "name": "ASORIA - AI Architecture Design",
-    "slug": "asoria",
+    "slug": "asoria-app-v2",
     "description": "Design your dream space with AI. Generate floor plans, visualize in 3D, and walk through your creations.",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -40,7 +44,8 @@
           "android": {
             "enableHermes": true,
             "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "enableMinifyInReleaseBuilds": true
           },
           "ios": {
             "flipper": false
@@ -77,15 +82,13 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "1697aad8-bba0-442d-ac24-275a5ddd8e74"
+        "projectId": "aff88d2f-a5de-4a5a-9fcb-b8a29c56e6f3"
       }
     },
-    "owner": "ckng",
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
+    "owner": "crokora",
+    "runtimeVersion": "1.0.0",
     "updates": {
-      "url": "https://u.expo.dev/1697aad8-bba0-442d-ac24-275a5ddd8e74"
+      "url": "https://u.expo.dev/aff88d2f-a5de-4a5a-9fcb-b8a29c56e6f3"
     }
   }
 }

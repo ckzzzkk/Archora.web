@@ -95,14 +95,14 @@ async function generatePrompts(
   selectedModel: string,
   maxTokens = 1024,
 ): Promise<PromptResult> {
-  const features = [
-    hasPool ? 'swimming pool' : '',
-    hasGarden ? 'landscaped garden' : '',
-  ].filter(Boolean).join(', ') || 'none';
+  const featureParts: string[] = [];
+  if (hasPool) featureParts.push('swimming pool');
+  if (hasGarden) featureParts.push('landscaped garden');
+  const features = featureParts.join(', ') || 'none';
 
   const userPrompt = `Generate an architectural render prompt for a ${buildingType}.
 Style: ${style}
-Floor area: ${totalArea}m² across approximately ${roomCount} rooms.
+Floor area: ${totalArea}m2 across approximately ${roomCount} rooms.
 Exterior finish: ${exteriorFinish ?? 'render/plaster'}
 Hemisphere: ${hemisphere}
 Features present: ${features}

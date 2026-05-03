@@ -111,7 +111,7 @@ export function AIAssistantSheet({ onClose }: Props) {
               fontStyle: 'italic',
             }}
           >
-            Hi, I'm ARIA. I've been designing homes for 20 years. Tell me what you'd like to change — maybe it's a room that feels too small, a kitchen you'd like to open up, or a corner of the house that's never quite worked. I'm here to help it feel right.
+            Hi, I&apos;m ARIA. I&apos;ve been designing homes for 20 years. Tell me what you&apos;d like to change — maybe it&apos;s a room that feels too small, a kitchen you&apos;d like to open up, or a corner of the house that&apos;s never quite worked. I&apos;m here to help it feel right.
           </Text>
         )}
         {chatHistory.map((msg: { role: string; content: string }, i: number) => (

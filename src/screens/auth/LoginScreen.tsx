@@ -278,7 +278,7 @@ export function LoginScreen() {
             {/* Sign up link */}
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: DS.spacing.sm }}>
               <ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: DS.fontSize.sm }}>
-                Don't have an account?
+                Don&apos;t have an account?
               </ArchText>
               <Pressable onPress={() => navigation.navigate('SignUp')} hitSlop={8}>
                 <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: DS.fontSize.sm, textDecorationLine: 'underline' }}>

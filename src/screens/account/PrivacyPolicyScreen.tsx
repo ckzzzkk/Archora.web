@@ -294,7 +294,7 @@ export function PrivacyPolicyScreen() {
               textAlign: 'center',
             }}
           >
-            This Privacy Policy was generated using Termly's Privacy Policy Generator.
+            This Privacy Policy was generated using Termly&apos;s Privacy Policy Generator.
           </ArchText>
         </View>
       </ScrollView>

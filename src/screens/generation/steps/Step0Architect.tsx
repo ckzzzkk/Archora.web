@@ -87,7 +87,7 @@ function ArchitectCard({
         {architect.era.split(',')[0]}
       </ArchText>
       <ArchText variant="body" style={{ fontSize: 11, color: DS.colors.accent, fontStyle: 'italic', marginBottom: 8 }}>
-        "{architect.tagline}"
+        {`&quot;${architect.tagline}`}
       </ArchText>
       <ArchText variant="body" style={{ fontSize: 10, color: DS.colors.primaryDim, lineHeight: 14 }} numberOfLines={3}>
         {architect.spatialSignature}
@@ -137,7 +137,7 @@ export function Step0Architect({ selectedId, onSelect, onContinue, onUseDefault,
         Architect Philosophy
       </ArchText>
       <ArchText variant="body" style={{ fontSize: 14, color: DS.colors.primaryDim, marginBottom: 20, lineHeight: 20 }}>
-        Every great building starts with an idea. Which architect's thinking should guide your design?
+        Every great building starts with an idea. Which architect&apos;s thinking should guide your design?
       </ArchText>
 
       <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
