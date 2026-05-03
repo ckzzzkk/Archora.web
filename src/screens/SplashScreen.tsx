@@ -9,20 +9,20 @@ import Animated, {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import Svg, { Rect, Path, Circle, G, Defs, FeDropShadow, FeGaussianBlur, FeMerge, FeMergeNode } from 'react-native-svg';
 
 interface Props {
   appReady: boolean;
   onComplete: () => void;
 }
 
-// Matches logo-final.svg exactly
 const COLORS = {
   background: '#2A2A28',
-  letterform: '#C8C8C8',
-  compassRing: '#5A5550',
-  compassStar: '#C8C8C8',
-  compassDot: '#7AB87A',
+  letterformLight: '#C5D4B8',
+  letterformDim: '#89B4C8',
+  compassRing: '#7A9AAA',
+  compassDot: '#89B4C8',
+  waveAccent: '#A8B8A0',
 };
 
 export function SplashScreen({ appReady, onComplete }: Props) {
@@ -90,37 +90,53 @@ export function SplashScreen({ appReady, onComplete }: Props) {
 
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: COLORS.background, alignItems: 'center', justifyContent: 'center' }, screenStyle]}>
-      {/* Logo — matches logo-final.svg exactly */}
+      {/* Logo — logo-01 flipped vertically (upside down) */}
       <Animated.View style={logoStyle}>
-        <Svg width={logoSize} height={logoSize} viewBox="0 0 80 80">
-          {/* Dark background */}
-          <Rect width="80" height="80" fill="#1A1A1A" />
+        <Svg width={logoSize} height={logoSize} viewBox="0 0 120 120">
+          <Defs>
+            <FeDropShadow dx="4" dy="4" stdDeviation="3" floodColor="#1a1a1a" floodOpacity="0.6" />
+            <FeGaussianBlur stdDeviation="1.5" result="blur" />
+            <FeMerge>
+              <FeMergeNode in="blur" />
+              <FeMergeNode in="SourceGraphic" />
+            </FeMerge>
+          </Defs>
 
-          {/* Letterform: Narrow "A" */}
-          {/* Left leg: (28,12) to (20,65) · Right leg: (52,12) to (60,65) · Crossbar at y=46 */}
-          <Path
-            d="M28,12 L20,65 M52,12 L60,65 M26,46 L54,46"
-            stroke={COLORS.letterform}
-            strokeWidth="3.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
+          {/* Background */}
+          <Rect width="120" height="120" fill={COLORS.background} />
 
-          {/* Compass outer ring */}
-          <Circle cx="40" cy="32" r="10" stroke={COLORS.compassRing} strokeWidth="1" fill="none" />
+          {/* FLIPPED VERTICALLY — logo-01 upside down */}
+          <G transform="translate(0, 120) scale(1, -1)">
+            {/* Layered depth - 3 stacked A's */}
+            <G opacity={0.2} transform="translate(3,3)">
+              <Path d="M35,20 L25,70 M85,20 L95,70" stroke={COLORS.letterformDim} strokeWidth="4" strokeLinecap="round" />
+              <Path d="M30,50 L90,50" stroke={COLORS.letterformDim} strokeWidth="3" strokeLinecap="round" />
+            </G>
+            <G opacity={0.4} transform="translate(1.5,1.5)">
+              <Path d="M35,20 L25,70 M85,20 L95,70" stroke={COLORS.letterformDim} strokeWidth="4" strokeLinecap="round" />
+              <Path d="M30,50 L90,50" stroke={COLORS.letterformDim} strokeWidth="3" strokeLinecap="round" />
+            </G>
 
-          {/* 4-point compass star */}
-          <Path
-            d="M40,22 L40,42 M30,32 L50,32"
-            stroke={COLORS.compassStar}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            fill="none"
-          />
+            {/* Main bold wave A */}
+            <G filter="url(#shadow)">
+              <Path d="M34,18 C42,28 48,40 52,50 C56,60 58,65 60,70" stroke={COLORS.letterformLight} strokeWidth="5" strokeLinecap="round" fill="none" />
+              <Path d="M86,18 C78,28 72,40 68,50 C64,60 62,65 60,70" stroke={COLORS.letterformLight} strokeWidth="5" strokeLinecap="round" fill="none" />
+              <Path d="M30,48 C45,46 60,46 75,48 C80,49 85,50 90,49" stroke={COLORS.letterformLight} strokeWidth="4" strokeLinecap="round" fill="none" />
+            </G>
 
-          {/* Compass center dot (Success Green) */}
-          <Circle cx="40" cy="32" r="2.5" fill={COLORS.compassDot} />
+            {/* Compass */}
+            <G>
+              <Circle cx="60" cy="42" r="14" stroke={COLORS.compassRing} strokeWidth="1.5" fill="none" />
+              <Path d="M60,28 L60,56 M46,42 L74,42" stroke={COLORS.letterformLight} strokeWidth="2" strokeLinecap="round" />
+              <Circle cx="60" cy="42" r="3.5" fill={COLORS.compassDot} />
+            </G>
+
+            {/* Wave ripples */}
+            <G opacity={0.25}>
+              <Path d="M52,58 C56,60 58,61 60,62 C62,61 64,60 68,58" stroke={COLORS.waveAccent} strokeWidth="1.2" strokeLinecap="round" />
+              <Path d="M50,62 C55,64 58,65 60,66 C62,65 65,64 70,62" stroke={COLORS.waveAccent} strokeWidth="0.8" strokeLinecap="round" />
+            </G>
+          </G>
         </Svg>
       </Animated.View>
 
@@ -130,7 +146,7 @@ export function SplashScreen({ appReady, onComplete }: Props) {
           style={{
             fontFamily: 'ArchitectsDaughter_400Regular',
             fontSize: 46,
-            color: COLORS.letterform,
+            color: COLORS.letterformLight,
             letterSpacing: 16,
             paddingLeft: 16,
           }}
