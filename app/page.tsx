@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import BlueprintCard from '@/components/BlueprintCard';
-import AnimatedCounter from '@/components/AnimatedCounter';
 import AppWorkflowShowcase from '@/components/AppWorkflowShowcase';
 import HeroDeviceFrame from '@/components/HeroDeviceFrame';
 import {

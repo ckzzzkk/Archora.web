@@ -101,7 +101,7 @@ export default function ContactPage() {
             <ContactForm />
             {/* Thank you message */}
             <p className="text-center text-text-dim font-body text-sm mt-8">
-              Thank you for being part of the ASORIA journey. We can't wait to see what you build.
+              Thank you for being part of the ASORIA journey. We can&apos;t wait to see what you build.
             </p>
           </div>
         </div>
