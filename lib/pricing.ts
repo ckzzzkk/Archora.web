@@ -26,14 +26,14 @@ export const PRICING: Record<Tier, {
   pro: {
     monthly: 24.99, annual: 19.99, annualTotal: 239.90,
     label: 'Pro', badge: 'Professional', color: '#D4A84B',
-    description: 'Claude Haiku + DeepSeek AI editing. Watermark-free renders, unlimited AR, and professional-grade exports.',
-    taglines: ['Claude Haiku AI models', 'Unlimited AR all modes', 'Watermark-free cinematic tours'],
+    description: 'Advanced AI editing. Watermark-free renders, unlimited AR, and professional-grade exports.',
+    taglines: ['Advanced Claude AI models', 'Unlimited AR all modes', 'Watermark-free cinematic tours'],
   },
   architect: {
     monthly: 39.99, annual: 31.99, annualTotal: 383.90,
     label: 'Architect', badge: null, color: '#C8C8C8',
-    description: 'Unlimited AI power with Claude Sonnet 4. Meshy AI furniture, co-design, CAD export, and dedicated VIP support.',
-    taglines: ['Claude Sonnet 4 AI designs', 'Meshy AI custom furniture', 'Co-design & team collaboration'],
+    description: 'Full Claude AI power. Meshy AI furniture, co-design, CAD export, and dedicated VIP support.',
+    taglines: ['Full Claude AI designs', 'Meshy AI custom furniture', 'Co-design & team collaboration'],
   },
 };
 
@@ -64,7 +64,7 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
   { label: 'AI designs/month',     starter: '0',        creator: '40',          pro: '100',         architect: '300'       },
   { label: 'AI edits/month',       starter: '0',        creator: '30',          pro: '80',          architect: '300'       },
   { label: 'AI chat (per day)',    starter: '0',        creator: '25',          pro: 'Unlimited',   architect: '200'       },
-  { label: 'AI model',             starter: '—',        creator: 'DeepSeek',    pro: 'DeepSeek + Haiku', architect: 'Claude Sonnet 4' },
+  { label: 'AI model',             starter: '—',        creator: 'DeepSeek',    pro: 'Advanced AI',   architect: 'Full Claude AI' },
   // AR
   { label: 'AR furniture placement', starter: 'No',   creator: 'Yes',         pro: 'Yes',         architect: 'Yes'       },
   { label: 'AR scan & measure',    starter: 'No',      creator: 'No',          pro: 'Yes',         architect: 'Yes'       },
@@ -121,7 +121,7 @@ export const TIER_PERKS: Record<Tier, string[]> = {
   pro: [
     '50 projects, 20 rooms/project',
     '100 AI designs + 80 edits/month',
-    'Claude Haiku AI models',
+    'Advanced Claude AI models',
     'Unlimited AR all modes',
     '30 renders/month (no watermark)',
     'Custom textures (fal.ai)',
@@ -131,7 +131,7 @@ export const TIER_PERKS: Record<Tier, string[]> = {
   architect: [
     '100 projects, 50 rooms/project',
     '300 AI designs + 300 edits/month',
-    'Claude Sonnet 4 AI designs',
+    'Full Claude AI power',
     'Meshy AI custom furniture',
     'Co-design with 5 collaborators',
     '100 renders + 50 exports/month',
