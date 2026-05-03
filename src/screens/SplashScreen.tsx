@@ -9,24 +9,24 @@ import Animated, {
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, Circle, Line, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
 interface Props {
   appReady: boolean;
   onComplete: () => void;
 }
 
+// Matches logo-final.svg exactly
 const COLORS = {
   background: '#2A2A28',
   letterform: '#C8C8C8',
-  compassAccent: '#C8C8C8',
-  compassRing: '#9A9590',
+  compassRing: '#5A5550',
+  compassStar: '#C8C8C8',
+  compassDot: '#7AB87A',
 };
 
 export function SplashScreen({ appReady, onComplete }: Props) {
   const { width: SW, height: SH } = useWindowDimensions();
-  const CX = SW / 2;
-  const CY = SH / 2 - 60;
   const screenOp = useSharedValue(1);
   const logoOp = useSharedValue(0);
   const logoScale = useSharedValue(0.8);
@@ -62,11 +62,9 @@ export function SplashScreen({ appReady, onComplete }: Props) {
     const ease = Easing.out(Easing.cubic);
     const fast = Easing.out(Easing.quad);
 
-    // Logo appears with scale spring
     logoOp.value = withTiming(1, { duration: 400, easing: ease });
     logoScale.value = withSpring(1, { damping: 14, stiffness: 200 });
 
-    // Text
     wordOp.value = withDelay(500, withTiming(1, { duration: 200, easing: fast }));
     wordSc.value = withDelay(500, withSpring(1, { damping: 16, stiffness: 300 }));
 
@@ -88,54 +86,41 @@ export function SplashScreen({ appReady, onComplete }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appReady]);
 
-  const logoSize = Math.min(SW, SH) * 0.35;
+  const logoSize = Math.min(SW, SH) * 0.45;
 
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: COLORS.background, alignItems: 'center', justifyContent: 'center' }, screenStyle]}>
-      {/* Compass A Logo */}
+      {/* Logo — matches logo-final.svg exactly */}
       <Animated.View style={logoStyle}>
-        <Svg width={logoSize} height={logoSize} viewBox="0 0 60 60">
-          {/* Outer ring */}
-          <Circle cx="30" cy="30" r="28" stroke="#333333" strokeWidth="1" opacity="0.6" />
-          <Circle cx="30" cy="30" r="22" stroke={COLORS.compassRing} strokeWidth="1" opacity="0.5" />
+        <Svg width={logoSize} height={logoSize} viewBox="0 0 80 80">
+          {/* Dark background */}
+          <Rect width="80" height="80" fill="#1A1A1A" />
 
-          {/* Layered A — faint background */}
-          <G opacity="0.15">
-            <Path d="M30,5 C34.5,11 38.5,21 40.5,29 C42.5,37 43.5,41 44.5,45" stroke={COLORS.compassRing} strokeWidth="4" strokeLinecap="round" fill="none" />
-            <Path d="M30,5 C25.5,11 21.5,21 19.5,29 C17.5,37 16.5,41 15.5,45" stroke={COLORS.compassRing} strokeWidth="4" strokeLinecap="round" fill="none" />
-          </G>
-
-          {/* Main Wave A — left stroke */}
+          {/* Letterform: Narrow "A" */}
+          {/* Left leg: (28,12) to (20,65) · Right leg: (52,12) to (60,65) · Crossbar at y=46 */}
           <Path
-            d="M30,5 C34.5,11 38.5,21 40.5,29 C42.5,37 43.5,41 44.5,45"
+            d="M28,12 L20,65 M52,12 L60,65 M26,46 L54,46"
             stroke={COLORS.letterform}
-            strokeWidth="4.5"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+
+          {/* Compass outer ring */}
+          <Circle cx="40" cy="32" r="10" stroke={COLORS.compassRing} strokeWidth="1" fill="none" />
+
+          {/* 4-point compass star */}
+          <Path
+            d="M40,22 L40,42 M30,32 L50,32"
+            stroke={COLORS.compassStar}
+            strokeWidth="1.5"
             strokeLinecap="round"
             fill="none"
           />
-          {/* Main Wave A — right stroke */}
-          <Path
-            d="M30,5 C25.5,11 21.5,21 19.5,29 C17.5,37 16.5,41 15.5,45"
-            stroke={COLORS.letterform}
-            strokeWidth="4.5"
-            strokeLinecap="round"
-            fill="none"
-          />
-          {/* Crossbar */}
-          <Line x1="22" y1="26" x2="38" y2="26" stroke={COLORS.letterform} strokeWidth="4" strokeLinecap="round" />
 
-          {/* Compass star */}
-          <Line x1="30" y1="20" x2="30" y2="40" stroke={COLORS.compassRing} strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
-          <Line x1="20" y1="30" x2="40" y2="30" stroke={COLORS.compassRing} strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
-
-          {/* Compass inner ring */}
-          <Circle cx="30" cy="30" r="8" stroke={COLORS.compassRing} strokeWidth="1" fill="none" opacity="0.5" />
-
-          {/* Center dot */}
-          <Circle cx="30" cy="30" r="2.5" fill={COLORS.compassAccent} opacity="0.9" />
-
-          {/* N label */}
-          <SvgText x="27.5" y="3" fontFamily="monospace" fontSize="4.5" fill={COLORS.compassRing} opacity="0.7">N</SvgText>
+          {/* Compass center dot (Success Green) */}
+          <Circle cx="40" cy="32" r="2.5" fill={COLORS.compassDot} />
         </Svg>
       </Animated.View>
 
