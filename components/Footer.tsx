@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CompassRose } from './SketchIcons';
+import CompassLogo from './CompassLogo';
 
 const FOOTER_SECTIONS = [
   {
@@ -34,8 +34,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand column */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 font-heading text-2xl text-primary tracking-wide hover:text-accent transition-colors">
-              <CompassRose size={20} className="text-accent" />
+            <Link href="/" className="flex items-center gap-2 font-heading text-xl text-primary tracking-wide hover:text-accent transition-colors">
+              <CompassLogo size={20} />
               ASORIA
             </Link>
             <p className="text-text-dim text-sm font-body leading-relaxed">
@@ -46,15 +46,37 @@ export default function Footer() {
               <span className="text-text-secondary">Crokora</span>
             </p>
             <a
-              href="mailto:support@asoria.app"
+              href="mailto:asoria.app@gmail.com"
               className="text-primary text-sm font-body hover:text-accent transition-colors block"
             >
-              support@asoria.app
+              asoria.app@gmail.com
             </a>
             {/* Social links */}
             <div className="flex gap-4 pt-2">
               <a
-                href="https://instagram.com/asoria.app"
+                href="https://www.tiktok.com/@asoria.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-dim hover:text-primary transition-colors"
+                aria-label="TikTok"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a4.85 4.85 0 00-.79-.1A4.83 4.83 0 003.07 15.3a4.83 4.83 0 004.82 4.83 4.83 4.83 0 003.77-4.25V15a5.02 5.02 0 005 5 5.02 5.02 0 005-5V9.16a5.02 5.02 0 00-2.63-4.09 4.83 4.83 0 01-3.77 1.62z" />
+                </svg>
+              </a>
+              <a
+                href="https://www.facebook.com/profile.php?id=61589310296162"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-dim hover:text-primary transition-colors"
+                aria-label="Facebook"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              </a>
+              <a
+                href="https://www.instagram.com/asoria.app/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-text-dim hover:text-primary transition-colors"
@@ -65,7 +87,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="https://twitter.com/asoria_app"
+                href="https://x.com/Asoria_app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-text-dim hover:text-primary transition-colors"

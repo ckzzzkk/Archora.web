@@ -2,6 +2,8 @@ import Link from 'next/link';
 import BlueprintHeroIllustration from '@/components/BlueprintHeroIllustration';
 import BlueprintCard from '@/components/BlueprintCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
+import AppWorkflowShowcase from '@/components/AppWorkflowShowcase';
+import HeroDeviceFrame from '@/components/HeroDeviceFrame';
 import {
   FloorPlanIcon,
   ARIcon,
@@ -77,7 +79,7 @@ export default function Home() {
           </div>
 
           <div className="h-[400px] lg:h-[500px]">
-            <BlueprintHeroIllustration />
+            <HeroDeviceFrame />
           </div>
         </div>
       </section>
@@ -146,29 +148,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats strip */}
-      <section className="py-20 px-6 border-y border-border">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-          <div>
-            <div className="text-4xl md:text-5xl font-bold text-primary mb-2 font-mono">
-              <AnimatedCounter target={10000} suffix="+" />
-            </div>
-            <p className="text-text-secondary font-body text-sm">Designs Generated</p>
-          </div>
-          <div>
-            <div className="text-4xl md:text-5xl font-bold text-primary mb-2 font-mono">
-              <AnimatedCounter target={50000} suffix="+" />
-            </div>
-            <p className="text-text-secondary font-body text-sm">Rooms Scanned</p>
-          </div>
-          <div>
-            <div className="text-4xl md:text-5xl font-bold text-accent mb-2 font-mono">
-              <AnimatedCounter target={4} suffix=".8" />
-            </div>
-            <p className="text-text-secondary font-body text-sm">App Rating</p>
-          </div>
-        </div>
-      </section>
+      {/* App Workflow Showcase */}
+      <AppWorkflowShowcase />
 
       {/* CTA banner */}
       <section className="py-24 px-6">

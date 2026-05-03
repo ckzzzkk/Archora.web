@@ -34,10 +34,10 @@ export default function ContactPage() {
               </div>
               <h3 className="font-heading text-lg text-text mb-1">Email</h3>
               <a
-                href="mailto:support@asoria.app"
+                href="mailto:asoria.app@gmail.com"
                 className="text-primary font-body text-sm hover:text-accent transition-colors"
               >
-                support@asoria.app
+                asoria.app@gmail.com
               </a>
             </div>
 
@@ -61,7 +61,23 @@ export default function ContactPage() {
               <h3 className="font-heading text-lg text-text mb-2">Social</h3>
               <div className="flex gap-4">
                 <a
-                  href="https://instagram.com/asoria.app"
+                  href="https://www.tiktok.com/@asoria.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-text-secondary hover:text-primary transition-colors text-sm font-body"
+                >
+                  TikTok
+                </a>
+                <a
+                  href="https://www.facebook.com/profile.php?id=61589310296162"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-text-secondary hover:text-primary transition-colors text-sm font-body"
+                >
+                  Facebook
+                </a>
+                <a
+                  href="https://www.instagram.com/asoria.app/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-text-secondary hover:text-primary transition-colors text-sm font-body"
@@ -69,7 +85,7 @@ export default function ContactPage() {
                   Instagram
                 </a>
                 <a
-                  href="https://twitter.com/asoria_app"
+                  href="https://x.com/Asoria_app"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-text-secondary hover:text-primary transition-colors text-sm font-body"
@@ -83,6 +99,10 @@ export default function ContactPage() {
           {/* Contact form */}
           <div className="lg:col-span-2">
             <ContactForm />
+            {/* Thank you message */}
+            <p className="text-center text-text-dim font-body text-sm mt-8">
+              Thank you for being part of the ASORIA journey. We can't wait to see what you build.
+            </p>
           </div>
         </div>
       </div>
