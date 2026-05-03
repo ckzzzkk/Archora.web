@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getArchitectMultiplier } from './aiLimits.ts';
+import { requireEnv } from './errors.ts';
 
 export async function getAuthUser(req: Request) {
   const authHeader = req.headers.get('Authorization');
@@ -11,8 +13,8 @@ export async function getAuthUser(req: Request) {
 
   const token = authHeader.replace('Bearer ', '');
   const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    requireEnv('SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
   );
 
   const { data: { user }, error } = await supabase.auth.getUser(token);

@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireEnv } from './errors.ts';
 
 export type AuditAction =
   | 'ai_generate'
@@ -35,8 +36,8 @@ export interface AuditEntry {
 export async function logAudit(entry: AuditEntry): Promise<void> {
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
 
     await supabase.from('audit_logs').insert({

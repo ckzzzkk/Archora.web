@@ -24,6 +24,8 @@ const MESHY_BASE = 'https://api.meshy.ai';
 const RequestSchema = z.object({
   imageUrl: z.string().url(),
   projectId: z.string().uuid().optional(),
+  name: z.string().optional(),
+  category: z.string().optional(),
 });
 
 // Furniture categories for the Vision prompt
@@ -219,7 +221,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const limited = await checkRateLimit(`furniture_image:${user.id}`, 10, 3600);
   if (limited) return Errors.rateLimited('Image-to-furniture rate limit exceeded (10/hr)');
 
-  const quotaOk = await checkQuota(user.id, 'ai_generation');
+  const quotaOk = await checkQuota(user.id, 'viga');
   if (!quotaOk) return Errors.quotaExceeded('AI generation quota exceeded');
 
   // ── Parse body ────────────────────────────────────────────────────────────
@@ -233,7 +235,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const parsed = RequestSchema.safeParse(body);
   if (!parsed.success) return Errors.validation('Invalid request', parsed.error.issues);
 
-  const { imageUrl, projectId } = parsed.data;
+  const { imageUrl, projectId, name, category } = parsed.data;
 
   const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
   if (!anthropicKey) {
@@ -304,8 +306,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .insert({
       user_id: user.id,
       project_id: projectId && uuidRegex().test(projectId) ? projectId : null,
-      name: identification.name,
-      category: identification.category,
+      name: name || identification.name,
+      category: category || identification.category,
       mesh_url: meshUrl,
       thumbnail_url: thumbnailUrl,
       source_image_url: imageUrl,
@@ -337,7 +339,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // ── Build CustomAsset for blueprintStore ──────────────────────────────────
   const customAsset = {
-    id: (record as Record<string, unknown>?.id as string) ?? crypto.randomUUID(),
+    id: ((record as Record<string, unknown>)?.id as string) ?? crypto.randomUUID(),
     name: identification.name,
     prompt: identification.furnitureType,
     style: identification.styleTags.join(', ') || identification.category,

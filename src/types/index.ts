@@ -67,6 +67,7 @@ export interface User {
   subscriptionTier: SubscriptionTier;
   aiGenerationsUsed: number;
   arScansUsed: number;
+  vigaRequestsUsed: number;
   quotaResetDate: string;
   stripeCustomerId: string | null;
   role: 'user' | 'admin';

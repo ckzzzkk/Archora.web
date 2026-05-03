@@ -4,13 +4,6 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
-export interface VigaTaskStatus {
-  id: string;
-  status: 'pending' | 'processing' | 'done' | 'failed';
-  gltfUrl: string | null;
-  errorMessage: string | null;
-}
-
 export interface VigaMesh {
   id: string;
   name: string;
@@ -20,15 +13,18 @@ export interface VigaMesh {
   dimensions: { x: number; y: number; z: number };
 }
 
-/** Submit an image URL for VIGA reconstruction */
-export async function submitVigaReconstruction(
+/**
+ * Submit an image for Meshy AI reconstruction via generate-furniture-from-image.
+ * Returns the custom_furniture record ID immediately (synchronous — no realtime needed).
+ */
+export async function submitMeshyReconstruction(
   imageUrl: string,
   options: { projectId?: string; name?: string; category?: string } = {},
-): Promise<{ taskId: string }> {
+): Promise<{ meshId: string }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token ?? '';
 
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/viga-request`, {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-furniture-from-image`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -45,47 +41,11 @@ export async function submitVigaReconstruction(
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`viga-request failed (${response.status}): ${errorBody}`);
+    throw new Error(`generate-furniture-from-image failed (${response.status}): ${errorBody}`);
   }
 
-  const data = await response.json() as { taskId: string };
-  return { taskId: data.taskId };
-}
-
-/** Subscribe to Realtime channel for VIGA task status updates */
-export function subscribeToVigaTask(
-  taskId: string,
-  onUpdate: (status: VigaTaskStatus) => void,
-): RealtimeChannel {
-  const channel = supabase.channel(`viga_task:${taskId}`);
-
-  channel.on(
-    'postgres_changes',
-    {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'viga_tasks',
-      filter: `id=eq.${taskId}`,
-    },
-    (payload) => {
-      const row = payload.new as Record<string, unknown>;
-      onUpdate({
-        id: String(row.id ?? ''),
-        status: (row.status as VigaTaskStatus['status']) ?? 'pending',
-        gltfUrl: (row.gltf_url as string | null) ?? null,
-        errorMessage: (row.error_message as string | null) ?? null,
-      });
-    },
-  );
-
-  channel.subscribe();
-
-  return channel;
-}
-
-/** Unsubscribe from a VIGA task Realtime channel */
-export function unsubscribeFromVigaTask(channel: RealtimeChannel): void {
-  supabase.removeChannel(channel);
+  const data = await response.json() as { customAsset: { id: string } };
+  return { meshId: data.customAsset.id };
 }
 
 /** Fetch all custom furniture for the current user */

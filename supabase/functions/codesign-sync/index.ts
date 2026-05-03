@@ -2,7 +2,7 @@ import { z } from 'https://esm.sh/zod@3.23.8';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { getAuthUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
@@ -38,8 +38,8 @@ serve(async (req: Request) => {
   const { projectId, floorIndex, delta, expectedVersion } = parsed.data;
 
   const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    requireEnv('SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
   );
 
   // 1. Verify user is a project member with editor/owner role

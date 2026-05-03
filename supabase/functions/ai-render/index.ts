@@ -96,8 +96,8 @@ async function generatePrompts(
   maxTokens = 1024,
 ): Promise<PromptResult> {
   const features = [
-    hasPool ? 'swimming pool',
-    hasGarden ? 'landscaped garden',
+    hasPool ? 'swimming pool' : '',
+    hasGarden ? 'landscaped garden' : '',
   ].filter(Boolean).join(', ') || 'none';
 
   const userPrompt = `Generate an architectural render prompt for a ${buildingType}.
@@ -248,6 +248,11 @@ serve(async (req: Request) => {
       if (supabaseUrl && supabaseKey) {
         const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
         const supabase = createClient(supabaseUrl, supabaseKey);
+        try {
+          await supabase.rpc('increment_quota', { p_user_id: user.id, p_field: 'renders_used', p_amount: 1 });
+        } catch (e) {
+          console.warn('Failed to increment renders_used quota:', e);
+        }
         supabase.from('renders').insert({
           user_id: user.id,
           render_url: renderUrl,

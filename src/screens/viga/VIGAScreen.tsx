@@ -19,12 +19,9 @@ import { ArchText } from '../../components/common/ArchText';
 import { OvalButton } from '../../components/common/OvalButton';
 import { supabase } from '../../lib/supabase';
 import {
-  submitVigaReconstruction,
-  subscribeToVigaTask,
-  unsubscribeFromVigaTask,
+  submitMeshyReconstruction,
   fetchCustomFurniture,
   type VigaMesh,
-  type VigaTaskStatus,
 } from '../../services/vigaService';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -42,13 +39,6 @@ const CATEGORIES = [
   'Other',
 ];
 
-const STATUS_LABELS: Record<VigaTaskStatus['status'], string> = {
-  pending: 'Queued',
-  processing: 'Reconstructing...',
-  done: 'Complete',
-  failed: 'Failed',
-};
-
 export function VIGAScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
@@ -56,16 +46,13 @@ export function VIGAScreen() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [meshName, setMeshName] = useState('');
   const [category, setCategory] = useState('');
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
-  const [activeStatus, setActiveStatus] = useState<VigaTaskStatus['status']>('pending');
   const [meshes, setMeshes] = useState<VigaMesh[]>([]);
   const [loadingMeshes, setLoadingMeshes] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Fetch custom meshes on mount
   useEffect(() => {
-    let channel: ReturnType<typeof subscribeToVigaTask> | null = null;
-
     const loadMeshes = async () => {
       setLoadingMeshes(true);
       try {
@@ -79,28 +66,7 @@ export function VIGAScreen() {
     };
 
     loadMeshes();
-
-    return () => {
-      if (channel) unsubscribeFromVigaTask(channel);
-    };
   }, []);
-
-  // Subscribe to realtime updates when activeTaskId changes
-  useEffect(() => {
-    if (!activeTaskId) return;
-
-    const channel = subscribeToVigaTask(activeTaskId, (status) => {
-      setActiveStatus(status.status);
-      if (status.status === 'done' || status.status === 'failed') {
-        // Reload mesh list when done
-        fetchCustomFurniture()
-          .then(setMeshes)
-          .catch(() => null);
-      }
-    });
-
-    return () => unsubscribeFromVigaTask(channel);
-  }, [activeTaskId]);
 
   const pickFromGallery = useCallback(async () => {
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -144,16 +110,17 @@ export function VIGAScreen() {
     }
 
     setUploading(true);
+    setSubmitError(null);
     try {
       // 1. Upload image to Supabase Storage
       const uri = selectedImage;
-      const path = `${Date.now()}-viga-input.jpg`;
+      const path = `${Date.now()}-furniture-input.jpg`;
 
       const response = await fetch(uri);
       const blob = await response.blob();
 
       const { error: uploadError } = await supabase.storage
-        .from('viga-inputs')
+        .from('furniture-images')
         .upload(path, blob, {
           upsert: false,
           contentType: 'image/jpeg',
@@ -162,19 +129,20 @@ export function VIGAScreen() {
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from('viga-inputs')
+        .from('furniture-images')
         .getPublicUrl(path);
 
       const imageUrl = urlData.publicUrl;
 
-      // 2. Submit for reconstruction
-      const { taskId } = await submitVigaReconstruction(imageUrl, {
+      // 2. Submit for Meshy AI reconstruction
+      await submitMeshyReconstruction(imageUrl, {
         name: meshName.trim(),
         category: category || undefined,
       });
 
-      setActiveTaskId(taskId);
-      setActiveStatus('pending');
+      // 3. Reload mesh list
+      const updated = await fetchCustomFurniture();
+      setMeshes(updated);
 
       // Clear form
       setSelectedImage(null);
@@ -182,7 +150,7 @@ export function VIGAScreen() {
       setCategory('');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
-      Alert.alert('Error', message);
+      setSubmitError(message);
     } finally {
       setUploading(false);
     }
@@ -194,7 +162,7 @@ export function VIGAScreen() {
   }, [navigation]);
 
   return (
-    <TierGate feature="arScansPerMonth" featureLabel="VIGA 3D Reconstruction">
+    <TierGate feature="vigaRequestsPerMonth" featureLabel="Custom Furniture from Photo">
       <View
         className="flex-1"
         style={{ backgroundColor: DS.colors.background, paddingTop: insets.top }}
@@ -337,8 +305,8 @@ export function VIGAScreen() {
             fullWidth
           />
 
-          {/* Active task status */}
-          {activeTaskId && (
+          {/* Uploading / processing indicator */}
+          {uploading && (
             <View
               className="mb-8 rounded-2xl p-4 flex-row items-center gap-4"
               style={{
@@ -350,18 +318,28 @@ export function VIGAScreen() {
               <CompassRoseLoader size="small" />
               <View className="flex-1">
                 <Text style={{ color: DS.colors.primary, fontSize: DS.fontSize.sm }}>
-                  {STATUS_LABELS[activeStatus]}
+                  Generating 3D mesh...
                 </Text>
                 <Text style={{ color: DS.colors.primaryDim, fontSize: DS.fontSize.xs }}>
-                  {activeStatus === 'processing'
-                    ? 'VIGA is reconstructing your mesh...'
-                    : activeStatus === 'done'
-                    ? 'Mesh ready — check your library below'
-                    : activeStatus === 'failed'
-                    ? 'Something went wrong. Please try again.'
-                    : 'Waiting in queue...'}
+                  Meshy AI is working on your furniture model
                 </Text>
               </View>
+            </View>
+          )}
+
+          {/* Error display */}
+          {submitError && (
+            <View
+              className="mb-8 rounded-2xl p-4"
+              style={{
+                backgroundColor: DS.colors.error + '20',
+                borderWidth: 1,
+                borderColor: DS.colors.error,
+              }}
+            >
+              <Text style={{ color: DS.colors.error, fontSize: DS.fontSize.sm }}>
+                {submitError}
+              </Text>
             </View>
           )}
 

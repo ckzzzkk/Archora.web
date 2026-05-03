@@ -111,6 +111,7 @@ function mapDbUser(row: Record<string, unknown>): User {
     subscriptionTier: (validTiers.includes(tier as typeof validTiers[number]) ? tier : 'starter') as User['subscriptionTier'],
     aiGenerationsUsed: Number(row.ai_generations_used ?? 0),
     arScansUsed: Number(row.ar_scans_used ?? 0),
+    vigaRequestsUsed: Number(row.viga_requests_used ?? 0),
     quotaResetDate: (row.quota_reset_date as string) ?? new Date().toISOString(),
     stripeCustomerId: (row.stripe_customer_id as string | null) ?? null,
     role: (validRoles.includes(role as typeof validRoles[number]) ? role : 'user') as User['role'],

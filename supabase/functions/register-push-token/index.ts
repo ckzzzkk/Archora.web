@@ -10,7 +10,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const cors = handleCors(req);
@@ -38,8 +38,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    requireEnv('SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
   );
 
   const { error } = await supabase

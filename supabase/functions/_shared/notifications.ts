@@ -10,6 +10,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { requireEnv } from './errors.ts';
 
 type NotificationType =
   | 'generation_complete' | 'generation_failed'
@@ -65,8 +66,8 @@ const DEFAULT_PUSH: Record<NotificationType, { title: string; body: string }> = 
 // ── Main function ────────────────────────────────────────────────────────────────
 
 export async function sendNotification(params: SendNotificationParams): Promise<void> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabaseUrl = requireEnv('SUPABASE_URL');
+  const serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
   const expoPushSecret = Deno.env.get('EXPO_PUSH_SECRET');
 
   const admin = createClient(supabaseUrl, serviceRoleKey);

@@ -4,7 +4,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { corsHeaders } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 
 const WebhookSchema = z.object({
   task_id: z.string(),
@@ -27,8 +27,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!projectId) return Errors.validation('Missing project_id');
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
 
     const updateData: Record<string, unknown> = {
