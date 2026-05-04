@@ -18,7 +18,7 @@ export function placeFurniture(rooms: LayoutRoom[], floorIndex = 0): FurniturePi
         name: def.name,
         category: def.category,
         roomId: room.id,
-        position: { x: room.x + def.w * 0.5, y: elevation, z: room.y + def.d * 0.5 },
+        position: { x: room.x + room.width * 0.5, y: elevation, z: room.y + room.height * 0.5 },
         rotation: { x: 0, y: 0, z: 0 },
         dimensions: { x: def.w, y: def.h, z: def.d },
         procedural: true,
