@@ -412,7 +412,7 @@ export function GenerationScreen() {
   const handleGenerate = useCallback(async () => {
     if (!buildingType || !style) return;
 
-    // Dev flag: use deterministic procedural layout engine instead of AI
+    /// Dev flag: use deterministic procedural layout engine instead of AI
     if (__DEV__ && process.env.EXPO_PUBLIC_USE_PROCEDURAL_LAYOUT === 'true') {
       const { generateFloorPlan } = await import('../../utils/layoutEngine');
       const payload = buildPayload();
