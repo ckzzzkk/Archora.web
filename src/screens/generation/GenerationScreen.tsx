@@ -411,6 +411,18 @@ export function GenerationScreen() {
 
   const handleGenerate = useCallback(async () => {
     if (!buildingType || !style) return;
+
+    // Dev flag: use deterministic procedural layout engine instead of AI
+    if (__DEV__ && process.env.EXPO_PUBLIC_USE_PROCEDURAL_LAYOUT === 'true') {
+      const { generateFloorPlan } = await import('../../utils/layoutEngine');
+      const payload = buildPayload();
+      const blueprint = generateFloorPlan(payload);
+      await blueprintActions.loadBlueprint(blueprint);
+      await save(payload);
+      navigation.navigate('Workspace', { projectId: blueprint.id });
+      return;
+    }
+
     if (!aiAllowed) {
       navigation.navigate('Subscription', { feature: 'aiGenerationsPerMonth' });
       return;

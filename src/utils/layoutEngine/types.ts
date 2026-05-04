@@ -1,0 +1,114 @@
+import type { RoomType } from '../../types/blueprint';
+
+/**
+ * Internal layout engine types (before conversion to BlueprintData)
+ */
+
+export interface Rectangle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface LayoutRoom extends Rectangle {
+  id: string;
+  type: RoomType;
+  name: string;
+  floorIndex: number;
+}
+
+export interface WallSegment {
+  id: string;
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+  isExterior: boolean;
+  adjacentRooms: [string, string | null]; // [roomA, roomB or null if exterior]
+}
+
+export interface Opening {
+  id: string;
+  wallId: string;
+  type: 'door' | 'window' | 'sliding_door';
+  position: number; // distance from wall start along wall
+  width: number;
+  height: number;
+  sillHeight: number;
+}
+
+export interface AdjacencyEdge {
+  roomA: string;
+  roomB: string;
+  sharedWallLength: number;
+  score: number; // 0–1, higher = more important
+}
+
+export interface LayoutConfig {
+  buildingType: 'house' | 'apartment' | 'office' | 'studio' | 'villa' | 'commercial';
+  plotWidth: number;   // metres
+  plotDepth: number;   // metres
+  floors: number;
+  rooms: Array<{
+    type: RoomType;
+    name: string;
+    minWidth: number;
+    minHeight: number;
+    preferredAspect: number; // width / height
+    count?: number;          // how many of this type (for bedrooms, bathrooms, etc.)
+  }>;
+}
+
+/** Minimum room sizes enforced during BSP packing */
+export const ROOM_MINIMA: Record<RoomType, { minArea: number; minWidth: number; minHeight: number }> = {
+  bedroom:    { minArea: 8.0,  minWidth: 2.1, minHeight: 2.0 },
+  bathroom:   { minArea: 5.0,  minWidth: 1.7, minHeight: 1.7 },
+  kitchen:   { minArea: 4.5,  minWidth: 1.8, minHeight: 1.5 },
+  living_room:{ minArea: 13.0, minWidth: 3.0, minHeight: 3.0 },
+  dining_room:{ minArea: 9.0,  minWidth: 2.8, minHeight: 2.5 },
+  hallway:   { minArea: 2.0,  minWidth: 1.0, minHeight: 1.0 },
+  garage:    { minArea: 18.0, minWidth: 3.0, minHeight: 3.0 },
+  office:    { minArea: 8.0,  minWidth: 2.1, minHeight: 2.1 },
+  laundry:   { minArea: 4.0,  minWidth: 1.5, minHeight: 1.5 },
+  storage:   { minArea: 4.0,  minWidth: 1.5, minHeight: 1.5 },
+  balcony:   { minArea: 4.0,  minWidth: 1.5, minHeight: 1.5 },
+};
+
+/** Which room types should be placed on upper floors */
+export const GROUND_FLOOR_ONLY: RoomType[] = ['garage', 'laundry', 'storage'];
+
+/** Default furniture per room type */
+export const DEFAULT_FURNITURE: Record<RoomType, Array<{ name: string; category: string; w: number; h: number; d: number }>> = {
+  bedroom: [
+    { name: 'bed',       category: 'bedroom',  w: 1.6, h: 0.5,  d: 2.0 },
+    { name: 'wardrobe',  category: 'storage',   w: 1.2, h: 0.6,  d: 0.6 },
+    { name: 'nightstand',category: 'bedroom',  w: 0.5, h: 0.5,  d: 0.4 },
+  ],
+  bathroom: [
+    { name: 'toilet',   category: 'bathroom', w: 0.4, h: 0.8,  d: 0.65 },
+    { name: 'sink',     category: 'bathroom', w: 0.6, h: 0.5,  d: 0.45 },
+    { name: 'shower',   category: 'bathroom', w: 0.9, h: 0.9,  d: 0.9 },
+  ],
+  kitchen: [
+    { name: 'counter',  category: 'kitchen',  w: 2.4, h: 0.9,  d: 0.6 },
+    { name: 'fridge',   category: 'kitchen',  w: 0.7, h: 0.9,  d: 0.7 },
+    { name: 'stove',    category: 'kitchen',  w: 0.6, h: 0.9,  d: 0.6 },
+  ],
+  living_room: [
+    { name: 'sofa',     category: 'living',   w: 2.2, h: 0.85, d: 0.9 },
+    { name: 'coffee_table', category: 'living', w: 1.2, h: 0.45, d: 0.6 },
+    { name: 'tv_unit',  category: 'media',    w: 1.8, h: 0.5,  d: 0.4 },
+  ],
+  dining_room: [
+    { name: 'dining_table', category: 'tables', w: 1.6, h: 0.75, d: 0.9 },
+    { name: 'chair',    category: 'tables',   w: 0.45, h: 0.9, d: 0.45 },
+  ],
+  hallway: [],
+  garage:   [{ name: 'parking_spot', category: 'outdoor', w: 3.0, h: 0.1, d: 5.0 }],
+  office:   [
+    { name: 'desk',     category: 'tables',  w: 1.4, h: 0.75, d: 0.7 },
+    { name: 'chair',    category: 'tables',  w: 0.5, h: 1.0,  d: 0.5 },
+  ],
+  laundry:  [{ name: 'washer', category: 'outdoor', w: 0.6, h: 0.85, d: 0.6 }],
+  storage:  [{ name: 'shelf_unit', category: 'storage', w: 1.0, h: 0.3, d: 0.4 }],
+  balcony:  [{ name: 'outdoor_chair', category: 'outdoor', w: 0.6, h: 0.8, d: 0.6 }],
+};
