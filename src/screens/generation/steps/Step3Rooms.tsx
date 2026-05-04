@@ -4,6 +4,9 @@ import { ArchText } from '../../../components/common/ArchText';
 import { View, Pressable, Switch } from 'react-native';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useHaptics } from '../../../hooks/useHaptics';
+import { useTierGate } from '../../../hooks/useTierGate';
+import { TIER_LIMITS } from '../../../utils/tierLimits';
+import type { Tier } from '../../../utils/tierLimits';
 
 
 interface Props {
@@ -16,6 +19,8 @@ interface Props {
   poolSize: 'small' | 'medium' | 'large';
   hasHomeOffice: boolean;
   hasUtilityRoom: boolean;
+  floors: number;
+  tier: Tier;
   onBedroomsChange: (v: number) => void;
   onBathroomsChange: (v: number) => void;
   onLivingAreasChange: (v: number) => void;
@@ -25,6 +30,7 @@ interface Props {
   onPoolSizeChange: (v: 'small' | 'medium' | 'large') => void;
   onHomeOfficeChange: (v: boolean) => void;
   onUtilityRoomChange: (v: boolean) => void;
+  onFloorsChange: (v: number) => void;
   onNext: () => void;
 }
 
@@ -166,6 +172,43 @@ export function Step3Rooms(props: Props) {
 
       <ToggleRow label="Home Office" value={props.hasHomeOffice} onChange={props.onHomeOfficeChange} />
       <ToggleRow label="Utility Room" value={props.hasUtilityRoom} onChange={props.onUtilityRoomChange} />
+
+      {/* Multi-floor selector — Pro/Architect only */}
+      {props.tier !== 'starter' && (() => {
+        const maxFloors = TIER_LIMITS[props.tier].maxFloors;
+        if (maxFloors <= 1) return null;
+        const floorOptions = Array.from({ length: maxFloors }, (_, i) => i + 1);
+        return (
+          <View style={{ marginTop: 4, marginBottom: 12 }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 16, color: DS.colors.primary, marginBottom: 10 }}>
+              Number of floors
+            </ArchText>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {floorOptions.map((n) => (
+                <Pressable
+                  key={n}
+                  onPress={() => props.onFloorsChange(n)}
+                  style={{
+                    paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12,
+                    backgroundColor: props.floors === n ? `${DS.colors.primary}20` : DS.colors.surface,
+                    borderWidth: 1,
+                    borderColor: props.floors === n ? DS.colors.primary : DS.colors.border,
+                  }}
+                >
+                  <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 14, color: props.floors === n ? DS.colors.primary : DS.colors.primaryDim }}>
+                    {n} floor{n > 1 ? 's' : ''}
+                  </ArchText>
+                </Pressable>
+              ))}
+            </View>
+            {props.floors > 1 && (
+              <ArchText variant="body" style={{ fontSize: 11, color: DS.colors.primaryGhost, marginTop: 6 }}>
+                Ground floor + {props.floors - 1} upper floor{props.floors > 2 ? 's' : ''} — staircases auto-generated
+              </ArchText>
+            )}
+          </View>
+        );
+      })()}
 
       <View style={{ flex: 1 }} />
 

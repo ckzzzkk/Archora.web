@@ -288,6 +288,7 @@ export function GenerationScreen() {
 
   // Architect selection state
   const [selectedArchitectId, setSelectedArchitectId] = useState<string | null>(null);
+  const tier = user?.subscriptionTier ?? 'starter';
 
   // Payload state
   const [buildingType, setBuildingType] = useState<BuildingType | null>(null);
@@ -309,6 +310,7 @@ export function GenerationScreen() {
   const [notes, setNotes] = useState<string>('');
   const [transcript, setTranscript] = useState<string>('');
   const [consultationSummary, setConsultationSummary] = useState<ConsultationSummary | null>(null);
+  const [floorCount, setFloorCount] = useState(1);
 
   // Screen state
   const [screenState, setScreenState] = useState<ScreenState>('idle');
@@ -395,6 +397,7 @@ export function GenerationScreen() {
       plotSize: parseFloat(plotSize) || 175,
       plotUnit: plotUnit as 'm2' | 'ft2',
       ...rooms,
+      floors: floorCount,
       style,
       referenceImageUrl: referenceImageUrl ?? undefined,
       additionalNotes: notes,
@@ -577,6 +580,8 @@ export function GenerationScreen() {
               poolSize={rooms.poolSize}
               hasHomeOffice={rooms.hasHomeOffice}
               hasUtilityRoom={rooms.hasUtilityRoom}
+              floors={floorCount}
+              tier={tier}
               onBedroomsChange={(v) => setRooms((r) => ({ ...r, bedrooms: v }))}
               onBathroomsChange={(v) => setRooms((r) => ({ ...r, bathrooms: v }))}
               onLivingAreasChange={(v) => setRooms((r) => ({ ...r, livingAreas: v }))}
@@ -586,6 +591,7 @@ export function GenerationScreen() {
               onPoolSizeChange={(v) => setRooms((r) => ({ ...r, poolSize: v }))}
               onHomeOfficeChange={(v) => setRooms((r) => ({ ...r, hasHomeOffice: v }))}
               onUtilityRoomChange={(v) => setRooms((r) => ({ ...r, hasUtilityRoom: v }))}
+              onFloorsChange={setFloorCount}
               onNext={goNext}
             />
 

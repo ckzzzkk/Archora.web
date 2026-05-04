@@ -20,6 +20,8 @@ export interface GenerationPayload {
   climateZone?: ClimateZone;
   hemisphere?: 'north' | 'south';
   architectId?: string;
+  /** Number of floors. Defaults to 1. Pro/Architect tiers: 1–20 */
+  floors?: number;
 }
 
 export type GenerationStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;

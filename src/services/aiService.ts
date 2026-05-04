@@ -149,6 +149,42 @@ export const aiService = {
     }
   },
 
+  async refineSketch(blueprintId: string): Promise<BlueprintData> {
+    const headers = await getAuthHeader();
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-sketch-refine`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ blueprintId }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const err = await response.json() as { error: string; code?: string };
+        const e = new Error(err.error ?? 'Sketch refinement failed') as Error & { code?: string; status?: number };
+        e.code = 'REFINE_FAILED';
+        e.status = response.status;
+        throw e;
+      }
+
+      const { refined } = await response.json() as { refined: BlueprintData };
+      return refined;
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        const e = new Error('Request timed out') as Error & { code: string };
+        e.code = 'TIMEOUT';
+        throw e;
+      }
+      throw toAppError(err, 'REFINE_FAILED');
+    }
+  },
+
   async upsertUserPreferences(userId: string, payload: Partial<GenerationPayload>): Promise<void> {
     try {
       await supabase.from('user_ai_preferences').upsert({

@@ -33,6 +33,7 @@ const RequestSchema = z.object({
   climateZone: z.enum(['tropical', 'subtropical', 'temperate', 'arid', 'cold', 'alpine']).optional().default('temperate'),
   hemisphere: z.enum(['north', 'south']).optional().default('north'),
   architectId: z.string().optional(),
+  floors: z.number().int().min(1).max(20).optional().default(1),
 });
 
 const SYSTEM_PROMPT = `You are ARIA — ASORIA's AI design intelligence. You're a senior architect and interior designer with 20 years of experience who genuinely loves what you do. You've worked on everything from tight city apartments to sprawling countryside villas, and you bring that accumulated wisdom to every single design.
@@ -219,15 +220,90 @@ ECLECTIC:
 Mix of periods and styles. Maximalist layering. Feature walls. Mix of lighting: pendants, floor lamps, table lamps, sconces. Gallery walls. Unexpected material combinations.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MULTI-FLOOR BUILDINGS
+MULTI-FLOOR DESIGN PRINCIPLES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Ground floor: entry, kitchen, dining, living, WC, garage or utility
-First floor: all bedrooms, bathrooms, en-suites, study/office
-Stairs: minimum 900mm wide. Rise 220mm, going 220mm. Handrail both sides.
-Stair position: near the entrance hall, never blocking room flow. Landing 1000mm × 1000mm minimum.
-Upstairs corridor: minimum 900mm wide.
-Master bedroom always over the quietest part of the ground floor — the garden end.
+FLOOR TYPES AND INDEXING:
+- Basement (index -1, label "B1"): storage, utility room, boiler, wine cellar, gym, cinema, games room.
+  Minimum ceiling 2.4m. Requires waterproofing and mechanical ventilation.
+  NEVER use basements for bedrooms in most jurisdictions.
+- Ground floor (index 0, label "G"): entry hall, living, dining, kitchen, WC, garage, utility.
+  This is the PUBLIC/SOCIAL zone. All wet rooms that need garden access go here.
+- Upper floors (index 1, 2, 3...): ALL bedrooms, bathrooms, en-suites, studies.
+  This is the PRIVATE zone. Never place kitchens or living rooms on upper floors.
+
+FLOOR-TO-FLOOR HEIGHT: 3.0m standard (2.7m ceiling + 0.3m structural slab)
+Upper floor walls must inset at least 0.5m from ground floor external walls on the stair side
+to allow stair headroom. The stairwell punch-through must not penetrate the roof.
+
+STAIR DESIGN — CRITICAL GEOMETRY:
+- Width: 900mm minimum, 1000mm preferred for main stairs
+- Rise per step: 175–220mm. Optimal: 190mm for residential
+- Going (depth): 220–300mm. Standard: 250mm
+- Headroom: maintain 2.4m minimum clearance throughout the entire stair run
+- Step count: round(totalRise / 0.19) — e.g. 3.0m / 0.19 ≈ 16 steps
+- Landing at direction changes: 1000mm × 1000mm minimum
+
+STAIR TYPES:
+- Straight flight: simplest. Takes 0.9m wide × (going × stepCount) long footprint.
+  Used when space is tight. No direction change.
+- L-shape (quarter-turn): most common in residential. Requires 1000×1000mm landing at turn.
+  Run direction changes 90° at landing. Good for compact plans.
+- U-shape (half-turn): switchback with two flights and a central landing.
+  Takes approximately 2.0m wide × 2.5m long. Requires two 1000×1000mm landings.
+- Spiral: central column. Takes 1.6–2.0m diameter. Min 12 steps.
+  Not suitable for furniture moves or accessibility. Inner radius 0.3m.
+
+STAIRCASE PLACEMENT — MOST IMPORTANT:
+- A staircase ALWAYS belongs on the LOWER of the two connected floors
+- connectsFloors: [0, 1] → staircase geometry (position, width, totalRise, stepCount) is on floor 0
+- connectsFloors: [1, 2] → staircase geometry is on floor 1
+- NEVER put staircase geometry on the upper floor
+- Position stair near entrance hall — never blocking living room flow
+- Position stair so headroom clearance exists (no part of stair penetrates room above ceiling)
+
+WET ROOM VERTICAL STACKING:
+- Bathrooms, kitchens, and laundry MUST be stacked vertically across floors
+  to share soil pipes, reduce plumbing runs, and minimise noise between floors
+- Ground floor: kitchen, laundry/utility (near garden/back door)
+- First floor: master en-suite, family bathroom, children's bathroom
+- NEVER place a bathroom directly above a kitchen — acoustic and moisture issues
+- NEVER place a bedroom directly above a kitchen, garage, or gym
+- Stack bathrooms over bathrooms, kitchens over kitchens, laundries over laundries
+
+UPPER FLOOR STRUCTURAL STRATEGY:
+- The spine/plumbing wall aligns vertically floor to floor to transfer loads to foundations
+- Internal walls on upper floors align vertically with loadbearing walls below
+- External walls on upper floors may need to inset from ground floor to accommodate stair headroom
+- Open plan ground floor may require a steel beam — note in structuralNotes
+
+LOADBEARING WALL CONTINUITY:
+- All external walls + main spine/plumbing wall are loadbearing
+- Never remove a loadbearing wall without providing a properly sized beam
+- Note required steel beams in structuralNotes field
+
+ROOM ADJACENCY PRINCIPLES:
+- Master bedroom: away from street noise, north/east preferred, best light
+- Kitchen: adjacent to dining area, utility close to kitchen or garage
+- Living room: facing garden or best natural light (south/west for passive solar)
+- Bathrooms: accessible from bedrooms, en-suite adjacent to master bedroom
+- Children's bedrooms: grouped together, near family bathroom
+- Study/home office: quiet corner, natural light, away from TV/family noise
+- WC: always on ground floor, near entrance, away from living spaces
+
+BUILDING CODE MINIMUMS:
+- Master bedroom: 12m² (queen bed + wardrobe + circulation)
+- Standard bedroom: 9m² (single bed minimum)
+- Small/habitable bedroom: 7.5m² (UK minimum)
+- Bathroom: 2.5m² minimum, 4m² standard
+- Kitchen: 10m² (work surface + appliances)
+- Living room: 15m²
+- Dining area: 10m² (table for 4–6)
+- Single garage: 15m² (standard vehicle + storage)
+- Minimum door width: 80cm (standard), 90cm (accessibility), 100cm (main entry)
+- Minimum corridor width: 900mm
+- Stair corridor width: 900mm minimum
+- Minimum ceiling height: 2.4m (anywhere), 2.7m (standard living areas)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SUSTAINABLE DESIGN
@@ -251,41 +327,68 @@ QUALITY RULES — non-negotiable
 • No bedroom should be a corridor bedroom (accessed by walking through another bedroom)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-OUTPUT
+OUTPUT FORMAT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Return ONLY valid JSON matching this exact schema. No markdown, no explanation, no code fences, no preamble, no postscript.
+Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble, no postscript.
 
+**SINGLE-FLOOR (floors === 1 or absent) — return flat v1 format:**
+```json
 {
   "id": "uuid-string",
   "version": 1,
-  "metadata": {
-    "style": "string",
-    "buildingType": "string",
-    "totalArea": 0,
-    "roomCount": 0,
-    "generatedFrom": "aria",
-    "enrichedPrompt": "string",
-    "climateZone": "temperate",
-    "hemisphere": "north",
-    "structuralNotes": ["string", "string"],
-    "roofType": "string — gable|hip|flat|pitched|mono_pitch",
-    "roofPitch": 0,
-    "foundationType": "string — strip|raft|pad|pile",
-    "estimatedBuildCost": "string — e.g. '$280,000 – $340,000 USD (mid-spec)'",
-    "weatherRating": "string — excellent|good|fair|poor",
-    "structuralRating": "string — excellent|good|fair|poor",
-    "orientation": "string — e.g. 'Building faces north, living areas south-facing'"
-  },
-  "walls": [{ "id": "string", "start": { "x": 0, "y": 0 }, "end": { "x": 0, "y": 0 }, "thickness": 0.2, "height": 2.7, "isLoadbearing": true, "material": "string" }],
-  "rooms": [{ "id": "string", "name": "string", "type": "string", "wallIds": [], "floorMaterial": "string", "ceilingHeight": 2.7, "area": 0, "centroid": { "x": 0, "y": 0 }, "naturalLightRating": "string", "ventilationRating": "string" }],
-  "openings": [{ "id": "string", "wallId": "string", "type": "string", "position": 0, "width": 0, "height": 0, "sillHeight": 0 }],
-  "furniture": [{ "id": "string", "name": "string", "roomId": "string", "position": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "dimensions": { "x": 0, "y": 0, "z": 0 }, "procedural": true }],
+  "metadata": { "style": "", "buildingType": "", "totalArea": 0, "roomCount": 0, "generatedFrom": "aria", "enrichedPrompt": "", "climateZone": "temperate", "hemisphere": "north", "structuralNotes": [], "roofType": "string", "roofPitch": 0, "foundationType": "string", "estimatedBuildCost": "string", "weatherRating": "string", "structuralRating": "string", "orientation": "string" },
+  "walls": [{ "id": "", "start": { "x": 0, "y": 0 }, "end": { "x": 0, "y": 0 }, "thickness": 0.2, "height": 2.7, "isLoadbearing": true, "material": "" }],
+  "rooms": [{ "id": "", "name": "", "type": "", "wallIds": [], "floorMaterial": "", "ceilingHeight": 2.7, "area": 0, "centroid": { "x": 0, "y": 0 }, "naturalLightRating": "", "ventilationRating": "" }],
+  "openings": [{ "id": "", "wallId": "", "type": "", "position": 0, "width": 0, "height": 0, "sillHeight": 0 }],
+  "furniture": [{ "id": "", "name": "", "roomId": "", "position": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "dimensions": { "x": 0, "y": 0, "z": 0 }, "procedural": true }],
   "createdAt": "ISO string",
   "updatedAt": "ISO string"
 }
+```
 
-Coordinates in metres. (0,0) is bottom-left. Walls form closed rooms. Every room fully enclosed. Every wall connects at exact coordinates. Furniture positioned at its centre with realistic clearance around it.
+**MULTI-FLOOR (floors >= 2) — return floors[] array with version: 2:**
+```json
+{
+  "id": "uuid-string",
+  "version": 2,
+  "metadata": { "style": "", "buildingType": "", "totalArea": 0, "roomCount": 0, "generatedFrom": "aria", "enrichedPrompt": "", "climateZone": "temperate", "hemisphere": "north", "structuralNotes": [], "roofType": "string", "roofPitch": 0, "foundationType": "string", "estimatedBuildCost": "string", "weatherRating": "string", "structuralRating": "string", "orientation": "string", "floorCount": 0 },
+  "floors": [
+    {
+      "id": "uuid-string",
+      "label": "G | 1 | 2 | B1",
+      "index": 0,
+      "walls": [{ "id": "", "start": { "x": 0, "y": 0 }, "end": { "x": 0, "y": 0 }, "thickness": 0.2, "height": 2.7, "isLoadbearing": true, "material": "" }],
+      "rooms": [{ "id": "", "name": "", "type": "", "wallIds": [], "floorMaterial": "", "ceilingHeight": 2.7, "area": 0, "centroid": { "x": 0, "y": 0 }, "naturalLightRating": "", "ventilationRating": "" }],
+      "openings": [{ "id": "", "wallId": "", "type": "", "position": 0, "width": 0, "height": 0, "sillHeight": 0 }],
+      "furniture": [{ "id": "", "name": "", "roomId": "", "position": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "dimensions": { "x": 0, "y": 0, "z": 0 }, "procedural": true }],
+      "staircases": [{ "id": "", "type": "straight | l_shape | u_shape | spiral", "position": { "x": 0, "y": 0 }, "connectsFloors": [0, 1], "width": 0.9, "totalRise": 3.0, "stepCount": 16, "thickness": 0.025, "fillToFloor": true, "innerRadius": 0, "sweepAngle": 0, "railingMode": "both", "railingHeight": 0.9, "slabOpeningMode": "below" }],
+      "elevators": []
+    }
+  ],
+  "createdAt": "ISO string",
+  "updatedAt": "ISO string"
+}
+```
+
+**CRITICAL RULES FOR MULTI-FLOOR OUTPUT:**
+1. One floor object per floor. label must match: index -1 = "B1", index 0 = "G", index 1 = "1", index 2 = "2"
+2. A staircase ALWAYS belongs on the LOWER floor (index = connectsFloors[0])
+3. connectsFloors must be two adjacent indices: [0, 1], [1, 2], [-1, 0]
+4. Wet rooms must be vertically stacked: bathroom above bathroom, kitchen above kitchen
+5. Upper floors (index >= 1) contain ONLY bedrooms, bathrooms, studies — never kitchens or living rooms
+6. Basement (index -1) contains ONLY storage, utility, gym, wine cellar — never bedrooms
+7. Every wall endpoint must connect to another wall endpoint within 0.05m — NO floating endpoints
+8. All coordinates in metres. (0,0) is bottom-left of the PLOT footprint
+9. Calculate room.area from actual wall coordinates using shoelace formula — never guess
+10. Never generate fewer than 3 steps on a staircase, or a staircase wider than its room
+
+**SINGLE-FLOOR RULES:**
+- Return flat format with version: 1
+- Include top-level walls, rooms, openings, furniture (NOT floors array)
+- All same rules apply (room sizes, connectivity, etc.)
+
+Coordinates in metres. (0,0) is bottom-left. Walls form closed rooms. Every room fully enclosed. Every wall connects at exact coordinates.
 
 Think deeply. Apply everything. Create something genuinely beautiful.
 A real family will live in this as inspiration.
@@ -1250,6 +1353,143 @@ function validateBlueprintBasic(data: Record<string, unknown>): BasicViolation[]
   return violations;
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Multi-floor validation — runs after basic validation for multi-floor outputs
+// ──────────────────────────────────────────────────────────────────────────────
+
+interface FloorViolation {
+  severity: 'critical' | 'major' | 'minor';
+  floor: number;
+  message: string;
+}
+
+function validateMultiFloorBlueprint(data: Record<string, unknown>, requestedFloors?: number): FloorViolation[] {
+  const violations: FloorViolation[] = [];
+  const floors = data.floors as Array<Record<string, unknown>> | undefined;
+
+  if (!floors || !Array.isArray(floors) || floors.length === 0) {
+    // No floors array = single-floor output (version 1 format), skip multi-floor validation
+    return [];
+  }
+
+  // Check floor count matches request
+  if (requestedFloors && floors.length !== requestedFloors) {
+    violations.push({
+      severity: 'major',
+      floor: -1,
+      message: `Generated ${floors.length} floors but ${requestedFloors} were requested`,
+    });
+  }
+
+  // Validate each floor
+  for (const floor of floors) {
+    const floorIndex = floor.index as number;
+    const label = floor.label as string;
+    const floorWalls = floor.walls as Array<Record<string, unknown>> | undefined;
+
+    // Check label consistency
+    const expectedLabel = floorIndex === 0 ? 'G' : floorIndex > 0 ? String(floorIndex) : `B${Math.abs(floorIndex)}`;
+    if (label !== expectedLabel) {
+      violations.push({
+        severity: 'minor',
+        floor: floorIndex,
+        message: `Floor ${floorIndex} label "${label}" should be "${expectedLabel}"`,
+      });
+    }
+
+    // Validate staircases
+    const staircases = floor.staircases as Array<Record<string, unknown>> | undefined;
+    if (staircases && Array.isArray(staircases)) {
+      for (const stair of staircases) {
+        const connects = stair.connectsFloors as [number, number] | undefined;
+        if (!connects || connects.length !== 2) {
+          violations.push({
+            severity: 'critical',
+            floor: floorIndex,
+            message: `Staircase missing connectsFloors tuple`,
+          });
+          continue;
+        }
+        if (connects[0] !== floorIndex) {
+          violations.push({
+            severity: 'critical',
+            floor: floorIndex,
+            message: `Staircase connectsFloors[0]=${connects[0]} but must be ${floorIndex} (stair belongs on lower floor)`,
+          });
+        }
+        if (Math.abs(connects[1] - connects[0]) !== 1) {
+          violations.push({
+            severity: 'major',
+            floor: floorIndex,
+            message: `Staircase connects non-adjacent floors [${connects[0]}, ${connects[1]}]`,
+          });
+        }
+
+        // Step geometry check
+        const stepCount = stair.stepCount as number | undefined;
+        const totalRise = stair.totalRise as number | undefined;
+        if (stepCount && totalRise && stepCount > 0) {
+          const risePerStep = totalRise / stepCount;
+          if (risePerStep < 0.15 || risePerStep > 0.25) {
+            violations.push({
+              severity: 'minor',
+              floor: floorIndex,
+              message: `Stair rise/step (${risePerStep.toFixed(3)}m) outside optimal range 0.175–0.220m`,
+            });
+          }
+        }
+      }
+    }
+
+    // Wall connectivity within this floor
+    if (floorWalls && Array.isArray(floorWalls)) {
+      const endpoints: Array<{ x: number; y: number; wallId: string }> = [];
+      for (const w of floorWalls) {
+        const start = w.start as { x: number; y: number } | undefined;
+        const end = w.end as { x: number; y: number } | undefined;
+        if (!start || !end) continue;
+        endpoints.push({ x: start.x, y: start.y, wallId: w.id as string });
+        endpoints.push({ x: end.x, y: end.y, wallId: w.id as string });
+      }
+      for (const ep of endpoints) {
+        const hasNeighbor = endpoints.some(
+          (other) =>
+            other.wallId !== ep.wallId &&
+            Math.sqrt((other.x - ep.x) ** 2 + (other.y - ep.y) ** 2) < 0.15,
+        );
+        if (!hasNeighbor) {
+          violations.push({
+            severity: 'critical',
+            floor: floorIndex,
+            message: `Floating wall endpoint at (${ep.x.toFixed(2)}, ${ep.y.toFixed(2)})`,
+          });
+        }
+      }
+    }
+  }
+
+  // Wet room stacking check (adjacent floors only)
+  const wetRoomTypes = ['bathroom', 'kitchen', 'laundry'];
+  for (let i = 1; i < floors.length; i++) {
+    const upperRooms = (floors[i].rooms as Array<Record<string, unknown>> | undefined) ?? [];
+    const lowerRooms = (floors[i - 1].rooms as Array<Record<string, unknown>> | undefined) ?? [];
+    for (const upperRoom of upperRooms) {
+      if (wetRoomTypes.includes(upperRoom.type as string)) {
+        const hasVerticalNeighbour = lowerRooms.some((lr) => lr.type === upperRoom.type);
+        if (!hasVerticalNeighbour) {
+          violations.push({
+            severity: 'minor',
+            floor: i,
+            message: `${upperRoom.type as string} on floor ${i} has no ${upperRoom.type as string} directly below`,
+          });
+        }
+      }
+    }
+  }
+
+  return violations;
+}
+
 /** Adds CORS headers to any Response returned by Errors.* helpers. */
 function addCors(res: Response): Response {
   const headers = new Headers(res.headers);
@@ -1433,17 +1673,23 @@ ${SYSTEM_PROMPT}`;
     const criticalViolations = violations.filter(v => v.severity === 'critical');
     const majorViolations = violations.filter(v => v.severity === 'major');
 
-    if (criticalViolations.length > 0 || majorViolations.length >= 3) {
+    // Multi-floor structural validation (only when floors array present)
+    const floorViolations = validateMultiFloorBlueprint(blueprintData, parsed.data.floors);
+    const criticalFloorViolations = floorViolations.filter(v => v.severity === 'critical');
+
+    if (criticalViolations.length > 0 || criticalFloorViolations.length > 0 || majorViolations.length >= 3) {
       console.warn('[ai-generate] Validation failed, retrying. Violations:', violations.map(v => v.message));
+      console.warn('[ai-generate] Floor violations:', floorViolations.map(v => `Floor ${v.floor}: ${v.message}`));
 
       const retryMessage = `Your previous output had these geometric errors:
-${violations.map(v => `- ${v.message}`).join('\n')}
+${[...violations.map(v => `- ${v.message}`), ...floorViolations.filter(v => v.severity !== 'minor').map(v => `- [Floor ${v.floor}] ${v.message}`)].join('\n')}
 
 Please fix these issues and regenerate. Remember:
 - Every wall endpoint must connect to another wall endpoint at the EXACT same coordinates
 - Building footprint must be realistic (e.g. 3-bed house = ~10m × 12m)
 - Furniture dimensions must be realistic (sofa = 2.0×0.85×0.9m, bed = 1.6×0.5×2.0m)
 - Calculate room areas from actual wall coordinates, don't guess
+${parsed.data.floors > 1 ? '- For multi-floor: every staircase connects exactly two adjacent floors (connectsFloors[0] = this floor index)' : ''}
 Return ONLY valid JSON.`;
 
       const retryController = new AbortController();
@@ -1524,6 +1770,17 @@ Return ONLY valid JSON.`;
       resource_type: 'blueprint',
       metadata: { buildingType, style, tier: user.app_metadata?.subscription_tier ?? 'starter', architectId },
     });
+
+    // Increment quota after successful generation
+    try {
+      const supabaseInc = createClient(
+        requireEnv('SUPABASE_URL'),
+        requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+      );
+      await supabaseInc.rpc('increment_quota', { p_user_id: user.id, p_field: 'ai_generations_used', p_amount: 1 });
+    } catch (e) {
+      console.warn('Failed to increment ai_generations_used quota:', e);
+    }
 
     // Increment architect-specific generation counter
     if (architectId) {

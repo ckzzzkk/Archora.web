@@ -6,103 +6,53 @@
  *
  * Both expose the same JS interface. The wrapper routes to the correct native
  * module based on Platform.OS and normalises event names.
+ *
+ * Now using TurboModuleRegistry for type-safe access instead of NativeModules.
  */
 
-import { NativeModules, Platform, NativeEventEmitter, DeviceEventEmitter } from 'react-native';
+import { Platform, NativeEventEmitter } from 'react-native';
+import { TurboModuleRegistry } from 'react-native';
+import type { Spec } from './ARModuleNativeSpec';
+import type {
+  Vector3D,
+  DetectedPlane,
+  ARSupport,
+  SessionStatus,
+  CameraPose,
+  PlaneDetectedEvent,
+} from './ARModuleNativeSpec';
 
-// ── Shared Types ───────────────────────────────────────────────────────────────
-
-export interface Vector3D {
-  x: number;
-  y: number;
-  z: number;
-}
-
-export interface Quaternion {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
-
-export interface DetectedPlane {
-  id: string;
-  type: 'floor' | 'wall' | 'ceiling' | 'unknown';
-  centerX: number;
-  centerY: number;
-  centerZ: number;
-  extentX: number;
-  extentZ: number;
-  confidence: number;
-}
-
-export interface ARSupport {
-  hasARCore: boolean;    // ARCore on Android / ARKit on iOS
-  hasDepthAPI: boolean; // Depth API / LiDAR
-  hasLiDAR?: boolean;  // iOS only
-  availability?: string;
-  error?: string;
-  deviceModel?: string;
-}
-
-export interface SessionStatus {
-  success: boolean;
-  depthEnabled: boolean;
-  error?: string;
-  lidarEnabled?: boolean; // iOS only
-}
-
-export interface CameraPose {
-  x: number;
-  y: number;
-  z: number;
-  qx: number;
-  qy: number;
-  qz: number;
-  qw: number;
-}
-
-export interface PlaneDetectedEvent {
-  count: number;
-}
-
-// ── Platform-Aware Native Module Resolution ───────────────────────────────────
-
-type NativeARModule = {
-  checkSupport(): Promise<ARSupport>;
-  requestCameraPermission?(): Promise<{ granted: boolean }>;
-  requestInstall?(): Promise<{ installRequested?: boolean; alreadyInstalled?: boolean }>;
-  startSession(): Promise<SessionStatus>;
-  stopSession(): Promise<boolean>;
-  updateFrame(): Promise<boolean>;
-  hitTest(x: number, y: number): Promise<Vector3D | null>;
-  getDetectedPlanes(): Promise<DetectedPlane[]>;
-  distanceBetween(p1: Vector3D, p2: Vector3D): Promise<number>;
-  getCameraPose(): Promise<CameraPose>;
-  getMeshVertices?(): Promise<Vector3D[]>;
-};
+// ── Platform-Aware Module Resolution ─────────────────────────────────────────
 
 const isAndroid = Platform.OS === 'android';
-
-// Resolve the correct native module
-// Android → ARCoreModule  |  iOS → ARKitModule
 const nativeModuleName = isAndroid ? 'ARCoreModule' : 'ARKitModule';
-const rawNative = (NativeModules as Record<string, unknown>)[nativeModuleName];
-const native = rawNative as NativeARModule | undefined;
+
+// Get the TurboModule (throws if not found — use try/catch for graceful fallback)
+function getNativeModule(): Spec | null {
+  try {
+    return TurboModuleRegistry.getEnforcing<Spec>(nativeModuleName);
+  } catch {
+    return null;
+  }
+}
+
+const native = getNativeModule();
+
+// ── Event Emitter Setup ───────────────────────────────────────────────────────
 
 // Event names differ between platforms
 const PLANES_EVENT = isAndroid ? 'ARCorePlanesDetected' : 'ARKitPlanesDetected';
-const SESSION_INTERRUPTED_EVENT = isAndroid ? undefined : 'ARKitSessionInterrupted';
-const SESSION_RESUMED_EVENT = isAndroid ? undefined : 'ARKitSessionResumed';
-
-// ── Event Emitter Setup ───────────────────────────────────────────────────────
+const SESSION_INTERRUPTED_EVENT = isAndroid ? null : 'ARKitSessionInterrupted';
+const SESSION_RESUMED_EVENT = isAndroid ? null : 'ARKitSessionResumed';
 
 let eventEmitter: NativeEventEmitter | null = null;
 
 if (native) {
-  eventEmitter = new NativeEventEmitter(
-    (NativeModules as Record<string, unknown>)[nativeModuleName] as any,
-  );
+  try {
+    eventEmitter = new NativeEventEmitter(native as any);
+  } catch {
+    // Fallback if event emitter creation fails
+  }
 }
 
 // ── Fallback Defaults ─────────────────────────────────────────────────────────
@@ -112,10 +62,10 @@ const FALLBACK_SUPPORT: ARSupport = {
   hasDepthAPI: false,
 };
 
-// ── Module Interface ──────────────────────────────────────────────────────────
+// ── Module Interface ───────────────────────────────────────────────────────────
 
 export const ARCoreModule = {
-  /** True if a native AR module is available */
+  /** True if a native AR TurboModule is available */
   isAvailable: !!native,
 
   // ── checkSupport ──────────────────────────────────────────────────────────
@@ -123,31 +73,28 @@ export const ARCoreModule = {
   checkSupport: async (): Promise<ARSupport> => {
     if (!native) return FALLBACK_SUPPORT;
     try {
-      return await native.checkSupport();
+      return await (native as Spec).checkSupport();
     } catch {
       return FALLBACK_SUPPORT;
     }
   },
 
-  // ── requestInstall (Android only) ─────────────────────────────────────────
+  // ── requestInstall (Android) / requestCameraPermission (iOS) ─────────────
 
-  /** Android: request ARCore install. iOS: request camera permission. */
-  requestInstall: async (): Promise<{ installRequested?: boolean; alreadyInstalled?: boolean } | { granted?: boolean }> => {
+  requestInstall: async (): Promise<
+    | { installRequested?: boolean; alreadyInstalled?: boolean }
+    | { granted?: boolean }
+  > => {
     if (!native) {
       if (isAndroid) return { installRequested: false, alreadyInstalled: false };
-      // iOS: request camera permission via rawNative (not narrowed)
-      const raw = rawNative as unknown as NativeARModule;
-      const { requestCameraPermission } = raw;
-      if (requestCameraPermission) return await requestCameraPermission();
       return { granted: false };
     }
     if (isAndroid) {
-      return await (native as any).requestInstall();
+      const fn = (native as Spec).requestInstall;
+      return fn ? await fn() : { installRequested: false, alreadyInstalled: false };
     } else {
-      // iOS: request camera permission
-      const fn = (native as any).requestCameraPermission;
-      if (fn) return await fn();
-      return { granted: true };
+      const fn = (native as Spec).requestCameraPermission;
+      return fn ? await fn() : { granted: true };
     }
   },
 
@@ -158,10 +105,11 @@ export const ARCoreModule = {
       return { success: false, depthEnabled: false, error: 'AR module not available' };
     }
     try {
-      return await native.startSession();
-    } catch (e: any) {
-      console.warn(`[ARKit] startSession failed:`, e);
-      return { success: false, depthEnabled: false, error: e?.message };
+      return await (native as Spec).startSession();
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e.message : String(e);
+      console.warn(`[AR] startSession failed:`, error);
+      return { success: false, depthEnabled: false, error };
     }
   },
 
@@ -170,9 +118,9 @@ export const ARCoreModule = {
   stopSession: async (): Promise<boolean> => {
     if (!native) return false;
     try {
-      return await native.stopSession();
-    } catch (e: any) {
-      console.warn('[ARKit] stopSession failed', e);
+      return await (native as Spec).stopSession();
+    } catch (e: unknown) {
+      console.warn('[AR] stopSession failed', e);
       return false;
     }
   },
@@ -182,7 +130,7 @@ export const ARCoreModule = {
   updateFrame: async (): Promise<boolean> => {
     if (!native) return false;
     try {
-      return await native.updateFrame();
+      return await (native as Spec).updateFrame();
     } catch {
       return false;
     }
@@ -199,7 +147,7 @@ export const ARCoreModule = {
   hitTest: async (x: number, y: number): Promise<Vector3D | null> => {
     if (!native) return null;
     try {
-      return await native.hitTest(x, y);
+      return await (native as Spec).hitTest(x, y);
     } catch {
       return null;
     }
@@ -210,7 +158,7 @@ export const ARCoreModule = {
   getDetectedPlanes: async (): Promise<DetectedPlane[]> => {
     if (!native) return [];
     try {
-      return await native.getDetectedPlanes();
+      return await (native as Spec).getDetectedPlanes();
     } catch {
       return [];
     }
@@ -225,7 +173,7 @@ export const ARCoreModule = {
   distanceBetween: async (p1: Vector3D, p2: Vector3D): Promise<number> => {
     if (native) {
       try {
-        return await native.distanceBetween(p1, p2);
+        return await (native as Spec).distanceBetween(p1, p2);
       } catch { /* fall through to JS */ }
     }
     // Pure JS fallback
@@ -241,7 +189,7 @@ export const ARCoreModule = {
   getCameraPose: async (): Promise<CameraPose | null> => {
     if (!native) return null;
     try {
-      return await native.getCameraPose();
+      return await (native as Spec).getCameraPose();
     } catch {
       return null;
     }
@@ -254,25 +202,29 @@ export const ARCoreModule = {
    * Android: 'ARCorePlanesDetected'
    * iOS:     'ARKitPlanesDetected'
    */
-  addPlanesDetectedListener: (callback: (event: PlaneDetectedEvent) => void) => {
+  addPlanesDetectedListener: (
+    callback: (event: PlaneDetectedEvent) => void,
+  ): { remove: () => void } => {
     if (eventEmitter) {
       return eventEmitter.addListener(PLANES_EVENT, callback);
     }
-    return { remove: () => {} } as ReturnType<NativeEventEmitter['addListener']>;
+    return { remove: () => {} };
   },
 
-  addSessionInterruptedListener: (callback: (event: { reason?: string }) => void) => {
+  addSessionInterruptedListener: (
+    callback: (event: { reason?: string }) => void,
+  ): { remove: () => void } => {
     if (eventEmitter && SESSION_INTERRUPTED_EVENT) {
       return eventEmitter.addListener(SESSION_INTERRUPTED_EVENT, callback);
     }
-    return { remove: () => {} } as ReturnType<NativeEventEmitter['addListener']>;
+    return { remove: () => {} };
   },
 
-  addSessionResumedListener: (callback: () => void) => {
+  addSessionResumedListener: (callback: () => void): { remove: () => void } => {
     if (eventEmitter && SESSION_RESUMED_EVENT) {
       return eventEmitter.addListener(SESSION_RESUMED_EVENT, callback);
     }
-    return { remove: () => {} } as ReturnType<NativeEventEmitter['addListener']>;
+    return { remove: () => {} };
   },
 
   removeAllListeners: () => {
@@ -284,7 +236,7 @@ export const ARCoreModule = {
   },
 };
 
-// ── Capability Query ─────────────────────────────────────────────────────────
+// ── Capability Query ────────────────────────────────────────────────────────────
 
 export async function getARCapabilities(): Promise<ARSupport & { canRunAR: boolean }> {
   const support = await ARCoreModule.checkSupport();
@@ -294,7 +246,7 @@ export async function getARCapabilities(): Promise<ARSupport & { canRunAR: boole
   };
 }
 
-// ── Coordinate Helpers ────────────────────────────────────────────────────────
+// ── Coordinate Helpers ─────────────────────────────────────────────────────────
 
 /**
  * Convert AR world coordinates to blueprint 2D top-down coordinates.
@@ -323,3 +275,6 @@ export function toBlueprint2D(v: Vector3D): { x: number; y: number } {
 export function snapToGrid(value: number, gridSize = 0.05): number {
   return Math.round(value / gridSize) * gridSize;
 }
+
+// Re-export types for consumers
+export type { Vector3D, DetectedPlane, ARSupport, SessionStatus, CameraPose } from './ARModuleNativeSpec';

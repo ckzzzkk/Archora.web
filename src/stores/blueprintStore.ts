@@ -12,7 +12,7 @@ import type {
 import type { ViewMode, SubscriptionTier } from '../types';
 import { clipboard } from '../utils/clipboard';
 import type { ClipboardItem } from '../utils/clipboard';
-import type { SuggestionItem } from '../components/consultation/SuggestionBubble';
+import type { SuggestionItem } from '../types/consultation';
 
 const STORAGE_KEY = 'blueprint_current';
 
@@ -21,6 +21,7 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null;
 function getSaveDebounceMs(tier: SubscriptionTier): number {
   if (tier === 'architect') return 30_000;
   if (tier === 'creator') return 120_000;
+  if (tier === 'pro') return 60_000;
   return 0; // Starter: manual only
 }
 
@@ -147,15 +148,15 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     }, debounce);
   }
 
-  function getCurrentTier(): SubscriptionTier {
-    // Auth state is managed by AuthProvider / useSession.
-    // For non-React store contexts, default to 'starter' (manual save).
-    return 'starter';
+  function getCurrentTier(tier?: SubscriptionTier): SubscriptionTier {
+    // If tier is explicitly passed (from authenticated action call), use it.
+    // Otherwise fall back to 'starter' for unauthenticated contexts.
+    return tier ?? 'starter';
   }
 
-  function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string): Partial<BlueprintState> {
-    const tier = getCurrentTier();
-    const maxSteps = TIER_LIMITS[tier].maxUndoSteps;
+  function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string, tier?: SubscriptionTier): Partial<BlueprintState> {
+    const resolvedTier = tier ?? getCurrentTier(tier);
+    const maxSteps = TIER_LIMITS[resolvedTier].maxUndoSteps;
 
     const sliced = state.history.slice(0, state.historyIndex + 1);
     const newHistory = maxSteps === -1
@@ -178,7 +179,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     const newBlueprint = updater(state);
     if (!newBlueprint) return;
     const tier = getCurrentTier();
-    const historyUpdate = pushHistory(state, newBlueprint, label);
+    const historyUpdate = pushHistory(state, newBlueprint, label, tier);
     scheduleSave(newBlueprint, tier);
     // Collect affected node IDs from this mutation
     const dirtyIds = affectedNodeIds ?? [];
