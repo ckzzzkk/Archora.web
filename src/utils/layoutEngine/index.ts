@@ -5,10 +5,12 @@ import type {
   FurniturePiece, StaircaseData, Slab, Ceiling, MaterialType, WallTexture,
 } from '../../types/blueprint';
 import type { LayoutRoom, WallSegment, Opening as LOpening, LayoutConfig } from './types';
-import { ROOM_MINIMA } from './types';
-import { packRooms, detectOverlaps } from './geometry';
+import { inferCommonSenseRooms } from './types';
+import { detectOverlaps } from './geometry';
 import { buildWalls } from './wallBuilder';
 import { placeDoors, placeWindows } from './openingPlacer';
+import type { DoorPlacementOptions } from './openingPlacer';
+import { placeRoomsInZones } from './zones';
 import { placeFurniture } from './furniturePlacer';
 
 const FLOOR_HEIGHT = 3.0;
@@ -16,8 +18,10 @@ const FLOOR_HEIGHT = 3.0;
 function generationPayloadToLayoutConfig(payload: GenerationPayload): LayoutConfig {
   const totalArea = payload.plotUnit === 'ft2' ? payload.plotSize * 0.0929 : payload.plotSize;
   const aspect = payload.buildingType === 'apartment' ? 1.5 : 1.3;
-  const plotWidth = Math.sqrt(totalArea * aspect);
-  const plotDepth = totalArea / plotWidth;
+  const plotWidth = payload.explicitPlotWidth
+    ?? Math.max(8, Math.sqrt(totalArea * aspect));
+  const plotDepth = payload.explicitPlotDepth
+    ?? Math.max(8, totalArea / plotWidth);
 
   const rooms: LayoutConfig['rooms'] = [];
 
@@ -45,11 +49,23 @@ function generationPayloadToLayoutConfig(payload: GenerationPayload): LayoutConf
     rooms.push({ type: 'laundry', name: 'Laundry', minWidth: 2.0, minHeight: 1.5, preferredAspect: 1.3, count: 1 });
   }
 
+  // Add common sense inferred rooms
+  const inferred = inferCommonSenseRooms(payload);
+  for (const inf of inferred) {
+    // Avoid duplicates if user already explicitly requested this room type
+    const alreadyHas = rooms.some(r => r.type === inf.type && r.name === inf.name);
+    if (!alreadyHas) {
+      rooms.push({ ...inf, count: 1 });
+    }
+  }
+
   return {
     buildingType: payload.buildingType,
     plotWidth: Math.max(plotWidth, 8),
     plotDepth: Math.max(plotDepth, 8),
     floors: payload.floors ?? 1,
+    hasGarden: payload.hasGarden,
+    hasGarage: payload.hasGarage,
     rooms,
   };
 }
@@ -90,10 +106,10 @@ function openingToBPOpening(op: LOpening): BPOpening {
   };
 }
 
-function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloors: number): FloorData {
+function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloors: number, doorOpts?: DoorPlacementOptions): FloorData {
   const elevation = floorIndex * FLOOR_HEIGHT;
   const walls = buildWalls(layoutRooms);
-  const doors = placeDoors(walls);
+  const doors = placeDoors(walls, doorOpts);
   const windows = placeWindows(walls);
   const furniture = placeFurniture(layoutRooms, floorIndex);
 
@@ -151,11 +167,13 @@ function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloo
 
 export function generateFloorPlan(payload: GenerationPayload): BlueprintData {
   const config = generationPayloadToLayoutConfig(payload);
-  const allLayoutRooms = packRooms(config);
+  const allLayoutRooms = placeRoomsInZones(config, 0);
 
   const floors: FloorData[] = [];
   for (let i = 0; i < config.floors; i++) {
-    floors.push(buildFloorData(allLayoutRooms, i, config.floors));
+    // Each floor gets its own zone-appropriate rooms
+    const floorRooms = i === 0 ? allLayoutRooms : placeRoomsInZones(config, i);
+    floors.push(buildFloorData(floorRooms, i, config.floors, { hasGarden: config.hasGarden, hasGarage: config.hasGarage }));
   }
 
   const firstFloor = floors[0];

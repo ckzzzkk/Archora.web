@@ -32,6 +32,12 @@ declare namespace React {
       coneGeometry: { args?: [number?, number?, number?, number?, boolean?, number?, number?] };
       torusGeometry: { args?: [number, number, number, number] };
       ringGeometry: { args?: [number, number, number] };
+      line: {
+        geometry?: THREE.BufferGeometry;
+        material?: THREE.LineBasicMaterial;
+        children?: React.ReactNode;
+      };
+      bufferGeometry: { args?: [number, number, number] };
       meshStandardMaterial: {
         color?: string;
         roughness?: number;

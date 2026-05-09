@@ -28,6 +28,7 @@ import { useRoomDetection } from '../../hooks/useRoomDetection';
 import { useDimensions } from '../../hooks/useDimensions';
 import { clipboard } from '../../utils/clipboard';
 import { FurnitureContextMenu } from './FurnitureContextMenu';
+import { NorthArrow } from './symbols/NorthArrow';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import {
   PIXELS_PER_METRE,
@@ -35,20 +36,21 @@ import {
   pixelToMetre,
 } from '../../utils/canvasHelpers';
 import { ScaleBar } from '../../utils/geometry/ScaleBar';
+import { ARCH_COLORS, LINE_WEIGHT, GRID, SYMBOLS, ARCH_FONTS, ROOM_THRESHOLDS } from '../../utils/architecture/drawingConventions';
 import { boundingBox } from '../../utils/geometry/polygonUtils';
 import { wallLength as calcWallLength } from '../../utils/geometry/wallGraph';
 import { MaterialCompiler } from '../../materials/MaterialCompiler';
 import { useSkiaFonts } from '../common/SkiaFontLoader';
-import type { Wall, Room, Opening, FurniturePiece, Vector2D } from '../../types';
+import type { Wall, Room, Opening, FurniturePiece, Vector2D, DimensionAccuracy } from '../../types';
 import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const CANVAS_H = SCREEN_H * 0.72;
 
 // UK minimum room area thresholds (m²)
-const MIN_BEDROOM_AREA = 7.5;
-const MIN_BATHROOM_AREA = 2.5;
-const SMALL_ROOM_AREA = 4;
+const MIN_BEDROOM_AREA = ROOM_THRESHOLDS.minBedroom;
+const MIN_BATHROOM_AREA = ROOM_THRESHOLDS.minBathroom;
+const SMALL_ROOM_AREA = ROOM_THRESHOLDS.small;
 
 interface ContextMenuState {
   visible: boolean;
@@ -415,6 +417,20 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
     return null;
   };
 
+  // Classify wall as outer (perimeter) or inner (partition)
+  // Perimeter walls have < 2 connections at one or both endpoints
+  const classifyWall = (wall: Wall): 'outer' | 'inner' => {
+    const allWalls = blueprint?.walls ?? [];
+    const connectAt = (pt: Vector2D) =>
+      allWalls.filter((w) => w.id !== wall.id && (
+        Math.hypot(w.start.x - pt.x, w.start.y - pt.y) < 0.15 ||
+        Math.hypot(w.end.x - pt.x, w.end.y - pt.y) < 0.15
+      )).length;
+    const startConns = connectAt(wall.start);
+    const endConns = connectAt(wall.end);
+    return startConns < 2 || endConns < 2 ? 'outer' : 'inner';
+  };
+
   return (
     <ErrorBoundary>
     <View style={{ width: SCREEN_W, height: CANVAS_H }}>
@@ -424,29 +440,47 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
           <Canvas {...({ ref: skiaCanvasRef } as any)} style={{ width: SCREEN_W, height: CANVAS_H }}>
             <Group>
 
-              {/* ── Layer 1: Blueprint grid ────────────────────────────── */}
-              {Array.from({ length: 30 }).map((_, i) => (
+              {/* ── Layer 1: Minor grid (0.5m) ──────────────────────────── */}
+              {Array.from({ length: 80 }).map((_, i) => (
                 <Line
-                  key={`v${i}`}
-                  p1={{ x: i * PIXELS_PER_METRE * 0.5, y: 0 }}
-                  p2={{ x: i * PIXELS_PER_METRE * 0.5, y: CANVAS_H }}
-                  color={colors.primary}
-                  strokeWidth={0.5}
-                  opacity={0.06}
+                  key={`mg_v${i}`}
+                  p1={{ x: i * PIXELS_PER_METRE * GRID.minorInterval, y: 0 }}
+                  p2={{ x: i * PIXELS_PER_METRE * GRID.minorInterval, y: CANVAS_H }}
+                  color={ARCH_COLORS.gridMinor}
+                  strokeWidth={LINE_WEIGHT.gridMinor}
                 />
               ))}
-              {Array.from({ length: 20 }).map((_, i) => (
+              {Array.from({ length: 60 }).map((_, i) => (
                 <Line
-                  key={`h${i}`}
-                  p1={{ x: 0, y: i * PIXELS_PER_METRE * 0.5 }}
-                  p2={{ x: SCREEN_W, y: i * PIXELS_PER_METRE * 0.5 }}
-                  color={colors.primary}
-                  strokeWidth={0.5}
-                  opacity={0.06}
+                  key={`mg_h${i}`}
+                  p1={{ x: 0, y: i * PIXELS_PER_METRE * GRID.minorInterval }}
+                  p2={{ x: SCREEN_W, y: i * PIXELS_PER_METRE * GRID.minorInterval }}
+                  color={ARCH_COLORS.gridMinor}
+                  strokeWidth={LINE_WEIGHT.gridMinor}
                 />
               ))}
 
-              {/* ── Layer 2: Structural grid ───────────────────────────── */}
+              {/* ── Layer 1b: Major grid (2m) ────────────────────────── */}
+              {Array.from({ length: 20 }).map((_, i) => (
+                <Line
+                  key={`Ma_v${i}`}
+                  p1={{ x: i * PIXELS_PER_METRE * GRID.majorInterval, y: 0 }}
+                  p2={{ x: i * PIXELS_PER_METRE * GRID.majorInterval, y: CANVAS_H }}
+                  color={ARCH_COLORS.gridMajor}
+                  strokeWidth={LINE_WEIGHT.gridMajor}
+                />
+              ))}
+              {Array.from({ length: 15 }).map((_, i) => (
+                <Line
+                  key={`Ma_h${i}`}
+                  p1={{ x: 0, y: i * PIXELS_PER_METRE * GRID.majorInterval }}
+                  p2={{ x: SCREEN_W, y: i * PIXELS_PER_METRE * GRID.majorInterval }}
+                  color={ARCH_COLORS.gridMajor}
+                  strokeWidth={LINE_WEIGHT.gridMajor}
+                />
+              ))}
+
+              {/* ── Layer 2: Structural grid (3m) ────────────────────── */}
               {showStructuralGrid && (() => {
                 const STRUCT_INTERVAL = 3;
                 const gridCount = 20;
@@ -455,8 +489,8 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                   const xPx = metreToPixel(i * STRUCT_INTERVAL, 1, ox);
                   const yPx = metreToPixel(i * STRUCT_INTERVAL, 1, oy);
                   lines.push(
-                    <Line key={`sg_v${i}`} p1={{ x: xPx, y: 0 }} p2={{ x: xPx, y: CANVAS_H }} color={colors.primary} strokeWidth={1} opacity={0.18} />,
-                    <Line key={`sg_h${i}`} p1={{ x: 0, y: yPx }} p2={{ x: SCREEN_W, y: yPx }} color={colors.primary} strokeWidth={1} opacity={0.18} />,
+                    <Line key={`sg_v${i}`} p1={{ x: xPx, y: 0 }} p2={{ x: xPx, y: CANVAS_H }} color={ARCH_COLORS.gridMajor} strokeWidth={LINE_WEIGHT.gridMajor} />,
+                    <Line key={`sg_h${i}`} p1={{ x: 0, y: yPx }} p2={{ x: SCREEN_W, y: yPx }} color={ARCH_COLORS.gridMajor} strokeWidth={LINE_WEIGHT.gridMajor} />,
                   );
                 }
                 return lines;
@@ -519,27 +553,41 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                     key={`rf_${room.id}`}
                     path={roomPath}
                     color={isSmall ? DS.colors.error : mat.color}
-                    opacity={0.15}
+                    opacity={0.12}
                     style="fill"
                   />
                 );
               })}
 
-              {/* ── Layer 4: Room labels ───────────────────────────────── */}
+              {/* ── Layer 4: Room labels — lower-right of bounding box ── */}
               {roomFont && (blueprint?.rooms ?? []).map((room) => {
-                const cx = toPixelX(room.centroid.x);
-                const cy = toPixelY(room.centroid.y);
+                const wallMap = new Map((blueprint?.walls ?? []).map((w: Wall) => [w.id, w]));
+                const roomWalls = room.wallIds
+                  .map((id: string) => wallMap.get(id))
+                  .filter((w: Wall | undefined): w is Wall => !!w);
+                if (roomWalls.length < 3) return null;
+
+                const allPts = roomWalls.flatMap((w: Wall) => [w.start, w.end]);
+                const bb = boundingBox(allPts);
+                const labelX = toPixelX(bb.maxX + SYMBOLS.roomLabelOffsetX);
+                const labelY = toPixelY(bb.maxY + SYMBOLS.roomLabelOffsetY);
                 const warning = roomWarning(room);
-                const label = `${room.name}${warning ? ` ${warning}` : ''} — ${room.area.toFixed(1)}m²`;
+
+                // Room name + area on one line: "Living Room (18.2m²)"
+                const areaText = `${room.area.toFixed(1)}m²`;
+                const label = `${room.name}${warning ? ` ${warning}` : ''} (${areaText})`;
+                const labelColor = warning ? DS.colors.error : ARCH_COLORS.ink;
+
                 return (
-                  <SkiaText
-                    key={`rl_${room.id}`}
-                    x={cx - 40}
-                    y={cy}
-                    text={label}
-                    color={warning ? DS.colors.error : colors.primaryDim}
-                    font={roomFont}
-                  />
+                  <Group key={`rl_${room.id}`}>
+                    <SkiaText
+                      x={labelX - label.length * 3}
+                      y={labelY}
+                      text={label}
+                      color={labelColor}
+                      font={roomFont}
+                    />
+                  </Group>
                 );
               })}
 
@@ -550,19 +598,23 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 const y1 = toPixelY(wall.start.y);
                 const x2 = toPixelX(wall.end.x);
                 const y2 = toPixelY(wall.end.y);
+                const weight = isSelected
+                  ? LINE_WEIGHT.selectedWall
+                  : classifyWall(wall) === 'outer'
+                    ? LINE_WEIGHT.outerWall
+                    : LINE_WEIGHT.innerWall;
                 return (
                   <Line
                     key={wall.id}
                     p1={{ x: x1, y: y1 }}
                     p2={{ x: x2, y: y2 }}
-                    color={isSelected ? colors.primary : DS.colors.primary}
-                    strokeWidth={isSelected ? 4 : 3}
-                    opacity={isSelected ? 1 : 0.9}
+                    color={isSelected ? DS.colors.accent : ARCH_COLORS.ink}
+                    strokeWidth={weight}
                   />
                 );
               })}
 
-              {/* ── Layer 5b: Openings ────────────────────────────────── */}
+              {/* ── Layer 5b: Openings — architectural symbols ───────────── */}
               {(blueprint?.openings ?? []).map((opening) => {
                 const wall = (blueprint?.walls ?? []).find((w) => w.id === opening.wallId);
                 if (!wall) return null;
@@ -572,24 +624,75 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 if (len === 0) return null;
                 const ux = dx / len;
                 const uy = dy / len;
-                const sx = toPixelX(wall.start.x + ux * opening.position);
-                const sy = toPixelY(wall.start.y + uy * opening.position);
-                const ex = toPixelX(wall.start.x + ux * (opening.position + opening.width));
-                const ey = toPixelY(wall.start.y + uy * (opening.position + opening.width));
                 const isDoor = opening.type === 'door';
-                return (
-                  <Line
-                    key={opening.id}
-                    p1={{ x: sx, y: sy }}
-                    p2={{ x: ex, y: ey }}
-                    color={isDoor ? DS.colors.warning : DS.colors.success}
-                    strokeWidth={5}
-                    opacity={0.9}
-                  />
-                );
+
+                // Start and end of opening in world coords
+                const ox0 = wall.start.x + ux * opening.position;
+                const oy0 = wall.start.y + uy * opening.position;
+                const ox1 = wall.start.x + ux * (opening.position + opening.width);
+                const oy1 = wall.start.y + uy * (opening.position + opening.width);
+
+                if (isDoor) {
+                  // ── Door: 90° arc + swing leaf line ─────────────────
+                  // Hinge at opening start; arc sweeps to wall-perpendicular direction
+                  const doorW = opening.width;
+                  const hx = toPixelX(ox0);
+                  const hy = toPixelY(oy0);
+                  // Arc endpoint: hinge + perpendicular * doorWidth (in pixels)
+                  const arcX = hx + (-uy) * doorW * PIXELS_PER_METRE;
+                  const arcY = hy + ux * doorW * PIXELS_PER_METRE;
+
+                  // Build 90° arc as line segments approximating a quarter-circle
+                  const arcSegments = 8;
+                  const arcPath = Skia.Path.Make();
+                  arcPath.moveTo(hx, hy);
+                  for (let i = 1; i <= arcSegments; i++) {
+                    const t = i / arcSegments;
+                    const px = hx + (-uy) * doorW * PIXELS_PER_METRE * Math.sin(t * Math.PI / 2);
+                    const py = hy + ux * doorW * PIXELS_PER_METRE * Math.sin(t * Math.PI / 2);
+                    arcPath.lineTo(px, py);
+                  }
+
+                  return (
+                    <Group key={opening.id}>
+                      {/* Door leaf line: hinge → arc endpoint */}
+                      <Line
+                        p1={{ x: hx, y: hy }}
+                        p2={{ x: arcX, y: arcY }}
+                        color={ARCH_COLORS.doorAccent}
+                        strokeWidth={LINE_WEIGHT.doorSwing}
+                      />
+                      {/* 90° arc */}
+                      <Path path={arcPath} color={ARCH_COLORS.doorAccent} strokeWidth={LINE_WEIGHT.doorArc} style="stroke" />
+                    </Group>
+                  );
+                } else {
+                  // ── Window: 3 parallel lines ──────────────────────────
+                  const lineOffset = SYMBOLS.windowLineOffset * PIXELS_PER_METRE;
+                  const lineGap = SYMBOLS.windowLineGap * PIXELS_PER_METRE;
+                  // Perpendicular to wall
+                  const px = -uy;
+                  const py = ux;
+                  const cx = toPixelX((ox0 + ox1) / 2);
+                  const cy = toPixelY((oy0 + oy1) / 2);
+
+                  return (
+                    <Group key={opening.id}>
+                      {[(-lineOffset - lineGap), (-lineOffset), (lineOffset), (lineOffset + lineGap)].map((offset, idx) => (
+                        <Line
+                          key={idx}
+                          p1={{ x: cx + px * offset - ux * toPixelX(opening.width / 2), y: cy + py * offset - uy * toPixelX(opening.width / 2) }}
+                          p2={{ x: cx + px * offset + ux * toPixelX(opening.width / 2), y: cy + py * offset + uy * toPixelX(opening.width / 2) }}
+                          color={ARCH_COLORS.windowAccent}
+                          strokeWidth={LINE_WEIGHT.windowLine}
+                        />
+                      ))}
+                    </Group>
+                  );
+                }
               })}
 
-              {/* ── Layer 6: Dimension lines ───────────────────────────── */}
+              {/* ── Layer 6: Dimension lines — architectural tick style ── */}
               {showDimensions && dimensionLines.map((dim) => {
                 const sx = toPixelX(dim.offsetStart.x);
                 const sy = toPixelY(dim.offsetStart.y);
@@ -598,35 +701,40 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 const mx = (sx + ex) / 2;
                 const my = (sy + ey) / 2;
 
-                // Arrowhead triangle size
-                const ARROW = 5;
                 const dx = ex - sx;
                 const dy = ey - sy;
                 const len = Math.sqrt(dx * dx + dy * dy);
-                if (len < 2) return null;
+                if (len < 4) return null;
                 const ux = dx / len;
                 const uy = dy / len;
+                // Perpendicular for tick marks
                 const px = -uy;
                 const py = ux;
+                const TICK = LINE_WEIGHT.tickMark * PIXELS_PER_METRE; // tick length in px
 
-                const arrowPath1 = Skia.Path.Make();
-                arrowPath1.moveTo(sx, sy);
-                arrowPath1.lineTo(sx + ux * ARROW + px * ARROW * 0.5, sy + uy * ARROW + py * ARROW * 0.5);
-                arrowPath1.lineTo(sx + ux * ARROW - px * ARROW * 0.5, sy + uy * ARROW - py * ARROW * 0.5);
-                arrowPath1.close();
-
-                const arrowPath2 = Skia.Path.Make();
-                arrowPath2.moveTo(ex, ey);
-                arrowPath2.lineTo(ex - ux * ARROW + px * ARROW * 0.5, ey - uy * ARROW + py * ARROW * 0.5);
-                arrowPath2.lineTo(ex - ux * ARROW - px * ARROW * 0.5, ey - uy * ARROW - py * ARROW * 0.5);
-                arrowPath2.close();
+                // Tick mark lines at each end (perpendicular short lines)
+                const tickPath = Skia.Path.Make();
+                tickPath.moveTo(sx + px * TICK, sy + py * TICK);
+                tickPath.lineTo(sx - px * TICK, sy - py * TICK);
+                tickPath.moveTo(ex + px * TICK, ey + py * TICK);
+                tickPath.lineTo(ex - px * TICK, ey - py * TICK);
 
                 return (
                   <Group key={dim.id}>
-                    <Line p1={{ x: sx, y: sy }} p2={{ x: ex, y: ey }} color={DS.colors.primaryDim} strokeWidth={0.5} />
-                    <Path path={arrowPath1} color={DS.colors.primaryDim} style="fill" />
-                    <Path path={arrowPath2} color={DS.colors.primaryDim} style="fill" />
-                    {dimFont && <SkiaText x={mx - 16} y={my - 4} text={dim.displayText} color={DS.colors.primaryDim} font={dimFont} />}
+                    {/* Dimension line */}
+                    <Line p1={{ x: sx, y: sy }} p2={{ x: ex, y: ey }} color={ARCH_COLORS.dimensionLine} strokeWidth={LINE_WEIGHT.extensionLine} />
+                    {/* Tick marks at endpoints */}
+                    <Path path={tickPath} color={ARCH_COLORS.dimensionLine} strokeWidth={LINE_WEIGHT.tickMark} style="stroke" />
+                    {/* Dimension text below the line */}
+                    {dimFont && (
+                      <SkiaText
+                        x={mx - dim.displayText.length * 2.5}
+                        y={my + 14}
+                        text={dim.displayText}
+                        color={ARCH_COLORS.dimensionText}
+                        font={dimFont}
+                      />
+                    )}
                   </Group>
                 );
               })}
@@ -640,7 +748,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 const y2 = toPixelY(preview.end.y);
                 const mx = (x1 + x2) / 2;
                 const my = (y1 + y2) / 2;
-                const previewColor = preview.isValid ? colors.primary : DS.colors.error;
+                const previewColor = preview.isValid ? ARCH_COLORS.ink : DS.colors.error;
 
                 const previewPath = Skia.Path.Make();
                 previewPath.moveTo(x1, y1);
@@ -649,7 +757,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 return (
                   <Group>
                     {/* Dashed preview line */}
-                    <Path path={previewPath} color={previewColor} strokeWidth={2} style="stroke">
+                    <Path path={previewPath} color={previewColor} strokeWidth={LINE_WEIGHT.wallDash} style="stroke">
                       <DashPathEffect intervals={[8, 4]} />
                     </Path>
                     {/* Start point dot */}
@@ -670,7 +778,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 );
               })()}
 
-              {/* ── Layer 8: Furniture rectangles ──────────────────────── */}
+              {/* ── Layer 8: Furniture — outline style ─────────────────── */}
               {(blueprint?.furniture ?? []).map((piece) => {
                 const isSelected = selectedId === piece.id;
                 const px = toPixelX(piece.position.x);
@@ -693,9 +801,8 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                   });
                   return (
                     <Group key={piece.id}>
-                      <Path path={furPath} color={colors.primary} opacity={0.85} style="fill" />
-                      <Path path={furPath} color={colors.primary} strokeWidth={1.5} style="stroke" />
-                      <Path path={clearPath} color={colors.primary} strokeWidth={0.8} opacity={0.35} style="stroke">
+                      <Path path={furPath} color={ARCH_COLORS.ink} strokeWidth={LINE_WEIGHT.furnitureSelected} style="stroke" />
+                      <Path path={clearPath} color={ARCH_COLORS.ink} strokeWidth={LINE_WEIGHT.furnitureEdge} opacity={0.35} style="stroke">
                         <DashPathEffect intervals={[4, 3]} />
                       </Path>
                     </Group>
@@ -704,8 +811,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
 
                 return (
                   <Group key={piece.id}>
-                    <Path path={furPath} color={colors.primaryDim} opacity={0.6} style="fill" />
-                    <Path path={furPath} color={colors.primaryDim} strokeWidth={1} style="stroke" />
+                    <Path path={furPath} color={ARCH_COLORS.inkDim} strokeWidth={LINE_WEIGHT.furnitureEdge} style="stroke" />
                   </Group>
                 );
               })}
@@ -723,8 +829,8 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
 
                 return (
                   <Group>
-                    <Path path={ghostPath} color={colors.primary} opacity={0.25} style="fill" />
-                    <Path path={ghostPath} color={colors.primary} strokeWidth={1.5} opacity={0.7} style="stroke">
+                    <Path path={ghostPath} color={ARCH_COLORS.ink} opacity={0.25} style="fill" />
+                    <Path path={ghostPath} color={ARCH_COLORS.ink} strokeWidth={1.5} opacity={0.7} style="stroke">
                       <DashPathEffect intervals={[5, 3]} />
                     </Path>
                   </Group>
@@ -747,12 +853,12 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 measPath.lineTo(bx, by);
                 return (
                   <Group>
-                    <Path path={measPath} color={DS.colors.warning} strokeWidth={1.5} style="stroke">
+                    <Path path={measPath} color={ARCH_COLORS.doorAccent} strokeWidth={1.5} style="stroke">
                       <DashPathEffect intervals={[6, 3]} />
                     </Path>
-                    <Circle cx={ax} cy={ay} r={4} color={DS.colors.warning} />
-                    <Circle cx={bx} cy={by} r={4} color={DS.colors.warning} />
-                    {dimFont && <SkiaText x={(ax + bx) / 2 - 16} y={(ay + by) / 2 - 8} text={label} color={DS.colors.warning} font={dimFont} />}
+                    <Circle cx={ax} cy={ay} r={4} color={ARCH_COLORS.doorAccent} />
+                    <Circle cx={bx} cy={by} r={4} color={ARCH_COLORS.doorAccent} />
+                    {dimFont && <SkiaText x={(ax + bx) / 2 - 16} y={(ay + by) / 2 - 8} text={label} color={ARCH_COLORS.doorAccent} font={dimFont} />}
                   </Group>
                 );
               })()}
@@ -762,9 +868,38 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 scale={scaleRef.current}
                 x={16}
                 y={CANVAS_H - 28}
-                color="#C9FFFD"
-                bgColor="#061A1A"
+                color={ARCH_COLORS.scaleBarInk}
+                bgColor={ARCH_COLORS.scaleBarBg}
               />
+
+              {/* ── Dimension accuracy badge ─────────────────────── */}
+              {(() => {
+                const acc: DimensionAccuracy | undefined = blueprint?.metadata?.dimensionAccuracy;
+                if (!acc) return null;
+                const confidenceColor = acc.confidence === 'high'
+                  ? '#7AB87A' : acc.confidence === 'moderate' ? '#D4A84B' : '#C0604A';
+                const badgeW = 88;
+                const badgeH = 24;
+                const badgeX = 16;
+                const badgeY = CANVAS_H - 70;
+                const labelText = `±${acc.marginCm}cm`;
+                // Label width approximation (9px per char at 11px font)
+                const labelW = labelText.length * 7;
+                const bg2 = Skia.Path.Make();
+                bg2.addRect({ x: badgeX, y: badgeY, width: Math.max(badgeW, labelW + 16), height: badgeH });
+                return (
+                  <Group>
+                    <Path path={bg2} color="rgba(30,30,30,0.85)" />
+                    <SkiaText
+                      x={badgeX + 8}
+                      y={badgeY + 17}
+                      text={labelText}
+                      color={confidenceColor}
+                      font={dimFont ?? null}
+                    />
+                  </Group>
+                );
+              })()}
 
               {/* ── Room dimension labels (width × depth + area) ─ */}
               {showDimensions && (blueprint?.rooms ?? []).map((room) => {
@@ -791,7 +926,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                         y={cy + 14}
                         text={dimText}
                         font={dimFont}
-                        color="#9A9590"
+                        color={ARCH_COLORS.inkDim}
                       />
                     )}
                     {dimFont && (
@@ -800,7 +935,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                         y={cy + 26}
                         text={areaText}
                         font={dimFont}
-                        color="#5A5550"
+                        color={ARCH_COLORS.inkGhost}
                       />
                     )}
                   </Group>
@@ -829,10 +964,18 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                     y={midY + ny}
                     text={label}
                     font={dimFont}
-                    color="#5A5550"
+                    color={ARCH_COLORS.inkGhost}
                   />
                 ) : null;
               })}
+
+              {/* ── North arrow (compass rose) ──────────────────────────── */}
+              <NorthArrow
+                x={SCREEN_W - 30}
+                y={CANVAS_H - 30}
+                size={SYMBOLS.northArrowSize}
+                font={dimFont}
+              />
 
             </Group>
           </Canvas>

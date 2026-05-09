@@ -32,10 +32,27 @@ export interface SimulationReport {
   error?: string;
 }
 
+/** Dimension accuracy metric computed after blueprint load */
+export interface DimensionAccuracy {
+  /** Margin of error in centimetres, e.g. ±8 */
+  marginCm: number;
+  /** Human-readable confidence label */
+  confidence: 'high' | 'moderate' | 'low';
+  /** Individual contributing factors and their penalties */
+  factors: Array<{
+    label: string;
+    penaltyCm: number;
+    severity: 'critical' | 'major' | 'minor';
+  }>;
+  /** Raw score 0–100 (100 = perfect) */
+  score: number;
+  computedAt: string;
+}
+
 export type RoomType =
   | 'bedroom' | 'bathroom' | 'kitchen' | 'living_room'
   | 'dining_room' | 'hallway' | 'garage' | 'office'
-  | 'laundry' | 'storage' | 'balcony';
+  | 'laundry' | 'storage' | 'balcony' | 'staircase';
 
 export type OpeningType = 'door' | 'window' | 'sliding_door' | 'french_door' | 'skylight';
 
@@ -142,6 +159,10 @@ export interface Opening {
   height: number;
   sillHeight: number;
   style?: string;
+  /** Which side the hinge is on: 'left' = hinge at opening start (standard), 'right' = hinge at opening end */
+  hingeSide?: 'left' | 'right';
+  /** Logical role of this door (used for placement and rendering context) */
+  doorRole?: 'main_entry' | 'garage_entry' | 'kitchen_back' | 'bedroom' | 'bathroom' | 'ensuite' | 'interior' | 'wc';
 }
 
 export interface Room {
@@ -207,6 +228,10 @@ export interface BuildingMetadata {
   simulationReport?: SimulationReport;
   structuralNotes?: string[];
   architectInfluence?: string;
+  /** Set by ai-generate Edge Function when critical violations persist after retry */
+  generationWarning?: string;
+  /** Client-computed dimension accuracy metric (cm) after load */
+  dimensionAccuracy?: DimensionAccuracy;
 }
 
 export type StaircaseType = 'straight' | 'l_shape' | 'spiral';

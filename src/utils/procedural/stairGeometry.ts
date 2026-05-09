@@ -232,8 +232,10 @@ export function buildSpiralStaircase(
     const midAngle = angle + stepAngle / 2;
     const stepY = stepH * i + stepH / 2;
 
-    // Step geometry
-    const stepGeo = new THREE.BoxGeometry(width * 0.42, stepH * 0.85, width * 0.4);
+    // Step geometry — ensure clear width ≥ 900mm per building code
+    const minClearWidth = 0.9;
+    const effectiveWidth = Math.max(width, minClearWidth);
+    const stepGeo = new THREE.BoxGeometry(effectiveWidth, stepH * 0.85, effectiveWidth * 0.9);
 
     // Position step at midpoint along the arc
     const cx = Math.cos(midAngle) * (innerRadius + width / 2);

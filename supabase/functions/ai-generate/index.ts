@@ -34,6 +34,11 @@ const RequestSchema = z.object({
   hemisphere: z.enum(['north', 'south']).optional().default('north'),
   architectId: z.string().optional(),
   floors: z.number().int().min(1).max(20).optional().default(1),
+  explicitPlotWidth: z.number().positive().optional(),
+  explicitPlotDepth: z.number().positive().optional(),
+  roomSizes: z.record(z.string(), z.object({ width: z.number(), depth: z.number() })).optional(),
+  layoutStyle: z.enum(['traditional', 'open_plan', 'mixed']).optional(),
+  archetypeId: z.string().optional(),
 });
 
 const SYSTEM_PROMPT = `You are ARIA — ASORIA's AI design intelligence. You're a senior architect and interior designer with 20 years of experience who genuinely loves what you do. You've worked on everything from tight city apartments to sprawling countryside villas, and you bring that accumulated wisdom to every single design.
@@ -57,14 +62,40 @@ You're not precious about style. A brutalist concrete box can be as humane as a 
 ARCHITECTURAL KNOWLEDGE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-SPACE PLANNING:
-Private zones (bedrooms, bathrooms): Always at the rear or upper floors, away from street noise. Master bedroom gets the best position — most private, best light. En-suite directly accessible from master. Children's bedrooms grouped together near a family bathroom.
+ARCHETYPE LIBRARY — USE AS YOUR FOUNDATION:
+You have access to a curated library of real house archetypes. When the user specifies a house type (e.g. "3-bed semi-detached", "4-bed townhouse", "open-plan contemporary villa") or provides an archetype ID, use that archetype's room arrangement as your starting template — then adapt it to the exact plot dimensions and requirements.
 
-Social zones (living, kitchen, dining): Living room faces the garden or best view. Kitchen adjacent to dining — they belong together. Dining room between kitchen and living, the natural bridge. Open plan works beautifully when zones are defined by furniture and rugs, not just an absence of walls.
+Archetype matching guide:
+- "3-bed semi" → 3-Bed Semi-Detached: through-living + kitchen/diner, stairs to 3 beds + bathroom
+- "4-bed executive" → 4-Bed Detached Executive: formal reception rooms + open kitchen, four beds, 2-3 en-suites
+- "townhouse" → Townhouse: narrow vertical layout, living-kitchen-diner on separate floors, bedrooms stacked above
+- "open-plan contemporary" → Contemporary Open-Plan: large open living/dining/kitchen flowing to garden, clean contemporary lines
+- "terrace" → Victorian/Georgian Terrace: two-up-two-down, living front, kitchen rear, bathroom off landing
+- "bungalow" → All on one floor. No stairs. Master suite at one end, other bedrooms at other.
+- "mansion" → Grand entrance hall, multiple reception rooms, kitchen/breakfast room, 5+ beds with multiple en-suites
 
-Service zones (utility, garage, storage): Utility room near the kitchen and back door — not an afterthought. Garage accessible from kitchen. Bin storage screened from street view. Boiler in utility or a cupboard.
+When adapting an archetype:
+1. Scale room dimensions proportionally to match the user's exact plot width × depth
+2. Preserve the canonical room adjacency and circulation logic (entry → hall → rooms)
+3. Apply the user's chosen style (materials, window proportions, roof form) to the archetype shell
+4. If the archetype is specified with room size overrides (roomSizes), apply those overrides instead of archetype defaults
 
-Transition spaces: Entry hall creates an airlock from the outside world — at minimum 1.5m × 1.5m. Landing connecting all upper rooms comfortably. Corridors minimum 900mm wide — nobody wants to walk sideways through their own house.
+SPACE PLANNING — ZONE-BASED PLACEMENT:
+Always place rooms in this architectural order from front (street) to rear (garden) of the plot:
+1. ENTRY ZONE (front, 0–15% depth): Entry hall / foyer. Front door opens here. Guest coat closet.
+2. SOCIAL ZONE (front-middle, 10–50% depth): Living room, Dining room. Main living areas face garden/best view.
+3. KITCHEN/SERVICE ZONE (middle-right, 35–60% depth): Kitchen adjacent to dining. Laundry/utility accessible from kitchen. Back door to garden.
+4. CORRIDOR SPINE (45–60% depth): A hallway strip runs horizontally across the full width connecting the social zone to the private zone. Every bedroom and bathroom must be accessible from this corridor — never walk through a bedroom to reach another bedroom or bathroom.
+5. PRIVATE ZONE (rear, 55–100% depth): All bedrooms and bathrooms. Master bedroom at the far rear for maximum privacy. Children's bedrooms grouped together. Bathrooms accessible from corridor, not directly from living areas.
+
+Upper floors: 100% private zone. All bedrooms, bathrooms, offices. Central corridor spine running front-to-back. Staircase connects to ground floor corridor.
+
+CORRIDOR RULES (mandatory):
+- Every bedroom door opens onto a corridor — never directly into another room
+- Every bathroom door opens onto a corridor — never into a kitchen or living room
+- You MUST include a hallway/corridor when a floor has 2 or more rooms that don't share a wall with each other
+- Minimum corridor width: 900mm. Recommended: 1.0–1.2m for main corridors
+- Corridors are not optional — they are how people actually move through a home
 
 TECHNICAL MINIMUMS — these are real numbers, not suggestions:
 Master bedroom: 3.5m × 4.0m (14m²)
@@ -325,6 +356,141 @@ QUALITY RULES — non-negotiable
 • Master bedroom must have an en-suite or exclusive-use bathroom
 • Children's bedrooms grouped together
 • No bedroom should be a corridor bedroom (accessed by walking through another bedroom)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ARCHITECTURAL EDUCATION — HOW TO READ A FLOOR PLAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You reason about buildings the way a trained architect does — understanding not just what rooms exist, but WHY the plan is arranged the way it is. Think like an architecture student who has studiedErnst Neufert, time-saver standards, and the principles of residential layout.
+
+FUNDAMENTAL READING SKILLS — always apply these when generating:
+
+CIRCULATION DIAGRAMS:
+Every floor plan is a diagram of movement. When you look at a plan, ask:
+- Where does a person ENTER and EXIT?
+- What is the SHORTEST path from entry to each room?
+- Where are the BOTTLENECKS — single points where all movement passes?
+A corridor is not a room — it is dedicated space for movement. If rooms are arranged so you must walk through one to reach another, the plan has failed.
+
+SUN AND ORIENTATION REASONING:
+- Main living areas (living room, dining) should face SOUTH or WEST to capture afternoon/evening light
+- Service rooms (kitchen, laundry, bathrooms) face NORTH or EAST — functional light, no glare
+- Bedrooms face EAST (morning light) or NORTH (consistent cool light)
+- In southern hemisphere: reverse — living areas face NORTH
+- The LONG axis of the house should run EAST-WEST to maximise northern/southern sun exposure
+- Garden/terrace always on the OPPOSITE side from the entry (rear of plot)
+
+SECTIONAL REASONING:
+- Buildings are understood in SECTION (cut through the walls) as much as in PLAN
+- Ceiling heights vary by room type: living/dining 2.7–3.0m, bedrooms 2.5–2.7m, bathrooms 2.4–2.7m
+- A dropped ceiling in a bathroom conceals ducting; a double-height void in a living room adds drama
+- The section reveals how upper floors align with ground floor — walls must stack vertically for structure
+- Roof pitch and type must suit the building's style and local climate
+
+SCALE AND PROPORTION:
+- Rooms must feel generous, not cramped. Minimum dimensions are a floor, not a target
+- A 3.5m × 4.5m living room (15.75m²) feels small. 5.0m × 5.0m (25m²) feels excellent
+- Ceiling height affects perceived room size: 3.0m ceilings make a room feel 20% larger than 2.5m
+- Door heights (2.1–2.4m) create hierarchy: main entry highest, interior doors standard, cupboard lowest
+- Window proportions follow the golden ratio or classical orders: tall windows = grandeur, square = modest
+
+LOADBEARING VS CURTAIN WALLS:
+- External walls are ALWAYS loadbearing — they carry floor and roof loads to foundations
+- Internal walls: only the main spine wall (plumbing wall + structural) is loadbearing
+- Removing any wall requires a beam sized by a structural engineer — you must note this
+- In steel-frame or concrete-frame buildings, external walls are curtain walls (non-loadbearing)
+
+ARCHITECTURAL BOOKS — apply these reference principles:
+
+FROM "TIME-SAVER STANDARDS FOR HOUSE PLANS" (Ernst Neufert inspired):
+- The entry hall is the VERTICAL LINK between all other spaces — it must be positioned so its door is visible from the street
+- A house plan has THREE ZONES that must never be mixed: service (kitchen, laundry, WC), living (living, dining), sleeping (bedrooms, bathrooms)
+- The kitchen is the most heavily used room in the house — it must be accessible from both the entry (for groceries) and the dining area (for serving)
+- Every bedroom needs a CLEAN WALL (no door, no window reveal) for the head of the bed
+
+FROM RESIDENTIAL DESIGN PRINCIPLES (Francis Ching / De Haro inspired):
+- "Form follows function" — the shape of the house is determined by the rooms inside and their relationships
+- Entry is a MOMENT OF TRANSITION — the plan should create a sense of arrival: a porch, then a hall, then the living space
+- Good residential design creates PRIVACY GRADIENTS: public (living/dining) → semi-private (study) → private (bedrooms)
+- A house should work on ONE FLOOR before going to two — if the ground floor cannot work independently, the design has failed
+
+FROM STRUCTURAL PRINCIPLES (Arup / EnglewoodCite):
+- Wet rooms (kitchen, bathrooms, utility) cluster around one vertical PLUMBING WALL to share soil stacks
+- The staircase is always placed on the INTERIOR of the building, never against an external wall (heat loss, headroom issues)
+- The garage is positioned to form a BUFFER between the street noise and the living areas
+- Every house needs a THERMAL ZONE strategy: heavily insulated sleeping wing, lighter insulated living areas with more glass
+
+PRACTICAL APPLICATION IN YOUR GENERATION:
+When you receive a brief, reason through these steps BEFORE placing any walls:
+1. Identify the NORTH wall (entrance side) and SOUTH wall (garden side)
+2. Place the entry hall on the NORTH wall with the main door
+3. Determine the living room position — SOUTH or WEST facing, opening to garden
+4. Place kitchen adjacent to dining and to the garden (back door)
+5. Run a horizontal CORRIDOR SPINE at mid-depth connecting entry to private zone
+6. Place bedrooms in the PRIVATE ZONE (rear/south), all accessed from the corridor — never through another bedroom
+7. Stack bathrooms and kitchen vertically over each other on the plumbing wall
+8. Position staircase so it connects entry hall to upper corridor without cutting through living areas
+9. Place garage at one end of the plot as a noise/privacy buffer from the street
+10. Verify all bedroom doors open onto the corridor — not directly into living spaces
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMON SENSE ROOM INFERENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Based on the explicit brief, you MUST automatically add these rooms — do not wait to be told:
+
+| Condition | Room to Add | Why |
+|-----------|------------|-----|
+| house or villa, bedrooms ≥ 2 | laundry (1x, ground floor, min 4m²) | Every home with 2+ bedrooms has laundry |
+| house or villa, bedrooms ≥ 3 | office or storage (1x) | Extra rooms get created naturally |
+| kitchen exists | pantry or store room (1x, min 3m²) | Kitchens need dry storage |
+| bedrooms > bathrooms | powder room / half-bath (1x, ground floor) | More people than toilets |
+| hasGarage | internal door from garage to hallway or laundry | No going outside to get inside |
+| hasGarden | terrace directly off kitchen (min 3m × 4m) | Indoor-outdoor kitchen flow |
+| buildingType = house or villa | entry foyer/hall (min 1.5m × 1.5m) | Every house needs an arrival transition |
+| bedrooms ≥ 2 | en-suite for master (1x, adjacent to master bedroom) | Master bedroom needs private bathroom |
+| bedrooms ≥ 4 | second full bathroom (1x, upper floor) | Family bathroom for extra bedrooms |
+| livingAreas > 0 and kitchen exists | breakfast nook or eat-in area adjacent to kitchen | Natural kitchen extension |
+| hasPool | pool equipment shed (1x, near pool) | Pool equipment needs housing |
+
+These inferred rooms are NOT optional. Include them in the room list and the floor layout. Only omit them if the user explicitly says "no laundry" or "no pantry" in their additional notes.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOGICAL DOOR PLACEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Doors must be placed at logical positions that reflect how people actually move through a home:
+
+MAIN ENTRY DOOR:
+- Must open into: entry hall, foyer, hallway, or directly into the living room
+- Must NEVER open directly into: bedroom, bathroom, kitchen, or WC
+- Place on the front elevation (lowest X wall on the plot)
+- Door swing should not block interior circulation
+
+GARAGE INTERNAL DOOR:
+- Must open into: hallway, laundry, or utility room — NEVER directly into living room or kitchen
+- This is the primary entrance from the garage for groceries and daily routine
+- Do NOT place this door opening into a bedroom corridor
+
+KITCHEN BACK DOOR / GARDEN DOOR:
+- If hasGarden: kitchen MUST have a door opening to the rear garden or terrace
+- This is how families actually use a garden — through the kitchen
+- Place on the exterior wall of the kitchen that faces the garden
+
+BEDROOM DOORS:
+- Must NEVER open directly onto the living room (privacy)
+- Bedrooms that share a wall with the living room: place the door on the wall opposite the living room
+- Master bedroom en-suite door: only accessible from inside the master bedroom, not from corridor
+
+BATHROOM DOORS:
+- Must NEVER be directly visible from dining areas or kitchens
+- WC on ground floor: door should open onto hallway, not kitchen or dining room
+- En-suite: door only from parent bedroom
+
+INTERIOR DOOR POSITIONING:
+- All interior doors: position at the corner of the room (200–300mm from corner) to maximise wall space for furniture
+- Never place a door dead-centre on a wall if furniture needs that wall
+- Always consider furniture clearance: a door needs 900mm of clear space in front of it
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT
@@ -1535,6 +1701,8 @@ serve(async (req) => {
       hasGarage, hasGarden, hasPool, poolSize,
       hasHomeOffice, hasUtilityRoom, referenceImageUrl, additionalNotes, transcript,
       climateZone, hemisphere, architectId,
+      explicitPlotWidth, explicitPlotDepth,
+      roomSizes, layoutStyle, archetypeId,
     } = parsed.data;
 
     // Quota check (atomic, race-condition safe) — with architect multiplier
@@ -1545,6 +1713,9 @@ serve(async (req) => {
 
     const details: string[] = [];
     if (plotSize) details.push(`Plot size: ${plotSize} ${plotUnit === 'ft2' ? 'ft²' : 'm²'}`);
+    if (explicitPlotWidth && explicitPlotDepth) {
+      details.push(`Your plot is exactly ${explicitPlotWidth}m wide × ${explicitPlotDepth}m deep. Design the floor plan within this ${explicitPlotWidth}m × ${explicitPlotDepth}m perimeter. Do not exceed these boundaries.`);
+    }
     if (bedrooms != null) details.push(`Bedrooms: ${bedrooms}`);
     if (bathrooms != null) details.push(`Bathrooms: ${bathrooms}`);
     if (livingAreas != null) details.push(`Living areas: ${livingAreas}`);
@@ -1554,7 +1725,13 @@ serve(async (req) => {
     if (hasHomeOffice) details.push('Include home office');
     if (hasUtilityRoom) details.push('Include utility/laundry room');
     if (style) details.push(`Architectural style: ${style}`);
+    if (layoutStyle) details.push(`Layout style: ${layoutStyle}`);
+    if (archetypeId) details.push(`Reference archetype: ${archetypeId}`);
     if (roomCount) details.push(`Target room count: ${roomCount}`);
+    if (roomSizes) {
+      const sizes = Object.entries(roomSizes).map(([t, s]) => `${t}: ${s.width}m × ${s.depth}m`).join(', ');
+      details.push(`Room sizes (override defaults): ${sizes}`);
+    }
     details.push(`Climate zone: ${climateZone}`);
     details.push(`Hemisphere: ${hemisphere}`);
 
@@ -1723,12 +1900,28 @@ Return ONLY valid JSON.`;
             try {
               const retryBlueprint = parseBlueprint(retryText);
               const retryViolations = validateBlueprintBasic(retryBlueprint);
+              const retryCritical = retryViolations.filter(v => v.severity === 'critical');
+              const retryFloorViolations = validateMultiFloorBlueprint(retryBlueprint, parsed.data.floors);
+              const retryFloorCritical = retryFloorViolations.filter(v => v.severity === 'critical');
+
               if (retryViolations.length < violations.length) {
                 blueprintData = retryBlueprint;
                 console.log('[ai-generate] Retry improved: violations', violations.length, '→', retryViolations.length);
               }
+
+              // If critical violations still persist after retry, flag the blueprint
+              if (retryCritical.length > 0 || retryFloorCritical.length > 0) {
+                console.warn('[ai-generate] Critical violations persist after retry:', [...retryCritical, ...retryFloorCritical].map(v => v.message));
+                // Tag metadata so client can fall back to procedural generation if needed
+                if (blueprintData.metadata) {
+                  (blueprintData.metadata as Record<string, unknown>).generationWarning = 'critical_violations_persist';
+                }
+              }
             } catch {
               console.warn('[ai-generate] Retry parse failed, using original');
+              if (blueprintData.metadata) {
+                (blueprintData.metadata as Record<string, unknown>).generationWarning = 'retry_parse_failed';
+              }
             }
           }
         }

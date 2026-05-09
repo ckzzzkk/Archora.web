@@ -96,6 +96,10 @@ export function syncAutoStairOpenings(
     const stairDepth = stepCount * treadDepth;
 
     // Determine which floor is above/below this stair's connection
+    if (!stair.connectsFloors || stair.connectsFloors.length < 2) {
+      // Incomplete connection data — skip hole sync silently
+      return;
+    }
     const [floorBelow, floorAbove] = stair.connectsFloors;
 
     // Find slabs / ceilings on the relevant floors

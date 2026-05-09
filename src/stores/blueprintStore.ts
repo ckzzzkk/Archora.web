@@ -4,6 +4,7 @@ import { migrateToMultiFloor, deriveTopLevel, getFloorLabel } from '../utils/flo
 import { TIER_LIMITS } from '../utils/tierLimits';
 import { autoRepairBlueprint } from '../utils/geometry/autoRepair';
 import { validateBlueprint, violationSummary } from '../utils/geometry/blueprintValidator';
+import { computeDimensionAccuracy } from '../utils/geometry/dimensionAccuracy';
 import type {
   BlueprintData, FloorData, Wall, Room, Opening, FurniturePiece,
   CustomAsset, ChatMessage, WallTexture, MaterialType, CeilingType,
@@ -45,6 +46,8 @@ interface BlueprintState {
   // Suggestions
   suggestions: SuggestionItem[];
   unreadSuggestionCount: number;
+  /** Cached subscription tier for auto-save debounce and undo limit resolution */
+  tier?: SubscriptionTier;
   actions: {
     loadBlueprint: (data: BlueprintData, tier?: SubscriptionTier) => void;
     clearBlueprint: () => void;
@@ -148,10 +151,13 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     }, debounce);
   }
 
-  function getCurrentTier(tier?: SubscriptionTier): SubscriptionTier {
+  function getCurrentTier(explicitTier?: SubscriptionTier): SubscriptionTier {
     // If tier is explicitly passed (from authenticated action call), use it.
-    // Otherwise fall back to 'starter' for unauthenticated contexts.
-    return tier ?? 'starter';
+    // Otherwise try to read from store state, falling back to 'starter' for
+    // unauthenticated or legacy contexts.
+    if (explicitTier) return explicitTier;
+    const state = get();
+    return (state as { tier?: SubscriptionTier }).tier ?? 'starter';
   }
 
   function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string, tier?: SubscriptionTier): Partial<BlueprintState> {
@@ -226,6 +232,10 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
             `${summary.critical} critical, ${summary.major} major, ${summary.minor} minor`);
         }
 
+        // Compute dimension accuracy metric
+        const accuracy = computeDimensionAccuracy(repaired);
+        repaired.metadata.dimensionAccuracy = accuracy;
+
         set({
           blueprint: repaired,
           selectedId: null,
@@ -235,6 +245,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           dirtyNodes: [],
           history: [repaired],
           historyIndex: 0,
+          tier,
         });
         scheduleSave(repaired, tier);
       },
@@ -611,8 +622,9 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           const data = JSON.parse(raw) as BlueprintData;
           const migrated = migrateToMultiFloor(data);
           set({ blueprint: migrated, isDirty: false, currentFloorIndex: 0, saveStatus: 'saved' });
-        } catch {
-          // corrupt data — ignore
+        } catch (err) {
+          console.warn('[blueprintStore] Corrupt storage data, resetting:', err);
+          blueprintStorage.delete(STORAGE_KEY);
         }
       },
 
