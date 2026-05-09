@@ -1,5 +1,5 @@
 import { DS } from '../../theme/designSystem';
-import React, { useCallback, useRef, useState, useEffect, forwardRef, useImperativeHandle, useReducer } from 'react';
+import React, { useCallback, useRef, useState, useEffect, useMemo, forwardRef, useImperativeHandle, useReducer } from 'react';
 import { View, Dimensions } from 'react-native';
 import {
   Canvas,
@@ -11,6 +11,7 @@ import {
   Text as SkiaText,
   DashPathEffect,
 } from '@shopify/react-native-skia';
+import type { StaircaseData } from '../../types/blueprint';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import {
   useSharedValue,
@@ -135,6 +136,48 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   // Measure tool: stores tapped points
   const [measurePoints, setMeasurePoints] = useState<{ x: number; y: number }[]>([]);
 
+  // ── Memoized grid paths (replaces ~150 individual Line components) ──
+  // Minor grid (0.5m): ~80 vertical + ~60 horizontal lines
+  // Major grid (2m): ~20 vertical + ~15 horizontal lines
+  const { minorGridPath, majorGridPath, minorLineWeight, majorLineWeight } = useMemo(() => {
+    const minorPath = Skia.Path.Make();
+    const majorPath = Skia.Path.Make();
+    const pxMinor = PIXELS_PER_METRE * GRID.minorInterval; // 20px
+    const pxMajor = PIXELS_PER_METRE * GRID.majorInterval; // 80px
+    const minorWt = LINE_WEIGHT.gridMinor;
+    const majorWt = LINE_WEIGHT.gridMajor;
+
+    // Minor: 80 vertical + 60 horizontal
+    for (let i = 0; i <= 80; i++) {
+      const x = i * pxMinor;
+      minorPath.moveTo(x, 0);
+      minorPath.lineTo(x, CANVAS_H);
+    }
+    for (let i = 0; i <= 60; i++) {
+      const y = i * pxMinor;
+      minorPath.moveTo(0, y);
+      minorPath.lineTo(SCREEN_W, y);
+    }
+
+    // Major: 20 vertical + 15 horizontal
+    for (let i = 0; i <= 20; i++) {
+      const x = i * pxMajor;
+      majorPath.moveTo(x, 0);
+      majorPath.lineTo(x, CANVAS_H);
+    }
+    for (let i = 0; i <= 15; i++) {
+      const y = i * pxMajor;
+      majorPath.moveTo(0, y);
+      majorPath.lineTo(SCREEN_W, y);
+    }
+
+    return {
+      minorGridPath: minorPath,
+      majorGridPath: majorPath,
+      minorLineWeight: minorWt,
+      majorLineWeight: majorWt,
+    };
+  }, [SCREEN_W, CANVAS_H]);
   const scale = useSharedValue(1);
   const offsetX = useSharedValue(SCREEN_W / 2);
   const offsetY = useSharedValue(CANVAS_H / 2);
@@ -441,44 +484,10 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
             <Group>
 
               {/* ── Layer 1: Minor grid (0.5m) ──────────────────────────── */}
-              {Array.from({ length: 80 }).map((_, i) => (
-                <Line
-                  key={`mg_v${i}`}
-                  p1={{ x: i * PIXELS_PER_METRE * GRID.minorInterval, y: 0 }}
-                  p2={{ x: i * PIXELS_PER_METRE * GRID.minorInterval, y: CANVAS_H }}
-                  color={ARCH_COLORS.gridMinor}
-                  strokeWidth={LINE_WEIGHT.gridMinor}
-                />
-              ))}
-              {Array.from({ length: 60 }).map((_, i) => (
-                <Line
-                  key={`mg_h${i}`}
-                  p1={{ x: 0, y: i * PIXELS_PER_METRE * GRID.minorInterval }}
-                  p2={{ x: SCREEN_W, y: i * PIXELS_PER_METRE * GRID.minorInterval }}
-                  color={ARCH_COLORS.gridMinor}
-                  strokeWidth={LINE_WEIGHT.gridMinor}
-                />
-              ))}
+              <Path path={minorGridPath} color={ARCH_COLORS.gridMinor} style="stroke" strokeWidth={minorLineWeight} />
 
               {/* ── Layer 1b: Major grid (2m) ────────────────────────── */}
-              {Array.from({ length: 20 }).map((_, i) => (
-                <Line
-                  key={`Ma_v${i}`}
-                  p1={{ x: i * PIXELS_PER_METRE * GRID.majorInterval, y: 0 }}
-                  p2={{ x: i * PIXELS_PER_METRE * GRID.majorInterval, y: CANVAS_H }}
-                  color={ARCH_COLORS.gridMajor}
-                  strokeWidth={LINE_WEIGHT.gridMajor}
-                />
-              ))}
-              {Array.from({ length: 15 }).map((_, i) => (
-                <Line
-                  key={`Ma_h${i}`}
-                  p1={{ x: 0, y: i * PIXELS_PER_METRE * GRID.majorInterval }}
-                  p2={{ x: SCREEN_W, y: i * PIXELS_PER_METRE * GRID.majorInterval }}
-                  color={ARCH_COLORS.gridMajor}
-                  strokeWidth={LINE_WEIGHT.gridMajor}
-                />
-              ))}
+              <Path path={majorGridPath} color={ARCH_COLORS.gridMajor} style="stroke" strokeWidth={majorLineWeight} />
 
               {/* ── Layer 2: Structural grid (3m) ────────────────────── */}
               {showStructuralGrid && (() => {
@@ -691,6 +700,53 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                   );
                 }
               })}
+
+              {/* ── Layer 5c: Staircase symbols ─────────────────────────── */}
+              {(() => {
+                const stairs: StaircaseData[] = (blueprint as any)?.staircases ?? [];
+                return stairs.map((stair) => {
+                  const px = toPixelX(stair.position.x);
+                  const py = toPixelY(stair.position.y);
+                  const w = (stair.width ?? 0.9) * PIXELS_PER_METRE;
+                  const d = ((stair.totalRise ?? 3.0) / (stair.stepCount ?? 12) * 0.3) * PIXELS_PER_METRE;
+                  const isSpiral = stair.type === 'spiral';
+                  // Build stair outline rectangle using a Skia Path
+                  const outlinePath = Skia.Path.Make();
+                  outlinePath.addRect({ x: px - w / 2, y: py - d / 2, width: w, height: d });
+                  // Diagonal tick marks inside — show direction of travel
+                  const numTicks = Math.max(2, Math.floor((stair.stepCount ?? 12) / 3));
+                  const tickPath = Skia.Path.Make();
+                  for (let i = 0; i < numTicks; i++) {
+                    const frac = (i + 0.5) / numTicks;
+                    const tx = px - w / 2 + frac * w;
+                    const ty1 = py + d / 2;
+                    const ty2 = ty1 - d * 0.2;
+                    tickPath.moveTo(tx - w * 0.06, ty1);
+                    tickPath.lineTo(tx + w * 0.06, ty2);
+                  }
+                  // Spiral centre circle — line-segment approximation (no addArc/addCircle in Skia)
+                  const circlePath = Skia.Path.Make();
+                  if (isSpiral) {
+                    const r = w * 0.25;
+                    const segs = 12;
+                    for (let i = 0; i <= segs; i++) {
+                      const angle = (i / segs) * Math.PI * 2;
+                      const cx2 = px + r * Math.cos(angle);
+                      const cy2 = py + r * Math.sin(angle);
+                      if (i === 0) circlePath.moveTo(cx2, cy2);
+                      else circlePath.lineTo(cx2, cy2);
+                    }
+                    circlePath.close();
+                  }
+                  return (
+                    <Group key={`stair_${stair.id}`}>
+                      <Path path={outlinePath} color={ARCH_COLORS.ink} strokeWidth={LINE_WEIGHT.innerWall} style="stroke" />
+                      <Path path={tickPath} color={ARCH_COLORS.ink} strokeWidth={1.2} style="stroke" />
+                      {isSpiral && <Path path={circlePath} color={ARCH_COLORS.ink} strokeWidth={LINE_WEIGHT.innerWall} style="stroke" />}
+                    </Group>
+                  );
+                });
+              })()}
 
               {/* ── Layer 6: Dimension lines — architectural tick style ── */}
               {showDimensions && dimensionLines.map((dim) => {

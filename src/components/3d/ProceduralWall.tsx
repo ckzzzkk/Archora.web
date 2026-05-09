@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import type { Wall, Opening } from '../../types/blueprint'
 import { MaterialCompiler } from '../../materials/MaterialCompiler'
@@ -408,6 +408,14 @@ export function ProceduralWall({
     // Simple fallback
     return new THREE.BoxGeometry(length, wall.height, wall.thickness)
   }, [miteredGeometry, length, wall.height, wall.thickness])
+
+  // Dispose geometries on unmount / wall change to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      miteredGeometry.dispose();
+      geometry.dispose();
+    };
+  }, [miteredGeometry, geometry]);
 
   const segments = useMemo(
     () => buildSegments(length, wall.height, wall.thickness, openings),

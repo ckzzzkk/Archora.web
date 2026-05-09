@@ -163,6 +163,10 @@ export function BlueprintWorkspaceScreen() {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const viewMode = useBlueprintStore((s) => s.viewMode);
   const isDirty = useBlueprintStore((s) => s.isDirty);
+  const saveStatus = useBlueprintStore((s) => s.saveStatus);
+  const lastActionLabel = useBlueprintStore((s) => s.lastActionLabel);
+  const historyIndex = useBlueprintStore((s) => s.historyIndex);
+  const historyLength = useBlueprintStore((s) => s.history.length);
   const currentFloorIndex = useBlueprintStore((s) => s.currentFloorIndex);
   const {
     setViewMode,
@@ -199,6 +203,7 @@ export function BlueprintWorkspaceScreen() {
   const [simulationReport, setSimulationReport] = useState<SimulationReport | null>(null);
   const [showSimulation, setShowSimulation] = useState(false);
   const [showCostEstimator, setShowCostEstimator] = useState(false);
+  const [sketchBannerDismissed, setSketchBannerDismissed] = useState(false);
   const canvasRef = useRef<Canvas2DHandle>(null);
 
   const handleToolPress = useCallback((toolId: ToolId) => {
@@ -398,6 +403,39 @@ export function BlueprintWorkspaceScreen() {
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
       <View style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: DS.colors.border, backgroundColor: DS.colors.surface }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, alignItems: 'center' }}>
+          {/* Cloud save status indicator */}
+          <Pressable style={{ marginRight: 10, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 }}>
+            {saveStatus === 'saved' && (
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill={DS.colors.success}>
+                <Path d="M19 18H6a4 4 0 0 1-4-4 4 4 0 0 1 4-4h.5A5.5 5.5 0 0 1 16 5.5 5.5 5.5 0 0 1 21.5 11c0 2.5-2 4.5-5 4.5h-1a3 3 0 0 0-3 3 3 3 0 0 0 3 3h7a4 4 0 0 0 4-4 4 4 0 0 0-4-4z"/>
+              </Svg>
+            )}
+            {saveStatus === 'saving' && (
+              <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+              <CompassRoseLoader size="small" />
+            </View>
+            )}
+            {saveStatus === 'unsaved' && (
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={DS.colors.warning} strokeWidth={2}>
+                <Path d="M19 18H6a4 4 0 0 1-4-4 4 4 0 0 1 4-4h.5A5.5 5.5 0 0 1 16 5.5 5.5 5.5 0 0 1 21.5 11c0 2.5-2 4.5-5 4.5h-1a3 3 0 0 0-3 3 3 3 0 0 0 3 3h7a4 4 0 0 0 4-4 4 4 0 0 0-4-4z"/>
+              </Svg>
+            )}
+          </Pressable>
+          {/* Undo/redo feedback chip */}
+          {lastActionLabel && (
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', gap: 4,
+              paddingHorizontal: 10, paddingVertical: 6, borderRadius: 50,
+              backgroundColor: DS.colors.surfaceHigh, borderWidth: 1,
+              borderColor: DS.colors.border, marginRight: 8,
+            }}>
+              <ArchText variant="body" style={{ fontSize: 10, color: DS.colors.success }}>↩</ArchText>
+              <ArchText variant="body" style={{ fontSize: 10, fontFamily: 'Inter_400Regular', color: DS.colors.primaryDim }} numberOfLines={1}>{lastActionLabel}</ArchText>
+              {historyLength > 0 && (
+                <ArchText variant="body" style={{ fontSize: 9, color: DS.colors.primaryGhost }}>({historyIndex + 1}/{historyLength})</ArchText>
+              )}
+            </View>
+          )}
           {TOOLS.map((tool) => (
             <ToolButton key={tool.id} tool={tool} active={activeTool === tool.id} onPress={() => handleToolPress(tool.id)} />
           ))}
@@ -492,7 +530,10 @@ export function BlueprintWorkspaceScreen() {
                 marginRight: 8,
               }}
             >
-              <Text style={{ fontSize: 14 }}>📷</Text>
+              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={DS.colors.warning} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <Circle cx={12} cy={13} r={4}/>
+              </Svg>
               <View style={{ flexShrink: 1 }}>
                 <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.warning }} numberOfLines={1}>Photo → 3D</ArchText>
               </View>
@@ -508,7 +549,10 @@ export function BlueprintWorkspaceScreen() {
               marginRight: 8,
             }}
           >
-            <Text style={{ fontSize: 14 }}>📋</Text>
+            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={DS.colors.primary} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <Rect x={8} y={2} width={8} height={4} rx={1} ry={1}/>
+              </Svg>
             <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.primary }}>Copy</ArchText>
           </Pressable>
           {/* Blender Render — Architect only */}
@@ -522,7 +566,12 @@ export function BlueprintWorkspaceScreen() {
                 marginRight: 8,
               }}
             >
-              <Text style={{ fontSize: 14 }}>🎨</Text>
+              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={DS.colors.amber} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                <Path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                <Path d="M2 2l7.586 7.586"/>
+                <Circle cx={11} cy={11} r={2}/>
+              </Svg>
               <View style={{ flexShrink: 1 }}>
                 <ArchText variant="body" style={{ fontSize: 11, fontFamily: DS.font.medium, color: DS.colors.amber }} numberOfLines={1}>Render</ArchText>
               </View>
@@ -592,6 +641,38 @@ export function BlueprintWorkspaceScreen() {
           onDeleteFloor={deleteFloor}
           onStaircasePrompt={() => setShowStaircasePrompt(true)}
         />
+      )}
+
+      {/* ── Sketch refinement banner ───────────────────────────────────── */}
+      {blueprint && blueprint.metadata.generatedFrom === 'sketch' && !sketchBannerDismissed && aiGenerationsAllowed && (
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', gap: 10,
+          marginHorizontal: 16, marginVertical: 8,
+          paddingHorizontal: 14, paddingVertical: 10,
+          borderRadius: 12,
+          backgroundColor: `${DS.colors.warning}18`,
+          borderWidth: 1, borderColor: `${DS.colors.warning}40`,
+        }}>
+          <View style={{ flex: 1 }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: DS.colors.warning }}>
+              Sketch refinement available
+            </ArchText>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: DS.colors.primaryDim, marginTop: 2 }}>
+              Refine this sketch to professional architectural standards
+            </ArchText>
+          </View>
+          <Pressable
+            onPress={() => navigation.navigate('Sketch' as never)}
+            style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: DS.colors.warning }}
+          >
+            <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: DS.colors.background }}>
+              Refine
+            </ArchText>
+          </Pressable>
+          <Pressable onPress={() => setSketchBannerDismissed(true)} style={{ padding: 4 }}>
+            <ArchText variant="body" style={{ color: DS.colors.primaryGhost, fontSize: 16 }}>✕</ArchText>
+          </Pressable>
+        </View>
       )}
 
       {/* ── Canvas ──────────────────────────────────────────────────────── */}

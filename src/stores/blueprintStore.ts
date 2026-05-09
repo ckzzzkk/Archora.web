@@ -17,6 +17,17 @@ import type { SuggestionItem } from '../types/consultation';
 
 const STORAGE_KEY = 'blueprint_current';
 
+// Content-hash cache for autoRepairBlueprint — avoids re-running expensive
+// JSON.parse/stringify + wall-graph analysis when blueprint content is unchanged
+const repairCache = new Map<string, { hash: string; result: Awaited<ReturnType<typeof autoRepairBlueprint>> }>();
+
+function blueprintContentHash(bp: BlueprintData): string {
+  // Cheap hash using wall/floor count + total area as proxy for content identity
+  const wallCount = bp.floors.reduce((n, f) => n + f.walls.length, 0);
+  const totalArea = bp.floors.reduce((a, f) => a + f.rooms.reduce((s, r) => s + (r.area ?? 0), 0), 0);
+  return `${bp.version ?? 0}-${wallCount}-${Math.round(totalArea)}`;
+}
+
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getSaveDebounceMs(tier: SubscriptionTier): number {
@@ -214,13 +225,27 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         const migrated = migrateToMultiFloor(data);
 
         // Auto-repair geometry issues (wall connections, proportions, etc.)
-        const { repaired, report } = autoRepairBlueprint(migrated);
-        if (report.totalFixes > 0) {
-          console.log(`[blueprintStore] Auto-repaired ${report.totalFixes} geometry issues:`,
-            report.wallsSnapped > 0 ? `${report.wallsSnapped} walls snapped` : '',
-            report.areasRecalculated > 0 ? `${report.areasRecalculated} areas recalculated` : '',
-            report.furnitureMoved > 0 ? `${report.furnitureMoved} furniture repositioned` : '',
-            report.openingsClamped > 0 ? `${report.openingsClamped} openings clamped` : '',
+        // Use content-hash cache to skip re-running when blueprint content unchanged
+        const cacheKey = `autoRepair_${data.id}`;
+        const contentHash = blueprintContentHash(migrated);
+        const cached = repairCache.get(cacheKey);
+        let repaired = migrated;
+        let repairReport = { totalFixes: 0, wallsSnapped: 0, areasRecalculated: 0, furnitureMoved: 0, openingsClamped: 0 };
+        if (cached && cached.hash === contentHash) {
+          repaired = migrated;
+          repairReport = { totalFixes: 0, wallsSnapped: 0, areasRecalculated: 0, furnitureMoved: 0, openingsClamped: 0 };
+        } else {
+          const result = autoRepairBlueprint(migrated);
+          repaired = result.repaired;
+          repairReport = result.report;
+          repairCache.set(cacheKey, { hash: contentHash, result });
+        }
+        if (repairReport.totalFixes > 0) {
+          console.log(`[blueprintStore] Auto-repaired ${repairReport.totalFixes} geometry issues:`,
+            repairReport.wallsSnapped > 0 ? `${repairReport.wallsSnapped} walls snapped` : '',
+            repairReport.areasRecalculated > 0 ? `${repairReport.areasRecalculated} areas recalculated` : '',
+            repairReport.furnitureMoved > 0 ? `${repairReport.furnitureMoved} furniture repositioned` : '',
+            repairReport.openingsClamped > 0 ? `${repairReport.openingsClamped} openings clamped` : '',
           );
         }
 
@@ -255,6 +280,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         set({
           blueprint: null, selectedId: null, isDirty: false, currentFloorIndex: 0,
           saveStatus: 'saved', dirtyNodes: [], history: [], historyIndex: -1,
+          suggestions: [], unreadSuggestionCount: 0, tier: undefined,
         });
         blueprintStorage.delete(STORAGE_KEY);
       },

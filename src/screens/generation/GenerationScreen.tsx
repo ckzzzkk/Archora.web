@@ -28,6 +28,7 @@ import { Step0Architect } from './steps/Step0Architect';
 import { Step1BuildingType } from './steps/Step1BuildingType';
 import { Step2PlotSize } from './steps/Step2PlotSize';
 import { Step3Rooms } from './steps/Step3Rooms';
+import { Step3RoomStudio } from './steps/Step3RoomStudio';
 import { Step4Style } from './steps/Step4Style';
 import { Step5Reference } from './steps/Step5Reference';
 import { Step6Notes } from './steps/Step6Notes';
@@ -294,6 +295,8 @@ export function GenerationScreen() {
   const [buildingType, setBuildingType] = useState<BuildingType | null>(null);
   const [plotSize, setPlotSize] = useState<string>('175');
   const [plotUnit, setPlotUnit] = useState<'m2' | 'ft2'>('m2');
+  const [explicitPlotWidth, setExplicitPlotWidth] = useState<string>('');
+  const [explicitPlotDepth, setExplicitPlotDepth] = useState<string>('');
   const [rooms, setRooms] = useState<RoomsState>({
     bedrooms: 3,
     bathrooms: 0,
@@ -311,6 +314,12 @@ export function GenerationScreen() {
   const [transcript, setTranscript] = useState<string>('');
   const [consultationSummary, setConsultationSummary] = useState<ConsultationSummary | null>(null);
   const [floorCount, setFloorCount] = useState(1);
+
+  // Room Studio state (Pro/Architect)
+  const [showRoomStudio, setShowRoomStudio] = useState(false);
+  const [roomSizes, setRoomSizes] = useState<Record<string, { width: number; depth: number }>>({});
+  const [layoutStyle, setLayoutStyle] = useState<'traditional' | 'open_plan' | 'mixed' | null>(null);
+  const [archetypeId, setArchetypeId] = useState<string | null>(null);
 
   // Screen state
   const [screenState, setScreenState] = useState<ScreenState>('idle');
@@ -392,10 +401,13 @@ export function GenerationScreen() {
 
   const buildPayload = (): GenerationPayload => {
     if (!buildingType || !style) throw new Error('buildPayload called before selection complete');
+    const hasExplicit = explicitPlotWidth && explicitPlotDepth;
     return {
       buildingType,
-      plotSize: parseFloat(plotSize) || 175,
-      plotUnit: plotUnit as 'm2' | 'ft2',
+      plotSize: hasExplicit
+        ? parseFloat(explicitPlotWidth) * parseFloat(explicitPlotDepth)
+        : parseFloat(plotSize) || 175,
+      plotUnit: hasExplicit ? 'm2' : plotUnit as 'm2' | 'ft2',
       ...rooms,
       floors: floorCount,
       style,
@@ -403,6 +415,11 @@ export function GenerationScreen() {
       additionalNotes: notes,
       transcript,
       architectId: selectedArchitectId ?? undefined,
+      explicitPlotWidth: hasExplicit ? parseFloat(explicitPlotWidth) : undefined,
+      explicitPlotDepth: hasExplicit ? parseFloat(explicitPlotDepth) : undefined,
+      roomSizes: Object.keys(roomSizes).length > 0 ? roomSizes : undefined,
+      layoutStyle: layoutStyle ?? undefined,
+      archetypeId: archetypeId ?? undefined,
     };
   };
 
@@ -574,8 +591,12 @@ export function GenerationScreen() {
           <Step2PlotSize
             plotSize={plotSize}
             plotUnit={plotUnit}
+            explicitPlotWidth={explicitPlotWidth}
+            explicitPlotDepth={explicitPlotDepth}
             onPlotSizeChange={setPlotSize}
             onPlotUnitChange={(u) => setPlotUnit(u)}
+            onExplicitWidthChange={setExplicitPlotWidth}
+            onExplicitDepthChange={setExplicitPlotDepth}
             onNext={goNext}
           />
         )}
@@ -604,6 +625,7 @@ export function GenerationScreen() {
               onHomeOfficeChange={(v) => setRooms((r) => ({ ...r, hasHomeOffice: v }))}
               onUtilityRoomChange={(v) => setRooms((r) => ({ ...r, hasUtilityRoom: v }))}
               onFloorsChange={setFloorCount}
+              onOpenRoomStudio={() => setShowRoomStudio(true)}
               onNext={goNext}
             />
 
@@ -656,6 +678,17 @@ export function GenerationScreen() {
                 </View>
               </View>
             )}
+
+            {/* Customise rooms — Pro/Architect tier */}
+            {(tier === 'pro' || tier === 'architect') && (
+              <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
+                <OvalButton
+                  label="Customise rooms ✦"
+                  onPress={() => setShowRoomStudio(true)}
+                  variant="ghost"
+                />
+              </View>
+            )}
           </>
         )}
 
@@ -701,6 +734,18 @@ export function GenerationScreen() {
           />
         )}
       </ScrollView>
+
+      {/* Room Studio modal — Pro/Architect */}
+      <Step3RoomStudio
+        visible={showRoomStudio}
+        roomSizes={roomSizes}
+        layoutStyle={layoutStyle}
+        archetypeId={archetypeId}
+        onClose={() => setShowRoomStudio(false)}
+        onRoomSizesChange={setRoomSizes}
+        onLayoutStyleChange={setLayoutStyle}
+        onArchetypeChange={setArchetypeId}
+      />
     </SafeAreaView>
     </Animated.View>
     </GestureDetector>

@@ -2,7 +2,7 @@
  * GltfFurniture — R3F component that loads and renders a GLTF mesh from a URL.
  * Used for VIGA-reconstructed furniture meshes stored in Supabase Storage.
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import type { Group, Mesh } from 'three';
 
@@ -44,6 +44,20 @@ export function GltfFurniture({
 
     return group;
   }, [scene, position, rotation, scale, selected]);
+
+  // Dispose cloned geometries and materials on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      mesh.traverse((child) => {
+        if ((child as Mesh).isMesh) {
+          (child as Mesh).geometry?.dispose();
+          const mat = (child as Mesh).material;
+          if (Array.isArray(mat)) mat.forEach(m => m.dispose());
+          else mat?.dispose();
+        }
+      });
+    };
+  }, [mesh]);
 
   return <primitive object={mesh} onClick={onSelect} />;
 }

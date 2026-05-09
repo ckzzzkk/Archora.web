@@ -31,6 +31,7 @@ interface Props {
   onHomeOfficeChange: (v: boolean) => void;
   onUtilityRoomChange: (v: boolean) => void;
   onFloorsChange: (v: number) => void;
+  onOpenRoomStudio?: () => void;
   onNext: () => void;
 }
 
@@ -209,6 +210,30 @@ export function Step3Rooms(props: Props) {
           </View>
         );
       })()}
+
+      {/* Pro/Architect tier: custom room sizes link */}
+      {props.tier !== 'starter' && props.onOpenRoomStudio && (
+        <Pressable
+          onPress={props.onOpenRoomStudio}
+          style={{
+            marginTop: 8,
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: `${DS.colors.warning}60`,
+            backgroundColor: `${DS.colors.warning}10`,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.warning }}>◈</ArchText>
+          <ArchText variant="body" style={{ fontSize: 13, fontFamily: 'Inter_500Medium', color: DS.colors.warning }}>
+            Custom room sizes
+          </ArchText>
+        </Pressable>
+      )}
 
       <View style={{ flex: 1 }} />
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { buildSlabGeometry } from '../../utils/procedural/slabGeometry';
 import type { Slab, Wall } from '../../types';
 import { MaterialCompiler } from '../../materials/MaterialCompiler';
@@ -29,6 +29,11 @@ export function ProceduralFloor({
     () => buildSlabGeometry(slab.polygon, slab.holes, slab.elevation),
     [slab.polygon, slab.holes, slab.elevation],
   );
+
+  // Dispose slab geometry on unmount / slab change to prevent memory leaks
+  useEffect(() => {
+    return () => { geometry.dispose(); };
+  }, [geometry]);
 
   const mat = MaterialCompiler.compile(floorMaterial, 'threejs');
   const color = selected ? '#4A90D9' : mat.color;
