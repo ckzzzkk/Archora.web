@@ -40,3 +40,16 @@ export const Errors = {
   internal: (msg = 'Internal server error') => errorResponse('INTERNAL_ERROR', msg, 500),
   upstream: (msg: string) => errorResponse('UPSTREAM_ERROR', msg, 502),
 } as const;
+
+/**
+ * Returns the value of a required environment variable.
+ * Throws a 500 Response if the variable is not set — fail fast rather than
+ * allowing a downstream NullPointerException on a misconfigured deployment.
+ */
+export function requireEnv(key: string): string {
+  const value = Deno.env.get(key);
+  if (value === undefined) {
+    throw Errors.internal(`Required environment variable '${key}' is not configured`);
+  }
+  return value;
+}

@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { useHaptics } from '../../hooks/useHaptics';
+import { useTierGate } from '../../hooks/useTierGate';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../../components/common/ArchText';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
@@ -30,6 +31,7 @@ import { useDeviceType } from '../../hooks/useDeviceType';
 import { getResponsiveTokens } from '../../theme/responsive';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData, Wall, Room, RoomType, Vector2D, FloorData } from '../../types/blueprint';
+import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -519,6 +521,10 @@ export function SketchScreen() {
   const [arcEnd, setArcEnd] = useState<Vector2D | null>(null);
   const [arcDragBulge, setArcDragBulge] = useState<Vector2D | null>(null); // drag offset while setting bulge
 
+  // Refine with AI state
+  const [isRefining, setIsRefining] = useState(false);
+  const { allowed: refineAllowed } = useTierGate('aiGenerationsPerMonth');
+
   // Arc drag shared value for smooth preview
   const arcDragX = useSharedValue(-9999);
   const arcDragY = useSharedValue(-9999);
@@ -836,6 +842,23 @@ export function SketchScreen() {
     navigation.navigate('Workspace', undefined);
   }, [medium, navigation]);
 
+  const handleRefineWithAI = useCallback(async () => {
+    if (walls.length === 0) return;
+    medium();
+    setIsRefining(true);
+    try {
+      const data = sketchToBlueprintData(walls, closedPolygon, 'bedroom', 'house');
+      const { refineSketch } = await import('../../services/aiService').then(m => m.aiService);
+      const refined = await refineSketch(data.id);
+      useBlueprintStore.getState().actions.loadBlueprint(refined);
+      navigation.navigate('Workspace', undefined);
+    } catch (err) {
+      Alert.alert('Refinement failed', err instanceof Error ? err.message : 'Please try again');
+    } finally {
+      setIsRefining(false);
+    }
+  }, [walls, closedPolygon, medium, navigation]);
+
   const accentColor = DS.colors.primary;
 
   // Mode toggle press animation
@@ -1131,6 +1154,19 @@ export function SketchScreen() {
               </GestureDetector>
             </ErrorBoundary>
 
+            {/* Refine with AI loading overlay */}
+            {isRefining && (
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11,30,61,0.85)', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                <CompassRoseLoader size="large" />
+                <ArchText variant="body" style={{ fontFamily: DS.font.heading, fontSize: 18, color: DS.colors.primary, marginTop: 20 }}>
+                  Refining sketch...
+                </ArchText>
+                <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim, marginTop: 8 }}>
+                  Converting to architectural standards
+                </ArchText>
+              </View>
+            )}
+
             {/* Bottom toolbar */}
             <Animated.View style={[
               toolAnimatedStyle,
@@ -1177,6 +1213,32 @@ export function SketchScreen() {
                   </ArchText>
                 </Pressable>
               ))}
+
+              {/* Divider */}
+              <View style={{ width: 1, height: 24, backgroundColor: DS.colors.border, marginHorizontal: 4 }} />
+
+              {/* Refine with AI — Pro/Architect only */}
+              {refineAllowed && walls.length > 0 && (
+                <Pressable
+                  onPress={handleRefineWithAI}
+                  onPressIn={handleToolPressIn}
+                  onPressOut={handleToolPressOut}
+                  disabled={isRefining}
+                  style={{
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                    borderRadius: 999,
+                    backgroundColor: isRefining ? DS.colors.surfaceHigh : `${DS.colors.warning}18`,
+                    borderWidth: 1,
+                    borderColor: isRefining ? DS.colors.border : `${DS.colors.warning}60`,
+                    alignItems: 'center',
+                  }}
+                >
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: isRefining ? DS.colors.primaryGhost : DS.colors.warning }}>
+                    Refine with AI
+                  </ArchText>
+                </Pressable>
+              )}
 
               {/* Divider */}
               <View style={{ width: 1, height: 24, backgroundColor: DS.colors.border, marginHorizontal: 4 }} />

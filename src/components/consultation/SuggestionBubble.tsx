@@ -3,16 +3,7 @@ import { View, Pressable } from 'react-native';
 import Svg, { Circle, Path, G, Rect } from 'react-native-svg';
 import { DS } from '../../theme/designSystem';
 import { ArchText } from '../common/ArchText';
-
-export interface SuggestionItem {
-  id: string;
-  type: 'nudge' | 'measurement' | 'cost' | 'philosophy';
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  actionable: boolean;
-  read?: boolean;
-}
+import type { SuggestionItem } from '../../types/consultation';
 
 interface SuggestionBubbleProps {
   suggestion: SuggestionItem;

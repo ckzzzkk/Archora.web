@@ -29,7 +29,7 @@ export async function signInWithGoogle(): Promise<void> {
     controlsColor: '#C8C8C8',
   });
 
-  if (result.type === 'cancel') {
-    throw new Error('Sign in was cancelled');
+  if (result.type === WebBrowser.WebBrowserResultType.CANCEL || result.type === WebBrowser.WebBrowserResultType.DISMISS) {
+    throw new Error('Sign in was cancelled or browser closed');
   }
 }

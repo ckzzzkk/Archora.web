@@ -8,20 +8,20 @@
  * Cache is read when the network fetch fails (offline).
  * Cache is cleared on sign-out.
  */
-import { Storage } from './storage';
+import { SecureStorage } from './storage';
 import type { User } from '../types';
 
 const CACHE_KEY = 'cached_user';
 
 export const userCache = {
-  /** Save user data to MMKV cache */
+  /** Save user data to encrypted MMKV cache */
   save(user: User): void {
-    Storage.set(CACHE_KEY, JSON.stringify(user));
+    SecureStorage.set(CACHE_KEY, JSON.stringify(user));
   },
 
-  /** Load user data from MMKV cache */
+  /** Load user data from encrypted MMKV cache */
   load(): User | null {
-    const raw = Storage.getString(CACHE_KEY);
+    const raw = SecureStorage.getString(CACHE_KEY);
     if (!raw) return null;
     try {
       return JSON.parse(raw) as User;
@@ -32,11 +32,11 @@ export const userCache = {
 
   /** Clear cache on sign-out */
   clear(): void {
-    Storage.delete(CACHE_KEY);
+    SecureStorage.delete(CACHE_KEY);
   },
 
   /** True if a cached user exists */
   has(): boolean {
-    return Storage.contains(CACHE_KEY);
+    return SecureStorage.contains(CACHE_KEY);
   },
 };

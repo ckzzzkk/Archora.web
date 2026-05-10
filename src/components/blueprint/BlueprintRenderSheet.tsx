@@ -16,9 +16,7 @@ import { ArchText } from '../common/ArchText';
 import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import { DS } from '../../theme/designSystem';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { supabase } from '../../lib/supabase';
-
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../../lib/supabase';
 
 type RenderStatus = 'idle' | 'rendering' | 'done' | 'failed';
 
@@ -54,7 +52,7 @@ export function BlueprintRenderSheet({ onClose }: BlueprintRenderSheetProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/render-blueprint`, {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/render-blueprint`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -19,17 +19,16 @@ export const PointEvents = {
 
 export type PointEventKey = keyof typeof PointEvents;
 
-export async function awardPoints(event: PointEventKey): Promise<number> {
-  // Get current user from Supabase session
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData?.session?.user?.id;
-  if (!userId) return 0;
+export async function awardPoints(event: PointEventKey, userId?: string): Promise<number> {
+  // If userId not passed, get from Supabase session
+  const uid = userId ?? (await supabase.auth.getSession()).data.session?.user?.id;
+  if (!uid) return 0;
 
   const delta = PointEvents[event];
 
   try {
     const { data, error } = await supabase.rpc('award_points', {
-      p_user_id: userId,
+      p_user_id: uid,
       p_event: event,
       p_delta: delta,
     });

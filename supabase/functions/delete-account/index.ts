@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { securityHeaders } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { logAudit } from '../_shared/audit.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -17,8 +17,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!allowed) return Errors.rateLimited('Too many requests');
 
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
 
     // Step 1: Delete all user data via SECURITY DEFINER RPC.

@@ -1,19 +1,29 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const { withNativeWind } = require('nativewind/metro');
+const path = require('path');
 
-let config = getDefaultConfig(__dirname);
+const projectRoot = path.resolve(__dirname);
 
-// SVG transformer — Terser disabled for web compat
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve('react-native-svg-transformer'),
-  inlineRequires: true,
-};
+// Pass config as a function so Metro resolves it after process.cwd() is set to projectRoot.
+// This prevents react-native-css-interop's expoColorSchemeWarning() from using the wrong directory.
+module.exports = withNativeWind(async () => {
+  const config = await getDefaultConfig(projectRoot);
 
-config.resolver = {
-  ...config.resolver,
-  assetExts: config.resolver.assetExts.filter((ext) => ext !== 'svg'),
-  sourceExts: [...config.resolver.sourceExts, 'svg'],
-};
+  // SVG transformer — Terser disabled for web compat
+  config.transformer = {
+    ...config.transformer,
+    babelTransformerPath: require.resolve('react-native-svg-transformer'),
+    inlineRequires: true,
+  };
 
-module.exports = withNativeWind(config, { input: './src/styles/global.css' });
+  config.resolver = {
+    ...config.resolver,
+    assetExts: config.resolver.assetExts.filter((ext) => ext !== 'svg'),
+    sourceExts: [...config.resolver.sourceExts, 'svg'],
+  };
+
+  return config;
+}, {
+  input: path.join(projectRoot, 'src/styles/global.css'),
+  configPath: path.join(projectRoot, 'tailwind.config.js'),
+});

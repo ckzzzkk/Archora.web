@@ -7,10 +7,11 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
-import { getAuthUser } from '../_shared/auth.ts';
+import { getAuthUser, requireOwnership } from '../_shared/auth.ts';
+import { checkQuota } from '../_shared/quota.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 
 const MESHY_BASE = 'https://api.meshy.ai';
 
@@ -94,8 +95,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const { blueprintId, referenceImageUrl } = parsed.data;
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
 
     // Fetch blueprint from projects table
@@ -106,6 +107,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .single();
 
     if (projectError || !project) return Errors.notFound('Project not found');
+
+    // Ownership check — user must own this project
+    await requireOwnership(supabase, 'projects', blueprintId, user.id);
+
+    // Quota check for renders
+    const quotaOk = await checkQuota(user.id, 'render');
+    if (!quotaOk) return Errors.quotaExceeded('Monthly render quota reached.');
 
     const meshyKey = Deno.env.get('MESHY_API_KEY') ?? '';
     if (!meshyKey) return Errors.internal('Meshy AI not configured');
@@ -155,6 +163,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
         render_error: null,
       })
       .eq('id', blueprintId);
+
+    // Increment render quota after successful render
+    try {
+      await supabase.rpc('increment_quota', { p_user_id: user.id, p_field: 'renders_used', p_amount: 1 });
+    } catch (e) {
+      console.warn('Failed to increment renders_used quota:', e);
+    }
 
     return new Response(
       JSON.stringify({ taskId, gltfUrl, projectId: blueprintId }),

@@ -8,7 +8,7 @@ export const BRAND = {
   name: process.env.EXPO_PUBLIC_APP_NAME ?? 'ASORIA',
   tagline: process.env.EXPO_PUBLIC_APP_TAGLINE ?? 'Describe it. Build it. Walk through it.',
   url: process.env.EXPO_PUBLIC_APP_URL ?? 'https://asoria.app',
-  supportEmail: process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? 'support@asoria.app',
+  supportEmail: process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? 'asoria.app@gmail.com',
 
   // Display variants
   displayName: 'ASORIA',
@@ -38,8 +38,10 @@ export const BRAND = {
 
   // Social
   social: {
-    twitter: '@asoria_app',
-    instagram: '@asoria.app',
+    twitter: 'https://x.com/Asoria_app',
+    instagram: 'https://www.instagram.com/asoria.app/',
+    tiktok: 'https://www.tiktok.com/@asoria.app',
+    facebook: 'https://www.facebook.com/profile.php?id=61589310296162',
   },
 } as const;
 

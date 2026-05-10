@@ -80,7 +80,7 @@ export function FurnitureContextMenu({ visible, position, item, onCopy, onCut, o
         ]}
       >
         <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: DS.colors.border }}>
-          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: DS.colors.primaryDim }} numberOfLines={1}>
+          <Text style={{ fontFamily: DS.font.medium, fontSize: 12, color: DS.colors.primaryDim }} numberOfLines={1}>
             {item.name}
           </Text>
         </View>
@@ -104,7 +104,7 @@ export function FurnitureContextMenu({ visible, position, item, onCopy, onCut, o
             <Text style={{ fontSize: 14, color: 'danger' in menuItem && menuItem.danger ? '#E05555' : DS.colors.primaryDim, width: 18 }}>
               {menuItem.icon}
             </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: 'danger' in menuItem && menuItem.danger ? '#E05555' : DS.colors.primary }}>
+            <Text style={{ fontFamily: DS.font.regular, fontSize: 14, color: 'danger' in menuItem && menuItem.danger ? '#E05555' : DS.colors.primary }}>
               {menuItem.label}
             </Text>
           </Pressable>

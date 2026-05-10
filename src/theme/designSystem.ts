@@ -2,12 +2,12 @@
  * ASORIA Design System — ink blueprint aesthetic
  * Import as: import { DS } from '../../theme/designSystem'
  *
- * Theme: Chalkboard dark (#1A1A1A) with pure white ink (#F0EDE8) and amber (#D4A84B)
+ * Theme: Architectural navy (#0B1E3D) with pure white ink (#F0EDE8) and amber (#D4A84B)
  * All hand-drawn, wobbly, sketchy aesthetic throughout.
  */
 export const DS = {
   colors: {
-    background:   '#1A1A1A',  // chalkboard
+    background:   '#0B1E3D',  // architectural navy paper
     surface:      '#222222',  // card bg
     surfaceHigh:  '#2C2C2C',  // elevated
     surfaceTop:   '#2C2C2C',
@@ -25,7 +25,7 @@ export const DS = {
     gridLine:     'rgba(240, 237, 232, 0.18)',
     // Aliases matching reference
     ink:          '#F0EDE8',
-    paper:        '#1A1A1A',
+    paper:        '#0B1E3D',
     amber:        '#D4A84B',
     card:         '#222222',
     cardForeground:'#F0EDE8',

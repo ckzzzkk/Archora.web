@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@14.21.0';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { logAudit } from '../_shared/audit.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
@@ -32,8 +32,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (!rateLimitOk) return Errors.rateLimited('Rate limit exceeded');
 
   const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    requireEnv('SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
   );
 
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-06-20' });

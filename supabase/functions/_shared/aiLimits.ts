@@ -62,15 +62,15 @@ export function getArchitectTierRequired(architectId: string): Tier {
 }
 
 export const TIER_AI_MODELS = {
-  starter: { generation: null, chat: null, edits: null, fallback: null, softCap: 0 },
-  creator: { generation: 'deepseek-chat', chat: 'deepseek-chat', edits: 'deepseek-chat', fallback: null, softCap: 25 },
-  pro: { generation: 'deepseek-chat', chat: 'claude-haiku-4-5-20251001', edits: 'deepseek-chat', fallback: 'deepseek-chat', softCap: 50 },
-  architect: { generation: 'claude-haiku-4-5-20251001', chat: 'claude-sonnet-4-6', edits: 'claude-haiku-4-5-20251001', fallback: 'claude-haiku-4-5-20251001', softCap: 50 },
+  starter: { generation: null, chat: null, edits: null, refine: null, fallback: null, softCap: 0 },
+  creator: { generation: 'deepseek-chat', chat: 'deepseek-chat', edits: 'deepseek-chat', refine: null, fallback: null, softCap: 25 },
+  pro: { generation: 'deepseek-chat', chat: 'claude-haiku-4-5-20251001', edits: 'deepseek-chat', refine: 'deepseek-chat', fallback: 'deepseek-chat', softCap: 50 },
+  architect: { generation: 'claude-haiku-4-5-20251001', chat: 'claude-sonnet-4-6', edits: 'claude-haiku-4-5-20251001', refine: 'claude-sonnet-4-6', fallback: 'claude-haiku-4-5-20251001', softCap: 50 },
 } as const;
 
 export type TIER_MODEL_KEY = keyof typeof TIER_AI_MODELS;
 
-export type AICallType = 'generation' | 'chat' | 'edits';
+export type AICallType = 'generation' | 'chat' | 'edits' | 'refine';
 
 export function getModelProvider(model: string): ModelProvider {
   if (model.startsWith('claude-')) return 'anthropic';

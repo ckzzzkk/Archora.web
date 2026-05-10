@@ -18,7 +18,6 @@ export function useStreak(): StreakState {
 
   useEffect(() => {
     if (!user?.id || hasRunRef.current) return;
-    hasRunRef.current = true;
 
     const updateStreak = async () => {
       try {
@@ -28,11 +27,15 @@ export function useStreak(): StreakState {
 
         if (error) {
           console.warn('[useStreak] RPC error:', error);
+          // Reset so retry is possible on next mount
+          hasRunRef.current = false;
           return;
         }
 
         const result = data as { streak_count: number; increased: boolean } | null;
         if (!result) return;
+
+        hasRunRef.current = true; // Mark success only after successful RPC
 
         const { streak_count, increased } = result;
 
@@ -54,6 +57,7 @@ export function useStreak(): StreakState {
         }
       } catch (err) {
         console.warn('[useStreak] error:', err);
+        hasRunRef.current = false;
         showToast('Could not update streak', 'error');
       }
     };

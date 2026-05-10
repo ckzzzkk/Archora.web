@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,8 +6,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import Svg, { Path, Circle, Line } from 'react-native-svg';
-import { useTheme } from '../../hooks/useTheme';
+import Svg, { Path, Circle, Line, G } from 'react-native-svg';
 
 interface Props {
   size?: 'small' | 'medium' | 'large';
@@ -16,14 +14,19 @@ interface Props {
 
 const SIZES = { small: 24, medium: 48, large: 96 };
 
+const COLORS = {
+  letterform: '#C5D4B8',
+  compassAccent: '#89B4C8',
+  compassRing: '#7A9AAA',
+};
+
 export function CompassRoseLoader({ size = 'medium' }: Props) {
-  const { colors } = useTheme();
   const px = SIZES[size];
   const rotation = useSharedValue(0);
 
   useEffect(() => {
     rotation.value = withRepeat(
-      withTiming(360, { duration: 2400, easing: Easing.linear }),
+      withTiming(360, { duration: 4000, easing: Easing.linear }),
       -1,
       false,
     );
@@ -33,40 +36,64 @@ export function CompassRoseLoader({ size = 'medium' }: Props) {
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
-  const c = px / 2;
-  const r = px * 0.42;
-  const stroke = colors.primary;
-
   return (
     <Animated.View style={animatedStyle}>
-      <Svg width={px} height={px} viewBox={`0 0 ${px} ${px}`}>
-        {/* Outer ring */}
-        <Circle cx={c} cy={c} r={r} stroke={stroke} strokeWidth={px * 0.04} fill="none" opacity={0.3} />
-        {/* N point */}
+      <Svg width={px} height={px} viewBox="0 0 40 40">
+        {/* Shadow layer */}
+        <G opacity="0.25" transform="translate(1, 1)">
+          <Path
+            d="M12,6 C14,10 16,14 18,18 C19,20 20,22 20,24"
+            stroke="#1A1A1A"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <Path
+            d="M28,6 C26,10 24,14 22,18 C21,20 20,22 20,24"
+            stroke="#1A1A1A"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <Line x1="11" y1="18" x2="29" y2="18" stroke="#1A1A1A" strokeWidth="1.2" strokeLinecap="round" />
+        </G>
+
+        {/* Layered A (faint) */}
         <Path
-          d={`M ${c} ${c - r * 0.3} L ${c - r * 0.15} ${c - r * 0.9} L ${c} ${c - r * 1.0} L ${c + r * 0.15} ${c - r * 0.9} Z`}
-          fill={stroke}
+          d="M13,7 L8,23 M27,7 L32,23 M11,18 L29,18"
+          stroke={COLORS.compassAccent}
+          strokeWidth="0.8"
+          strokeLinecap="round"
+          fill="none"
+          opacity="0.2"
         />
-        {/* S point */}
+
+        {/* Main Wave A */}
         <Path
-          d={`M ${c} ${c + r * 0.3} L ${c - r * 0.15} ${c + r * 0.9} L ${c} ${c + r * 1.0} L ${c + r * 0.15} ${c + r * 0.9} Z`}
-          fill={stroke} opacity={0.5}
+          d="M12,6 C14,10 16,14 18,18 C19,20 20,22 20,24"
+          stroke={COLORS.letterform}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          fill="none"
         />
-        {/* E point */}
         <Path
-          d={`M ${c + r * 0.3} ${c} L ${c + r * 0.9} ${c - r * 0.15} L ${c + r * 1.0} ${c} L ${c + r * 0.9} ${c + r * 0.15} Z`}
-          fill={stroke} opacity={0.5}
+          d="M28,6 C26,10 24,14 22,18 C21,20 20,22 20,24"
+          stroke={COLORS.letterform}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          fill="none"
         />
-        {/* W point */}
-        <Path
-          d={`M ${c - r * 0.3} ${c} L ${c - r * 0.9} ${c - r * 0.15} L ${c - r * 1.0} ${c} L ${c - r * 0.9} ${c + r * 0.15} Z`}
-          fill={stroke} opacity={0.5}
-        />
+        <Line x1="11" y1="18" x2="29" y2="18" stroke={COLORS.letterform} strokeWidth="1.2" strokeLinecap="round" />
+
+        {/* Compass ring */}
+        <Circle cx="20" cy="18" r="6" stroke={COLORS.compassRing} strokeWidth="0.6" fill="none" opacity="0.8" />
+
+        {/* Compass star */}
+        <Line x1="20" y1="12" x2="20" y2="24" stroke={COLORS.letterform} strokeWidth="0.6" strokeLinecap="round" opacity="0.9" />
+        <Line x1="14" y1="18" x2="26" y2="18" stroke={COLORS.letterform} strokeWidth="0.6" strokeLinecap="round" opacity="0.9" />
+
         {/* Center dot */}
-        <Circle cx={c} cy={c} r={px * 0.04} fill={stroke} />
-        {/* Cross hairs */}
-        <Line x1={c} y1={c - r * 0.25} x2={c} y2={c + r * 0.25} stroke={stroke} strokeWidth={px * 0.025} opacity={0.4} />
-        <Line x1={c - r * 0.25} y1={c} x2={c + r * 0.25} y2={c} stroke={stroke} strokeWidth={px * 0.025} opacity={0.4} />
+        <Circle cx="20" cy="18" r="1.2" fill={COLORS.compassAccent} />
       </Svg>
     </Animated.View>
   );

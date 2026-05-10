@@ -6,9 +6,12 @@
  *
  * Usage in app.json:
  *   plugins: ["./plugin/withARKitModule"]
+ *
+ * Note: NSCameraUsageDescription is set in ios/ASORIAAIArchitectureDesign/Info.plist
+ * and/or app.json ios.infoPlist — not needed here.
  */
 
-const { withDangerousMod, withInfoPlist } = require('@expo/config-plugins');
+const { withDangerousMod } = require('@expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
@@ -35,7 +38,6 @@ function modifyPodfile(podfile) {
 }
 
 module.exports = function withARKitModule(config) {
-  // 1. Inject local CocoaPod into Podfile
   config = withDangerousMod(config, ['ios', async (config) => {
     const podfilePath = path.join(config.modRequest.platformProjectRoot, 'Podfile');
     if (!fs.existsSync(podfilePath)) {
@@ -48,14 +50,6 @@ module.exports = function withARKitModule(config) {
     console.log('[withARKitModule] Added ARKitModule pod to Podfile ✓');
     return config;
   }]);
-
-  // 2. Set NSCameraUsageDescription in Info.plist
-  config = withInfoPlist(config, (props) => ({
-    ...props,
-    NSCameraUsageDescription:
-      props.NSCameraUsageDescription ??
-      'ASORIA uses your camera for AR room scanning and furniture placement.',
-  }));
 
   return config;
 };

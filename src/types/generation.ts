@@ -22,6 +22,15 @@ export interface GenerationPayload {
   architectId?: string;
   /** Number of floors. Defaults to 1. Pro/Architect tiers: 1–20 */
   floors?: number;
+  /** Optional explicit plot dimensions in metres. Takes priority over plotSize when both are set. */
+  explicitPlotWidth?: number;
+  explicitPlotDepth?: number;
+  /** Per-room size overrides. Key = room type, value = dimensions in metres. */
+  roomSizes?: Record<string, { width: number; depth: number }>;
+  /** Layout style hint — instructs the AI on preferred room arrangement style. */
+  layoutStyle?: 'traditional' | 'open_plan' | 'mixed';
+  /** Selected house archetype ID from the reference library. */
+  archetypeId?: string;
 }
 
 export type GenerationStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;

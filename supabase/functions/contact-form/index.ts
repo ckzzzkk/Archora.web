@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const RequestSchema = z.object({
@@ -33,8 +33,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (!parsed.success) return Errors.validation('Invalid form data', parsed.error.issues);
 
   const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    requireEnv('SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
   );
 
   const { error } = await supabase.from('contact_messages').insert({

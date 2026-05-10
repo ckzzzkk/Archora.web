@@ -20,10 +20,7 @@ import { AIProcessingIndicator } from '../common/AIProcessingIndicator';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { supabase } from '../../lib/supabase';
-
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../../lib/supabase';
 
 type Atmosphere =
   | 'golden_hour'
@@ -122,7 +119,7 @@ function RenderSheetContent({ onClose }: RenderSheetProps) {
       const { data: { session } } = await supabase.auth.getSession();
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
+        apikey: supabaseAnonKey,
       };
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
@@ -135,7 +132,7 @@ function RenderSheetContent({ onClose }: RenderSheetProps) {
         );
       const roomCount = (blueprint.floors?.[0]?.rooms ?? []).length || blueprintMeta.roomCount || 1;
 
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-render`, {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/ai-render`, {
         method: 'POST',
         headers,
         body: JSON.stringify({

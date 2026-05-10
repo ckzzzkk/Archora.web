@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DS } from '../../../theme/designSystem';
 import { ArchText } from '../../../components/common/ArchText';
-import { View,  TextInput, Pressable, ScrollView } from 'react-native';
+import { View, TextInput, Pressable, ScrollView } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 
@@ -16,12 +16,29 @@ const QUICK_PICKS = [
 interface Props {
   plotSize: string;
   plotUnit: 'm2' | 'ft2';
+  explicitPlotWidth: string;
+  explicitPlotDepth: string;
   onPlotSizeChange: (v: string) => void;
   onPlotUnitChange: (u: 'm2' | 'ft2') => void;
+  onExplicitWidthChange: (v: string) => void;
+  onExplicitDepthChange: (v: string) => void;
   onNext: () => void;
 }
 
-export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnitChange, onNext }: Props) {
+export function Step2PlotSize({
+  plotSize, plotUnit,
+  explicitPlotWidth, explicitPlotDepth,
+  onPlotSizeChange, onPlotUnitChange,
+  onExplicitWidthChange, onExplicitDepthChange,
+  onNext,
+}: Props) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const hasExplicit = showAdvanced && explicitPlotWidth && explicitPlotDepth;
+  const computedArea = hasExplicit
+    ? (parseFloat(explicitPlotWidth) || 0) * (parseFloat(explicitPlotDepth) || 0)
+    : 0;
+
   return (
     <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
       <ArchText variant="body"
@@ -35,6 +52,7 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
         Tell me about your space
       </ArchText>
 
+      {/* Area-based input */}
       <TextInput
         value={plotSize}
         onChangeText={onPlotSizeChange}
@@ -83,7 +101,7 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
         ))}
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 32 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {QUICK_PICKS.map((qp) => (
             <Pressable
@@ -115,14 +133,118 @@ export function Step2PlotSize({ plotSize, plotUnit, onPlotSizeChange, onPlotUnit
         </View>
       </ScrollView>
 
+      {/* Advanced: exact plot dimensions */}
+      <Pressable
+        onPress={() => setShowAdvanced(v => !v)}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 16,
+          gap: 8,
+        }}
+      >
+        <View style={{
+          width: 20,
+          height: 20,
+          borderRadius: 4,
+          borderWidth: 1,
+          borderColor: showAdvanced ? DS.colors.primary : DS.colors.border,
+          backgroundColor: showAdvanced ? DS.colors.primary : 'transparent',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          {showAdvanced && (
+            <ArchText variant="body" style={{ color: DS.colors.background, fontSize: 12 }}>✓</ArchText>
+          )}
+        </View>
+        <ArchText variant="body"
+          style={{
+            fontFamily: 'Inter_400Regular',
+            fontSize: 13,
+            color: DS.colors.primaryDim,
+          }}
+        >
+          I know my exact plot dimensions
+        </ArchText>
+      </Pressable>
+
+      {showAdvanced && (
+        <Animated.View entering={FadeIn.duration(150)} style={{ marginBottom: 20, gap: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <ArchText variant="body"
+                style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryDim, marginBottom: 6 }}
+              >
+                Width (m)
+              </ArchText>
+              <TextInput
+                value={explicitPlotWidth}
+                onChangeText={onExplicitWidthChange}
+                placeholder="e.g. 12"
+                placeholderTextColor={DS.colors.primaryGhost}
+                keyboardType="numeric"
+                style={{
+                  backgroundColor: DS.colors.surface,
+                  borderRadius: 50,
+                  paddingHorizontal: DS.spacing.lg,
+                  paddingVertical: 12,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 15,
+                  color: DS.colors.primary,
+                  borderWidth: 1,
+                  borderColor: DS.colors.border,
+                }}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <ArchText variant="body"
+                style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: DS.colors.primaryDim, marginBottom: 6 }}
+              >
+                Depth (m)
+              </ArchText>
+              <TextInput
+                value={explicitPlotDepth}
+                onChangeText={onExplicitDepthChange}
+                placeholder="e.g. 15"
+                placeholderTextColor={DS.colors.primaryGhost}
+                keyboardType="numeric"
+                style={{
+                  backgroundColor: DS.colors.surface,
+                  borderRadius: 50,
+                  paddingHorizontal: DS.spacing.lg,
+                  paddingVertical: 12,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 15,
+                  color: DS.colors.primary,
+                  borderWidth: 1,
+                  borderColor: DS.colors.border,
+                }}
+              />
+            </View>
+          </View>
+
+          {hasExplicit && computedArea > 0 && (
+            <ArchText variant="body"
+              style={{
+                fontFamily: 'Inter_400Regular',
+                fontSize: 12,
+                color: DS.colors.primary,
+              }}
+            >
+              Plot: {explicitPlotWidth}m × {explicitPlotDepth}m = {computedArea.toFixed(0)}m²
+            </ArchText>
+          )}
+        </Animated.View>
+      )}
+
       <Pressable
         onPress={onNext}
-        disabled={!plotSize}
-        accessibilityLabel={plotSize ? 'Next, proceed to rooms' : 'Next, enter plot size first'}
+        disabled={!plotSize && !hasExplicit}
+        accessibilityLabel={plotSize || hasExplicit ? 'Next, proceed to rooms' : 'Next, enter plot size first'}
         accessibilityRole="button"
-        accessibilityState={{ disabled: !plotSize }}
+        accessibilityState={{ disabled: !plotSize && !hasExplicit }}
         style={{
-          backgroundColor: plotSize ? DS.colors.primary : DS.colors.border,
+          backgroundColor: plotSize || hasExplicit ? DS.colors.primary : DS.colors.border,
           borderRadius: 50,
           paddingVertical: 16,
           alignItems: 'center',

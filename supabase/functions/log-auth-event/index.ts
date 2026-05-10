@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { securityHeaders } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
-import { Errors } from '../_shared/errors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const RequestSchema = z.object({
@@ -26,8 +26,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Write via service role — audit_logs has no client INSERT RLS policy by design
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      requireEnv('SUPABASE_URL'),
+      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
     );
 
     await supabaseAdmin.from('audit_logs').insert({
