@@ -361,11 +361,20 @@ ${SUGGEST_SYSTEM_PROMPT}`;
       meta: { prompt: prompt.slice(0, 200), ...extractRequestMeta(req) },
     });
 
-    // Fire-and-forget: increment ai_edits_used
-    import('https://esm.sh/@supabase/supabase-js@2').then(({ createClient }) => {
-      const supabase2 = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
-      supabase2.from('users').update({ ai_edits_used: supabase2.sql`ai_edits_used + 1` }).eq('id', user.id).catch(() => {});
-    });
+    // Increment ai_edits_used — await to avoid silent failure on quota tracking
+    try {
+      const { createClient: makeSupabaseClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+      const supabase2 = makeSupabaseClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+      const { error: updateError } = await supabase2
+        .from('users')
+        .update({ ai_edits_used: supabase2.sql`ai_edits_used + 1` })
+        .eq('id', user.id);
+      if (updateError) {
+        console.warn('[ai-edit-blueprint] Failed to increment ai_edits_used:', updateError.message);
+      }
+    } catch (incErr) {
+      console.warn('[ai-edit-blueprint] Quota increment threw:', incErr instanceof Error ? incErr.message : incErr);
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -14,12 +14,20 @@ import type { ViewMode, SubscriptionTier } from '../types';
 import { clipboard } from '../utils/clipboard';
 import type { ClipboardItem } from '../utils/clipboard';
 import type { SuggestionItem } from '../types/consultation';
+import { useAuth } from '../auth/AuthProvider';
 
 const STORAGE_KEY = 'blueprint_current';
 
 // Content-hash cache for autoRepairBlueprint — avoids re-running expensive
 // JSON.parse/stringify + wall-graph analysis when blueprint content is unchanged
+const MAX_REPAIR_CACHE = 50;
 const repairCache = new Map<string, { hash: string; result: Awaited<ReturnType<typeof autoRepairBlueprint>> }>();
+
+function evictRepairCache(): void {
+  // LRU-style eviction: remove the oldest entry (first inserted key)
+  const firstKey = repairCache.keys().next().value;
+  if (firstKey !== undefined) repairCache.delete(firstKey);
+}
 
 function blueprintContentHash(bp: BlueprintData): string {
   // Cheap hash using wall/floor count + total area as proxy for content identity
@@ -27,8 +35,6 @@ function blueprintContentHash(bp: BlueprintData): string {
   const totalArea = bp.floors.reduce((a, f) => a + f.rooms.reduce((s, r) => s + (r.area ?? 0), 0), 0);
   return `${bp.version ?? 0}-${wallCount}-${Math.round(totalArea)}`;
 }
-
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getSaveDebounceMs(tier: SubscriptionTier): number {
   if (tier === 'architect') return 30_000;
@@ -57,8 +63,6 @@ interface BlueprintState {
   // Suggestions
   suggestions: SuggestionItem[];
   unreadSuggestionCount: number;
-  /** Cached subscription tier for auto-save debounce and undo limit resolution */
-  tier?: SubscriptionTier;
   actions: {
     loadBlueprint: (data: BlueprintData, tier?: SubscriptionTier) => void;
     clearBlueprint: () => void;
@@ -145,6 +149,9 @@ function updateCurrentFloor(
 }
 
 export const useBlueprintStore = create<BlueprintState>((set, get) => {
+  // Instance-bound save timer — each store instance gets its own timer,
+  // avoiding race conditions across multiple concurrent instances.
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   function scheduleSave(data: BlueprintData, tier: SubscriptionTier = 'starter'): void {
     const debounce = getSaveDebounceMs(tier);
@@ -164,11 +171,10 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
 
   function getCurrentTier(explicitTier?: SubscriptionTier): SubscriptionTier {
     // If tier is explicitly passed (from authenticated action call), use it.
-    // Otherwise try to read from store state, falling back to 'starter' for
-    // unauthenticated or legacy contexts.
+    // Otherwise read live from auth provider — avoids stale tier if user upgrades mid-session.
     if (explicitTier) return explicitTier;
-    const state = get();
-    return (state as { tier?: SubscriptionTier }).tier ?? 'starter';
+    const auth = useAuth();
+    return auth.user?.subscriptionTier ?? 'starter';
   }
 
   function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string, tier?: SubscriptionTier): Partial<BlueprintState> {
@@ -238,6 +244,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           const result = autoRepairBlueprint(migrated);
           repaired = result.repaired;
           repairReport = result.report;
+          if (repairCache.size >= MAX_REPAIR_CACHE) evictRepairCache();
           repairCache.set(cacheKey, { hash: contentHash, result });
         }
         if (repairReport.totalFixes > 0) {
@@ -270,7 +277,6 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           dirtyNodes: [],
           history: [repaired],
           historyIndex: 0,
-          tier,
         });
         scheduleSave(repaired, tier);
       },
@@ -280,7 +286,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         set({
           blueprint: null, selectedId: null, isDirty: false, currentFloorIndex: 0,
           saveStatus: 'saved', dirtyNodes: [], history: [], historyIndex: -1,
-          suggestions: [], unreadSuggestionCount: 0, tier: undefined,
+          suggestions: [], unreadSuggestionCount: 0,
         });
         blueprintStorage.delete(STORAGE_KEY);
       },

@@ -31,6 +31,11 @@ export const subscriptionService = {
     return url;
   },
 
+  /**
+   * Syncs subscription state from Stripe via the stripe-sync Edge Function.
+   * Returns the current tier — the caller is responsible for updating any relevant store(s)
+   * (e.g., authStore) with the returned tier value.
+   */
   async syncSubscription(): Promise<{ synced: boolean; tier?: string }> {
     const headers = await getAuthHeader();
     const response = await fetch(`${SUPABASE_URL}/functions/v1/stripe-sync`, {

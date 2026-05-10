@@ -128,6 +128,7 @@ serve(async (req: Request) => {
       ],
     };
 
+    let result = FALLBACK_RESULT;
     let claudeResponse: Response;
     if (provider === 'deepseek') {
       // DeepSeek doesn't support Vision — fall back to a text-only request
@@ -136,19 +137,20 @@ serve(async (req: Request) => {
     } else {
       const reqConfig = buildAIRequest(selectedModel, systemPrompt, [userMessage as unknown as { role: string; content: string }], 1024);
       claudeResponse = await fetch(reqConfig.url, { method: 'POST', headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
-      if (claudeResponse.ok) {
-        const responseData = await claudeResponse.json();
-        const { content } = parseAIResponse(reqConfig.provider, responseData);
-        if (content) {
-          try {
-            result = safeParseResult(content);
-          } catch {
-            console.warn('[ar-photo-analyse] Parse error');
-          }
+    }
+    if (claudeResponse.ok) {
+      const responseData = await claudeResponse.json();
+      const { content } = parseAIResponse(reqConfig.provider, responseData);
+      if (content) {
+        try {
+          result = safeParseResult(content);
+        } catch {
+          console.warn('[ar-photo-analyse] Parse error');
         }
-      } else {
-        console.error('[ar-photo-analyse] AI API error:', claudeResponse.status, await claudeResponse.text());
       }
+    } else {
+      console.error('[ar-photo-analyse] AI API error:', claudeResponse.status, await claudeResponse.text());
+    }
 
     await logAudit({
       user_id: user.id,

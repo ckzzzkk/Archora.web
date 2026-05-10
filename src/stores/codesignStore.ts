@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { TIER_LIMITS } from '../utils/tierLimits';
 
 export interface CursorPosition {
   x: number;
@@ -75,6 +76,13 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
+        // Tier gate: Codesign is Architect-only
+        const tier: string = (user as { subscriptionTier?: string }).subscriptionTier ?? 'starter';
+        if (!TIER_LIMITS[tier as keyof typeof TIER_LIMITS]?.codesignEnabled) {
+          set({ isConnecting: false, connectionError: 'Codesign requires an Architect tier subscription' });
+          return undefined;
+        }
+
         const sessionId = generateId();
         const participant: Participant = {
           userId: user.id,
@@ -108,6 +116,13 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
+
+        // Tier gate: Codesign is Architect-only
+        const tier: string = (user as { subscriptionTier?: string }).subscriptionTier ?? 'starter';
+        if (!TIER_LIMITS[tier as keyof typeof TIER_LIMITS]?.codesignEnabled) {
+          set({ isConnecting: false, connectionError: 'Codesign requires an Architect tier subscription' });
+          return;
+        }
 
         const { data: sessionData, error } = await supabase
           .from('codesign_sessions')

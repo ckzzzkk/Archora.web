@@ -46,6 +46,10 @@ export const projectService = {
 
   async update(id: string, _userId: string, updates: Partial<{ name: string; blueprintData: BlueprintData; thumbnailUrl: string; isPublished: boolean }>): Promise<Project> {
     // RLS enforces ownership server-side — no need for redundant client pre-check
+    const VALID_KEYS = ['name', 'blueprintData', 'thumbnailUrl', 'isPublished'] as const;
+    const unexpected = Object.keys(updates).filter((k) => !VALID_KEYS.includes(k as typeof VALID_KEYS[number]));
+    if (unexpected.length > 0) console.warn('[projectService] update received unexpected keys:', unexpected);
+
     const dbUpdates: Record<string, unknown> = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.blueprintData !== undefined) dbUpdates.blueprint_data = updates.blueprintData;

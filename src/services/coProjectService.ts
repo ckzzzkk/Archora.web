@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { toAppError } from '../types/AppError';
 
 export interface CoProject {
   id: string;
@@ -41,7 +42,7 @@ async function getCoProjects(): Promise<CoProject[]> {
     .from('co_projects')
     .select('*, member_count:auto_project_members(count)')
     .order('updated_at', { ascending: false });
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
   return (data ?? []).map((row: any) => ({
     id: row.id,
     name: row.name,
@@ -63,7 +64,7 @@ async function getCoProject(projectId: string): Promise<CoProject | null> {
     .single();
   if (error) {
     if (error.code === 'PGRST116') return null;
-    throw error;
+    throw toAppError(error, 'DB_ERROR');
   }
   return {
     id: data.id,
@@ -87,7 +88,7 @@ async function createCoProject(name: string, blueprintId?: string): Promise<CoPr
     .insert({ name, blueprint_id: blueprintId, created_by: user.id })
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
 
   return {
     id: data.id,
@@ -110,7 +111,7 @@ async function updateCoProject(
     .from('co_projects')
     .update({ name: updates.name, description: updates.description, updated_at: new Date().toISOString() })
     .eq('id', projectId);
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
 }
 
 async function deleteCoProject(projectId: string): Promise<void> {
@@ -118,7 +119,7 @@ async function deleteCoProject(projectId: string): Promise<void> {
     .from('co_projects')
     .delete()
     .eq('id', projectId);
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
 }
 
 async function getCoProjectMembers(projectId: string): Promise<CoProjectMember[]> {
@@ -127,7 +128,7 @@ async function getCoProjectMembers(projectId: string): Promise<CoProjectMember[]
     .select('*, profiles(display_name, avatar_url)')
     .eq('project_id', projectId)
     .order('joined_at', { ascending: true });
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
   return (data ?? []).map((row: any) => ({
     id: row.id,
     projectId: row.project_id,
@@ -155,7 +156,7 @@ async function inviteToCoProject(
   const { error } = await supabase
     .from('co_project_members')
     .insert({ project_id: projectId, user_id: profileData.user_id, role });
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
 }
 
 async function removeFromCoProject(projectId: string, userId: string): Promise<void> {
@@ -164,7 +165,7 @@ async function removeFromCoProject(projectId: string, userId: string): Promise<v
     .delete()
     .eq('project_id', projectId)
     .eq('user_id', userId);
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
 }
 
 async function getActivityFeed(projectId: string, limit = 20): Promise<ActivityEntry[]> {
@@ -174,7 +175,7 @@ async function getActivityFeed(projectId: string, limit = 20): Promise<ActivityE
     .eq('project_id', projectId)
     .order('created_at', { ascending: false })
     .limit(limit);
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
   return (data ?? []).map((row: any) => ({
     id: row.id,
     projectId: row.project_id,
@@ -208,7 +209,7 @@ async function addActivityEntry(
       entity_id: entity?.id,
       entity_snapshot: entity?.snapshot,
     });
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
 }
 
 export const coProjectService = {
