@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="400" height="400">
+  <defs>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#89B4C8" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  <rect width="120" height="120" fill="#2A2A28"/>
+
+  <!-- Bold flat A with hard shadow - dusty coal -->
+  <g transform="translate(4, 4)">
+    <path d="M33,20 L23,70 M87,20 L97,70 M28,48 L92,48" stroke="#4A4A48" stroke-width="5" stroke-linecap="round" fill="none"/>
+  </g>
+  <!-- Main A - matcha mist -->
+  <path d="M33,20 L23,70 M87,20 L97,70 M28,48 L92,48" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- Compass ring - blue mirage -->
+  <circle cx="60" cy="48" r="15" stroke="#7A9AAA" stroke-width="1.5" fill="none"/>
+  <path d="M60,33 L60,63 M45,48 L75,48" stroke="#C5D4B8" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="60" cy="48" r="4" fill="#89B4C8" filter="url(#glow)"/>
+
+  <!-- Layered wave crossbars -->
+  <g opacity="0.3">
+    <path d="M26,46 C45,44 60,44 75,46 C82,47 88,48 94,47" stroke="#89B4C8" stroke-width="2"/>
+    <path d="M24,44 C45,42 60,42 78,44 C86,45 92,46 96,45" stroke="#89B4C8" stroke-width="1.5"/>
+  </g>
+</svg>

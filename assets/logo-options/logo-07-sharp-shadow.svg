@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="400" height="400">
+  <defs>
+    <filter id="shadow3d">
+      <feDropShadow dx="3" dy="3" stdDeviation="1.5" flood-color="#1a1a1a" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="120" height="120" fill="#2A2A28"/>
+
+  <!-- Sharp shadow - dusty coal -->
+  <g transform="translate(4, 4)">
+    <path d="M32,18 L20,72 M88,18 L100,72" stroke="#3A3A38" stroke-width="5" stroke-linecap="round"/>
+    <path d="M26,50 L94,50" stroke="#3A3A38" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Layered A's - blue mirage -->
+  <g opacity="0.2" transform="translate(2,2)">
+    <path d="M32,18 L20,72 M88,18 L100,72" stroke="#89B4C8" stroke-width="3.5"/>
+    <path d="M26,50 L94,50" stroke="#89B4C8" stroke-width="3"/>
+  </g>
+
+  <!-- Main A - matcha mist -->
+  <g filter="url(#shadow3d)">
+    <path d="M32,18 C40,32 46,44 50,54 C54,62 57,66 60,72" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M88,18 C80,32 74,44 70,54 C66,62 63,66 60,72" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M26,50 C42,48 58,48 74,50 C82,51 88,52 92,51" stroke="#C5D4B8" stroke-width="4" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Compass - blue mirage -->
+  <circle cx="60" cy="46" r="11" stroke="#7A9AAA" stroke-width="1.2" fill="none"/>
+  <path d="M60,35 L60,57 M49,46 L71,46" stroke="#C5D4B8" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="60" cy="46" r="2.5" fill="#89B4C8"/>
+
+  <!-- Wave ripple -->
+  <path d="M46,60 C52,62 56,63 60,64 C64,63 68,62 74,60" stroke="#A8B8A0" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+  <path d="M44,64 C51,66 56,67 60,68 C64,67 69,66 76,64" stroke="#A8B8A0" stroke-width="0.7" stroke-linecap="round" opacity="0.2"/>
+</svg>

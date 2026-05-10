@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="400" height="400">
+  <defs>
+    <filter id="softShadow">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#1a1a1a" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect width="120" height="120" fill="#2A2A28"/>
+
+  <!-- 3D depth - dusty coal shadow -->
+  <g transform="translate(3, 3)" opacity="0.5">
+    <path d="M34,20 L24,70 M86,20 L96,70 M30,48 L90,48" stroke="#3A3A38" stroke-width="5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Layered A's - blue mirage -->
+  <g opacity="0.2">
+    <path d="M36,22 L26,68 M88,22 L98,68" stroke="#89B4C8" stroke-width="2.5"/>
+    <path d="M34,24 L24,66 M86,24 L96,66" stroke="#89B4C8" stroke-width="2.5"/>
+  </g>
+
+  <!-- Main Wave A - matcha mist -->
+  <g filter="url(#softShadow)">
+    <path d="M34,20 C40,30 46,42 50,52 C54,60 57,64 60,68" stroke="#C5D4B8" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <path d="M86,20 C80,30 74,42 70,52 C66,60 63,64 60,68" stroke="#C5D4B8" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <path d="M28,46 C45,44 60,44 75,46 C82,47 88,48 92,47" stroke="#C5D4B8" stroke-width="4" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Compass - blue mirage -->
+  <circle cx="60" cy="42" r="11" stroke="#7A9AAA" stroke-width="1.2" fill="none"/>
+  <path d="M60,31 L60,53 M49,42 L71,42" stroke="#C5D4B8" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="60" cy="42" r="2.5" fill="#89B4C8"/>
+
+  <!-- Water ripple circles - dusty coal -->
+  <g opacity="0.2">
+    <circle cx="60" cy="42" r="16" stroke="#7A9AAA" stroke-width="0.8" fill="none"/>
+    <circle cx="60" cy="42" r="20" stroke="#7A9AAA" stroke-width="0.5" fill="none"/>
+  </g>
+</svg>

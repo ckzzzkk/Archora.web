@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="400" height="400">
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="#1a1a1a" flood-opacity="0.45"/>
+    </filter>
+    <filter id="glow">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#89B4C8" flood-opacity="0.7"/>
+    </filter>
+  </defs>
+  <rect width="120" height="120" fill="#2A2A28"/>
+
+  <!-- Stacked floor plan A's - blue mirage layers -->
+  <g opacity="0.1">
+    <path d="M32,14 L22,68 M88,14 L98,68 M28,44 L92,44" stroke="#89B4C8" stroke-width="3"/>
+  </g>
+  <g opacity="0.18">
+    <path d="M32,16 L22,70 M88,16 L98,70 M28,46 L92,46" stroke="#89B4C8" stroke-width="3"/>
+  </g>
+
+  <!-- Bold wave A - matcha mist -->
+  <g filter="url(#shadow)">
+    <path d="M32,18 C40,30 46,42 50,52 C54,60 57,65 60,70" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M88,18 C80,30 74,42 70,52 C66,60 63,65 60,70" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M28,47 C44,45 58,45 72,47 C80,48 86,49 90,48" stroke="#C5D4B8" stroke-width="4" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Compass with glow - blue mirage -->
+  <circle cx="60" cy="42" r="12" stroke="#7A9AAA" stroke-width="1.5" fill="none"/>
+  <path d="M60,30 L60,54 M48,42 L72,42" stroke="#C5D4B8" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="60" cy="42" r="3.5" fill="#89B4C8" filter="url(#glow)"/>
+
+  <!-- Flowing wave lines - matcha mist accent -->
+  <g opacity="0.2">
+    <path d="M52,56 C56,58 58,59 60,60 C62,59 64,58 68,56" stroke="#A8B8A0" stroke-width="1.2"/>
+    <path d="M50,60 C55,62 58,63 60,64 C62,63 65,62 70,60" stroke="#A8B8A0" stroke-width="0.8"/>
+    <path d="M48,64 C54,66 58,67 60,68 C62,67 66,66 72,64" stroke="#A8B8A0" stroke-width="0.6"/>
+  </g>
+</svg>

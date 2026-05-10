@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="400" height="400">
+  <rect width="120" height="120" fill="#2A2A28"/>
+
+  <!-- Bold solid A shape - matcha mist -->
+  <path d="M32,18 C38,28 44,40 48,50 C52,58 55,63 58,68" stroke="#C5D4B8" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M88,18 C82,28 76,40 72,50 C68,58 65,63 62,68" stroke="#C5D4B8" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M26,46 C40,44 55,44 70,46 C78,47 85,48 90,47" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- Layered shadow depth - blue mirage -->
+  <g opacity="0.12" transform="translate(4,4)">
+    <path d="M32,18 L22,68 M88,18 L98,68 M26,46 L90,46" stroke="#89B4C8" stroke-width="5"/>
+  </g>
+  <g opacity="0.2" transform="translate(2,2)">
+    <path d="M32,18 L22,68 M88,18 L98,68 M26,46 L90,46" stroke="#89B4C8" stroke-width="5"/>
+  </g>
+
+  <!-- Compass floating above - blue mirage -->
+  <g transform="translate(0, -2)">
+    <circle cx="60" cy="40" r="13" stroke="#7A9AAA" stroke-width="1.5" fill="none"/>
+    <path d="M60,27 L60,53 M47,40 L73,40" stroke="#C5D4B8" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="60" cy="40" r="3" fill="#89B4C8"/>
+  </g>
+
+  <!-- Wave accents -->
+  <g opacity="0.25">
+    <path d="M48,58 C52,60 56,62 60,64 C64,62 68,60 72,58" stroke="#A8B8A0" stroke-width="1.2"/>
+    <path d="M46,62 C51,64 55,66 60,68 C65,66 69,64 74,62" stroke="#A8B8A0" stroke-width="0.8"/>
+  </g>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="400" height="400">
+  <rect width="120" height="120" fill="#2A2A28"/>
+
+  <!-- Layered floor plan A's - blue mirage layers -->
+  <g opacity="0.15" transform="translate(5,5)">
+    <path d="M32,18 L22,68 M88,18 L98,68" stroke="#89B4C8" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <g opacity="0.3" transform="translate(2.5,2.5)">
+    <path d="M32,18 L22,68 M88,18 L98,68" stroke="#89B4C8" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- Wave A legs - matcha mist -->
+  <path d="M32,18 C38,35 45,45 50,55 C55,62 58,66 60,70" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M88,18 C82,35 75,45 70,55 C65,62 62,66 60,70" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- Wave crossbar -->
+  <path d="M28,48 C45,46 60,46 75,48 C82,49 88,50 92,49" stroke="#C5D4B8" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+  <!-- Compass - blue mirage -->
+  <circle cx="60" cy="44" r="12" stroke="#7A9AAA" stroke-width="1.5" fill="none"/>
+  <path d="M60,32 L60,56 M48,44 L72,44" stroke="#C5D4B8" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="60" cy="44" r="3" fill="#89B4C8"/>
+
+  <!-- Wave ripples -->
+  <g opacity="0.2">
+    <path d="M50,60 C54,61 57,62 60,63 C63,62 66,61 70,60" stroke="#A8B8A0" stroke-width="1"/>
+    <path d="M48,64 C53,65 57,66 60,67 C63,66 67,65 72,64" stroke="#A8B8A0" stroke-width="0.7"/>
+  </g>
+</svg>

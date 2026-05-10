@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="400" height="400">
+  <defs>
+    <filter id="deepShadow">
+      <feDropShadow dx="5" dy="5" stdDeviation="4" flood-color="#1a1a1a" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect width="120" height="120" fill="#2A2A28"/>
+
+  <!-- Bold shadow offset - dusty coal -->
+  <g transform="translate(5,5)">
+    <path d="M32,18 L22,72 M88,18 L98,72 M26,50 L94,50" stroke="#3A3A38" stroke-width="6" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Layered A's - blue mirage -->
+  <g opacity="0.18">
+    <path d="M33,20 L23,70 M87,20 L97,70 M27,48 L93,48" stroke="#89B4C8" stroke-width="2"/>
+  </g>
+
+  <!-- Main wave A - matcha mist -->
+  <g filter="url(#deepShadow)">
+    <path d="M32,18 C40,32 46,44 50,54 C54,62 57,66 60,72" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M88,18 C80,32 74,44 70,54 C66,62 63,66 60,72" stroke="#C5D4B8" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M26,50 C42,48 58,48 74,50 C82,51 88,52 92,51" stroke="#C5D4B8" stroke-width="4" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Compass ring - blue mirage -->
+  <circle cx="60" cy="44" r="13" stroke="#7A9AAA" stroke-width="1.5" fill="none"/>
+  <path d="M60,31 L60,57 M47,44 L73,44" stroke="#C5D4B8" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="60" cy="44" r="3" fill="#89B4C8"/>
+
+  <!-- Wave emanating - matcha mist accent -->
+  <g opacity="0.25">
+    <path d="M48,58 C54,60 57,61 60,62 C63,61 66,60 72,58" stroke="#A8B8A0" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M45,63 C52,65 56,66 60,67 C64,66 68,65 75,63" stroke="#A8B8A0" stroke-width="1" stroke-linecap="round"/>
+  </g>
+</svg>
