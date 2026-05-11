@@ -458,7 +458,7 @@ export function GenerationScreen() {
         setIterationProgress(update);
         // Map status to phase index
         const phaseMap: Record<string, number> = { generating: 1, scoring: 2, refining: 3, complete: 4 };
-        setLoadingPhase(phaseMap[update.status] ?? 1);
+        setLoadingPhase(phaseMap[update.status as string] ?? 1);
       });
 
       await blueprintActions.loadBlueprint(blueprint);

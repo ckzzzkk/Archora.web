@@ -24,7 +24,7 @@ export const simulationService = {
 
       if (!response.ok) {
         const err = await response.json() as { error?: string };
-        throw new Error(err.error ?? 'Simulation failed');
+        throw Object.assign(new Error(err.error ?? 'Simulation failed'), { code: 'SIMULATION_FAILED' });
       }
 
       const raw = await response.json();

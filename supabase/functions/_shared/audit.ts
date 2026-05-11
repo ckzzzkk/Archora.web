@@ -4,6 +4,8 @@ import { requireEnv } from './errors.ts';
 export type AuditAction =
   | 'ai_generate'
   | 'ai_furniture'
+  | 'ai_edit_blueprint'
+  | 'ai_suggest_blueprint'
   | 'ar_scan'
   | 'ar_scan_status_polled'
   | 'ar_reconstruct'

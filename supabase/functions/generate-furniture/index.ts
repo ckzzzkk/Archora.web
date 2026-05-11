@@ -162,6 +162,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     metadata: { type: 'furniture_3d', prompt: prompt.slice(0, 100), task_id: taskId },
   });
 
+  // Log audit for POST (create) — quota-consuming action
+  await logAudit({
+    user_id: user.id,
+    action: 'ai_generate',
+    metadata: { type: 'furniture_3d_create', task_id: taskId },
+  });
+
   return new Response(
     JSON.stringify({ taskId }),
     { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

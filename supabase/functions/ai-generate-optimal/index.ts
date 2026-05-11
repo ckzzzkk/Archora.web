@@ -310,6 +310,7 @@ serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  const start = Date.now();
   let sessionId = '';
 
   try {
@@ -452,7 +453,7 @@ serve(async (req) => {
         prompt:       p.prompt,
         generation_type: 'floor_plan_optimal',
         model:        selectedModel,
-        duration_ms:  0,
+        duration_ms:  Date.now() - start,
         status:       'complete',
         result_data:  bestBlueprint as Record<string, unknown>,
       });

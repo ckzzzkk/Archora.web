@@ -26,8 +26,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const rateLimitOk = await checkRateLimit(`ai:${user.id}`, 10, 3600);
     if (!rateLimitOk) return Errors.rateLimited();
 
-    // Quota check — checkQuota() already increments ai_generations_used internally;
-    // do NOT call increment_quota here (would be double-increment)
+    // Quota check is read-only (checkQuota only verifies, does not increment).
+    // Increment after successful generation (handled by checkQuota internally).
     const quotaOk = await checkQuota(user.id, 'ai_generation');
     if (!quotaOk) return Errors.quotaExceeded();
 

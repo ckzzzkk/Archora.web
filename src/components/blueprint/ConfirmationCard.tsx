@@ -6,8 +6,8 @@ import { diffBlueprints, type BlueprintDiff } from '../../utils/diffBlueprint';
 import type { BlueprintData } from '../../types/blueprint';
 
 interface Props {
-  original: BlueprintData;
-  proposed: BlueprintData;
+  original?: BlueprintData;
+  proposed?: BlueprintData;
   aiMessage: string;
   currentFloorIndex?: number;
   onAccept: () => void;
@@ -24,6 +24,8 @@ function ChangeChip({ label, value, color }: { label: string; value: string; col
 }
 
 export function ConfirmationCard({ original, proposed, aiMessage, currentFloorIndex = 0, onAccept, onReject }: Props) {
+  if (!original || !proposed) return null;
+
   const diff: BlueprintDiff = diffBlueprints(original, proposed, currentFloorIndex);
 
   return (

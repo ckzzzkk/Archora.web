@@ -46,7 +46,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (error) {
     console.error('[contact-form]', error);
-    return Errors.internal();
+    return new Response(JSON.stringify({ error: 'Failed to send message', details: error.message }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   return new Response(
