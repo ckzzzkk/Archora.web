@@ -193,10 +193,11 @@ serve(async (req) => {
     return Errors.internal('Failed to save refined blueprint');
   }
 
-  await logAudit(supabase, userId, 'sketch_refine', {
-    blueprintId,
-    model,
-    tier,
+  await logAudit({
+    user_id: userId,
+    action: 'sketch_refine',
+    resource_id: blueprintId,
+    metadata: { model, tier },
   });
 
   return new Response(

@@ -101,6 +101,9 @@ serve(async (req) => {
       user_agent: userAgent ?? undefined,
     });
 
+    // Increment quota after successful transcription
+    await supabase.rpc('increment_quota', { p_user_id: user.id, p_field: 'ai_generations_used', p_amount: 1 });
+
     return new Response(JSON.stringify({ transcript: result.text }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

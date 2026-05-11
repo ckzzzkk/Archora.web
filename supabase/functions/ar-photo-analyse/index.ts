@@ -6,7 +6,7 @@ import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
+import { TIER_AI_MODELS, buildAIRequest, parseAIResponse, getModelProvider } from '../_shared/aiLimits.ts';
 
 const RequestSchema = z.object({
   photoBase64: z.string().min(100),

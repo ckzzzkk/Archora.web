@@ -16,6 +16,16 @@ const WebhookSchema = z.object({
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
+  // Simple shared-secret auth — caller must provide the secret in the header
+  const webhookSecret = Deno.env.get('RENDER_WEBHOOK_SECRET');
+  if (webhookSecret) {
+    const provided = req.headers.get('X-Webhook-Secret');
+    if (provided !== webhookSecret) {
+      return Errors.forbidden('Invalid webhook secret');
+    }
+  }
+  // If RENDER_WEBHOOK_SECRET is not set, skip auth (legacy / development mode)
+
   try {
     const body = await req.json() as unknown;
     const parsed = WebhookSchema.safeParse(body);
