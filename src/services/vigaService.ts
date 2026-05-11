@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { toAppError } from '../types/AppError';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
@@ -60,7 +61,7 @@ export async function fetchCustomFurniture(): Promise<VigaMesh[]> {
     .not('mesh_url', 'is', null)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) throw toAppError(error, 'DB_ERROR');
 
   return (data ?? []).map((row) => ({
     id: String(row.id ?? ''),

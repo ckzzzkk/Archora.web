@@ -122,10 +122,12 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
 
   // Sync pending placement with the placement hook
   const prevPendingRef = useRef<FurnitureDef | null | undefined>(undefined);
-  if (pendingFurniturePlacement !== prevPendingRef.current) {
-    prevPendingRef.current = pendingFurniturePlacement;
-    placement.setPendingPlacement(pendingFurniturePlacement ?? null);
-  }
+  useEffect(() => {
+    if (pendingFurniturePlacement !== prevPendingRef.current) {
+      prevPendingRef.current = pendingFurniturePlacement;
+      placement.setPendingPlacement(pendingFurniturePlacement ?? null);
+    }
+  }, [pendingFurniturePlacement]);
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -749,7 +751,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
               })()}
 
               {/* ── Layer 6: Dimension lines — architectural tick style ── */}
-              {showDimensions && dimensionLines.map((dim) => {
+              {showDimensions && (dimensionLines ?? []).map((dim) => {
                 const sx = toPixelX(dim.offsetStart.x);
                 const sy = toPixelY(dim.offsetStart.y);
                 const ex = toPixelX(dim.offsetEnd.x);

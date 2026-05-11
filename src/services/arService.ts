@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { toAppError } from '../types/AppError';
 import { ARCoreModule } from '../native/ARCoreModule';
 import type { PhotoAnalysisResult } from '../utils/ar/arToBlueprintConverter';
 
@@ -36,7 +37,7 @@ export const arService = {
       .from('ar-scans')
       .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
 
-    if (error) throw error;
+    if (error) throw toAppError(error, 'STORAGE_ERROR');
 
     const { data } = supabase.storage.from('ar-scans').getPublicUrl(fileName);
     return data.publicUrl;
@@ -58,14 +59,17 @@ export const arService = {
     return response.json() as Promise<ARScanResult>;
   },
 
-  async getScanStatus(scanId: string): Promise<ARScanResult> {
+  async getScanStatus(scanId: string): Promise<ARScanResult | null> {
     const { data, error } = await supabase
       .from('ar_scans')
       .select('*')
       .eq('id', scanId)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
     const row = data as Record<string, unknown>;
 
     return {

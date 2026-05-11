@@ -47,7 +47,7 @@ export const useCoProjectStore = create<CoProjectStore>((set, get) => ({
       const project = await coProjectService.getCoProject(projectId);
       set({ activeProject: project, isLoading: false });
     } catch (e: any) {
-      set({ error: e.message ?? 'Failed to fetch co-project', isLoading: false });
+      set({ activeProject: null, error: e.message ?? 'Failed to fetch co-project', isLoading: false });
     }
   },
 

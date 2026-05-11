@@ -243,6 +243,7 @@ export function BlueprintWorkspaceScreen() {
 
   const handleStaircaseSelect = useCallback((type: StaircaseType) => {
     if (!blueprint) return;
+    if (blueprint.floors.length === 0) return;
     const floorIndex = blueprint.floors.length - 1;
     addStaircase(floorIndex, {
       id: randomUUID(),
@@ -662,7 +663,7 @@ export function BlueprintWorkspaceScreen() {
             </ArchText>
           </View>
           <Pressable
-            onPress={() => navigation.navigate('Sketch' as never)}
+            onPress={() => navigation.navigate('Sketch' as const)}
             style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: DS.colors.warning }}
           >
             <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: DS.colors.background }}>

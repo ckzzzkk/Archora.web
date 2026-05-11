@@ -136,8 +136,10 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
         }
 
         // Get existing participants and add this user
-        const existingParticipants = sessionData.participants ?? [];
-        const colorIndex = existingParticipants.length % PARTICIPANT_COLORS.length;
+        // Use retry loop for optimistic concurrency — two concurrent joins
+        // can read the same participant count and assign duplicate colors.
+        let existingParticipants: Participant[] = sessionData.participants ?? [];
+        let colorIndex = existingParticipants.length % PARTICIPANT_COLORS.length;
         const participant: Participant = {
           userId: user.id,
           displayName: user.user_metadata?.display_name ?? user.email ?? 'Guest',
@@ -147,12 +149,39 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
           color: PARTICIPANT_COLORS[colorIndex],
         };
 
-        const updatedParticipants = [...existingParticipants, participant];
+        let updatedParticipants = [...existingParticipants, participant];
+        let insertSucceeded = false;
 
-        await supabase
-          .from('codesign_sessions')
-          .update({ participants: updatedParticipants })
-          .eq('id', sessionId);
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const { error: updateError } = await supabase
+            .from('codesign_sessions')
+            .update({ participants: updatedParticipants })
+            .eq('id', sessionId)
+            .eq('is_active', true);
+
+          if (!updateError) {
+            insertSucceeded = true;
+            break;
+          }
+
+          // Conflict or not found — re-fetch and recompute
+          const { data: reFetched } = await supabase
+            .from('codesign_sessions')
+            .select('participants')
+            .eq('id', sessionId)
+            .eq('is_active', true)
+            .single();
+
+          if (!reFetched) break; // session gone
+          existingParticipants = reFetched.participants ?? [];
+          colorIndex = existingParticipants.length % PARTICIPANT_COLORS.length;
+          // Avoid duplicate color by appending a fresh participant
+          updatedParticipants = [...existingParticipants, participant];
+        }
+
+        if (!insertSucceeded) {
+          throw new Error('Failed to join session — please try again');
+        }
 
         const session: CodesignSession = {
           id: sessionId,

@@ -22,7 +22,7 @@ import { OvalButton } from '../../components/common/OvalButton';
 import { GridBackground } from '../../components/common/GridBackground';
 import { DS } from '../../theme/designSystem';
 import { useTierGate } from '../../hooks/useTierGate';
-import { useGenerationPreferences } from '../../hooks/useGenerationPreferences';
+import { useUIStore } from '../../stores/uiStore';
 
 import { Step0Architect } from './steps/Step0Architect';
 import { Step1BuildingType } from './steps/Step1BuildingType';
@@ -374,9 +374,7 @@ export function GenerationScreen() {
     setPrefilledFromDb(true);
     // Show hint toast if we had a previous preference
     if (preferences.style_id || preferences.building_type) {
-      const { useUIStore } = require('../../stores/uiStore');
-      const s = useUIStore.getState();
-      s.actions.showToast(`Last time: ${preferences.style_id ?? 'style'} ${preferences.building_type ?? 'building'}`, 'info');
+      useUIStore.getState().actions.showToast(`Last time: ${preferences.style_id ?? 'style'} ${preferences.building_type ?? 'building'}`, 'info');
     }
   }, [preferences, prefsLoading, prefilledFromDb]);
 

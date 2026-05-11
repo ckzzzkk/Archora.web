@@ -402,8 +402,8 @@ export function FeedScreen() {
 
   const handleSearch = useCallback((text: string) => {
     setSearchText(text);
-    setFilter({ ...filter, search: text || undefined });
-  }, [filter, setFilter]);
+    setFilter(f => ({ ...f, search: text || undefined }));
+  }, [setFilter]);
 
   const handleItemPress = useCallback((templateId: string) => {
     navigation.navigate('TemplateDetail', { templateId });
@@ -535,7 +535,7 @@ export function FeedScreen() {
         </Animated.View>
 
         {/* Trending carousel — only when no active search/filter */}
-        {!searchText && activeChip === 'All' && templates.length > 0 && (
+        {!searchText && activeChip === 'All' && (templates?.length ?? 0) > 0 && (
           <TrendingCarousel templates={templates} onPress={handleItemPress} C={C} />
         )}
 
@@ -562,7 +562,7 @@ export function FeedScreen() {
           </ArchText>
           <OvalButton label="Retry" variant="outline" onPress={() => { void refresh(); }} />
         </View>
-      ) : templates.length === 0 ? (
+      ) : (templates?.length ?? 0) === 0 ? (
         <FeedEmptyState />
       ) : (
         <FlashList

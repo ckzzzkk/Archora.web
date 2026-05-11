@@ -14,7 +14,7 @@ import type { ViewMode, SubscriptionTier } from '../types';
 import { clipboard } from '../utils/clipboard';
 import type { ClipboardItem } from '../utils/clipboard';
 import type { SuggestionItem } from '../types/consultation';
-import { useAuth } from '../auth/AuthProvider';
+import { userCache } from '../utils/userCache';
 
 const STORAGE_KEY = 'blueprint_current';
 
@@ -170,11 +170,12 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
   }
 
   function getCurrentTier(explicitTier?: SubscriptionTier): SubscriptionTier {
-    // If tier is explicitly passed (from authenticated action call), use it.
-    // Otherwise read live from auth provider — avoids stale tier if user upgrades mid-session.
+    // Tier must always be passed explicitly from call sites.
+    // Never call useAuth() here — this function is invoked outside React render context.
+    // Fall back to the cached user for offline access (userCache is synchronous).
     if (explicitTier) return explicitTier;
-    const auth = useAuth();
-    return auth.user?.subscriptionTier ?? 'starter';
+    const cached = userCache.load();
+    return (cached?.subscriptionTier as SubscriptionTier) ?? 'starter';
   }
 
   function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string, tier?: SubscriptionTier): Partial<BlueprintState> {
@@ -653,7 +654,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         try {
           const data = JSON.parse(raw) as BlueprintData;
           const migrated = migrateToMultiFloor(data);
-          set({ blueprint: migrated, isDirty: false, currentFloorIndex: 0, saveStatus: 'saved' });
+          set({ blueprint: migrated, isDirty: false, currentFloorIndex: 0, saveStatus: 'saved', dirtyNodes: [] });
         } catch (err) {
           console.warn('[blueprintStore] Corrupt storage data, resetting:', err);
           blueprintStorage.delete(STORAGE_KEY);
@@ -698,6 +699,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           historyIndex: historyIndex - 1,
           isDirty: true,
           saveStatus: 'unsaved',
+          dirtyNodes: [],
         });
       },
 
@@ -711,6 +713,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           historyIndex: historyIndex + 1,
           isDirty: true,
           saveStatus: 'unsaved',
+          dirtyNodes: [],
         });
       },
 

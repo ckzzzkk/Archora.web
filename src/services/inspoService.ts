@@ -106,30 +106,54 @@ export const inspoService = {
   },
 
   async likeTemplate(templateId: string, userId: string): Promise<void> {
-    await supabase.from('likes').upsert({ template_id: templateId, user_id: userId }, { onConflict: 'user_id,template_id' });
+    try {
+      await supabase.from('likes').upsert({ template_id: templateId, user_id: userId }, { onConflict: 'user_id,template_id' });
+    } catch (err) {
+      console.warn('[inspoService] likeTemplate failed:', err);
+    }
   },
 
   async unlikeTemplate(templateId: string, userId: string): Promise<void> {
-    await supabase.from('likes').delete().eq('template_id', templateId).eq('user_id', userId);
+    try {
+      await supabase.from('likes').delete().eq('template_id', templateId).eq('user_id', userId);
+    } catch (err) {
+      console.warn('[inspoService] unlikeTemplate failed:', err);
+    }
   },
 
   async rateTemplate(templateId: string, userId: string, score: number): Promise<void> {
-    await supabase.from('ratings').upsert(
-      { template_id: templateId, user_id: userId, score },
-      { onConflict: 'user_id,template_id' },
-    );
+    try {
+      await supabase.from('ratings').upsert(
+        { template_id: templateId, user_id: userId, score },
+        { onConflict: 'user_id,template_id' },
+      );
+    } catch (err) {
+      console.warn('[inspoService] rateTemplate failed:', err);
+    }
   },
 
   async postComment(templateId: string, userId: string, content: string): Promise<void> {
-    await supabase.from('comments').insert({ template_id: templateId, user_id: userId, body: content });
+    try {
+      await supabase.from('comments').insert({ template_id: templateId, user_id: userId, body: content });
+    } catch (err) {
+      console.warn('[inspoService] postComment failed:', err);
+    }
   },
 
   async saveTemplate(templateId: string, userId: string): Promise<void> {
-    await supabase.from('saves').upsert({ template_id: templateId, user_id: userId }, { onConflict: 'user_id,template_id' });
+    try {
+      await supabase.from('saves').upsert({ template_id: templateId, user_id: userId }, { onConflict: 'user_id,template_id' });
+    } catch (err) {
+      console.warn('[inspoService] saveTemplate failed:', err);
+    }
   },
 
   async unsaveTemplate(templateId: string, userId: string): Promise<void> {
-    await supabase.from('saves').delete().eq('template_id', templateId).eq('user_id', userId);
+    try {
+      await supabase.from('saves').delete().eq('template_id', templateId).eq('user_id', userId);
+    } catch (err) {
+      console.warn('[inspoService] unsaveTemplate failed:', err);
+    }
   },
 
   async getSavedTemplates(userId: string): Promise<Template[]> {
