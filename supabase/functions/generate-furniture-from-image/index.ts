@@ -351,6 +351,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     styleTags: identification.styleTags,
   };
 
+  // ── Increment viga quota on success ─────────────────────────────────────
+  await supabase.rpc('increment_quota', { p_user_id: user.id, p_field: 'viga_used', p_amount: 1 }).catch((e) => {
+    console.warn('[generate-furniture-from-image] Failed to increment viga_used:', e);
+  });
+
   return new Response(
     JSON.stringify({ customAsset, identification, meshGenerated }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
