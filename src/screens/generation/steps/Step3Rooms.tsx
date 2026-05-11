@@ -2,6 +2,7 @@ import React from 'react';
 import { DS } from '../../../theme/designSystem';
 import { ArchText } from '../../../components/common/ArchText';
 import { View, Pressable, Switch } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useHaptics } from '../../../hooks/useHaptics';
 import { useTierGate } from '../../../hooks/useTierGate';
@@ -161,7 +162,7 @@ export function Step3Rooms(props: Props) {
                 borderWidth: 1,
                 borderColor: props.poolSize === s ? DS.colors.primary : DS.colors.border,
                 backgroundColor: props.poolSize === s ? `${DS.colors.primary}20` : 'transparent',
-              }, poolSizeAnimatedStyle]}
+              }, poolSizeAnimatedStyle as StyleProp<ViewStyle>]}
             >
               <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim, textTransform: 'capitalize' }}>
                 {s}
@@ -247,7 +248,7 @@ export function Step3Rooms(props: Props) {
           paddingVertical: 16,
           alignItems: 'center',
           marginTop: 20,
-        }, nextAnimatedStyle]}
+        }, nextAnimatedStyle as StyleProp<ViewStyle>]}
       >
         <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>Next</ArchText>
       </Pressable>

@@ -1,4 +1,5 @@
 import React, { useRef, useCallback } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { DS } from '../../../theme/designSystem';
 import { ArchText } from '../../../components/common/ArchText';
 import { View,  Pressable, ScrollView } from 'react-native';
@@ -77,7 +78,7 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
                 borderWidth: isActive ? 2 : 1,
                 borderColor: isActive ? DS.colors.primary : DS.colors.border,
                 opacity: isLocked ? 0.4 : 1,
-              }, cardAnimatedStyle]}
+              }, cardAnimatedStyle as StyleProp<ViewStyle>]}
             >
               <View
                 style={{
@@ -122,7 +123,7 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
             borderRadius: 50,
             paddingVertical: 16,
             alignItems: 'center',
-          }, nextAnimatedStyle]}
+          }, nextAnimatedStyle as StyleProp<ViewStyle>]}
         >
           <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>Next</ArchText>
         </Pressable>

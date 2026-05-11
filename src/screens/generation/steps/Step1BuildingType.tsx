@@ -1,4 +1,5 @@
 import React from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { DS } from '../../../theme/designSystem';
 import { ArchText } from '../../../components/common/ArchText';
 import { View, Pressable } from 'react-native';
@@ -53,7 +54,7 @@ function BuildingTypeCard({ type, label, isActive, onPress }: {
         borderWidth: isActive ? 2 : 1,
         borderColor: isActive ? DS.colors.primary : DS.colors.border,
         minHeight: 44,
-      }, animatedStyle]}
+      }, animatedStyle as StyleProp<ViewStyle>]}
     >
       {/* SVG building line art */}
       <View style={{ marginBottom: 8 }}>

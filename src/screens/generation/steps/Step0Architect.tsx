@@ -1,4 +1,5 @@
 import React from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { View, ScrollView, Pressable } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { ArchText } from '../../../components/common/ArchText';
@@ -66,7 +67,7 @@ function ArchitectCard({
         borderWidth: 2,
         borderColor: selected ? DS.colors.accent : DS.colors.border,
         opacity: locked ? 0.5 : 1,
-      }, animatedStyle]}
+      }, animatedStyle as StyleProp<ViewStyle>]}
     >
       {selected && (
         <View style={{ position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: DS.colors.accent, alignItems: 'center', justifyContent: 'center' }}>
@@ -172,7 +173,7 @@ export function Step0Architect({ selectedId, onSelect, onContinue, onUseDefault,
           onPressIn={handleBlendedPressIn}
           onPressOut={handleBlendedPressOut}
           onPress={onUseDefault}
-          style={[blendedAnimatedStyle, { alignItems: 'center' }]}
+          style={[blendedAnimatedStyle as StyleProp<ViewStyle>, { alignItems: 'center' }]}
         >
           <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryGhost }}>
             Use blended philosophy — no specific architect

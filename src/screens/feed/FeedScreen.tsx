@@ -8,6 +8,7 @@ import {
   Dimensions,
   Text,
 } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -105,7 +106,7 @@ const TrendingCarousel = React.memo(function TrendingCarousel({
                 borderColor: idx === 0 ? '#FFEE8C40' : C.border,
                 overflow: 'hidden',
               },
-              itemAnimatedStyle,
+              itemAnimatedStyle as StyleProp<ViewStyle>,
             ]}
           >
             {/* Color thumbnail */}
@@ -174,6 +175,12 @@ const TrendingCarousel = React.memo(function TrendingCarousel({
   );
 });
 
+interface ChipConfig {
+  label: string;
+  buildingType?: string;
+  trendingOrNew?: 'trending' | 'new';
+}
+
 const CHIPS: ChipConfig[] = [
   { label: 'All' },
   { label: 'Houses', buildingType: 'house' },
@@ -231,7 +238,7 @@ function FilterChipsRow({
                 borderColor: active ? C.primary : C.border,
                 backgroundColor: active ? C.accentGlow : 'transparent',
               },
-              chipAnimatedStyle,
+              chipAnimatedStyle as StyleProp<ViewStyle>,
             ]}
           >
             <View style={{ flexShrink: 1 }}>
@@ -384,19 +391,19 @@ export function FeedScreen() {
     }
   }, [searchVisible, searchBarHeight, light, filter, setFilter]);
 
-  const handleChip = useCallback((chip: ChipConfig) => {
+  const handleChip = useCallback((f: ChipConfig) => {
     light();
-    setActiveChip(chip.label);
+    setActiveChip(f.label);
     setFilter({
-      buildingType: chip.buildingType,
-      trendingOrNew: chip.trendingOrNew,
+      buildingType: f.buildingType,
+      trendingOrNew: f.trendingOrNew,
       search: searchText || undefined,
     });
   }, [light, setFilter, searchText]);
 
   const handleSearch = useCallback((text: string) => {
     setSearchText(text);
-    setFilter(f => ({ ...f, search: text || undefined }));
+    setFilter({ search: text || undefined });
   }, [setFilter]);
 
   const handleItemPress = useCallback((templateId: string) => {

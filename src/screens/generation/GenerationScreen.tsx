@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, ScrollView, Pressable, SafeAreaView } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -23,6 +24,7 @@ import { GridBackground } from '../../components/common/GridBackground';
 import { DS } from '../../theme/designSystem';
 import { useTierGate } from '../../hooks/useTierGate';
 import { useUIStore } from '../../stores/uiStore';
+import { useGenerationPreferences } from '../../hooks/useGenerationPreferences';
 
 import { Step0Architect } from './steps/Step0Architect';
 import { Step1BuildingType } from './steps/Step1BuildingType';
@@ -34,6 +36,7 @@ import { Step5Reference } from './steps/Step5Reference';
 import { Step6Notes } from './steps/Step6Notes';
 import { Step7Review } from './steps/Step7Review';
 import { StepProgressBar } from './steps/StepProgressBar';
+import { BlueprintGeneratingOverlay } from '../../components/generation/BlueprintGeneratingOverlay';
 import { ConsultationChat } from '../../components/consultation/ConsultationChat';
 
 import type { RootStackParamList } from '../../navigation/types';
@@ -80,201 +83,6 @@ interface IterationProgress {
   scores: Array<{ n: number; score: number; keyChange: string }>;
 }
 
-// Animated blueprint being drawn — shown while AI generates
-function BlueprintGeneratingOverlay({ phase, iterationProgress }: { phase: number; iterationProgress: IterationProgress }) {
-  // Pulse for the cross-hair + dots
-  const pulse = useSV(0);
-  useEffect(() => {
-    pulse.value = withRepeat(withTiming(1, { duration: 1400, easing: EA.inOut(EA.ease) }), -1, true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Wall draw-in animations (5 walls, staggered)
-  const walls = [useSV(0), useSV(0), useSV(0), useSV(0), useSV(0)];
-  useEffect(() => {
-    walls.forEach((w, i) => {
-      w.value = wDelay(i * 320, withTiming(1, { duration: 600, easing: EA.out(EA.cubic) }));
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const w0 = useAS(() => ({ opacity: walls[0].value }));
-  const w1 = useAS(() => ({ opacity: walls[1].value }));
-  const w2 = useAS(() => ({ opacity: walls[2].value }));
-  const w3 = useAS(() => ({ opacity: walls[3].value }));
-  const w4 = useAS(() => ({ opacity: walls[4].value }));
-  const wallStyles = [w0, w1, w2, w3, w4];
-
-  // Phase text fade
-  const textOp = useSV(1);
-  useEffect(() => {
-    textOp.value = withTiming(0, { duration: 200 }, () => {
-      textOp.value = withTiming(1, { duration: 300 });
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
-  const textStyle = useAS(() => ({ opacity: textOp.value }));
-
-  const pulseStyle = useAS(() => ({
-    opacity: interpolate(pulse.value, [0, 1], [0.4, 1]),
-    transform: [{ scale: interpolate(pulse.value, [0, 1], [0.95, 1.05]) }],
-  }));
-
-  // SVG wall segments (floor plan view)
-  const segments = [
-    // outer walls
-    { x1: 24, y1: 24, x2: 120, y2: 24 },   // top
-    { x1: 120, y1: 24, x2: 120, y2: 112 },  // right
-    { x1: 24, y1: 112, x2: 120, y2: 112 },  // bottom
-    { x1: 24, y1: 24, x2: 24, y2: 112 },    // left
-    { x1: 24, y1: 68, x2: 80, y2: 68 },     // interior partition
-  ];
-
-  return (
-    <View
-      style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}
-      accessibilityLiveRegion="polite"
-      accessibilityLabel={`ARIA is generating your design. ${LOADING_PHASES[phase]}`}
-      accessibilityRole="progressbar"
-    >
-      <GridBackground />
-
-      {/* Blueprint canvas */}
-      <Animated.View style={[pulseStyle, { marginBottom: DS.spacing.xl }]}>
-        <Svg width={144} height={136} viewBox="0 0 144 136">
-          {/* Grid dots */}
-          {[0, 1, 2, 3].map((r) => [0, 1, 2, 3, 4].map((c) => (
-            <Circle key={`${r}-${c}`} cx={24 + c * 24} cy={24 + r * 24} r={1.5}
-              fill={DS.colors.border} opacity={0.4} />
-          )))}
-          {/* Walls — each fades in */}
-          {segments.map((seg, i) => (
-            <Animated.View key={i} style={wallStyles[i]}>
-              <Svg width={144} height={136} viewBox="0 0 144 136" style={{ position: 'absolute', top: 0, left: 0 }}>
-                <Line
-                  x1={seg.x1} y1={seg.y1} x2={seg.x2} y2={seg.y2}
-                  stroke={DS.colors.primary} strokeWidth={2.2} strokeLinecap="round"
-                />
-              </Svg>
-            </Animated.View>
-          ))}
-          {/* Corner dots where walls meet */}
-          {[
-            { cx: 24, cy: 24 }, { cx: 120, cy: 24 },
-            { cx: 120, cy: 112 }, { cx: 24, cy: 112 },
-            { cx: 80, cy: 68 },
-          ].map((pt, i) => (
-            <Circle key={i} cx={pt.cx} cy={pt.cy} r={3}
-              fill="none" stroke={DS.colors.accent} strokeWidth={1.5} opacity={0.8} />
-          ))}
-          {/* Compass marker */}
-          <Path d="M72 8 L74 14 L72 12 L70 14 Z" fill={DS.colors.primary} opacity={0.6} />
-          <Circle cx={72} cy={16} r={2} fill={DS.colors.primary} opacity={0.4} />
-        </Svg>
-      </Animated.View>
-
-      {/* ARIA label */}
-      <ArchText variant="heading" style={{ fontSize: 13, color: DS.colors.primaryDim, letterSpacing: 4, textTransform: 'uppercase', marginBottom: DS.spacing.sm }}>
-        ARIA
-      </ArchText>
-
-      {/* Cycling phase text */}
-      <Animated.View style={[textStyle, { alignItems: 'center' }]}>
-        <ArchText variant="body" style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
-          fontSize: 18,
-          color: DS.colors.primary,
-          textAlign: 'center',
-          paddingHorizontal: 40,
-          marginBottom: DS.spacing.md,
-        }}>
-          {LOADING_PHASES[phase]}
-        </ArchText>
-      </Animated.View>
-
-      {/* Progress dots */}
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: DS.spacing.xs }}>
-        {LOADING_PHASES.map((_, i) => (
-          <Animated.View
-            key={i}
-            style={{
-              width: i === phase ? 20 : 6,
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: i === phase ? DS.colors.primary : DS.colors.border,
-            }}
-          />
-        ))}
-      </View>
-
-      {/* Iteration status strip */}
-      <View style={{
-        marginTop: DS.spacing.xl,
-        borderTopWidth: 1,
-        borderTopColor: DS.colors.border,
-        paddingTop: DS.spacing.md,
-        width: '100%',
-        paddingHorizontal: DS.spacing.xl,
-        alignItems: 'center',
-        gap: DS.spacing.xs,
-      }}>
-        {/* Status line */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: DS.spacing.sm }}>
-          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.primaryDim, letterSpacing: 2, textTransform: 'uppercase' }}>
-            ITERATION {iterationProgress.iteration} / 3
-          </ArchText>
-          <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: DS.colors.border }} />
-          <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: iterationProgress.status === 'scoring' ? DS.colors.warning : iterationProgress.status === 'refining' ? DS.colors.error : DS.colors.primary, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-            {iterationProgress.status}
-          </ArchText>
-        </View>
-
-        {/* Live message */}
-        {iterationProgress.message ? (
-          <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim, textAlign: 'center', paddingHorizontal: DS.spacing.sm }}>
-            {iterationProgress.message}
-          </ArchText>
-        ) : null}
-
-        {/* Score badges — appear as iterations complete */}
-        {iterationProgress.scores.length > 0 && (
-          <View style={{ flexDirection: 'row', gap: DS.spacing.sm, marginTop: DS.spacing.xs }}>
-            {iterationProgress.scores.map((s) => {
-              const scoreColor = s.score >= 88 ? DS.colors.primary : s.score >= 70 ? DS.colors.warning : DS.colors.error;
-              return (
-                <View key={s.n} style={{
-                  alignItems: 'center',
-                  paddingHorizontal: DS.spacing.sm,
-                  paddingVertical: DS.spacing.xs,
-                  borderRadius: 10,
-                  backgroundColor: 'rgba(240, 237, 232, 0.03)',
-                  borderWidth: 1,
-                  borderColor: `${scoreColor}30`,
-                  minWidth: 52,
-                }}>
-                  <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 16, color: scoreColor }}>
-                    {s.score}
-                  </ArchText>
-                  <ArchText variant="body" style={{ fontSize: 9, color: DS.colors.primaryDim, fontFamily: DS.font.mono }}>
-                    #{s.n}
-                  </ArchText>
-                </View>
-              );
-            })}
-            {iterationProgress.scores.length > 1 && (
-              <View style={{ justifyContent: 'center', paddingHorizontal: 4 }}>
-                <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 10, color: DS.colors.warning }}>
-                  {iterationProgress.scores[iterationProgress.scores.length - 1].score > iterationProgress.scores[0].score ? '↑' : '→'}
-                  {Math.abs(iterationProgress.scores[iterationProgress.scores.length - 1].score - iterationProgress.scores[0].score)}
-                </ArchText>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
 
 export function GenerationScreen() {
   const navigation = useNavigation<Nav>();
@@ -663,7 +471,7 @@ export function GenerationScreen() {
                         backgroundColor: 'rgba(240, 237, 232, 0.03)',
                         borderWidth: 1,
                         borderColor: 'rgba(240, 237, 232, 0.10)',
-                      }, chipAnimatedStyle]}
+                      }, chipAnimatedStyle as StyleProp<ViewStyle>]}
                     >
                       <ArchText
                         variant="body"

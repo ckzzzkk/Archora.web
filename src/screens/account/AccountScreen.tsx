@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   View, ScrollView, Pressable, Switch, Alert, TextInput, Linking, Image,
 } from 'react-native';
@@ -231,7 +232,7 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
                 backgroundColor: active ? DS.colors.ink : 'transparent',
                 borderWidth: 2,
                 borderColor: active ? DS.colors.ink : DS.colors.border,
-              }, appearanceAnimatedStyle]}
+              }, appearanceAnimatedStyle as StyleProp<ViewStyle>]}
             >
               <ArchText
                 variant="body"

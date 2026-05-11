@@ -61,7 +61,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
           set({ error: 'Failed to load projects', isLoading: false });
         }
       }
-      return () => { mounted = false; };
     },
 
     create: async (userId, name, buildingType) => {
