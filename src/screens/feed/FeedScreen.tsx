@@ -44,7 +44,7 @@ const CARD_W = SCREEN_W * 0.52;
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-function TrendingCarousel({
+const TrendingCarousel = React.memo(function TrendingCarousel({
   templates,
   onPress,
   C,
@@ -172,13 +172,7 @@ function TrendingCarousel({
       </ScrollView>
     </View>
   );
-}
-
-interface ChipConfig {
-  label: string;
-  buildingType?: string;
-  trendingOrNew?: 'trending' | 'new';
-}
+});
 
 const CHIPS: ChipConfig[] = [
   { label: 'All' },

@@ -252,7 +252,9 @@ export function AIChatPanel({ visible, onToggle, selectedArchitectId, architectN
       // Sanitize context and combine with prompt
       const safeContext = selectedContext;
       const enrichedPrompt = safeContext ? `${text}\n\n${safeContext}${measurementContext}` : `${text}${measurementContext}`;
-      const data = await aiService.editBlueprint({ prompt: enrichedPrompt, blueprint });
+      const currentBlueprint = useBlueprintStore.getState().blueprint;
+    if (!currentBlueprint) return;
+    const data = await aiService.editBlueprint({ prompt: enrichedPrompt, blueprint: currentBlueprint });
 
       if (data.blueprint) {
         setPendingBlueprint(data.blueprint);
@@ -428,11 +430,11 @@ export function AIChatPanel({ visible, onToggle, selectedArchitectId, architectN
               </ScrollView>
 
               {/* Confirmation preview */}
-              {pendingBlueprint && (
+              {pendingBlueprint && blueprint && (
                 <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
                   <ConfirmationCard
-                    original={blueprint!}
-                    proposed={pendingBlueprint!}
+                    original={blueprint}
+                    proposed={pendingBlueprint}
                     currentFloorIndex={currentFloorIndex}
                     aiMessage={pendingMessage}
                     onAccept={() => {

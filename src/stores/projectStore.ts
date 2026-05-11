@@ -31,15 +31,18 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
      * 3. Update state + cache when fresh data arrives
      */
     load: async (userId) => {
+      let mounted = true;
       const key = projectsCacheKey(userId);
       const cached = cacheService.getStale<Project[]>(key);
 
       if (cached) {
         // Instant render from cache — no loading flash
+        if (!mounted) return;
         set({ projects: cached, isLoading: false, error: null });
         // Revalidate silently in background
         try {
           const fresh = await projectService.list(userId);
+          if (!mounted) return;
           cacheService.setAndRegister(key, fresh);
           set({ projects: fresh });
         } catch {
@@ -50,12 +53,15 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         set({ isLoading: true, error: null });
         try {
           const projects = await projectService.list(userId);
+          if (!mounted) return;
           cacheService.setAndRegister(key, projects);
           set({ projects, isLoading: false });
         } catch {
+          if (!mounted) return;
           set({ error: 'Failed to load projects', isLoading: false });
         }
       }
+      return () => { mounted = false; };
     },
 
     create: async (userId, name, buildingType) => {

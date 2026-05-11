@@ -49,7 +49,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     showToast: (message, type = 'info', duration = 3000) => {
       const id = `toast_${++toastCounter}`;
       const timer = setTimeout(() => {
-        get().actions.hideToast(id);
+        useUIStore.getState().actions.hideToast(id);
         toastTimers.delete(id);
       }, duration);
       toastTimers.set(id, timer);

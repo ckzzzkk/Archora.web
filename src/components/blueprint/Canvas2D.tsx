@@ -948,13 +948,15 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
                 return (
                   <Group>
                     <Path path={bg2} color="rgba(30,30,30,0.85)" />
-                    <SkiaText
-                      x={badgeX + 8}
-                      y={badgeY + 17}
-                      text={labelText}
-                      color={confidenceColor}
-                      font={dimFont ?? null}
-                    />
+                    {dimFont ? (
+                      <SkiaText
+                        x={badgeX + 8}
+                        y={badgeY + 17}
+                        text={labelText}
+                        color={confidenceColor}
+                        font={dimFont}
+                      />
+                    ) : null}
                   </Group>
                 );
               })()}

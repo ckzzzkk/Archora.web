@@ -67,6 +67,7 @@ export const useCoProjectStore = create<CoProjectStore>((set, get) => ({
   },
 
   updateCoProject: async (projectId: string, updates: { name?: string; description?: string }) => {
+    set({ isLoading: true });
     try {
       await coProjectService.updateCoProject(projectId, updates);
       set((state) => ({
@@ -85,6 +86,7 @@ export const useCoProjectStore = create<CoProjectStore>((set, get) => ({
   },
 
   deleteCoProject: async (projectId: string) => {
+    set({ isLoading: true });
     try {
       await coProjectService.deleteCoProject(projectId);
       set((state) => ({

@@ -211,14 +211,21 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        set({ session: null });
+        return;
+      }
 
       // Remove participant from session in DB
       const updatedParticipants = session.participants.filter(p => p.userId !== user.id);
-      await supabase
+      const { error } = await supabase
         .from('codesign_sessions')
         .update({ participants: updatedParticipants })
         .eq('id', session.id);
+
+      if (error) {
+        console.warn('[codesignStore] leaveSession: failed to sync participant removal to DB, clearing locally anyway:', error.message);
+      }
 
       set({ session: null });
     },
@@ -252,6 +259,21 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
     },
 
     removeParticipant: (userId: string) => {
+      const { session } = get();
+      if (!session) return;
+
+      // Sync removal to DB so other clients see the change
+      const updatedParticipants = session.participants.filter(p => p.userId !== userId);
+      supabase
+        .from('codesign_sessions')
+        .update({ participants: updatedParticipants })
+        .eq('id', session.id)
+        .then(({ error }) => {
+          if (error) {
+            console.warn('[codesignStore] removeParticipant: failed to sync to DB:', error.message);
+          }
+        });
+
       set((state) => {
         if (!state.session) return {};
         return {

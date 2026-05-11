@@ -201,7 +201,10 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     const state = get();
     if (!state.blueprint) return;
     const newBlueprint = updater(state);
-    if (!newBlueprint) return;
+    if (!newBlueprint) {
+      console.warn(`[blueprintStore] mutate("${label}") updater returned null — mutation rejected`);
+      return;
+    }
     const tier = getCurrentTier();
     const historyUpdate = pushHistory(state, newBlueprint, label, tier);
     scheduleSave(newBlueprint, tier);
@@ -614,21 +617,23 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
       },
 
       addCustomAsset: (asset) => {
-        const { blueprint } = get();
-        if (!blueprint) return;
-        const updated = { ...blueprint, customAssets: [...(blueprint.customAssets ?? []), asset] };
-        const tier = getCurrentTier();
-        scheduleSave(updated, tier);
-        set({ blueprint: updated, isDirty: true });
+        mutate('Add custom asset', (state) => {
+          if (!state.blueprint) return null;
+          return {
+            ...state.blueprint,
+            customAssets: [...(state.blueprint.customAssets ?? []), asset],
+          };
+        });
       },
 
       removeCustomAsset: (id) => {
-        const { blueprint } = get();
-        if (!blueprint) return;
-        const updated = { ...blueprint, customAssets: (blueprint.customAssets ?? []).filter((a) => a.id !== id) };
-        const tier = getCurrentTier();
-        scheduleSave(updated, tier);
-        set({ blueprint: updated, isDirty: true });
+        mutate('Remove custom asset', (state) => {
+          if (!state.blueprint) return null;
+          return {
+            ...state.blueprint,
+            customAssets: (state.blueprint.customAssets ?? []).filter((a) => a.id !== id),
+          };
+        });
       },
 
       addChatMessage: (msg) => {
@@ -636,16 +641,18 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         if (!blueprint) return;
         const history = [...(blueprint.chatHistory ?? []), msg].slice(-20);
         const updated = { ...blueprint, chatHistory: history };
-        set({ blueprint: updated });
-        blueprintStorage.set(STORAGE_KEY, JSON.stringify(updated));
+        const tier = getCurrentTier();
+        scheduleSave(updated, tier);
+        set({ blueprint: updated, isDirty: true });
       },
 
       clearChatHistory: () => {
         const { blueprint } = get();
         if (!blueprint) return;
         const updated = { ...blueprint, chatHistory: [] };
-        set({ blueprint: updated });
-        blueprintStorage.set(STORAGE_KEY, JSON.stringify(updated));
+        const tier = getCurrentTier();
+        scheduleSave(updated, tier);
+        set({ blueprint: updated, isDirty: true });
       },
 
       loadFromStorage: () => {
@@ -681,7 +688,10 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
 
       setRoomsDirectly: (rooms) => {
         const { blueprint, currentFloorIndex } = get();
-        if (!blueprint) return;
+        if (!blueprint) {
+          console.warn('[blueprintStore] setRoomsDirectly called with no active blueprint');
+          return;
+        }
         const updated = updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({ ...f, rooms }));
         const tier = getCurrentTier();
         scheduleSave(updated, tier);

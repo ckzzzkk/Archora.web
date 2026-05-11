@@ -834,11 +834,12 @@ export function BlueprintWorkspaceScreen() {
 }
 
 function EditLimitModal() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const activeModal = useUIStore((s) => s.activeModal);
   const closeModal = useUIStore((s) => s.actions.closeModal);
 
   if (activeModal !== 'edit_limit_reached') return null;
+
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const now = new Date();
   const midnight = new Date();
