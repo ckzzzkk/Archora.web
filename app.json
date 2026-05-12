@@ -61,13 +61,6 @@
         }
       ],
       [
-        "react-native-vision-camera",
-        {
-          "cameraPermissionText": "ASORIA needs camera access for AR features",
-          "enableMicrophonePermission": false
-        }
-      ],
-      [
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
