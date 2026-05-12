@@ -129,7 +129,8 @@ export function ARScanScreen() {
   const { allowed: canMeasure, requiredTier: measureRequiredTier } = useTierGate('arMeasure');
 
   useEffect(() => {
-    Camera.requestCameraPermission().then(status => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Camera as any).requestCameraPermission().then((status: string) => {
       setHasPermission(status === 'granted');
     });
   }, []);
@@ -159,7 +160,7 @@ export function ARScanScreen() {
   if (!hasPermission) {
     return (
       <ARPermissionRequest
-        onRequest={() => Camera.requestCameraPermission().then(s => setHasPermission(s === 'granted'))}
+        onRequest={() => (Camera as any).requestCameraPermission().then((s: string) => setHasPermission(s === 'granted'))}
       />
     );
   }
@@ -325,7 +326,6 @@ export function ARScanScreen() {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         device={device}
         isActive={isFocused}
-        photo={mode === 'scan' && scanMode === 'photo'}
       />
 
       {/* Mode selector at top */}
