@@ -1,0 +1,22 @@
+# Test files and docs — not needed for builds
+src/__tests__/
+docs/
+tasks/
+.claude/
+
+# Dev tooling
+vitest.config.ts
+tsconfig.json
+
+# Local secrets (never upload)
+.env
+.env.local
+.env.*.local
+
+# Large media that's loaded from CDN at runtime
+assets/videos/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
