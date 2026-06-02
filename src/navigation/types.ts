@@ -29,7 +29,7 @@ export type RootStackParamList = {
   OnboardingQuiz: undefined;
   QuizCheckLoading: undefined;
   // Workspace and Generation are modals from root stack
-  Workspace: { projectId?: string; fromAR?: boolean } | undefined;
+  Workspace: { projectId?: string; fromAR?: boolean; placeFurniture?: string } | undefined;
   Generation: undefined;
   Subscription: { feature?: string } | undefined;
   TemplateDetail: { templateId: string };

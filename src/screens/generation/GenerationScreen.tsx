@@ -32,8 +32,6 @@ import { Step2PlotSize } from './steps/Step2PlotSize';
 import { Step3Rooms } from './steps/Step3Rooms';
 import { Step3RoomStudio } from './steps/Step3RoomStudio';
 import { Step4Style } from './steps/Step4Style';
-import { Step5Reference } from './steps/Step5Reference';
-import { Step6Notes } from './steps/Step6Notes';
 import { Step7Review } from './steps/Step7Review';
 import { StepProgressBar } from './steps/StepProgressBar';
 import { BlueprintGeneratingOverlay } from '../../components/generation/BlueprintGeneratingOverlay';
@@ -46,6 +44,11 @@ import type { GenerationPayload, ConsultationSummary } from '../../types/generat
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type BuildingType = GenerationPayload['buildingType'];
 type ScreenState = 'idle' | 'generating' | 'success' | 'error';
+
+const VALID_BUILDING_TYPES: readonly BuildingType[] = ['house', 'apartment', 'office', 'studio', 'villa', 'commercial'];
+function isBuildingType(v: string): v is BuildingType {
+  return (VALID_BUILDING_TYPES as readonly string[]).includes(v);
+}
 
 interface RoomsState {
   bedrooms: number;
@@ -146,8 +149,8 @@ export function GenerationScreen() {
   // Pre-fill from saved user preferences on mount
   useEffect(() => {
     if (prefsLoading || prefilledFromDb || !preferences) return;
-    if (preferences.building_type && preferences.building_type !== buildingType) {
-      setBuildingType(preferences.building_type as any);
+    if (preferences.building_type && preferences.building_type !== buildingType && isBuildingType(preferences.building_type)) {
+      setBuildingType(preferences.building_type);
     }
     if (preferences.plot_size) {
       setPlotSize(String(preferences.plot_size));

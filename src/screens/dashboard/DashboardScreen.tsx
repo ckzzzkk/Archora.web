@@ -4,9 +4,9 @@ import {
   KeyboardAvoidingView, Platform, RefreshControl, Alert,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSpring, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSpring,
+  withRepeat, withSequence, Easing,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle, Line, Rect, Polyline, G } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -159,55 +159,67 @@ function BlueprintThumbnail({ type, color, size = 64 }: { type: BuildingType; co
   );
 }
 
-/**
- * ProjectCardSkeleton — skeleton that matches InlineProjectCard shape.
- */
-function ProjectCardSkeleton({ C }: { C: ReturnType<typeof useThemeColors> }) {
+// Skeleton card matching 2-col ProjectGridCard shape
+function ProjectCardSkeleton() {
   return (
     <View style={{
-      backgroundColor: C.surface,
-      borderRadius: DS.radius.card, // 24px — oval-first design system
-      marginHorizontal: DS.spacing.lg,
+      flex: 1,
+      marginHorizontal: DS.spacing.xs,
       marginBottom: DS.spacing.sm,
-      borderWidth: 1,
-      borderColor: C.border,
+      borderRadius: DS.radius.large,
+      borderWidth: 2,
+      borderColor: DS.colors.ink,
       overflow: 'hidden',
+      backgroundColor: DS.colors.card,
     }}>
-      {/* Thumbnail */}
-      <SkeletonItem width="100%" height={88} borderRadius={0} style={{ borderRadius: 0 }} />
-      {/* Content */}
-      <View style={{ padding: DS.spacing.md }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <SkeletonItem height={14} width="55%" style={{ marginBottom: 0 }} />
-          <SkeletonItem height={10} width="20%" style={{ marginBottom: 0 }} />
+      <SkeletonItem width="100%" height={96} borderRadius={0} style={{ borderRadius: 0 }} />
+      <View style={{ padding: DS.spacing.sm, gap: 6 }}>
+        <SkeletonItem height={13} width="80%" style={{ marginBottom: 0 }} />
+        <SkeletonItem height={9}  width="40%" style={{ marginBottom: 0 }} />
+        <View style={{ flexDirection: 'row', gap: 4 }}>
+          <SkeletonItem height={18} width={32} borderRadius={50} style={{ marginBottom: 0 }} />
+          <SkeletonItem height={18} width={44} borderRadius={50} style={{ marginBottom: 0 }} />
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <SkeletonItem height={20} width={56} borderRadius={6} style={{ marginBottom: 0 }} />
-            <SkeletonItem height={20} width={56} borderRadius={6} style={{ marginBottom: 0 }} />
-          </View>
-          <SkeletonItem height={28} width={52} borderRadius={50} style={{ marginBottom: 0 }} />
-        </View>
+        <SkeletonItem height={34} width="100%" borderRadius={50} style={{ marginBottom: 0 }} />
       </View>
     </View>
   );
 }
 
-function SkeletonCards({ C }: { C: ReturnType<typeof useThemeColors> }) {
+function SkeletonCards() {
   return (
-    <>
-      {[0, 1, 2].map((i) => <ProjectCardSkeleton key={i} C={C} />)}
-    </>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: DS.spacing.sm }}>
+      {[0, 1, 2, 3].map((i) => (
+        <View key={i} style={{ width: '50%' }}>
+          <ProjectCardSkeleton />
+        </View>
+      ))}
+    </View>
   );
 }
 
 function DailyChallengeBanner({ C }: { C: ReturnType<typeof useThemeColors> }) {
   const challenge = getDailyChallenge();
-  const scale = useSharedValue(0.97);
+  const scale  = useSharedValue(0.97);
+  const rotate = useSharedValue(0);
+
   useEffect(() => {
     scale.value = withSpring(1, { damping: 12, stiffness: 180 });
+    // Slow infinite wobble — ±0.6deg like reference
+    rotate.value = withRepeat(
+      withSequence(
+        withTiming(-0.6, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.6,  { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      true,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const bannerStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  const bannerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }, { rotate: `${rotate.value}deg` }],
+  }));
 
   return (
     <Animated.View style={[bannerStyle, { marginHorizontal: DS.spacing.lg, marginBottom: DS.spacing.md }]}>
@@ -295,20 +307,45 @@ const ProjectThumbnailColors: Record<string, string> = {
   studio:    '#C9FFFD',
 };
 
-function InlineProjectCard({ project, onPress, index }: { project: Project; onPress: () => void; index: number }) {
-  const C = useThemeColors();
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(18);
+// 2-column portrait grid card with pop-in rotation + press-squish
+function ProjectGridCard({ project, onPress, index }: { project: Project; onPress: () => void; index: number }) {
+  const opacity      = useSharedValue(0);
+  const entryScale   = useSharedValue(0.85);
+  const entryRotate  = useSharedValue(-3);
+  const pressScale   = useSharedValue(1);
+  const pressRotate  = useSharedValue(0);
 
   useEffect(() => {
-    const delay = index * 60;
-    const ease = Easing.out(Easing.cubic);
-    opacity.value = withDelay(delay, withTiming(1, { duration: 340, easing: ease }));
-    translateY.value = withDelay(delay, withTiming(0, { duration: 340, easing: ease }));
+    const delay = index * 80;
+    opacity.value = withDelay(delay, withTiming(1, { duration: 240 }));
+    entryScale.value = withDelay(delay, withSequence(
+      withSpring(1.03, { damping: 10, stiffness: 180 }),
+      withSpring(1,    { damping: 14, stiffness: 280 }),
+    ));
+    entryRotate.value = withDelay(delay, withSequence(
+      withSpring(1, { damping: 10, stiffness: 180 }),
+      withSpring(0, { damping: 14, stiffness: 280 }),
+    ));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ translateY: translateY.value }] }));
+  const entryStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: entryScale.value }, { rotate: `${entryRotate.value}deg` }],
+  }));
+
+  const pressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }, { rotate: `${pressRotate.value}deg` }],
+  }));
+
+  const handlePressIn = () => {
+    pressScale.value  = withSpring(0.93, { damping: 14, stiffness: 400 });
+    pressRotate.value = withSpring(-1,   { damping: 14, stiffness: 400 });
+  };
+  const handlePressOut = () => {
+    pressScale.value  = withSpring(1, { damping: 14, stiffness: 400 });
+    pressRotate.value = withSpring(0, { damping: 14, stiffness: 400 });
+  };
 
   const formattedDate = new Date(project.updatedAt ?? project.createdAt ?? Date.now())
     .toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -316,62 +353,63 @@ function InlineProjectCard({ project, onPress, index }: { project: Project; onPr
   const btype = (project.buildingType ?? 'studio') as BuildingType;
 
   return (
-    <Animated.View style={animStyle}>
+    <Animated.View style={[entryStyle, { flex: 1, marginHorizontal: DS.spacing.xs, marginBottom: DS.spacing.sm }]}>
       <Pressable
         onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         accessibilityLabel={`${project.name}, ${btype} with ${roomCount} rooms, updated ${formattedDate}`}
         accessibilityRole="button"
         accessibilityHint="Opens this design in the workspace"
-        style={{
+        style={{ flex: 1 }}
+      >
+        <Animated.View style={[pressStyle, {
+          flex: 1,
           backgroundColor: DS.colors.card,
           borderRadius: DS.radius.large,
-          marginHorizontal: DS.spacing.lg,
-          marginBottom: DS.spacing.sm,
-          borderWidth: 2, borderColor: DS.colors.ink,
+          borderWidth: 2,
+          borderColor: DS.colors.ink,
+          shadowColor: DS.colors.ink,
+          shadowOffset: { width: 3, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 0,
           overflow: 'hidden',
-          shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
-        }}
-      >
-        {/* Thumbnail with BlueprintThumbnail SVG */}
-        <View style={{
-          height: 100,
-          backgroundColor: DS.colors.background,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottomWidth: 2, borderBottomColor: DS.colors.ink,
-        }}>
-          <SharedBlueprintThumbnail kind={btype} color={DS.colors.ink} size={90} animate={true} />
-        </View>
-
-        <View style={{ padding: DS.spacing.md }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: DS.fontSize.md, color: DS.colors.ink, flex: 1 }}>
+        }]}>
+          {/* Thumbnail */}
+          <View style={{
+            height: 96,
+            backgroundColor: DS.colors.background,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderBottomWidth: 2,
+            borderBottomColor: DS.colors.ink,
+          }}>
+            <SharedBlueprintThumbnail kind={btype} color={DS.colors.ink} size={72} animate={true} />
+          </View>
+          {/* Content */}
+          <View style={{ padding: DS.spacing.sm }}>
+            <ArchText
+              variant="body"
+              style={{ fontFamily: DS.font.bold, fontSize: 13, color: DS.colors.ink, marginBottom: 2 }}
+              numberOfLines={1}
+            >
               {project.name}
             </ArchText>
-            <ArchText variant="label" style={{ fontSize: 10 }}>{formattedDate}</ArchText>
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{
-                borderWidth: 1, borderColor: DS.colors.ink,
-                borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2,
-              }}>
-                <ArchText variant="mono" style={{ fontSize: 10, color: DS.colors.ink }}>
-                  {roomCount} rooms
-                </ArchText>
+            <ArchText variant="mono" style={{ fontSize: 9, color: DS.colors.mutedForeground, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
+              {formattedDate}
+            </ArchText>
+            {/* Oval chips — oval-first rule: borderRadius 50 */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+              <View style={{ borderWidth: 1, borderColor: DS.colors.ink, borderRadius: 50, paddingHorizontal: 7, paddingVertical: 2 }}>
+                <ArchText variant="mono" style={{ fontSize: 9, color: DS.colors.ink }}>{roomCount}r</ArchText>
               </View>
-              <View style={{
-                borderWidth: 1, borderColor: DS.colors.ink,
-                borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2,
-              }}>
-                <ArchText variant="mono" style={{ fontSize: 10, color: DS.colors.mutedForeground, textTransform: 'capitalize' }}>
-                  {btype}
-                </ArchText>
+              <View style={{ borderWidth: 1, borderColor: DS.colors.ink, borderRadius: 50, paddingHorizontal: 7, paddingVertical: 2 }}>
+                <ArchText variant="mono" style={{ fontSize: 9, color: DS.colors.mutedForeground, textTransform: 'capitalize' }}>{btype}</ArchText>
               </View>
             </View>
-            <OvalButton label="Open" variant="outline" size="small" onPress={onPress} />
+            <OvalButton label="open" variant="outline" size="small" onPress={onPress} fullWidth />
           </View>
-        </View>
+        </Animated.View>
       </Pressable>
     </Animated.View>
   );
@@ -458,6 +496,77 @@ function NewProjectModal({ visible, onClose, onCreate }: {
         </KeyboardAvoidingView>
       </View>
     </Modal>
+  );
+}
+
+// 7-day streak calendar — derived from streakCount (Mon-based week)
+function WeekCalendar({ streakCount }: { streakCount: number }) {
+  const jsDay = new Date().getDay(); // 0=Sun
+  const monBased = jsDay === 0 ? 6 : jsDay - 1; // Mon=0, Sun=6
+  const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const days = DAYS.map((d, i) => ({
+    d,
+    on: i <= monBased && (monBased - i) < streakCount,
+  }));
+
+  return (
+    <View style={{
+      marginHorizontal: DS.spacing.lg,
+      marginBottom: DS.spacing.md,
+      borderRadius: DS.radius.card,
+      borderWidth: 2,
+      borderColor: DS.colors.ink,
+      backgroundColor: DS.colors.card,
+      padding: DS.spacing.md,
+      shadowColor: DS.colors.ink,
+      shadowOffset: { width: 2, height: 2 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
+    }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: DS.spacing.sm }}>
+        <ArchText variant="label" style={{ fontSize: 9, color: DS.colors.mutedForeground }}>this week</ArchText>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Svg width={13} height={13} viewBox="0 0 24 24">
+            <Path d="M12 2C12 2 8 6 8 10C8 12.2 9.5 14 12 14C14.5 14 16 12.2 16 10C16 6 12 2 12 2Z"
+              fill={DS.colors.amber} stroke={DS.colors.ink} strokeWidth="1" />
+          </Svg>
+          <ArchText variant="mono" style={{ fontSize: 11, color: DS.colors.ink, fontFamily: DS.font.bold }}>
+            {streakCount} day streak
+          </ArchText>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 4 }}>
+        {days.map((day, i) => (
+          <View
+            key={i}
+            style={{
+              flex: 1,
+              borderRadius: DS.radius.small,
+              borderWidth: 2,
+              borderColor: DS.colors.ink,
+              backgroundColor: day.on ? DS.colors.amber : DS.colors.background,
+              paddingVertical: 6,
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <ArchText
+              variant="mono"
+              style={{ fontSize: 9, color: day.on ? DS.colors.paper : DS.colors.mutedForeground }}
+            >
+              {day.d}
+            </ArchText>
+            {day.on ? (
+              <Svg width={10} height={10} viewBox="0 0 24 24">
+                <Path d="M5 12L10 17L19 8" stroke={DS.colors.paper} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            ) : (
+              <View style={{ height: 10 }} />
+            )}
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -555,7 +664,7 @@ function DashboardHeader({
           gap: DS.spacing.sm,
           backgroundColor: DS.colors.card,
           borderWidth: 2, borderColor: DS.colors.ink,
-          borderRadius: 24, paddingHorizontal: DS.spacing.md, paddingVertical: 10,
+          borderRadius: 50, paddingHorizontal: DS.spacing.md, paddingVertical: 10,
           shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
         }}>
           <Svg width={18} height={18} viewBox="0 0 24 24">
@@ -574,7 +683,7 @@ function DashboardHeader({
           justifyContent: 'center',
           backgroundColor: DS.colors.card,
           borderWidth: 2, borderColor: DS.colors.ink,
-          borderRadius: 24, paddingVertical: 10,
+          borderRadius: 50, paddingVertical: 10,
           shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
         }}>
           <ArchText variant="mono" style={{ fontSize: 14, fontFamily: DS.font.bold, color: DS.colors.amber }}>{points.toLocaleString()}</ArchText>
@@ -587,7 +696,7 @@ function DashboardHeader({
           justifyContent: 'center',
           backgroundColor: DS.colors.card,
           borderWidth: 2, borderColor: DS.colors.ink,
-          borderRadius: 24, paddingVertical: 10,
+          borderRadius: 50, paddingVertical: 10,
           shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
         }}>
           <ArchText variant="mono" style={{ fontSize: 14, fontFamily: DS.font.bold, color: DS.colors.ink }}>{projectCount}</ArchText>
@@ -677,11 +786,11 @@ export function DashboardScreen() {
           onOpenNotifications={handleOpenNotifications}
           onNewProject={handleNewProject}
         />
-        <View style={{ height: DS.spacing.md }} />
+        <WeekCalendar streakCount={streakCount} />
         <DailyChallengeBanner C={C} />
         <View style={{ paddingHorizontal: DS.spacing.lg, marginBottom: DS.spacing.sm }}>
-          <ArchText variant="body" style={{ fontSize: 11, color: C.primaryGhost, fontFamily: DS.font.mono, textTransform: 'uppercase', letterSpacing: 1 }}>
-            Your Designs
+          <ArchText variant="label" style={{ fontSize: 9, color: C.primaryGhost }}>
+            your designs
           </ArchText>
         </View>
       </>
@@ -693,7 +802,7 @@ export function DashboardScreen() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const renderItem = useCallback(
     ({ item, index }: { item: Project; index: number }) => (
-      <InlineProjectCard
+      <ProjectGridCard
         project={item}
         index={index}
         onPress={() => navigation.navigate('Workspace', { projectId: item.id })}
@@ -707,13 +816,15 @@ export function DashboardScreen() {
       {isLoading ? (
         <>
           {listHeader()}
-          <SkeletonCards C={C} />
+          <SkeletonCards />
         </>
       ) : (
-        <View style={{ paddingHorizontal: tokens.horizontalPadding }}>
-          <FlashList
+        <FlashList
             data={projects}
+            numColumns={2}
             keyExtractor={(item) => item.id}
+            // @ts-expect-error -- FlashList v2 prop not in types
+            estimatedItemSize={220}
             ListHeaderComponent={listHeader}
             ListEmptyComponent={refreshError ? (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, paddingHorizontal: 32 }}>
@@ -741,15 +852,12 @@ export function DashboardScreen() {
               />
             }
             renderItem={renderItem}
-            contentContainerStyle={{ paddingBottom: Math.max(120, insets.bottom + 88) }}
+            contentContainerStyle={{
+              paddingHorizontal: DS.spacing.sm,
+              paddingBottom: Math.max(120, insets.bottom + 88),
+            }}
             showsVerticalScrollIndicator={false}
-            // @ts-expect-error -- FlashList v2 performance props not in types
-            windowSize={5}
-            maxToRenderPerBatch={8}
-            initialNumToRender={6}
-            updateCellsBatchingPeriod={50}
           />
-        </View>
       )}
 
       <NewProjectModal

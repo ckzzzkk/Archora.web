@@ -129,10 +129,11 @@ export function ARScanScreen() {
   const { allowed: canMeasure, requiredTier: measureRequiredTier } = useTierGate('arMeasure');
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (Camera as any).requestCameraPermission().then((status: string) => {
-      setHasPermission(status === 'granted');
-    });
+    // Camera.requestCameraPermission is a VisionCamera v2 static method not present in v3 types.
+    // TODO: migrate to useCameraPermission() hook when refactoring this screen.
+    (Camera as unknown as { requestCameraPermission: () => Promise<string> })
+      .requestCameraPermission()
+      .then((status) => { setHasPermission(status === 'granted'); });
   }, []);
 
   // Reset when mode changes
@@ -160,7 +161,8 @@ export function ARScanScreen() {
   if (!hasPermission) {
     return (
       <ARPermissionRequest
-        onRequest={() => (Camera as any).requestCameraPermission().then((s: string) => setHasPermission(s === 'granted'))}
+        onRequest={() => (Camera as unknown as { requestCameraPermission: () => Promise<string> })
+          .requestCameraPermission().then((s) => setHasPermission(s === 'granted'))}
       />
     );
   }

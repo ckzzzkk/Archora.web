@@ -150,7 +150,7 @@ export function BlueprintWorkspaceScreen() {
   useEditTimer();
 
   // 2D/3D sync with cross-fade
-  const { syncStatus, transitionProgress } = use2D3DSync();
+  const { syncStatus, transitionProgress, switchTo2D, switchTo3D } = use2D3DSync();
 
   const canvas2DStyle = useAnimatedStyle(() => ({
     opacity: interpolate(transitionProgress.value, [0, 0.5], [1, 0], 'clamp'),
@@ -191,6 +191,7 @@ export function BlueprintWorkspaceScreen() {
   const { allowed: costEstimatorAllowed } = useTierGate('costEstimator');
   const { allowed: customFurnitureAllowed } = useTierGate('customFurniture');
   const { allowed: aiGenerationsAllowed } = useTierGate('aiGenerationsPerMonth');
+  const { allowed: aiChatAllowed } = useTierGate('aiChatMessagesPerDay');
 
   const [showImageToFurniture, setShowImageToFurniture] = useState(false);
   const [showCopyPaste, setShowCopyPaste] = useState(false);
@@ -229,8 +230,10 @@ export function BlueprintWorkspaceScreen() {
       navigation.navigate('Subscription', { feature: 'walkthrough' });
       return;
     }
-    setViewMode(m);
-  }, [walkthroughAllowed, setViewMode, showToast, navigation]);
+    if (m === '3D') switchTo3D();
+    else if (m === '2D') switchTo2D();
+    else setViewMode(m);
+  }, [walkthroughAllowed, setViewMode, switchTo2D, switchTo3D, showToast, navigation]);
 
   const handleAddFloor = useCallback(() => {
     if (!blueprint) return;
@@ -723,7 +726,7 @@ export function BlueprintWorkspaceScreen() {
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            onPress={() => setShowChat((v) => !v)}
+            onPress={() => aiChatAllowed ? setShowChat((v) => !v) : navigation.navigate('Subscription', { feature: 'AI Chat' })}
           >
             <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 20 }}>✦</ArchText>
           </Pressable>

@@ -112,9 +112,11 @@ export function VIGAScreen() {
     setUploading(true);
     setSubmitError(null);
     try {
-      // 1. Upload image to Supabase Storage
+      // 1. Upload image to Supabase Storage (user-scoped path satisfies RLS policy)
       const uri = selectedImage;
-      const path = `${Date.now()}-furniture-input.jpg`;
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('Not authenticated');
+      const path = `${currentUser.id}/${Date.now()}-furniture-input.jpg`;
 
       const response = await fetch(uri);
       const blob = await response.blob();
@@ -157,8 +159,7 @@ export function VIGAScreen() {
   }, [selectedImage, meshName, category]);
 
   const navigateToWorkspace = useCallback((meshId: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    navigation.navigate('Workspace', { placeFurniture: meshId } as any);
+    navigation.navigate('Workspace', { placeFurniture: meshId });
   }, [navigation]);
 
   return (
@@ -374,52 +375,64 @@ export function VIGAScreen() {
             </View>
           ) : (
             <View className="gap-4">
-              {meshes.map((mesh) => (
-                <Pressable
-                  key={mesh.id}
-                  onPress={() => navigateToWorkspace(mesh.id)}
-                  className="rounded-2xl overflow-hidden"
-                  style={{
-                    backgroundColor: DS.colors.surface,
-                    borderWidth: 1,
-                    borderColor: DS.colors.border,
-                  }}
-                >
-                  <View className="flex-row items-center p-4 gap-4">
-                    {mesh.thumbnailUrl ? (
-                      <Image
-                        source={{ uri: mesh.thumbnailUrl }}
-                        className="rounded-xl"
-                        style={{ width: 56, height: 56, resizeMode: 'cover' }}
-                      />
-                    ) : (
-                      <View
-                        className="rounded-xl items-center justify-center"
-                        style={{
-                          width: 56,
-                          height: 56,
-                          backgroundColor: DS.colors.surfaceHigh,
-                        }}
-                      >
-                        <Svg width={24} height={24} viewBox="0 0 24 24">
-                          <Path d="M12,4 L20,20 L4,20 Z" stroke={DS.colors.primaryDim} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
-                        </Svg>
+              {meshes.map((mesh) => {
+                const isProcessing = mesh.status === 'processing';
+                return (
+                  <Pressable
+                    key={mesh.id}
+                    onPress={isProcessing ? undefined : () => navigateToWorkspace(mesh.id)}
+                    className="rounded-2xl overflow-hidden"
+                    style={{
+                      backgroundColor: DS.colors.surface,
+                      borderWidth: 1,
+                      borderColor: isProcessing ? DS.colors.warning + '60' : DS.colors.border,
+                      opacity: isProcessing ? 0.75 : 1,
+                    }}
+                  >
+                    <View className="flex-row items-center p-4 gap-4">
+                      {mesh.thumbnailUrl ? (
+                        <Image
+                          source={{ uri: mesh.thumbnailUrl }}
+                          className="rounded-xl"
+                          style={{ width: 56, height: 56, resizeMode: 'cover' }}
+                        />
+                      ) : (
+                        <View
+                          className="rounded-xl items-center justify-center"
+                          style={{
+                            width: 56,
+                            height: 56,
+                            backgroundColor: DS.colors.surfaceHigh,
+                          }}
+                        >
+                          <Svg width={24} height={24} viewBox="0 0 24 24">
+                            {isProcessing
+                              ? <Path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke={DS.colors.warning} strokeWidth="1.5" strokeLinecap="round" />
+                              : <Path d="M12,4 L20,20 L4,20 Z" stroke={DS.colors.primaryDim} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+                            }
+                          </Svg>
+                        </View>
+                      )}
+                      <View className="flex-1">
+                        <Text style={{ color: DS.colors.primary, fontSize: DS.fontSize.md, fontWeight: '600' }}>
+                          {mesh.name}
+                        </Text>
+                        <Text style={{ color: isProcessing ? DS.colors.warning : DS.colors.primaryDim, fontSize: DS.fontSize.xs, marginTop: 2 }}>
+                          {isProcessing
+                            ? 'Processing 3D mesh… check back soon'
+                            : `${mesh.category || 'Uncategorized'} · ${mesh.dimensions.x.toFixed(1)}×${mesh.dimensions.y.toFixed(1)}×${mesh.dimensions.z.toFixed(1)}m`
+                          }
+                        </Text>
                       </View>
-                    )}
-                    <View className="flex-1">
-                      <Text style={{ color: DS.colors.primary, fontSize: DS.fontSize.md, fontWeight: '600' }}>
-                        {mesh.name}
-                      </Text>
-                      <Text style={{ color: DS.colors.primaryDim, fontSize: DS.fontSize.xs, marginTop: 2 }}>
-                        {mesh.category || 'Uncategorized'} · {mesh.dimensions.x.toFixed(1)}×{mesh.dimensions.y.toFixed(1)}×{mesh.dimensions.z.toFixed(1)}m
-                      </Text>
+                      {!isProcessing && (
+                        <Svg width={20} height={20} viewBox="0 0 24 24">
+                          <Path d="M9,6 L15,12 L9,18" stroke={DS.colors.primaryDim} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                        </Svg>
+                      )}
                     </View>
-                    <Svg width={20} height={20} viewBox="0 0 24 24">
-                      <Path d="M9,6 L15,12 L9,18" stroke={DS.colors.primaryDim} strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                    </Svg>
-                  </View>
-                </Pressable>
-              ))}
+                  </Pressable>
+                );
+              })}
             </View>
           )}
         </ScrollView>

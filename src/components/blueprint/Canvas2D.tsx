@@ -86,6 +86,8 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   const { colors } = useTheme();
   const { light } = useHaptics();
 
+  // useCanvasRef / CanvasRef are not re-exported from Skia's public index in this version;
+  // useRef<any> is the required workaround until the package types stabilise.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const skiaCanvasRef = useRef<any>(null);
   useImperativeHandle(ref, () => ({
@@ -193,9 +195,8 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
   // Sync Reanimated shared values to plain refs so gesture handlers can read them.
   // Pattern mirrors SketchScreen — runOnJS forces React re-render so Skia picks up latest values.
   const [, forceCanvasRender] = useReducer((n: number) => n + 1, 0);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useAnimatedReaction(
-    () => ({ s: (scale as any).value, ox: (offsetX as any).value, oy: (offsetY as any).value }),
+    () => ({ s: scale.value, ox: offsetX.value, oy: offsetY.value }),
     (curr) => {
       scaleRef.current = curr.s;
       offsetXRef.current = curr.ox;
@@ -481,6 +482,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
     <View style={{ width: SCREEN_W, height: CANVAS_H }}>
       <GestureDetector gesture={combined}>
         <View style={{ width: SCREEN_W, height: CANVAS_H }}>
+          {/* Skia Canvas ref prop type (CanvasRef) is not re-exported from the public index in this version */}
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <Canvas {...({ ref: skiaCanvasRef } as any)} style={{ width: SCREEN_W, height: CANVAS_H }}>
             <Group>
@@ -705,7 +707,8 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
 
               {/* ── Layer 5c: Staircase symbols ─────────────────────────── */}
               {(() => {
-                const stairs: StaircaseData[] = (blueprint as any)?.staircases ?? [];
+                // staircases live on FloorData, not BlueprintData; access via active floor
+                const stairs: StaircaseData[] = (blueprint?.floors[0]?.staircases) ?? [];
                 return stairs.map((stair) => {
                   const px = toPixelX(stair.position.x);
                   const py = toPixelY(stair.position.y);

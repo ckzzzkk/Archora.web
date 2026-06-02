@@ -239,6 +239,8 @@ export const aiService = {
       delete headers['Content-Type']; // FormData sets its own
 
       const formData = new FormData();
+      // React Native's FormData.append accepts { uri, type, name } objects for file uploads,
+      // but the web Blob type doesn't describe this shape — the cast is a required RN pattern.
       formData.append('audio', {
         uri: audioUri,
         type: 'audio/m4a',

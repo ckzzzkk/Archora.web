@@ -27,4 +27,19 @@ export const authService = {
     const { error } = await supabase.functions.invoke('delete-account');
     return { error: error ?? null };
   },
+
+  async updateProfile(fields: { displayName?: string; avatarUrl?: string }): Promise<void> {
+    const body: Record<string, string> = {};
+    if (fields.displayName !== undefined) body.display_name = fields.displayName;
+    if (fields.avatarUrl !== undefined) body.avatar_url = fields.avatarUrl;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    const { error } = await supabase.functions.invoke('update-profile', {
+      body,
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (error) throw error;
+  },
 };

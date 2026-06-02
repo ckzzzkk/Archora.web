@@ -2,11 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Pressable } from 'react-native';
 import Svg, { Line, Circle, Path, Text as SvgText, Polygon } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ArchText } from '../common/ArchText';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
 import { useARCore } from '../../hooks/useARCore';
 import type { Vector3D } from '../../native/ARCoreModule';
+import type { RootStackParamList } from '../../navigation/types';
 
 interface Point2D { x: number; y: number; }
 
@@ -349,6 +352,7 @@ interface RoomCorner3D {
 
 function RoomMeasure() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { state, startSession, stopSession, hitTest: arHitTest, distanceBetween: arDistance } = useARCore();
   const [corners, setCorners] = useState<RoomCorner3D[]>([]);
   const [closed, setClosed] = useState(false);
@@ -519,7 +523,7 @@ function RoomMeasure() {
       {closed && (
         <View style={{ position: 'absolute', bottom: insets.bottom + 24, left: 20, right: 20, gap: 10 }}>
           <Pressable
-            onPress={(e) => { e.stopPropagation(); }}
+            onPress={() => navigation.navigate('Workspace', { fromAR: true })}
             style={{ backgroundColor: DS.colors.success, borderRadius: 50, paddingVertical: 14, alignItems: 'center' }}
           >
             <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.background }}>

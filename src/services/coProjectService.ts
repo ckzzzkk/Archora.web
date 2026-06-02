@@ -40,7 +40,7 @@ export interface ActivityEntry {
 async function getCoProjects(): Promise<CoProject[]> {
   const { data, error } = await supabase
     .from('co_projects')
-    .select('*, member_count:auto_project_members(count)')
+    .select('*, member_count:co_project_members(count)')
     .order('updated_at', { ascending: false });
   if (error) throw toAppError(error, 'DB_ERROR');
   return (data ?? []).map((row: any) => ({
@@ -59,7 +59,7 @@ async function getCoProjects(): Promise<CoProject[]> {
 async function getCoProject(projectId: string): Promise<CoProject | null> {
   const { data, error } = await supabase
     .from('co_projects')
-    .select('*, member_count:auto_project_members(count)')
+    .select('*, member_count:co_project_members(count)')
     .eq('id', projectId)
     .single();
   if (error) {
@@ -145,6 +145,9 @@ async function inviteToCoProject(
   email: string,
   role: 'editor' | 'viewer',
 ): Promise<void> {
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  if (!currentUser) throw new Error('Not authenticated');
+
   // Look up user by email
   const { data: profileData, error: profileError } = await supabase
     .from('profiles')
@@ -155,7 +158,7 @@ async function inviteToCoProject(
 
   const { error } = await supabase
     .from('co_project_members')
-    .insert({ project_id: projectId, user_id: profileData.user_id, role });
+    .insert({ project_id: projectId, user_id: profileData.user_id, role, invited_by: currentUser.id });
   if (error) throw toAppError(error, 'DB_ERROR');
 }
 
@@ -212,6 +215,41 @@ async function addActivityEntry(
   if (error) throw toAppError(error, 'DB_ERROR');
 }
 
+/**
+ * Subscribe to co-project changes for the current user.
+ * Fires `onRefresh` whenever a co_project_members row for this user
+ * changes — covering new invitations, removals, and project updates.
+ * Returns an unsubscribe function.
+ */
+function subscribeToCoProjectUpdates(userId: string, onRefresh: () => void): () => void {
+  const channel = supabase
+    .channel(`co-projects:${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'co_project_members',
+        filter: `user_id=eq.${userId}`,
+      },
+      () => onRefresh(),
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'co_projects',
+      },
+      () => onRefresh(),
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
 export const coProjectService = {
   getCoProjects,
   getCoProject,
@@ -223,4 +261,5 @@ export const coProjectService = {
   removeFromCoProject,
   getActivityFeed,
   addActivityEntry,
+  subscribeToCoProjectUpdates,
 };

@@ -425,12 +425,8 @@ export function ProceduralWall({
   const wallColor = selected ? '#4A90D9' : (color ?? compiledColor)
   const isTransparent = opacity < 1
 
-  // r3f group accepts onClick at runtime; cast to silence TS
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Group = 'group' as any
-
   return (
-    <Group
+    <group
       position={[position.x, position.y, position.z]}
       rotation={[rotation.x, rotation.y, rotation.z]}
       onClick={onClick}
@@ -471,6 +467,6 @@ export function ProceduralWall({
           hingeSide={opening.hingeSide ?? 'left'}
         />
       ))}
-    </Group>
+    </group>
   )
 }

@@ -200,7 +200,7 @@ function WallScanPhase({
 }) {
   const progressWidth = useSharedValue(0);
   const progressStyle = useAnimatedStyle(() => ({
-    width: `${progressWidth.value}%` as any,
+    width: `${progressWidth.value}%` as `${number}%`,
   }));
 
   useEffect(() => {
@@ -286,7 +286,7 @@ function ARScanModeContent() {
 
   const objectProgress = useSharedValue(0);
   const objectProgressStyle = useAnimatedStyle(() => ({
-    width: `${objectProgress.value}%` as any,
+    width: `${objectProgress.value}%` as `${number}%`,
   }));
 
   const startWallTimer = (idx: number) => {

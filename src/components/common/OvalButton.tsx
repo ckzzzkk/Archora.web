@@ -8,7 +8,6 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { DS } from '../../theme/designSystem';
 
 export type OvalButtonVariant = 'filled' | 'outline' | 'ghost' | 'danger' | 'amber' | 'success';
@@ -26,9 +25,79 @@ interface Props {
 }
 
 const SIZE = {
-  small:  { height: 38,  ph: 18, fs: DS.fontSize.sm },
-  medium: { height: 50,  ph: 26, fs: DS.fontSize.md },
-  large:  { height: 58,  ph: 34, fs: DS.fontSize.lg },
+  small:  { height: 38, ph: 18, fs: DS.fontSize.sm },
+  medium: { height: 50, ph: 26, fs: DS.fontSize.md },
+  large:  { height: 58, ph: 34, fs: DS.fontSize.lg },
+};
+
+type VariantStyle = {
+  bg: string;
+  borderWidth: number;
+  borderColor: string;
+  shadowColor: string;
+  shadowOffset: { width: number; height: number };
+  shadowOpacity: number;
+  textColor: string;
+};
+
+const VARIANTS: Record<OvalButtonVariant, VariantStyle> = {
+  // Flat solid ink — white pill on dark navy, offset shadow gives depth
+  filled: {
+    bg: DS.colors.ink,
+    borderWidth: 2,
+    borderColor: DS.colors.ink,
+    shadowColor: DS.colors.ink,
+    shadowOffset: { width: 3, height: 4 },
+    shadowOpacity: 1,
+    textColor: DS.colors.paper,
+  },
+  // Transparent with visible 2px ink border — secondary action
+  outline: {
+    bg: 'transparent',
+    borderWidth: 2,
+    borderColor: DS.colors.ink,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    textColor: DS.colors.ink,
+  },
+  // Amber gold — primary CTA
+  amber: {
+    bg: DS.colors.amber,
+    borderWidth: 2,
+    borderColor: DS.colors.ink,
+    shadowColor: DS.colors.ink,
+    shadowOffset: { width: 3, height: 4 },
+    shadowOpacity: 1,
+    textColor: DS.colors.paper,
+  },
+  danger: {
+    bg: DS.colors.error,
+    borderWidth: 2,
+    borderColor: DS.colors.ink,
+    shadowColor: DS.colors.ink,
+    shadowOffset: { width: 2, height: 3 },
+    shadowOpacity: 1,
+    textColor: DS.colors.ink,
+  },
+  success: {
+    bg: DS.colors.success,
+    borderWidth: 2,
+    borderColor: DS.colors.ink,
+    shadowColor: DS.colors.ink,
+    shadowOffset: { width: 2, height: 3 },
+    shadowOpacity: 1,
+    textColor: DS.colors.paper,
+  },
+  ghost: {
+    bg: 'transparent',
+    borderWidth: 0,
+    borderColor: 'transparent',
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    textColor: DS.colors.ink,
+  },
 };
 
 function LoadingDots({ color }: { color: string }) {
@@ -69,102 +138,34 @@ export function OvalButton({
   icon,
   fullWidth = false,
 }: Props) {
-  const scale = useSharedValue(1);
+  const scale  = useSharedValue(1);
+  const rotate = useSharedValue(0);
   const pressOp = useSharedValue(1);
   const { height, ph, fs } = SIZE[size];
-
+  const v = VARIANTS[variant];
   const isInactive = disabled || loading;
 
+  // press-squish: scale + rotation together (matches reference)
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.value }, { rotate: `${rotate.value}deg` }],
     opacity: pressOp.value,
   }));
 
   const handlePressIn = () => {
     if (!isInactive) {
-      scale.value = withSpring(0.93, { damping: 18, stiffness: 420 });
-      pressOp.value = withTiming(0.82, { duration: 80 });
+      scale.value  = withSpring(0.93, { damping: 18, stiffness: 420 });
+      rotate.value = withSpring(-1,   { damping: 18, stiffness: 420 });
+      pressOp.value = withTiming(0.85, { duration: 80 });
     }
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 18, stiffness: 420 });
+    scale.value  = withSpring(1, { damping: 18, stiffness: 420 });
+    rotate.value = withSpring(0, { damping: 18, stiffness: 420 });
     pressOp.value = withTiming(1, { duration: 120 });
   };
 
-  const contentStyle = {
-    height,
-    paddingHorizontal: ph,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    gap: 8,
-  };
-
-  const labelColor = variant === 'filled'
-    ? DS.colors.background
-    : variant === 'amber'
-    ? DS.colors.background
-    : variant === 'danger'
-    ? DS.colors.error
-    : DS.colors.primary;
-
-  const accessibilityLabel = loading
-    ? `${label}, loading`
-    : disabled
-    ? `${label}, disabled`
-    : label;
-
-  if (variant === 'filled') {
-    return (
-      <AnimatedPressable
-        onPress={isInactive ? undefined : onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !!isInactive, busy: !!loading }}
-        accessibilityHint={loading ? 'Please wait while the action completes' : undefined}
-        style={[
-          animStyle,
-          {
-            borderRadius: DS.radius.oval,
-            overflow: 'hidden',
-            opacity: isInactive ? 0.32 : 1,
-            alignSelf: fullWidth ? 'stretch' : 'flex-start',
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={[DS.colors.primary, DS.colors.accent]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[contentStyle, { borderRadius: DS.radius.oval }]}
-        >
-          {loading ? <LoadingDots color={DS.colors.background} /> : (
-            <>
-              {icon}
-              <View style={{ flexShrink: 1 }}>
-                <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }} numberOfLines={1}>
-                  {label}
-                </Text>
-              </View>
-            </>
-          )}
-        </LinearGradient>
-      </AnimatedPressable>
-    );
-  }
-
-  const nonFilledStyle = variant === 'outline'
-    ? { bg: 'rgba(240, 237, 232, 0.03)', border: 'rgba(240, 237, 232, 0.18)', borderWidth: 1 }
-    : variant === 'danger'
-    ? { bg: 'rgba(240, 237, 232, 0.03)', border: 'rgba(192, 96, 74, 0.30)', borderWidth: 1 }
-    : variant === 'amber'
-    ? { bg: DS.colors.amber, border: 'transparent', borderWidth: 0 }
-    : variant === 'success'
-    ? { bg: DS.colors.success, border: 'transparent', borderWidth: 0 }
-    : { bg: 'transparent', border: 'transparent', borderWidth: 0 }; // ghost
+  const accessibilityLabel = loading ? `${label}, loading` : disabled ? `${label}, disabled` : label;
 
   return (
     <AnimatedPressable
@@ -178,23 +179,42 @@ export function OvalButton({
       style={[
         animStyle,
         {
-          ...contentStyle,
+          height,
+          paddingHorizontal: ph,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
           borderRadius: DS.radius.oval,
-          backgroundColor: nonFilledStyle.bg,
-          borderWidth: nonFilledStyle.borderWidth,
-          borderColor: nonFilledStyle.border,
+          backgroundColor: v.bg,
+          borderWidth: v.borderWidth,
+          borderColor: v.borderColor,
+          shadowColor: v.shadowColor,
+          shadowOffset: v.shadowOffset,
+          shadowOpacity: v.shadowOpacity,
+          shadowRadius: 0,
+          elevation: 0,
           opacity: isInactive ? 0.32 : 1,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
         },
       ]}
     >
       {loading ? (
-        <LoadingDots color={labelColor} />
+        <LoadingDots color={v.textColor} />
       ) : (
         <>
           {icon}
           <View style={{ flexShrink: 1 }}>
-            <Text style={{ fontFamily: DS.font.bold, fontSize: fs, color: labelColor, includeFontPadding: false, letterSpacing: 0.3 }} numberOfLines={1}>
+            <Text
+              style={{
+                fontFamily: DS.font.bold,
+                fontSize: fs,
+                color: v.textColor,
+                includeFontPadding: false,
+                letterSpacing: 0.3,
+              }}
+              numberOfLines={1}
+            >
               {label}
             </Text>
           </View>

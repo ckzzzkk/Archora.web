@@ -127,15 +127,17 @@ function ARPlaceModeContent() {
   useEffect(() => {
     fetchCustomFurniture()
       .then((meshes: VigaMesh[]) => {
-        const custom: CatalogueItem[] = meshes.map((m) => ({
-          id: m.id,
-          label: m.name,
-          icon: '🏠',
-          w: m.dimensions.x,
-          d: m.dimensions.z,
-          cat: m.category,
-          meshUrl: m.meshUrl,
-        }));
+        const custom: CatalogueItem[] = meshes
+          .filter((m) => m.status === 'ready' && m.meshUrl)
+          .map((m) => ({
+            id: m.id,
+            label: m.name,
+            icon: '🏠',
+            w: m.dimensions.x,
+            d: m.dimensions.z,
+            cat: m.category,
+            meshUrl: m.meshUrl!,
+          }));
         setCustomItems(custom);
         setCombinedCatalogue([...BUILTIN_CATALOGUE, ...custom]);
       })

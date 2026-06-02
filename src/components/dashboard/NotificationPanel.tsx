@@ -248,7 +248,9 @@ export function NotificationPanel({ visible, onClose }: Props) {
 
     onClose();
 
-    // Navigate based on type — tabs are inside Main navigator
+    // Nested tab navigation (Main + { screen }) requires passing params that RootStackParamList
+    // marks undefined at the top level. React Navigation supports this at runtime but the
+    // type system cannot express the composite nested route without full re-typing here.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nav = navigation as any;
     switch (notification.type) {

@@ -74,3 +74,17 @@
 - [x] NotificationPanel with Realtime subscription (system notification type added)
 - [x] Template publish flow
 - [x] Template purchase flow (Stripe)
+
+### Architecture Compliance (June 2026 audit)
+- [x] Create update-profile edge function
+- [x] Migrate AccountScreen display_name + avatar_url through update-profile edge fn
+- [x] Create save-quiz edge function
+- [x] Migrate OnboardingQuizScreen quiz save through save-quiz edge fn
+- [x] Fix co-project invite RLS (invited_by field missing from insert)
+- [x] Fix coProjectStore isLoading freeze in updateCoProject + deleteCoProject
+- [x] Fix 046_co_projects_rls.sql malformed DROP POLICY → CREATE POLICY
+- [x] Fix VIGA upload path (flat → user-scoped folder to satisfy storage RLS)
+- [x] Add AI chat tier gate to BlueprintWorkspaceScreen (Starter tier was unrestricted)
+- [x] Remove dead Step5Reference + Step6Notes imports from GenerationScreen
+- [x] Fix 15 unjustified TypeScript as-any casts across codebase
+- [x] Add profile_update to AuditAction union type

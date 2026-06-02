@@ -115,7 +115,7 @@ function ARPhotoModeContent() {
       // Convert to blueprint
       const { walls, rooms, openings } = photoAnalysisToBlueprint(
         results as [PhotoAnalysisResult, PhotoAnalysisResult, PhotoAnalysisResult, PhotoAnalysisResult],
-        WALL_DIRECTIONS as unknown as ['front', 'left', 'back', 'right']
+        [...WALL_DIRECTIONS] as ['front', 'left', 'back', 'right']
       );
 
       const blueprint = buildBlueprintFromAR(walls, rooms, [], openings);

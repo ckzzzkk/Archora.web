@@ -9,9 +9,11 @@ export interface VigaMesh {
   id: string;
   name: string;
   category: string;
-  meshUrl: string;
+  /** null while Meshy is still processing */
+  meshUrl: string | null;
   thumbnailUrl: string | null;
   dimensions: { x: number; y: number; z: number };
+  status: 'ready' | 'processing';
 }
 
 /**
@@ -58,7 +60,6 @@ export async function fetchCustomFurniture(): Promise<VigaMesh[]> {
     .from('custom_furniture')
     .select('id, name, category, mesh_url, thumbnail_url, dimensions_x, dimensions_y, dimensions_z')
     .eq('user_id', user.id)
-    .not('mesh_url', 'is', null)
     .order('created_at', { ascending: false });
 
   if (error) throw toAppError(error, 'DB_ERROR');
@@ -67,12 +68,13 @@ export async function fetchCustomFurniture(): Promise<VigaMesh[]> {
     id: String(row.id ?? ''),
     name: String(row.name ?? ''),
     category: String(row.category ?? ''),
-    meshUrl: String(row.mesh_url ?? ''),
+    meshUrl: (row.mesh_url as string | null) ?? null,
     thumbnailUrl: (row.thumbnail_url as string | null) ?? null,
     dimensions: {
       x: Number(row.dimensions_x ?? 0),
       y: Number(row.dimensions_y ?? 0),
       z: Number(row.dimensions_z ?? 0),
     },
-  }));
+    status: row.mesh_url ? 'ready' : 'processing',
+  } as VigaMesh));
 }

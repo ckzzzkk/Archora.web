@@ -149,7 +149,7 @@ export function CoProjectDetailScreen() {
               fullWidth
               onPress={() => {
                 light();
-                navigation.navigate('Workspace' as any, { projectId: activeProject.blueprintId } as any);
+                navigation.navigate('Workspace', { projectId: activeProject.blueprintId });
               }}
             />
             </TierGate>

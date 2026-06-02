@@ -24,7 +24,8 @@ export type AuditAction =
   | 'login_success'
   | 'stripe_portal'
   | 'furniture_image_generate'
-  | 'sketch_refine';
+  | 'sketch_refine'
+  | 'profile_update';
 
 export interface AuditEntry {
   user_id: string;
