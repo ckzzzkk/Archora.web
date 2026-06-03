@@ -1,11 +1,21 @@
 # node_modules — EAS installs these fresh during build
 node_modules/
 
-# Test files and docs — not needed for builds
+# Git worktrees and local tooling directories (not needed for build)
+.worktrees/
+.gitnexus/
+.claude/
+
+# Old build artifacts in project root
+*.apk
+*.aab
+*.jks
+
+# Test files and docs
 src/__tests__/
 docs/
 tasks/
-.claude/
+competitor-profiles/
 
 # Dev tooling
 vitest.config.ts
