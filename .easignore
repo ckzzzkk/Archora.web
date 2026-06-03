@@ -1,3 +1,6 @@
+# node_modules — EAS installs these fresh during build
+node_modules/
+
 # Test files and docs — not needed for builds
 src/__tests__/
 docs/
