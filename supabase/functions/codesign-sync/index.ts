@@ -31,8 +31,9 @@ serve(async (req: Request) => {
 
   // Tier gate: Codesign is Architect-only
   const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
-  const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
-  const tier = (tierData as string) ?? 'starter';
+  const { data: tierData, error: tierError } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+  if (tierError || !tierData) return Errors.internal('tier lookup failed');
+  const tier = tierData as string;
   const CODESIGN_ENABLED_TIERS = ['architect'];
   if (!CODESIGN_ENABLED_TIERS.includes(tier)) {
     return Errors.forbidden('Codesign requires an Architect tier subscription');

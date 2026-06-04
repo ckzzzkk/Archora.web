@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
-import { useCameraDevice, Camera } from 'react-native-vision-camera';
+import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -109,8 +109,8 @@ function ScanModeCard({ title, description, available, requires, onPress, delay 
 export function ARScanScreen() {
   const [mode, setMode] = useState<ARMode>('scan');
   const [scanMode, setScanMode] = useState<ScanMode>('entry');
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const device = useCameraDevice('back');
+  const { hasPermission, requestPermission } = useCameraPermission();
   type ARNavProp = CompositeNavigationProp<
     BottomTabNavigationProp<MainTabParamList, 'AR'>,
     NativeStackNavigationProp<RootStackParamList>
@@ -129,12 +129,8 @@ export function ARScanScreen() {
   const { allowed: canMeasure, requiredTier: measureRequiredTier } = useTierGate('arMeasure');
 
   useEffect(() => {
-    // Camera.requestCameraPermission is a VisionCamera v2 static method not present in v3 types.
-    // TODO: migrate to useCameraPermission() hook when refactoring this screen.
-    (Camera as unknown as { requestCameraPermission: () => Promise<string> })
-      .requestCameraPermission()
-      .then((status) => { setHasPermission(status === 'granted'); });
-  }, []);
+    if (!hasPermission) requestPermission();
+  }, [hasPermission, requestPermission]);
 
   // Reset when mode changes
   const handleModeChange = (newMode: ARMode) => {
@@ -150,19 +146,10 @@ export function ARScanScreen() {
     setScanMode('entry');
   };
 
-  if (hasPermission === null) {
-    return (
-      <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center' }}>
-        <ArchText variant="body" style={{ color: DS.colors.primaryDim }}>Requesting camera permission…</ArchText>
-      </View>
-    );
-  }
-
   if (!hasPermission) {
     return (
       <ARPermissionRequest
-        onRequest={() => (Camera as unknown as { requestCameraPermission: () => Promise<string> })
-          .requestCameraPermission().then((s) => setHasPermission(s === 'granted'))}
+        onRequest={requestPermission}
       />
     );
   }

@@ -232,6 +232,8 @@ export interface BuildingMetadata {
   generationWarning?: string;
   /** Client-computed dimension accuracy metric (cm) after load */
   dimensionAccuracy?: DimensionAccuracy;
+  /** Set by applyStyle() — hex colour applied to walls */
+  primaryWallColour?: string;
 }
 
 export type StaircaseType = 'straight' | 'l_shape' | 'spiral';

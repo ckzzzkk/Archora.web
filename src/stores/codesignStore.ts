@@ -76,8 +76,9 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
-        // Tier gate: Codesign is Architect-only
-        const tier: string = (user as { subscriptionTier?: string }).subscriptionTier ?? 'starter';
+        // Tier gate: Codesign is Architect-only — read tier from users table, not auth.users
+        const { data: userData } = await supabase.from('users').select('subscription_tier').eq('id', user.id).single();
+        const tier = (userData?.subscription_tier as string) ?? 'starter';
         if (!TIER_LIMITS[tier as keyof typeof TIER_LIMITS]?.codesignEnabled) {
           set({ isConnecting: false, connectionError: 'Codesign requires an Architect tier subscription' });
           return undefined;
@@ -117,8 +118,9 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
-        // Tier gate: Codesign is Architect-only
-        const tier: string = (user as { subscriptionTier?: string }).subscriptionTier ?? 'starter';
+        // Tier gate: Codesign is Architect-only — read tier from users table, not auth.users
+        const { data: joinUserData } = await supabase.from('users').select('subscription_tier').eq('id', user.id).single();
+        const tier = (joinUserData?.subscription_tier as string) ?? 'starter';
         if (!TIER_LIMITS[tier as keyof typeof TIER_LIMITS]?.codesignEnabled) {
           set({ isConnecting: false, connectionError: 'Codesign requires an Architect tier subscription' });
           return;

@@ -6,7 +6,7 @@ import { useUIStore } from '../stores/uiStore';
 import { TIER_LIMITS } from '../utils/tierLimits';
 
 const SYNC_INTERVAL_MS = 60_000; // sync to Supabase every 60s
-const STARTER_DAILY_LIMIT_SECONDS = TIER_LIMITS.starter.dailyEditTimeSeconds; // 2700 (45 min)
+const STARTER_DAILY_LIMIT_SECONDS = TIER_LIMITS.starter.dailyEditTimeSeconds; // 900 (15 min)
 
 export function useEditTimer() {
   const { user } = useSession();

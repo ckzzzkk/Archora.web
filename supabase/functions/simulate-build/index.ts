@@ -138,8 +138,9 @@ serve(async (req) => {
 
     // Tier-based model selection
     const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
-    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
-    const tier = (tierData as string) ?? 'starter';
+    const { data: tierData, error: tierError } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    if (tierError || !tierData) return Errors.internal('tier lookup failed');
+    const tier = tierData as string;
     const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
     const selectedModel = modelConfig.generation;
     if (!selectedModel) {

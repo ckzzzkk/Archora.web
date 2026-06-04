@@ -179,13 +179,12 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
   }
 
   function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string, tier?: SubscriptionTier): Partial<BlueprintState> {
-    const resolvedTier = tier ?? getCurrentTier(tier);
+    const resolvedTier = tier ?? getCurrentTier();
     const maxSteps = TIER_LIMITS[resolvedTier].maxUndoSteps;
 
     const sliced = state.history.slice(0, state.historyIndex + 1);
-    const newHistory = maxSteps === -1
-      ? [...sliced, newBlueprint]
-      : [...sliced, newBlueprint].slice(-maxSteps);
+    const trimmed = maxSteps === -1 ? sliced : sliced.slice(-(maxSteps - 1));
+    const newHistory = [...trimmed, newBlueprint];
     return {
       history: newHistory,
       historyIndex: newHistory.length - 1,
@@ -599,17 +598,20 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         mutate('Apply style', (state) => {
           const { blueprint } = state;
           if (!blueprint) return null;
-          // Update metadata style + set all wall colours to primary
           const floors = blueprint.floors.map((f) => ({
             ...f,
             walls: f.walls.map((w) => ({
               ...w,
-              texture: 'plain_white' as WallTexture, // reset to plain so colour shows
+              texture: 'plain_white' as WallTexture,
             })),
           }));
           return {
             ...blueprint,
-            metadata: { ...blueprint.metadata, style: styleId },
+            metadata: {
+              ...blueprint.metadata,
+              style: styleId,
+              primaryWallColour: primaryColour ?? blueprint.metadata.primaryWallColour,
+            },
             floors,
             ...deriveTopLevel(floors, state.currentFloorIndex),
           };
@@ -637,22 +639,18 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
       },
 
       addChatMessage: (msg) => {
-        const { blueprint } = get();
-        if (!blueprint) return;
-        const history = [...(blueprint.chatHistory ?? []), msg].slice(-20);
-        const updated = { ...blueprint, chatHistory: history };
-        const tier = getCurrentTier();
-        scheduleSave(updated, tier);
-        set({ blueprint: updated, isDirty: true });
+        mutate('Add chat message', (state) => {
+          if (!state.blueprint) return null;
+          const history = [...(state.blueprint.chatHistory ?? []), msg].slice(-20);
+          return { ...state.blueprint, chatHistory: history };
+        });
       },
 
       clearChatHistory: () => {
-        const { blueprint } = get();
-        if (!blueprint) return;
-        const updated = { ...blueprint, chatHistory: [] };
-        const tier = getCurrentTier();
-        scheduleSave(updated, tier);
-        set({ blueprint: updated, isDirty: true });
+        mutate('Clear chat history', (state) => {
+          if (!state.blueprint) return null;
+          return { ...state.blueprint, chatHistory: [] };
+        });
       },
 
       loadFromStorage: () => {

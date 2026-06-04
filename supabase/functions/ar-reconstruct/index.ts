@@ -56,6 +56,10 @@ interface RoboflowDetection {
 
 async function runRoboflowDetection(imageUrl: string): Promise<RoboflowDetection[]> {
   const apiKey = Deno.env.get('ROBOFLOW_API_KEY');
+  if (!apiKey) {
+    console.warn('[ar-reconstruct] ROBOFLOW_API_KEY not configured — skipping object detection');
+    return [];
+  }
   const modelId = Deno.env.get('ROBOFLOW_MODEL_ID') ?? 'room-objects/1';
   const url = `https://detect.roboflow.com/${modelId}?api_key=${apiKey}&image=${encodeURIComponent(imageUrl)}`;
   const response = await fetch(url);

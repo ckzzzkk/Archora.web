@@ -10,32 +10,45 @@ vi.mock('../../lib/supabase', () => ({
   },
 }));
 
-// Helper to build chained supabase query mocks
-// Usage: mockSupabaseQuery([resolvedData], updateError)
-function mockSelectAndUpdate(data: any, updateError: any) {
+// Builds a from() mock that handles both the users tier lookup and codesign_sessions
+function mockTierLookup(tier: string) {
   mockSupabaseFrom.mockImplementation((table: string) => {
-    if (table !== 'codesign_sessions') return {};
-    return {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data, error: null }),
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ error: updateError }),
-        }),
-      }),
-    };
+    if (table === 'users') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { subscription_tier: tier }, error: null }),
+      };
+    }
+    return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: null, error: null }) };
   });
 }
 
+// Builds a from() mock for architect tests that also need codesign_sessions
+function mockArchitectWithSessions(sessionsMock: object) {
+  mockSupabaseFrom.mockImplementation((table: string) => {
+    if (table === 'users') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { subscription_tier: 'architect' }, error: null }),
+      };
+    }
+    if (table === 'codesign_sessions') {
+      return sessionsMock;
+    }
+    return {};
+  });
+}
+
+const baseUser = {
+  data: { user: { id: 'user-1', user_metadata: { display_name: 'Test User' } } },
+  error: null,
+};
+
 const architectUser = {
-  data: {
-    user: {
-      id: 'user-1',
-      user_metadata: { display_name: 'Architect User' },
-      subscriptionTier: 'architect',
-    },
-  },
+  data: { user: { id: 'user-1', user_metadata: { display_name: 'Architect User' } } },
+  error: null,
 };
 
 const sessionData = {
@@ -61,9 +74,8 @@ describe('codesignStore', () => {
   describe('createSession', () => {
     it('rejects non-Architect tiers', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: { id: 'user-1', user_metadata: { display_name: 'Test User' }, subscriptionTier: 'starter' } },
-      });
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(baseUser as ReturnType<typeof supabase.auth.getUser> extends Promise<infer T> ? T : never);
+      mockTierLookup('starter');
 
       const { actions } = useCodesignStore.getState();
       const sessionId = await actions.createSession('project-1');
@@ -76,9 +88,8 @@ describe('codesignStore', () => {
 
     it('rejects creator tier (not Architect)', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: { id: 'user-1', user_metadata: { display_name: 'Test User' }, subscriptionTier: 'creator' } },
-      });
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(baseUser as any);
+      mockTierLookup('creator');
 
       const { actions } = useCodesignStore.getState();
       const sessionId = await actions.createSession('project-1');
@@ -89,9 +100,8 @@ describe('codesignStore', () => {
 
     it('rejects pro tier (not Architect)', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: { id: 'user-1', user_metadata: { display_name: 'Test User' }, subscriptionTier: 'pro' } },
-      });
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(baseUser as any);
+      mockTierLookup('pro');
 
       const { actions } = useCodesignStore.getState();
       const sessionId = await actions.createSession('project-1');
@@ -102,7 +112,8 @@ describe('codesignStore', () => {
 
     it('allows Architect tier to create a session', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue(architectUser);
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(architectUser as any);
+      mockTierLookup('architect');
 
       const { actions } = useCodesignStore.getState();
       const sessionId = await actions.createSession('project-1');
@@ -118,9 +129,8 @@ describe('codesignStore', () => {
   describe('joinSession', () => {
     it('rejects non-Architect tiers', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: { id: 'user-1', user_metadata: { display_name: 'Test User' }, subscriptionTier: 'starter' } },
-      });
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(baseUser as any);
+      mockTierLookup('starter');
 
       const { actions } = useCodesignStore.getState();
       await actions.joinSession('session-123');
@@ -132,9 +142,8 @@ describe('codesignStore', () => {
 
     it('rejects creator tier (not Architect)', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: { id: 'user-1', user_metadata: { display_name: 'Test User' }, subscriptionTier: 'creator' } },
-      });
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(baseUser as any);
+      mockTierLookup('creator');
 
       const { actions } = useCodesignStore.getState();
       await actions.joinSession('session-123');
@@ -144,31 +153,25 @@ describe('codesignStore', () => {
 
     it('allows Architect tier to join session with retry loop — second update succeeds', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue(architectUser);
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(architectUser as any);
 
-      // Track update call count to alternate between conflict and success
       let updateCallCount = 0;
 
-      mockSupabaseFrom.mockImplementation((table: string) => {
-        if (table !== 'codesign_sessions') return {};
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: sessionData, error: null }),
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockImplementation(() => {
-                updateCallCount++;
-                if (updateCallCount === 1) {
-                  // First update fails — triggers re-fetch then retry
-                  return Promise.resolve({ error: { message: 'Conflict' } });
-                }
-                // Second update succeeds
-                return Promise.resolve({ error: null });
-              }),
+      mockArchitectWithSessions({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: sessionData, error: null }),
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockImplementation(() => {
+              updateCallCount++;
+              if (updateCallCount === 1) {
+                return Promise.resolve({ error: { message: 'Conflict' } });
+              }
+              return Promise.resolve({ error: null });
             }),
           }),
-        };
+        }),
       });
 
       const { actions } = useCodesignStore.getState();
@@ -182,20 +185,17 @@ describe('codesignStore', () => {
 
     it('sets error after retry loop exhausts on persistent conflict', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue(architectUser);
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(architectUser as any);
 
-      mockSupabaseFrom.mockImplementation((table: string) => {
-        if (table !== 'codesign_sessions') return {};
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: sessionData, error: null }),
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: { message: 'Conflict' } }),
-            }),
+      mockArchitectWithSessions({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: sessionData, error: null }),
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: { message: 'Conflict' } }),
           }),
-        };
+        }),
       });
 
       const { actions } = useCodesignStore.getState();
