@@ -15,6 +15,8 @@ import Animated, {
 
 import { aiService } from '../../services/aiService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import { useGenerationBatchStore } from '../../stores/generationBatchStore';
+import { TIER_LIMITS } from '../../utils/tierLimits';
 import { useSession } from '../../auth/useSession';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { SketchLoader } from '../../components/common/SketchLoader';
@@ -92,7 +94,9 @@ export function GenerationScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useSession();
   const blueprintActions = useBlueprintStore((s) => s.actions);
+  const batchActions = useGenerationBatchStore((s) => s.actions);
   const { allowed: aiAllowed } = useTierGate('aiGenerationsPerMonth');
+  const { allowed: batchAllowed } = useTierGate('batchGeneration');
   const { preferences, loading: prefsLoading, prefilledFromDb, setPrefilledFromDb, save } = useGenerationPreferences();
 
   // Step state
@@ -101,6 +105,10 @@ export function GenerationScreen() {
   // Architect selection state
   const [selectedArchitectId, setSelectedArchitectId] = useState<string | null>(null);
   const tier = user?.subscriptionTier ?? 'starter';
+
+  // Batch generation: number of variations to generate (1 = single design)
+  const batchSize = TIER_LIMITS[tier].batchSize;
+  const [batchCount, setBatchCount] = useState(1);
 
   // Payload state
   const [buildingType, setBuildingType] = useState<BuildingType | null>(null);
@@ -139,6 +147,8 @@ export function GenerationScreen() {
   const [iterationProgress, setIterationProgress] = useState<IterationProgress>({
     status: 'generating', iteration: 1, message: 'Preparing design session...', scores: [],
   });
+  // Aggregate progress for batch generation (null = single-design flow)
+  const [batchStatus, setBatchStatus] = useState<{ ready: number; total: number } | null>(null);
 
   // ARIA suggestion chip press animation
   const chipScale = useSV(1);
@@ -256,6 +266,49 @@ export function GenerationScreen() {
 
     if (!user?.id) return;
 
+    const phaseMap: Record<string, number> = { generating: 1, scoring: 2, refining: 3, complete: 4 };
+
+    // ── Batch generation (Pro/Architect): generate N variations, then pick one ──
+    if (batchCount > 1) {
+      // Pre-flight quota: each variation costs 1 credit — block before firing to avoid partial charges.
+      const limit = TIER_LIMITS[tier].aiGenerationsPerMonth;
+      const used = user.aiGenerationsUsed ?? 0;
+      if (limit !== -1 && used + batchCount > limit) {
+        navigation.navigate('Subscription', { feature: 'aiGenerationsPerMonth' });
+        return;
+      }
+
+      setScreenState('generating');
+      setLoadingPhase(0);
+      setBatchStatus({ ready: 0, total: batchCount });
+      setIterationProgress({ status: 'generating', iteration: 1, message: `Generating ${batchCount} variations...`, scores: [] });
+
+      try {
+        const payload = buildPayload();
+        const completed = new Set<number>();
+        const blueprints = await aiService.generateBatch(user.id, payload, batchCount, (variationIndex, update) => {
+          setIterationProgress(update);
+          setLoadingPhase(phaseMap[update.status as string] ?? 1);
+          if (update.status === 'complete') {
+            completed.add(variationIndex);
+            setBatchStatus({ ready: completed.size, total: batchCount });
+          }
+        });
+
+        batchActions.setCandidates(blueprints, payload);
+        await save(payload);
+        navigation.navigate('BatchSelection');
+        setScreenState('success');
+      } catch (err: unknown) {
+        setScreenState('error');
+        const code = err instanceof Error && 'code' in err ? (err as Error & { code: string }).code : '';
+        setErrorMessage(ERROR_MESSAGES[code] ?? (err instanceof Error ? err.message : 'Something went wrong. Please try again.'));
+      } finally {
+        setBatchStatus(null);
+      }
+      return;
+    }
+
     setScreenState('generating');
     setLoadingPhase(0);
     setIterationProgress({ status: 'generating', iteration: 1, message: 'Preparing design session...', scores: [] });
@@ -268,7 +321,6 @@ export function GenerationScreen() {
       const blueprint = await aiService.generateOptimal(payload, sessionId, (update) => {
         setIterationProgress(update);
         // Map status to phase index
-        const phaseMap: Record<string, number> = { generating: 1, scoring: 2, refining: 3, complete: 4 };
         setLoadingPhase(phaseMap[update.status as string] ?? 1);
       });
 
@@ -283,7 +335,7 @@ export function GenerationScreen() {
       const code = err instanceof Error && 'code' in err ? (err as Error & { code: string }).code : '';
       setErrorMessage(ERROR_MESSAGES[code] ?? (err instanceof Error ? err.message : 'Something went wrong. Please try again.'));
     }
-  }, [buildingType, style, blueprintActions, navigation, plotSize, plotUnit, rooms, notes, transcript, aiAllowed]);
+  }, [buildingType, style, blueprintActions, batchActions, navigation, plotSize, plotUnit, rooms, notes, transcript, aiAllowed, batchCount, tier, user, save]);
 
   // ── Swipe-to-go-back gesture ─────────────────────────────────────────────
   const swipeTranslateX = useSV(0);
@@ -314,7 +366,7 @@ export function GenerationScreen() {
 
   // ── Generating overlay ────────────────────────────────────────────────────
   if (screenState === 'generating') {
-    return <BlueprintGeneratingOverlay phase={loadingPhase} iterationProgress={iterationProgress} />;
+    return <BlueprintGeneratingOverlay phase={loadingPhase} iterationProgress={iterationProgress} batchStatus={batchStatus} />;
   }
 
   // ── Error overlay ─────────────────────────────────────────────────────────
@@ -540,6 +592,10 @@ export function GenerationScreen() {
             payload={reviewPayload}
             consultationSummary={consultationSummary}
             onGenerate={handleGenerate}
+            batchAllowed={batchAllowed && batchSize > 1}
+            batchSize={batchSize}
+            batchCount={batchCount}
+            onBatchCountChange={setBatchCount}
           />
         )}
       </ScrollView>

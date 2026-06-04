@@ -1,5 +1,11 @@
 import { vi } from 'vitest';
 
+// Mock expo-crypto — the real module pulls in react-native (Flow syntax) which the
+// node test environment cannot parse. randomUUID just needs to return a unique string.
+vi.mock('expo-crypto', () => ({
+  randomUUID: () => 'test-' + Math.random().toString(36).slice(2) + Date.now().toString(36),
+}));
+
 // Mock userCache
 vi.mock('../utils/userCache', () => ({
   userCache: {

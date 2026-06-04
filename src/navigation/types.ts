@@ -31,6 +31,7 @@ export type RootStackParamList = {
   // Workspace and Generation are modals from root stack
   Workspace: { projectId?: string; fromAR?: boolean; placeFurniture?: string } | undefined;
   Generation: undefined;
+  BatchSelection: undefined;
   Subscription: { feature?: string } | undefined;
   TemplateDetail: { templateId: string };
   ThemeCustomiser: undefined;
@@ -63,6 +64,7 @@ export type SketchScreenProps      = CompositeScreenProps<BottomTabScreenProps<M
 
 export type WorkspaceScreenProps         = NativeStackScreenProps<RootStackParamList, 'Workspace'>;
 export type GenerationScreenProps        = NativeStackScreenProps<RootStackParamList, 'Generation'>;
+export type BatchSelectionScreenProps    = NativeStackScreenProps<RootStackParamList, 'BatchSelection'>;
 export type OnboardingQuizScreenProps    = NativeStackScreenProps<RootStackParamList, 'OnboardingQuiz'>;
 export type RootOnboardingScreenProps   = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 export type PublishTemplateScreenProps   = NativeStackScreenProps<RootStackParamList, 'PublishTemplate'>;

@@ -4,6 +4,7 @@
  */
 
 export type QuotaType = 'ai_generation' | 'ai_edit' | 'render' | 'ar_scan';
+export type ModelProvider = 'anthropic' | 'deepseek';
 
 export const TIER_AI_LIMITS = {
   starter: { aiGenerations: 10, aiEdits: 10, renders: 2, arScans: 0 },
@@ -62,10 +63,12 @@ export function getArchitectTierRequired(architectId: string): Tier {
 }
 
 export const TIER_AI_MODELS = {
-  starter: { generation: null, chat: null, edits: null, refine: null, fallback: null, softCap: 0 },
-  creator: { generation: 'deepseek-chat', chat: 'deepseek-chat', edits: 'deepseek-chat', refine: null, fallback: null, softCap: 25 },
-  pro: { generation: 'deepseek-chat', chat: 'claude-haiku-4-5-20251001', edits: 'deepseek-chat', refine: 'deepseek-chat', fallback: 'deepseek-chat', softCap: 50 },
-  architect: { generation: 'claude-haiku-4-5-20251001', chat: 'claude-sonnet-4-6', edits: 'claude-haiku-4-5-20251001', refine: 'claude-sonnet-4-6', fallback: 'claude-haiku-4-5-20251001', softCap: 50 },
+  // Generation is the most geometrically demanding task — all paid tiers use the
+  // strongest model (claude-sonnet-4-6). Cheaper models stay on lighter tasks (chat/edits).
+  starter:  { generation: null,                      chat: null,                      edits: null,                      refine: null,                      fallback: null,                      photoAnalysis: null,                      softCap: 0 },
+  creator:  { generation: 'claude-sonnet-4-6',       chat: 'deepseek-chat',           edits: 'deepseek-chat',           refine: null,                      fallback: null,                      photoAnalysis: 'claude-haiku-4-5-20251001', softCap: 25 },
+  pro:      { generation: 'claude-sonnet-4-6',       chat: 'claude-haiku-4-5-20251001', edits: 'deepseek-chat',         refine: 'deepseek-chat',           fallback: 'deepseek-chat',           photoAnalysis: 'claude-haiku-4-5-20251001', softCap: 50 },
+  architect:{ generation: 'claude-sonnet-4-6',       chat: 'claude-sonnet-4-6',       edits: 'claude-haiku-4-5-20251001', refine: 'claude-sonnet-4-6',     fallback: 'claude-haiku-4-5-20251001', photoAnalysis: 'claude-sonnet-4-6',      softCap: 50 },
 } as const;
 
 export type TIER_MODEL_KEY = keyof typeof TIER_AI_MODELS;
@@ -90,6 +93,7 @@ export function buildAIRequest(
   systemPrompt: string,
   messages: Array<{ role: string; content: string }>,
   maxTokens: number,
+  temperature = 0,
 ): AIRequestConfig {
   const provider = getModelProvider(model);
   if (provider === 'deepseek') {
@@ -103,7 +107,7 @@ export function buildAIRequest(
         model,
         messages: [{ role: 'system', content: systemPrompt }, ...messages],
         max_tokens: maxTokens,
-        temperature: 0,
+        temperature,
       },
       provider: 'deepseek',
     };
@@ -120,7 +124,7 @@ export function buildAIRequest(
         system: systemPrompt,
         messages,
         max_tokens: maxTokens,
-        temperature: 0,
+        temperature,
       },
       provider: 'anthropic',
     };

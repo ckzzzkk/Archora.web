@@ -48,9 +48,11 @@ const segments = [
 export function BlueprintGeneratingOverlay({
   phase,
   iterationProgress,
+  batchStatus,
 }: {
   phase: number;
   iterationProgress: IterationProgress;
+  batchStatus?: { ready: number; total: number } | null;
 }) {
   const pulse = useSV(0);
   useEffect(() => {
@@ -127,6 +129,12 @@ export function BlueprintGeneratingOverlay({
       <ArchText variant="heading" style={{ fontSize: 13, color: DS.colors.primaryDim, letterSpacing: 4, textTransform: 'uppercase', marginBottom: DS.spacing.sm }}>
         ARIA
       </ArchText>
+
+      {batchStatus && (
+        <ArchText variant="body" style={{ fontFamily: DS.font.mono, fontSize: 11, color: DS.colors.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: DS.spacing.sm }}>
+          Generating {batchStatus.total} variations — {batchStatus.ready} ready
+        </ArchText>
+      )}
 
       <Animated.View style={[textStyle, { alignItems: 'center' }]}>
         <ArchText variant="body" style={{

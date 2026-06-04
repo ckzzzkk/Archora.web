@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { DS } from '../../../theme/designSystem';
@@ -15,6 +15,13 @@ interface Props {
   consultationSummary?: ConsultationSummary | null;
   result?: BlueprintData | null;
   onGenerate: () => void;
+  /** Pro/Architect: show the variation-count selector. */
+  batchAllowed?: boolean;
+  /** Max variations for this tier (3 = Pro, 5 = Architect). */
+  batchSize?: number;
+  /** Currently selected variation count (1 = single design). */
+  batchCount?: number;
+  onBatchCountChange?: (count: number) => void;
 }
 
 const SKETCH_SHADOW = {
@@ -24,7 +31,10 @@ const SKETCH_SHADOW = {
   shadowRadius: 2,
 };
 
-export function Step7Review({ payload, consultationSummary, result, onGenerate }: Props) {
+export function Step7Review({
+  payload, consultationSummary, result, onGenerate,
+  batchAllowed = false, batchSize = 3, batchCount = 1, onBatchCountChange,
+}: Props) {
   const plotUnit = payload.plotUnit === 'm2' ? 'm\u00B2' : 'ft\u00B2';
   const extras = [
     payload.hasGarage && 'Garage',
@@ -159,8 +169,51 @@ export function Step7Review({ payload, consultationSummary, result, onGenerate }
       </ScrollView>
 
       <View style={{ paddingHorizontal: DS.spacing.lg, paddingBottom: DS.spacing.lg }}>
+        {batchAllowed && (
+          <View style={{ marginBottom: DS.spacing.md }}>
+            <ArchText variant="caption" style={{ marginBottom: DS.spacing.sm, textAlign: 'center' }}>
+              how many designs?
+            </ArchText>
+            <View
+              style={{
+                flexDirection: 'row',
+                borderRadius: DS.radius.oval,
+                borderWidth: 2,
+                borderColor: BASE_COLORS.textPrimary,
+                overflow: 'hidden',
+              }}
+            >
+              {[
+                { count: 1, label: '1 design' },
+                { count: batchSize, label: `${batchSize} variations` },
+              ].map((opt) => {
+                const active = batchCount === opt.count;
+                return (
+                  <Pressable
+                    key={opt.count}
+                    onPress={() => onBatchCountChange?.(opt.count)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: DS.spacing.md,
+                      alignItems: 'center',
+                      backgroundColor: active ? DS.colors.accent : 'transparent',
+                    }}
+                  >
+                    <ArchText
+                      variant="body"
+                      style={{ color: active ? BASE_COLORS.background : DS.colors.primary }}
+                    >
+                      {opt.label}
+                    </ArchText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
         <OvalButton
-          label="generate your design"
+          label={batchCount > 1 ? `generate ${batchCount} variations` : 'generate your design'}
           onPress={onGenerate}
           variant="outline"
           size="large"

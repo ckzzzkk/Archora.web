@@ -33,6 +33,9 @@ const RequestSchema = z.object({
   transcript:      z.string().max(2000).optional(),
   climateZone:     z.enum(['tropical', 'subtropical', 'temperate', 'arid', 'cold', 'alpine']).optional().default('temperate'),
   hemisphere:      z.enum(['north', 'south']).optional().default('north'),
+  // Batch generation: when present, this call is one variation of a batch.
+  // Drives an elevated generation temperature + a per-variation prompt directive.
+  variationSeed:   z.number().int().min(0).optional(),
 });
 
 type Parsed = z.infer<typeof RequestSchema>;
@@ -150,7 +153,33 @@ Return ONLY valid JSON — no markdown, no explanation:
   "updatedAt": "ISO"
 }
 
-All coordinates in metres. (0,0) bottom-left. Every room fully enclosed. All loadbearing walls marked.`;
+All coordinates in metres. (0,0) bottom-left. Every room fully enclosed. All loadbearing walls marked.
+
+━━━━ GEOMETRIC INVARIANTS (NON-NEGOTIABLE) ━━━━
+
+These are hard rules. A plan that breaks any of them is INVALID and will be rejected:
+1. CLOSED LOOPS: every room is bounded by walls forming a closed polygon. Walk the room's walls end-to-end and you must return to the start.
+2. SHARED ENDPOINTS: where two walls meet, they share the EXACT same coordinate (identical x AND y to 2 decimals). Never leave a gap — a wall ending at (5.00, 3.00) must connect to another wall that also has an endpoint at (5.00, 3.00).
+3. NO OVERLAPS: no two rooms may occupy the same floor area. Rooms tile the footprint edge-to-edge; shared walls separate adjacent rooms.
+4. AREA = SHOELACE: each room's "area" must equal the actual polygon area of its bounding walls (shoelace formula), not a guess. Centroid is the polygon's average vertex.
+5. WALLS REFERENCED: every id in a room's wallIds must exist in the walls array. Every opening's wallId must exist. Every furniture roomId must exist.
+6. FURNITURE FITS INSIDE: each furniture piece sits fully within its room's polygon with ≥0.3m clearance from walls; pieces don't overlap each other.
+7. SHARED INTERIOR WALLS: an interior wall between two rooms is ONE wall listed once, referenced by both rooms' wallIds — never two duplicate walls at the same coordinates.
+
+Before returning, mentally trace each room: do its walls close? Does its area match? Do all referenced walls exist? Fix any that fail.
+
+━━━━ WORKED EXAMPLE (2-room core — extend this pattern) ━━━━
+
+A 6m × 4m footprint split into a 4m × 4m living room and a 2m × 4m kitchen, sharing one interior wall at x=4:
+
+"walls": [
+  { "id": "w-s", "start": {"x":0,"y":0}, "end": {"x":6,"y":0}, "thickness":0.2, "height":2.7, "isLoadbearing":true, "material":"brick" },
+  { "id": "w-e", "start": {"x":6,"y":0}, "end": {"x":6,"y":4}, "thickness":0.2, "height":2.7, "isLoadbearing":true, "material":"brick" },
+  { "id": "w-n", "start": {"x":6,"y":4}, "end": {"x":0,"y":4}, "thickness":0.2, "height":2.7, "isLoadbearing":true, "material":"brick" },
+  { "id": "w-w", "start": {"x":0,"y":4}, "end": {"x":0,"y":0}, "thickness":0.2, "height":2.7, "isLoadbearing":true, "material":"brick" },
+  { "id": "w-div", "start": {"x":4,"y":0}, "end": {"x":4,"y":4}, "thickness":0.1, "height":2.7, "isLoadbearing":false, "material":"timber_frame" }
+]
+Note: w-div endpoints (4,0) and (4,4) lie exactly on walls w-s and w-n. Living room = walls [w-w, w-s(0→4 portion), w-div, w-n] enclosing x:0–4 (area 16). Kitchen = [w-div, w-s(4→6), w-e, w-n] enclosing x:4–6 (area 8). The divider w-div appears ONCE, referenced by BOTH rooms.`;
 
 // ── Scoring prompt ────────────────────────────────────────────────────────────
 
@@ -183,8 +212,9 @@ async function callClaude(
   maxTokens: number,
   signal: AbortSignal,
   selectedModel: string,
+  temperature = 0,
 ): Promise<unknown> {
-  const reqConfig = buildAIRequest(selectedModel, systemPrompt, [{ role: 'user', content: userMessage }], maxTokens);
+  const reqConfig = buildAIRequest(selectedModel, systemPrompt, [{ role: 'user', content: userMessage }], maxTokens, temperature);
   const response = await fetch(reqConfig.url, { method: 'POST', signal, headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
 
   if (!response.ok) {
@@ -258,9 +288,14 @@ function buildInitialUserMessage(p: Parsed): string {
 
   const notes = [p.prompt, p.additionalNotes, p.transcript].filter(Boolean).join('\n');
 
+  // Batch generation: nudge each variation toward a distinctly different solution.
+  const variationDirective = p.variationSeed != null
+    ? `\n\nThis is design variation #${p.variationSeed + 1}. Explore a distinctly different spatial arrangement, circulation strategy, and massing from a conventional solution — while still satisfying every requirement above.`
+    : '';
+
   return `Design a ${p.buildingType}:
 ${details.join('\n')}
-${notes ? `\nUser notes:\n${notes}` : ''}
+${notes ? `\nUser notes:\n${notes}` : ''}${variationDirective}
 
 Generate a complete floor plan with all rooms, walls, furniture, and openings. Apply all structural and climate rules.`;
 }
@@ -353,8 +388,9 @@ serve(async (req) => {
 
     // Tier-based model selection
     const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
-    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
-    const tier = (tierData as string) ?? 'starter';
+    const { data: tierData, error: tierError } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    if (tierError || !tierData) return Errors.internal('tier lookup failed');
+    const tier = tierData as string;
     const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
     const selectedModel = modelConfig.generation;
     if (!selectedModel) {
@@ -379,6 +415,10 @@ serve(async (req) => {
     const iterationLog: Array<{ n: number; score: number; structural: number; weather: number; flow: number; keyChange: string }> = [];
     let lastScoreResult: ScoreResult | null = null;
 
+    // Batch variations generate with elevated temperature so each is distinct.
+    // Scoring stays deterministic (temperature 0) so all variations are judged equally.
+    const genTemperature = p.variationSeed != null ? 0.85 : 0;
+
     try {
       for (let i = 1; i <= MAX_ITERATIONS; i++) {
         // ── Generate ────────────────────────────────────────────────────────
@@ -396,7 +436,7 @@ serve(async (req) => {
           ? buildInitialUserMessage(p)
           : buildRefineUserMessage(bestBlueprint, lastScoreResult!, i);
 
-        const blueprint = await callClaude(anthropicKey, SYSTEM_PROMPT, userMessage, 5500, controller.signal, selectedModel);
+        const blueprint = await callClaude(anthropicKey, SYSTEM_PROMPT, userMessage, 5500, controller.signal, selectedModel, genTemperature);
 
         // ── Score ────────────────────────────────────────────────────────────
         await updateSession(supabase, sessionId, {
