@@ -114,7 +114,18 @@ function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloo
   const furniture = placeFurniture(layoutRooms, floorIndex);
 
   const blueprintWalls = walls.map(wallSegmentToWall);
-  const blueprintRooms = layoutRooms.map(lr => layoutRoomToRoom(lr, []));
+
+  // Each WallSegment.adjacentRooms[0] is the room the wall was built for — invert
+  // that into per-room boundary wall lists so room.wallIds is populated (a closed loop).
+  const wallsByRoom = new Map<string, string[]>();
+  for (const w of walls) {
+    const owner = w.adjacentRooms[0];
+    if (!owner) continue;
+    const arr = wallsByRoom.get(owner) ?? [];
+    arr.push(w.id);
+    wallsByRoom.set(owner, arr);
+  }
+  const blueprintRooms = layoutRooms.map(lr => layoutRoomToRoom(lr, wallsByRoom.get(lr.id) ?? []));
   const blueprintOpenings = [...doors, ...windows].map(openingToBPOpening);
 
   // Staircase connecting floors
