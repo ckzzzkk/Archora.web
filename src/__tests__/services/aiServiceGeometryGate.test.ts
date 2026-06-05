@@ -35,6 +35,11 @@ describe('aiService geometry safety net — ensureSoundGeometry', () => {
     expect(result.metadata.generatedFrom).not.toBe('procedural_fallback');
     expect(result.walls.length).toBeGreaterThan(0);
     expect(result.rooms.length).toBeGreaterThan(0);
+    // Every generation self-reports an objective architectural-quality score.
+    const q = result.metadata.architecturalQuality;
+    expect(q).toBeDefined();
+    expect(q!.overall).toBeGreaterThanOrEqual(0);
+    expect(q!.overall).toBeLessThanOrEqual(100);
   });
 
   it('falls back to a valid procedural layout when AI geometry is irredeemably broken', async () => {

@@ -6,6 +6,7 @@ import type { Tier } from '../utils/tierLimits';
 import { validateBlueprintData } from '../utils/blueprintValidation';
 import { autoRepairBlueprint } from '../utils/geometry/autoRepair';
 import { validateBlueprint, violationSummary } from '../utils/geometry/blueprintValidator';
+import { assessArchitecturalQuality } from '../utils/geometry/architecturalQuality';
 import { generateFloorPlan } from '../utils/layoutEngine';
 import { toAppError } from '../types/AppError';
 
@@ -75,22 +76,43 @@ export function ensureSoundGeometry(
 ): BlueprintData {
   const { repaired } = autoRepairBlueprint(aiBlueprint);
   const summary = violationSummary(validateBlueprint(repaired));
+
+  let result: BlueprintData;
   // Fall back ONLY on critical violations (genuinely broken/unusable geometry:
   // missing walls, rooms referencing non-existent walls, impossible footprint).
   // Major issues (slightly undersized rooms, furniture quirks) are usable and
   // already addressed by auto-repair — falling back on those would needlessly
   // discard the AI's creative layout in favour of a conventional procedural one.
-  if (summary.critical === 0) return repaired;
+  if (summary.critical === 0) {
+    result = repaired;
+  } else {
+    console.warn(
+      `[aiService] AI blueprint has ${summary.critical} critical geometry violation(s) ` +
+      `after repair — using procedural fallback`,
+    );
+    const fallback = generateFloorPlan(coerceToFullPayload(payload));
+    result = autoRepairBlueprint(fallback).repaired;
+    result.metadata = { ...result.metadata, generatedFrom: 'procedural_fallback' };
+  }
 
-  console.warn(
-    `[aiService] AI blueprint has ${summary.critical} critical geometry violation(s) ` +
-    `after repair — using procedural fallback`,
+  // Attach an objective architect-grade quality score to every generation so real
+  // usage continuously self-reports quality (observability — not a gate).
+  const q = assessArchitecturalQuality(result);
+  result.metadata = {
+    ...result.metadata,
+    architecturalQuality: {
+      overall: q.overall,
+      circulation: q.circulation.score,
+      daylightCode: q.daylightCode.score,
+      structural: q.structural.score,
+      adjacency: q.adjacency.score,
+    },
+  };
+  console.log(
+    `[aiService] architectural quality — overall ${q.overall} ` +
+    `(circ ${q.circulation.score}, day ${q.daylightCode.score}, struct ${q.structural.score}, adj ${q.adjacency.score})`,
   );
-
-  const fallback = generateFloorPlan(coerceToFullPayload(payload));
-  const { repaired: repairedFallback } = autoRepairBlueprint(fallback);
-  repairedFallback.metadata = { ...repairedFallback.metadata, generatedFrom: 'procedural_fallback' };
-  return repairedFallback;
+  return result;
 }
 
 export const aiService = {
