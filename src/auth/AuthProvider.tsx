@@ -105,12 +105,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Bind RevenueCat purchases to the Supabase user id (used by revenuecat-webhook
   // as app_user_id); detach on sign-out.
   useEffect(() => {
+    if (isLoading) return;
     if (user?.id) {
       void loginRevenueCat(user.id);
     } else {
       void logoutRevenueCat();
     }
-  }, [user?.id]);
+  }, [user?.id, isLoading]);
 
   return (
     <AuthContext.Provider value={{ session, user, isLoading, signOut, refreshUser }}>
