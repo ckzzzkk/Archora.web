@@ -5,6 +5,12 @@ import { logAudit } from '../_shared/audit.ts';
 import { resolveTierForEvent } from './tierResolver.ts';
 
 // Product-id → tier mapping comes from env, mirroring stripe-webhook's price map.
+// CONTRACT: each RC_PRODUCT_* env var's VALUE must equal the exact product
+// identifier produced by getProductId() in src/utils/iapProducts.ts — i.e.
+// 'asoria_creator_monthly', 'asoria_pro_annual', etc. RevenueCat sends that same
+// string as event.product_id. If an env value does not match, every event for
+// that product silently resolves to 'starter' (no error is logged). Keep these
+// in sync with iapProducts.ts and the App Store / Play product identifiers.
 function buildEnvMap(): Record<string, string> {
   const pairs: Array<[string | undefined, string]> = [
     [Deno.env.get('RC_PRODUCT_CREATOR_MONTHLY'), 'creator'],

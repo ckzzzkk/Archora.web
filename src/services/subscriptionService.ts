@@ -88,9 +88,13 @@ export const subscriptionService = {
   },
 
   /**
-   * Purchase a paid tier via native IAP. Resolves to the new effective tier
-   * (caller refreshes authStore). Throws on real failure; resolves the prior
-   * tier with cancelled=true on user cancellation.
+   * Purchase a paid tier via native IAP.
+   * - On success: resolves { tier: <new effective tier>, cancelled: false }.
+   * - On user cancellation: resolves { tier: 'starter', cancelled: true }. Callers
+   *   MUST check `cancelled` before using `tier` — the 'starter' value is a
+   *   placeholder, not the user's real tier.
+   * - On any other failure: throws an Error with a `code` (IAP_NO_OFFERING /
+   *   IAP_NO_PACKAGE / IAP_PURCHASE_FAILED).
    */
   async purchase(
     tier: Exclude<SubscriptionTier, 'starter'>,
