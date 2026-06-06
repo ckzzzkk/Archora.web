@@ -16,8 +16,12 @@ export function configureRevenueCat(): void {
     console.warn('[revenuecat] No API key for platform — IAP disabled in this build');
     return;
   }
-  Purchases.configure({ apiKey });
-  configured = true;
+  try {
+    Purchases.configure({ apiKey });
+    configured = true;
+  } catch (e) {
+    console.warn('[revenuecat] configure failed — IAP disabled:', e);
+  }
 }
 
 /** Associate purchases with the signed-in Supabase user. */
@@ -43,7 +47,7 @@ export async function logoutRevenueCat(): Promise<void> {
 
 /** Derive the effective tier from a CustomerInfo's active entitlements. */
 export function getCurrentTierFromCustomerInfo(info: CustomerInfo): SubscriptionTier {
-  return entitlementToTier(Object.keys(info.entitlements.active));
+  return entitlementToTier(Object.keys(info?.entitlements?.active ?? {}));
 }
 
 /** Fetch the current default offering (packages to display). */
