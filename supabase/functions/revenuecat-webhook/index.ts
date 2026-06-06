@@ -28,6 +28,16 @@ interface RCWebhookBody {
   };
 }
 
+/** Constant-time string comparison to avoid timing side-channels on the shared secret. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const ae = new TextEncoder().encode(a);
+  const be = new TextEncoder().encode(b);
+  if (ae.length !== be.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ae.length; i++) diff |= ae[i] ^ be[i];
+  return diff === 0;
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   if (req.method !== 'POST') return Errors.notFound();
@@ -42,7 +52,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // RevenueCat sends the configured value verbatim in the Authorization header.
   const provided = req.headers.get('Authorization') ?? '';
-  if (provided !== expectedAuth) {
+  if (!timingSafeEqual(provided, expectedAuth)) {
     return Errors.unauthorized('Invalid webhook authorization');
   }
 
@@ -80,6 +90,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+    } else {
+      console.warn('[revenuecat-webhook] Redis unavailable for idempotency check — processing anyway');
     }
   }
 
@@ -135,6 +147,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    if (err instanceof Response) return err;
     console.error('[revenuecat-webhook]', err);
     return Errors.internal();
   }
