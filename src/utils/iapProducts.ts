@@ -20,7 +20,7 @@ export function getProductId(tier: PaidTier, billing: BillingInterval): string {
 }
 
 /** RevenueCat entitlement identifier for a paid tier (equals the tier name). */
-export function getEntitlementId(tier: PaidTier): string {
+export function getEntitlementId(tier: PaidTier): PaidTier {
   return tier;
 }
 
@@ -32,7 +32,7 @@ export function entitlementToTier(activeEntitlementIds: readonly string[]): Subs
   let best: SubscriptionTier = 'starter';
   for (const id of activeEntitlementIds) {
     if ((RC_ENTITLEMENTS as readonly string[]).includes(id)) {
-      const candidate = id as SubscriptionTier;
+      const candidate = id as PaidTier;
       if (TIER_RANK[candidate] > TIER_RANK[best]) best = candidate;
     }
   }
