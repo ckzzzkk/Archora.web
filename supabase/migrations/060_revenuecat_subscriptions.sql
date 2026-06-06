@@ -30,6 +30,22 @@ BEGIN
   ) THEN
     ALTER TABLE public.subscriptions ALTER COLUMN stripe_price_id DROP NOT NULL;
   END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'subscriptions'
+      AND column_name = 'current_period_start' AND is_nullable = 'NO'
+  ) THEN
+    ALTER TABLE public.subscriptions ALTER COLUMN current_period_start DROP NOT NULL;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'subscriptions'
+      AND column_name = 'current_period_end' AND is_nullable = 'NO'
+  ) THEN
+    ALTER TABLE public.subscriptions ALTER COLUMN current_period_end DROP NOT NULL;
+  END IF;
 END $$;
 
 -- 2. Add provider + RevenueCat columns (idempotent).
@@ -47,3 +63,28 @@ ALTER TABLE public.subscriptions
 --    distinct in unique indexes.
 CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_rc_app_user_id_key
   ON public.subscriptions (rc_app_user_id);
+
+-- 4. Normalize the tier CHECK constraint to include all four tiers.
+-- Only the 007 (TEXT column) shape has an inline tier CHECK missing 'pro';
+-- the 004 (enum) shape has no such CHECK and already supports every tier.
+DO $$
+DECLARE
+  cons_name text;
+BEGIN
+  SELECT con.conname INTO cons_name
+  FROM pg_constraint con
+  JOIN pg_class rel ON rel.oid = con.conrelid
+  JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+  WHERE nsp.nspname = 'public'
+    AND rel.relname = 'subscriptions'
+    AND con.contype = 'c'
+    AND pg_get_constraintdef(con.oid) ILIKE '%tier%'
+  LIMIT 1;
+
+  IF cons_name IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE public.subscriptions DROP CONSTRAINT %I', cons_name);
+    ALTER TABLE public.subscriptions
+      ADD CONSTRAINT subscriptions_tier_check
+      CHECK (tier IN ('starter', 'creator', 'pro', 'architect'));
+  END IF;
+END $$;
