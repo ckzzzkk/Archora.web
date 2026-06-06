@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { toAppError } from '../types/AppError';
-import Purchases, { type CustomerInfo } from 'react-native-purchases';
+import Purchases, { PURCHASES_ERROR_CODE, type CustomerInfo } from 'react-native-purchases';
 import { Linking, Platform } from 'react-native';
 import { getProductId } from '../utils/iapProducts';
 import { getCurrentOffering, getCurrentTierFromCustomerInfo } from '../lib/revenuecat';
@@ -109,7 +109,8 @@ export const subscriptionService = {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
       return { tier: getCurrentTierFromCustomerInfo(customerInfo), cancelled: false };
     } catch (err: unknown) {
-      if (typeof err === 'object' && err && (err as { userCancelled?: boolean }).userCancelled) {
+      const rcErr = err as { code?: PURCHASES_ERROR_CODE; userCancelled?: boolean | null };
+      if (rcErr?.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR || rcErr?.userCancelled === true) {
         return { tier: 'starter', cancelled: true };
       }
       throw Object.assign(new Error('Purchase could not be completed.'), { code: 'IAP_PURCHASE_FAILED' });
@@ -118,8 +119,12 @@ export const subscriptionService = {
 
   /** Restore prior purchases (Apple-required). Returns the restored tier. */
   async restorePurchases(): Promise<{ tier: SubscriptionTier }> {
-    const info: CustomerInfo = await Purchases.restorePurchases();
-    return { tier: getCurrentTierFromCustomerInfo(info) };
+    try {
+      const info: CustomerInfo = await Purchases.restorePurchases();
+      return { tier: getCurrentTierFromCustomerInfo(info) };
+    } catch {
+      throw Object.assign(new Error('Restore failed. Please try again.'), { code: 'IAP_RESTORE_FAILED' });
+    }
   },
 
   /** Open the OS subscription-management screen. */
