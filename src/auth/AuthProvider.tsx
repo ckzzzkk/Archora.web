@@ -12,6 +12,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { signOut } from './signOut';
+import { configureRevenueCat, loginRevenueCat, logoutRevenueCat } from '../lib/revenuecat';
 import { userCache } from '../utils/userCache';
 import type { User } from '../types';
 import type { Session } from '@supabase/supabase-js';
@@ -61,6 +62,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchUserData]);
 
+  // Configure RevenueCat once at app start (no-op when keys are absent).
+  useEffect(() => {
+    configureRevenueCat();
+  }, []);
+
   // Initial session load + auth state listener
   useEffect(() => {
     const init = async () => {
@@ -95,6 +101,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
+
+  // Bind RevenueCat purchases to the Supabase user id (used by revenuecat-webhook
+  // as app_user_id); detach on sign-out.
+  useEffect(() => {
+    if (user?.id) {
+      void loginRevenueCat(user.id);
+    } else {
+      void logoutRevenueCat();
+    }
+  }, [user?.id]);
 
   return (
     <AuthContext.Provider value={{ session, user, isLoading, signOut, refreshUser }}>
