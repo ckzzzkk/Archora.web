@@ -1,0 +1,34 @@
+name: Edge Functions Syntax Check
+
+# The app's tsconfig excludes supabase/ (it's Deno), so nothing type-checks the
+# edge functions locally — broken syntax only surfaces at `supabase functions
+# deploy` time. This gate transpiles every function with the TypeScript compiler
+# (parse-only, no type-checking — same as the deploy bundler) to catch
+# undeployable syntax before it merges.
+
+on:
+  push:
+    paths:
+      - 'supabase/functions/**'
+      - 'scripts/check-edge-functions.mjs'
+      - '.github/workflows/edge-functions-check.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/**'
+  workflow_dispatch:
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Parse edge functions (syntax gate)
+        run: npm run check:edge
