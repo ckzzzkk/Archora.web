@@ -21,6 +21,7 @@ interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -49,6 +50,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return userCache.load();
     }
   }, []);
+
+  // Re-fetch the current user's profile row (e.g. after a purchase changes their tier).
+  const refreshUser = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    const uid = data.session?.user?.id;
+    if (uid) {
+      const userData = await fetchUserData(uid);
+      if (userData) setUser(userData);
+    }
+  }, [fetchUserData]);
 
   // Initial session load + auth state listener
   useEffect(() => {
@@ -86,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchUserData]);
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, isLoading, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
