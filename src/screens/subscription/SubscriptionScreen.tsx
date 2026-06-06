@@ -245,7 +245,8 @@ export function SubscriptionScreen({ navigation }: Props) {
         Alert.alert('Restored', `Your ${restored} subscription is active again.`);
         await refreshUser();
       }
-    } catch {
+    } catch (err) {
+      console.error('[SubscriptionScreen] restore error:', err);
       Alert.alert('Restore failed', 'Could not restore purchases. Please try again.');
     } finally {
       setIsLoading(false);
@@ -256,7 +257,8 @@ export function SubscriptionScreen({ navigation }: Props) {
     try {
       setIsLoading(true);
       await subscriptionService.openStoreManagement();
-    } catch {
+    } catch (err) {
+      console.error('[SubscriptionScreen] manage subscription error:', err);
       Alert.alert('Error', 'Could not open subscription management.');
     } finally {
       setIsLoading(false);
@@ -359,6 +361,7 @@ export function SubscriptionScreen({ navigation }: Props) {
               label={isLoading ? 'Loading…' : 'Manage Subscription'}
               variant="outline"
               fullWidth
+              disabled={isLoading}
               onPress={() => { void handleManageSubscription(); }}
             />
           </View>
@@ -369,6 +372,7 @@ export function SubscriptionScreen({ navigation }: Props) {
             label="Restore Purchases"
             variant="ghost"
             fullWidth
+            disabled={isLoading}
             onPress={() => { void handleRestore(); }}
           />
         </View>
