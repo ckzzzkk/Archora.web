@@ -15,6 +15,7 @@ export type AuditAction =
   | 'stripe_webhook'
   | 'stripe_cancel'
   | 'stripe_sync'
+  | 'revenuecat_webhook'
   | 'template_publish'
   | 'template_download'
   | 'project_create'

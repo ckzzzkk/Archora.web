@@ -127,7 +127,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     await logAudit({
       user_id: appUserId,
-      action: 'stripe_webhook',
+      action: 'revenuecat_webhook',
       metadata: { event: eventType, tier, product_id: productId },
     });
 
