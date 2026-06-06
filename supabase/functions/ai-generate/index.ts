@@ -499,7 +499,6 @@ OUTPUT FORMAT
 Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble, no postscript.
 
 **SINGLE-FLOOR (floors === 1 or absent) — return flat v1 format:**
-```json
 {
   "id": "uuid-string",
   "version": 1,
@@ -511,10 +510,8 @@ Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble
   "createdAt": "ISO string",
   "updatedAt": "ISO string"
 }
-```
 
 **MULTI-FLOOR (floors >= 2) — return floors[] array with version: 2:**
-```json
 {
   "id": "uuid-string",
   "version": 2,
@@ -535,7 +532,6 @@ Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble
   "createdAt": "ISO string",
   "updatedAt": "ISO string"
 }
-```
 
 **CRITICAL RULES FOR MULTI-FLOOR OUTPUT:**
 1. One floor object per floor. label must match: index -1 = "B1", index 0 = "G", index 1 = "1", index 2 = "2"
@@ -558,7 +554,7 @@ Coordinates in metres. (0,0) is bottom-left. Walls form closed rooms. Every room
 
 Think deeply. Apply everything. Create something genuinely beautiful.
 A real family will live in this as inspiration.
-Make it worthy of that trust.`;
+Make it worthy of that trust.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ARCHITECTURAL KNOWLEDGE
