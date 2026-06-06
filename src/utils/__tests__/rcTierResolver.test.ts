@@ -17,8 +17,12 @@ const ENV = {
 
 describe('getTierFromProductId', () => {
   it('maps a known product id to its tier', () => {
+    expect(getTierFromProductId('asoria_creator_monthly', ENV)).toBe('creator');
+    expect(getTierFromProductId('asoria_creator_annual', ENV)).toBe('creator');
+    expect(getTierFromProductId('asoria_pro_monthly', ENV)).toBe('pro');
     expect(getTierFromProductId('asoria_pro_annual', ENV)).toBe('pro');
     expect(getTierFromProductId('asoria_architect_monthly', ENV)).toBe('architect');
+    expect(getTierFromProductId('asoria_architect_annual', ENV)).toBe('architect');
   });
   it('returns starter for an unknown product id', () => {
     expect(getTierFromProductId('something_else', ENV)).toBe('starter');
