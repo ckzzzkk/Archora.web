@@ -57,3 +57,4 @@ node_modules/
 dist-android/
 supabase/.temp/
 quality-report.txt
+android/.kotlin/

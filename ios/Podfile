@@ -41,6 +41,9 @@ target 'ASORIAAIArchitectureDesign' do
 
   config = use_native_modules!(config_command)
 
+  # Local pod: ARKit native module for AR room scan / placement / measure.
+  pod 'ARKitModule', :path => './LocalPods/ARKitModule'
+
   use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
   use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
 
@@ -61,6 +64,3 @@ target 'ASORIAAIArchitectureDesign' do
     )
   end
 end
-
-# ── Local pods ───────────────────────────────────────────────────
-  pod 'ARKitModule', :path => './LocalPods/ARKitModule'
