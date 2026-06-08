@@ -102,10 +102,24 @@ npx vitest run src/__tests__/quality/measureQuality.test.ts
 Structural pass **0%**. Bathrooms open onto living rooms (no hallway); rooms span 8m
 with no beam. **This is what users get when AI is unavailable or returns broken geometry.**
 
-**Action:** run the live-AI measurement once keys are set. If the live AI also scores
-low on circulation/structural, the layout engine (`src/utils/layoutEngine/`) needs work
-— adding hallway/corridor circulation and span/beam structural logic. Tracked as a
-separate effort, not a publish blocker.
+**Root cause (investigated 2026-06-07, deeper than it looks):** the low scores are NOT a
+door-placement bug. The procedural engine packs each room as an **independent rectangle
+inside its zone box, with gaps — no two rooms share a wall** (verified: 0 walls border
+≥2 rooms). The quality validator derives adjacency by *geometrically tracing* the wall
+graph, and against non-tiling geometry it recovers composite polygons (hence "bathroom
+opens onto living + dining + kitchen" from a single traced edge). So tuning door logic on
+the engine's fabricated `WallSegment.adjacentRooms` cannot move the metric — the validator
+ignores those and reads coordinates.
+
+**The real fix** is a layout-engine change so rooms **tile the plot sharing walls** (a true
+space partition / proper BSP that emits shared wall segments), after which doors land on
+genuine shared walls and circulation/structural scores become meaningful. This is a
+self-contained but non-trivial rewrite of `src/utils/layoutEngine/{zones,wallBuilder}.ts`
+and deserves its own spec + plan. **Not a publish blocker** — the live AI likely produces
+properly-tiled geometry; this only governs the offline fallback's quality.
+
+**Action:** run the live-AI measurement once keys are set. If the *live AI* also scores
+low, prioritise the space-partition rewrite above.
 
 ---
 
