@@ -1,9 +1,11 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkRateLimit } from '../_shared/rateLimit.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 import { checkQuota } from '../_shared/quota.ts';
+import { requireEnv } from '../_shared/errors.ts';
 
 serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -100,6 +102,10 @@ serve(async (req) => {
       ip_address: ip ?? undefined,
       user_agent: userAgent ?? undefined,
     });
+
+    // Increment quota after successful transcription
+    const supabase = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
+    await supabase.rpc('increment_quota', { p_user_id: user.id, p_field: 'ai_generations_used', p_amount: 1 });
 
     return new Response(JSON.stringify({ transcript: result.text }), {
       status: 200,

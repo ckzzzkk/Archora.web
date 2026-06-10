@@ -19,6 +19,10 @@ const GenerationScreen = lazyScreen(() =>
   import('../screens/generation/GenerationScreen')
     .then((m) => ({ default: m.GenerationScreen })));
 
+const BatchSelectionScreen = lazyScreen(() =>
+  import('../screens/generation/BatchSelectionScreen')
+    .then((m) => ({ default: m.BatchSelectionScreen })));
+
 const SubscriptionScreen = lazyScreen(() =>
   import('../screens/subscription/SubscriptionScreen')
     .then((m) => ({ default: m.SubscriptionScreen })));
@@ -220,6 +224,15 @@ export function RootNavigator() {
             component={GenerationScreen}
             options={{
               presentation: 'modal',
+              animation: 'fade',
+              animationDuration: 150,
+            }}
+          />
+          <Stack.Screen
+            name="BatchSelection"
+            component={BatchSelectionScreen}
+            options={{
+              presentation: 'fullScreenModal',
               animation: 'fade',
               animationDuration: 150,
             }}

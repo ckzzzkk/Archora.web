@@ -40,6 +40,7 @@ export function useArchitectAgentModerator(
   // Store pending cursor event for throttled batching
   const pendingCursor = useRef<SessionEvent | null>(null);
   const throttleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
 
   const emitSuggestion = useCallback((newSuggestions: ArchitectSuggestion[]) => {
     if (newSuggestions.length > 0) {
@@ -55,6 +56,7 @@ export function useArchitectAgentModerator(
 
   // Throttled cursor event emitter
   const flushCursorEvent = useCallback(async () => {
+    if (!isMountedRef.current) return;
     if (!pendingCursor.current) return;
     const event = pendingCursor.current;
     pendingCursor.current = null;
@@ -163,6 +165,7 @@ export function useArchitectAgentModerator(
     setChannelRef(unsubscribe);
 
     return () => {
+      isMountedRef.current = false;
       unsubscribe();
       // Only clear if this is the same channel (don't clear a newer one)
       const current = useCodesignStore.getState()._channelRef;
@@ -170,7 +173,7 @@ export function useArchitectAgentModerator(
         setChannelRef(null);
       }
       if (throttleTimer.current) clearTimeout(throttleTimer.current);
-      flushCursorEvent(); // flush any pending cursor event
+      flushCursorEvent();
     };
   }, [sessionId, handleCursorUpdate, handleParticipantJoin, handleParticipantLeave, handleBlueprintDelta, flushCursorEvent, setChannelRef]);
 

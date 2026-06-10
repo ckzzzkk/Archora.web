@@ -13,8 +13,31 @@ const WebhookSchema = z.object({
   error: z.string().optional(),
 });
 
+/** Constant-time string comparison to avoid timing side-channels on the shared secret. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const ae = new TextEncoder().encode(a);
+  const be = new TextEncoder().encode(b);
+  if (ae.length !== be.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ae.length; i++) diff |= ae[i] ^ be[i];
+  return diff === 0;
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+
+  // Shared-secret auth — MANDATORY and fail-closed. This function uses the
+  // service-role key (bypasses RLS) to write any project by id, so it must never
+  // be reachable unauthenticated. If the secret is unconfigured, reject everything.
+  const webhookSecret = Deno.env.get('RENDER_WEBHOOK_SECRET');
+  if (!webhookSecret) {
+    console.error('[render-webhook] RENDER_WEBHOOK_SECRET not configured — rejecting (fail closed)');
+    return Errors.internal('Webhook not configured');
+  }
+  const provided = req.headers.get('X-Webhook-Secret') ?? '';
+  if (!timingSafeEqual(provided, webhookSecret)) {
+    return Errors.forbidden('Invalid webhook secret');
+  }
 
   try {
     const body = await req.json() as unknown;

@@ -14,7 +14,6 @@ import { OvalInput } from '../../components/common/OvalInput';
 import { OvalButton } from '../../components/common/OvalButton';
 import { ArchText } from '../../components/common/ArchText';
 import { DS } from '../../theme/designSystem';
-import { useSession } from '../../auth/useSession';
 import { signInWithEmail } from '../../auth/signInWithEmail';
 import { signInWithGoogle } from '../../auth/signInWithGoogle';
 import type { AuthStackParamList } from '../../navigation/types';

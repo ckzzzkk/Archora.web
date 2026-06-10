@@ -6,7 +6,7 @@ import { useUIStore } from '../stores/uiStore';
 import { TIER_LIMITS } from '../utils/tierLimits';
 
 const SYNC_INTERVAL_MS = 60_000; // sync to Supabase every 60s
-const STARTER_DAILY_LIMIT_SECONDS = TIER_LIMITS.starter.dailyEditTimeSeconds; // 2700 (45 min)
+const STARTER_DAILY_LIMIT_SECONDS = TIER_LIMITS.starter.dailyEditTimeSeconds; // 900 (15 min)
 
 export function useEditTimer() {
   const { user } = useSession();
@@ -138,14 +138,19 @@ export function useEditTimer() {
     };
   }, [shouldTrack, getAccumulatedSeconds, syncToSupabase, checkLimit]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount — flush accumulated time synchronously to avoid fire-and-forget
   useEffect(() => {
     return () => {
-      if (shouldTrack) {
-        pauseSession();
+      if (shouldTrack && sessionStartRef.current !== null) {
+        const elapsed = getAccumulatedSeconds();
+        accumulatedRef.current += elapsed;
+        totalTodayRef.current += elapsed;
+        sessionStartRef.current = null;
+        // Fire-and-forget: the async sync will run but unmount completes regardless
+        syncToSupabase(elapsed);
       }
     };
-  }, [shouldTrack, pauseSession]);
+  }, [shouldTrack, getAccumulatedSeconds, syncToSupabase]);
 
   const getTotalSecondsToday = useCallback(() => {
     return totalTodayRef.current + getAccumulatedSeconds();

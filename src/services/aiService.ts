@@ -4,6 +4,10 @@ import type { GenerationPayload, QuestionCategory } from '../types/generation';
 import type { ChatMessage } from '../types/blueprint';
 import type { Tier } from '../utils/tierLimits';
 import { validateBlueprintData } from '../utils/blueprintValidation';
+import { autoRepairBlueprint } from '../utils/geometry/autoRepair';
+import { validateBlueprint, violationSummary } from '../utils/geometry/blueprintValidator';
+import { assessArchitecturalQuality } from '../utils/geometry/architecturalQuality';
+import { generateFloorPlan } from '../utils/layoutEngine';
 import { toAppError } from '../types/AppError';
 
 export interface UserPreferences {
@@ -34,6 +38,81 @@ async function getAuthHeader(): Promise<Record<string, string>> {
     'apikey': SUPABASE_ANON_KEY,
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+}
+
+/** Fills a partial generation payload with safe defaults so the procedural
+ *  engine (which reads these fields directly) always has complete input. */
+function coerceToFullPayload(
+  p: Partial<GenerationPayload> & { buildingType: string; style?: string },
+): GenerationPayload {
+  return {
+    ...p,
+    buildingType: p.buildingType as GenerationPayload['buildingType'],
+    plotSize: p.plotSize ?? 175,
+    plotUnit: p.plotUnit ?? 'm2',
+    bedrooms: p.bedrooms ?? 3,
+    bathrooms: p.bathrooms ?? 2,
+    livingAreas: p.livingAreas ?? 1,
+    hasGarage: p.hasGarage ?? false,
+    hasGarden: p.hasGarden ?? false,
+    hasPool: p.hasPool ?? false,
+    hasHomeOffice: p.hasHomeOffice ?? false,
+    hasUtilityRoom: p.hasUtilityRoom ?? false,
+    style: p.style ?? 'modern',
+    additionalNotes: p.additionalNotes ?? '',
+  } as GenerationPayload;
+}
+
+/**
+ * Geometry safety net: the AI is the most capable designer, but it occasionally
+ * emits broken geometry (disconnected walls, overlapping/missing rooms). We repair
+ * what we can, and if critical/major violations still remain we fall back to the
+ * procedural layout engine, which is guaranteed to produce valid geometry. This
+ * means the user NEVER sees a structurally broken plan.
+ */
+export function ensureSoundGeometry(
+  aiBlueprint: BlueprintData,
+  payload: Partial<GenerationPayload> & { buildingType: string; style?: string },
+): BlueprintData {
+  const { repaired } = autoRepairBlueprint(aiBlueprint);
+  const summary = violationSummary(validateBlueprint(repaired));
+
+  let result: BlueprintData;
+  // Fall back ONLY on critical violations (genuinely broken/unusable geometry:
+  // missing walls, rooms referencing non-existent walls, impossible footprint).
+  // Major issues (slightly undersized rooms, furniture quirks) are usable and
+  // already addressed by auto-repair — falling back on those would needlessly
+  // discard the AI's creative layout in favour of a conventional procedural one.
+  if (summary.critical === 0) {
+    result = repaired;
+  } else {
+    console.warn(
+      `[aiService] AI blueprint has ${summary.critical} critical geometry violation(s) ` +
+      `after repair — using procedural fallback`,
+    );
+    const fallback = generateFloorPlan(coerceToFullPayload(payload));
+    result = autoRepairBlueprint(fallback).repaired;
+    result.metadata = { ...result.metadata, generatedFrom: 'procedural_fallback' };
+  }
+
+  // Attach an objective architect-grade quality score to every generation so real
+  // usage continuously self-reports quality (observability — not a gate).
+  const q = assessArchitecturalQuality(result);
+  result.metadata = {
+    ...result.metadata,
+    architecturalQuality: {
+      overall: q.overall,
+      circulation: q.circulation.score,
+      daylightCode: q.daylightCode.score,
+      structural: q.structural.score,
+      adjacency: q.adjacency.score,
+    },
+  };
+  console.log(
+    `[aiService] architectural quality — overall ${q.overall} ` +
+    `(circ ${q.circulation.score}, day ${q.daylightCode.score}, struct ${q.structural.score}, adj ${q.adjacency.score})`,
+  );
+  return result;
 }
 
 export const aiService = {
@@ -82,12 +161,11 @@ export const aiService = {
       const validation = validateBlueprintData(rawBlueprint);
       if (!validation.valid || !validation.data) {
         console.error('[aiService] Blueprint validation failed:', validation.errors);
-        throw Object.assign(new Error('Invalid response from AI'), {
-          code: 'INVALID_RESPONSE',
-          details: validation.errors,
-        });
+        // Schema broken — fall back to guaranteed-valid procedural layout.
+        return ensureSoundGeometry(generateFloorPlan(coerceToFullPayload(params)), params);
       }
-      return validation.data as BlueprintData;
+      // Geometry safety net: repair, validate, and fall back to procedural if irredeemable.
+      return ensureSoundGeometry(validation.data as BlueprintData, params);
     } catch (err: unknown) {
       clearTimeout(timeoutId);
       if (err instanceof Error && err.name === 'AbortError') {
@@ -239,6 +317,8 @@ export const aiService = {
       delete headers['Content-Type']; // FormData sets its own
 
       const formData = new FormData();
+      // React Native's FormData.append accepts { uri, type, name } objects for file uploads,
+      // but the web Blob type doesn't describe this shape — the cast is a required RN pattern.
       formData.append('audio', {
         uri: audioUri,
         type: 'audio/m4a',
@@ -351,12 +431,11 @@ export const aiService = {
       const validation = validateBlueprintData(rawBlueprint);
       if (!validation.valid || !validation.data) {
         console.error('[aiService] generateOptimal validation failed:', validation.errors);
-        throw Object.assign(new Error('Invalid response from AI'), {
-          code: 'INVALID_RESPONSE',
-          details: validation.errors,
-        });
+        // Schema itself is broken — fall back to guaranteed-valid procedural layout.
+        return ensureSoundGeometry(generateFloorPlan(coerceToFullPayload(payload)), payload);
       }
-      return validation.data as BlueprintData;
+      // Geometry safety net: repair, validate, and fall back to procedural if irredeemable.
+      return ensureSoundGeometry(validation.data as BlueprintData, payload);
     } catch (err: unknown) {
       clearTimeout(timeoutId);
       if (err instanceof Error && err.name === 'AbortError') {
@@ -373,6 +452,49 @@ export const aiService = {
     } finally {
       await supabase.removeChannel(channel);
     }
+  },
+
+  /**
+   * Batch generation (Pro/Architect tiers): fires `count` independent generateOptimal
+   * calls in parallel, each with a distinct variationSeed so the AI produces genuinely
+   * different designs from the same brief. Each call carries its own session, quota,
+   * and audit. Uses allSettled so one failure (e.g. quota exhausted mid-flight) doesn't
+   * void the whole batch — returns whatever succeeded.
+   *
+   * @param onProgress called per-variation with its index and latest progress update.
+   * @returns the successfully generated blueprints (length may be < count on partial failure).
+   */
+  async generateBatch(
+    userId: string,
+    payload: Partial<GenerationPayload> & { buildingType: string; style?: string },
+    count: number,
+    onProgress?: (variationIndex: number, update: {
+      status: string;
+      iteration: number;
+      message: string;
+      scores: Array<{ n: number; score: number; keyChange: string }>;
+    }) => void,
+  ): Promise<BlueprintData[]> {
+    const tasks = Array.from({ length: count }, async (_, i) => {
+      const sessionId = await this.createGenerationSession(userId);
+      return this.generateOptimal(
+        { ...payload, variationSeed: i },
+        sessionId,
+        (update) => onProgress?.(i, update),
+      );
+    });
+
+    const settled = await Promise.allSettled(tasks);
+    const blueprints = settled
+      .filter((r): r is PromiseFulfilledResult<BlueprintData> => r.status === 'fulfilled')
+      .map((r) => r.value);
+
+    if (blueprints.length === 0) {
+      // Surface the first rejection so the UI can show a meaningful error.
+      const firstRejection = settled.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      throw firstRejection ? firstRejection.reason : toAppError(null, 'GENERATION_FAILED');
+    }
+    return blueprints;
   },
 
   async consultWithArchitect(params: {

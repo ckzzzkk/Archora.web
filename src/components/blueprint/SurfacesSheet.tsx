@@ -4,6 +4,7 @@ import { View, Text, Pressable, ScrollView, Modal, Dimensions } from 'react-nati
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBlueprintStore } from '../../stores/blueprintStore';
+import { useUIStore } from '../../stores/uiStore';
 import type { WallTexture, MaterialType, CeilingType } from '../../types/blueprint';
 
 const SCREEN_H = Dimensions.get('window').height;
@@ -91,6 +92,7 @@ export function SurfacesSheet({ visible, onClose }: Props) {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const selectedId = useBlueprintStore((s) => s.selectedId);
   const actions = useBlueprintStore((s) => s.actions);
+  const showToast = useUIStore((s) => s.actions.showToast);
 
   useEffect(() => {
     translateY.value = visible
@@ -131,8 +133,9 @@ export function SurfacesSheet({ visible, onClose }: Props) {
             <Swatch key={item.id} color={item.color} label={item.label}
               selected={selectedWall?.texture === item.id}
               onPress={() => {
-                const wid = selectedWall?.id ?? blueprint?.walls[0]?.id;
-                if (wid) actions.setWallTexture(wid, item.id);
+                const wid = selectedWall?.id ?? (blueprint?.walls?.length ? blueprint.walls[0].id : undefined);
+                if (!wid) { showToast('No wall selected', 'warning'); return; }
+                actions.setWallTexture(wid, item.id);
               }}
             />
           ))}
@@ -140,14 +143,14 @@ export function SurfacesSheet({ visible, onClose }: Props) {
             <Swatch key={item.id} color={item.color} label={item.label}
               selected={selectedRoom?.floorMaterial === item.id}
               onPress={() => {
-                const rid = selectedRoom?.id ?? blueprint?.rooms[0]?.id;
+                const rid = selectedRoom?.id ?? (blueprint?.rooms?.length ? blueprint.rooms[0].id : undefined);
                 if (rid) actions.setRoomFloor(rid, item.id);
               }}
             />
           ))}
           {tab === 'ceilings' && CEILING_TYPES.map((item) => (
             <Pressable key={item.id} onPress={() => {
-              const rid = selectedRoom?.id ?? blueprint?.rooms[0]?.id;
+              const rid = selectedRoom?.id ?? (blueprint?.rooms?.length ? blueprint.rooms[0].id : undefined);
               if (rid) actions.setRoomCeiling(rid, item.id);
             }} style={{ paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, marginBottom: 8, borderRadius: 16, borderWidth: 1, borderColor: selectedRoom?.ceilingType === item.id ? DS.colors.primary : DS.colors.border, backgroundColor: selectedRoom?.ceilingType === item.id ? DS.colors.primary + '20' : DS.colors.surfaceHigh }}>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: selectedRoom?.ceilingType === item.id ? DS.colors.primary : DS.colors.primaryDim }}>{item.label}</Text>

@@ -1,6 +1,9 @@
 // Module declarations for packages used at runtime but not yet listed in package.json.
 // These keep `tsc --noEmit` clean while the native packages are resolved by Metro/Expo.
 
+// NativeWind global stylesheet imported for its side effect (className support).
+declare module '*.css';
+
 declare module '@shopify/react-native-skia' {
   import type { ComponentType, ReactNode } from 'react';
   import type { ViewStyle } from 'react-native';

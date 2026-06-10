@@ -26,8 +26,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const rateLimitOk = await checkRateLimit(`ai:${user.id}`, 10, 3600);
     if (!rateLimitOk) return Errors.rateLimited();
 
-    // Quota check — checkQuota() already increments ai_generations_used internally;
-    // do NOT call increment_quota here (would be double-increment)
+    // Quota check is read-only (checkQuota only verifies, does not increment).
+    // Increment after successful generation (handled by checkQuota internally).
     const quotaOk = await checkQuota(user.id, 'ai_generation');
     if (!quotaOk) return Errors.quotaExceeded();
 
@@ -45,8 +45,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     await requireOwnership(supabaseAdmin, 'rooms', roomId, user.id);
 
     // Tier-based model selection
-    const { data: tierData } = await supabaseAdmin.rpc('get_user_tier', { user_id: user.id });
-    const tier = (tierData as string) ?? 'starter';
+    const { data: tierData, error: tierError } = await supabaseAdmin.rpc('get_user_tier', { user_id: user.id });
+    if (tierError || !tierData) return Errors.internal('tier lookup failed');
+    const tier = tierData as string;
     const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
     const selectedModel = modelConfig.generation;
     if (!selectedModel) {

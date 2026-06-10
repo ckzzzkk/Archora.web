@@ -425,14 +425,21 @@ export function OnboardingQuizScreen() {
     try {
       Storage.set('asoria_quiz_done', 'true');
 
-      // Upsert quiz answers to Supabase
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        await supabase.from('user_quiz_answers').upsert({
-          user_id: session.user.id,
-          answers: answers as unknown as Record<string, unknown>,
-          completed_at: new Date().toISOString(),
+      if (session?.access_token) {
+        const { error: quizError } = await supabase.functions.invoke('save-quiz', {
+          body: {
+            buildingType: answers.buildingType,
+            styles: answers.styles,
+            budget: answers.budget,
+            household: answers.household,
+            priority: answers.priority,
+          },
+          headers: { Authorization: `Bearer ${session.access_token}` },
         });
+        if (quizError) {
+          console.warn('[OnboardingQuizScreen] quiz save failed:', quizError.message);
+        }
       }
 
       const prompt = buildQuizPrompt(answers);

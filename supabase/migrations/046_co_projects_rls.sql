@@ -91,10 +91,10 @@ CREATE POLICY "co_project_activity_insert" ON co_project_activity
     )
   );
 
-DROP POLICY IF EXISTS "co_project_activity_update" ON co_project_activity
+CREATE POLICY "co_project_activity_update" ON co_project_activity
   FOR UPDATE USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "co_project_activity_delete" ON co_project_activity
+CREATE POLICY "co_project_activity_delete" ON co_project_activity
   FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================================

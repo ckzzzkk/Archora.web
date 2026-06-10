@@ -23,6 +23,7 @@ declare namespace React {
         position?: [number, number, number];
         rotation?: [number, number, number];
         scale?: [number, number, number] | number;
+        onClick?: (event?: unknown) => void;
         children?: React.ReactNode;
       };
       boxGeometry: { args?: [number, number, number] };

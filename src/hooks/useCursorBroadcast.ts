@@ -29,8 +29,8 @@ export function useCursorBroadcast() {
         const cursor = cursorRef.current;
         if (now - lastBroadcastRef.current >= BROADCAST_INTERVAL_MS) {
           lastBroadcastRef.current = now;
-          publishCursorUpdate(sessionId, userId, cursor).catch(() => {
-            // silient fail — cursor updates are non-critical
+          publishCursorUpdate(sessionId, userId, cursor).catch((e) => {
+            console.warn('[useCursorBroadcast] Cursor publish failed:', e);
           });
         }
         scheduleNext();

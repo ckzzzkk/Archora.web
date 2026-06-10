@@ -4,6 +4,8 @@ import { requireEnv } from './errors.ts';
 export type AuditAction =
   | 'ai_generate'
   | 'ai_furniture'
+  | 'ai_edit_blueprint'
+  | 'ai_suggest_blueprint'
   | 'ar_scan'
   | 'ar_scan_status_polled'
   | 'ar_reconstruct'
@@ -13,6 +15,7 @@ export type AuditAction =
   | 'stripe_webhook'
   | 'stripe_cancel'
   | 'stripe_sync'
+  | 'revenuecat_webhook'
   | 'template_publish'
   | 'template_download'
   | 'project_create'
@@ -21,7 +24,9 @@ export type AuditAction =
   | 'data_exported'
   | 'login_success'
   | 'stripe_portal'
-  | 'furniture_image_generate';
+  | 'furniture_image_generate'
+  | 'sketch_refine'
+  | 'profile_update';
 
 export interface AuditEntry {
   user_id: string;

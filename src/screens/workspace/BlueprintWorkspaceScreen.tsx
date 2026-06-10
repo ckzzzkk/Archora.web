@@ -34,6 +34,7 @@ import { DS } from '../../theme/designSystem';
 import { ArchText } from '../../components/common/ArchText';
 import { SimulationPanel } from '../../components/blueprint/SimulationPanel';
 import { CostEstimatorModal } from '../../components/common/CostEstimatorModal';
+import { EditLimitModal } from '../../components/workspace/EditLimitModal';
 import { exportBlueprintToDXF } from '../../utils/dxfExport';
 import { simulationService } from '../../services/simulationService';
 import type { SimulationReport } from '../../types/blueprint';
@@ -149,7 +150,7 @@ export function BlueprintWorkspaceScreen() {
   useEditTimer();
 
   // 2D/3D sync with cross-fade
-  const { syncStatus, transitionProgress } = use2D3DSync();
+  const { syncStatus, transitionProgress, switchTo2D, switchTo3D } = use2D3DSync();
 
   const canvas2DStyle = useAnimatedStyle(() => ({
     opacity: interpolate(transitionProgress.value, [0, 0.5], [1, 0], 'clamp'),
@@ -190,6 +191,7 @@ export function BlueprintWorkspaceScreen() {
   const { allowed: costEstimatorAllowed } = useTierGate('costEstimator');
   const { allowed: customFurnitureAllowed } = useTierGate('customFurniture');
   const { allowed: aiGenerationsAllowed } = useTierGate('aiGenerationsPerMonth');
+  const { allowed: aiChatAllowed } = useTierGate('aiChatMessagesPerDay');
 
   const [showImageToFurniture, setShowImageToFurniture] = useState(false);
   const [showCopyPaste, setShowCopyPaste] = useState(false);
@@ -228,8 +230,10 @@ export function BlueprintWorkspaceScreen() {
       navigation.navigate('Subscription', { feature: 'walkthrough' });
       return;
     }
-    setViewMode(m);
-  }, [walkthroughAllowed, setViewMode, showToast, navigation]);
+    if (m === '3D') switchTo3D();
+    else if (m === '2D') switchTo2D();
+    else setViewMode(m);
+  }, [walkthroughAllowed, setViewMode, switchTo2D, switchTo3D, showToast, navigation]);
 
   const handleAddFloor = useCallback(() => {
     if (!blueprint) return;
@@ -243,6 +247,7 @@ export function BlueprintWorkspaceScreen() {
 
   const handleStaircaseSelect = useCallback((type: StaircaseType) => {
     if (!blueprint) return;
+    if (blueprint.floors.length === 0) return;
     const floorIndex = blueprint.floors.length - 1;
     addStaircase(floorIndex, {
       id: randomUUID(),
@@ -662,7 +667,7 @@ export function BlueprintWorkspaceScreen() {
             </ArchText>
           </View>
           <Pressable
-            onPress={() => navigation.navigate('Sketch' as never)}
+            onPress={() => navigation.navigate('Main')}
             style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: DS.colors.warning }}
           >
             <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: DS.colors.background }}>
@@ -721,7 +726,7 @@ export function BlueprintWorkspaceScreen() {
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            onPress={() => setShowChat((v) => !v)}
+            onPress={() => aiChatAllowed ? setShowChat((v) => !v) : navigation.navigate('Subscription', { feature: 'AI Chat' })}
           >
             <ArchText variant="body" style={{ color: DS.colors.primary, fontSize: 20 }}>✦</ArchText>
           </Pressable>
@@ -832,54 +837,3 @@ export function BlueprintWorkspaceScreen() {
   );
 }
 
-function EditLimitModal() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const activeModal = useUIStore((s) => s.activeModal);
-  const closeModal = useUIStore((s) => s.actions.closeModal);
-
-  if (activeModal !== 'edit_limit_reached') return null;
-
-  const now = new Date();
-  const midnight = new Date();
-  midnight.setHours(24, 0, 0, 0);
-  const secondsToMidnight = Math.floor((midnight.getTime() - now.getTime()) / 1000);
-  const hours = Math.floor(secondsToMidnight / 3600);
-  const mins = Math.floor((secondsToMidnight % 3600) / 60);
-
-  return (
-    <View style={{
-      position: 'absolute', inset: 0,
-      backgroundColor: 'rgba(0,0,0,0.9)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 32,
-      zIndex: 999,
-    }}>
-      <CompassRoseLoader size="large" />
-      <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
-        Daily Editing Time Reached
-      </ArchText>
-      <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: 8 }}>
-        Starter plan includes 45 minutes of editing per day.
-      </ArchText>
-      <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 13, color: DS.colors.primaryGhost, textAlign: 'center', marginBottom: 32 }}>
-        Resets in {hours}h {mins}m
-      </ArchText>
-      <Pressable
-        onPress={() => {
-          closeModal();
-          navigation.navigate('Subscription', { feature: 'Daily Edit Time' });
-        }}
-        style={{ backgroundColor: DS.colors.primary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 50, marginBottom: 16, width: '100%', alignItems: 'center' }}
-      >
-        <ArchText variant="body" style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: DS.colors.background }}>Upgrade Now</ArchText>
-      </Pressable>
-      <Pressable
-        onPress={() => { closeModal(); }}
-        style={{ paddingVertical: 12 }}
-      >
-        <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryGhost }}>Save and Exit</ArchText>
-      </Pressable>
-    </View>
-  );
-}

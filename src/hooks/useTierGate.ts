@@ -21,8 +21,9 @@ export function useTierGate(feature: keyof TierLimits): TierGateResult {
     ? (user?.arScansUsed ?? 0)
     : 0;
   const numericLimit = typeof limits[feature] === 'number' ? limits[feature] : (limits[feature] ? 1 : 0);
+  // numericLimit === -1 means unlimited; numericLimit === 0 means blocked (no uses allowed)
   const allowed = isFeatureAllowed(tier, feature)
-    && (numericLimit === -1 || numericLimit === 0 || usage < numericLimit);
+    && (numericLimit === -1 || (numericLimit > 0 && usage < numericLimit));
   const requiredTier = allowed ? null : getUpgradeTier(feature);
 
   return {

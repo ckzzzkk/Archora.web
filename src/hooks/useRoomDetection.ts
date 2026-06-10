@@ -20,21 +20,21 @@ export function useRoomDetection(): void {
   const existingRooms = useBlueprintStore((s) => s.blueprint?.rooms);
   const setRoomsDirectly = useBlueprintStore((s) => s.actions.setRoomsDirectly);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wallsRef = useRef<Wall[] | undefined>(walls);
-  const existingRoomsRef = useRef<Room[] | undefined>(existingRooms);
-
-  wallsRef.current = walls;
-  existingRoomsRef.current = existingRooms;
+  const generationRef = useRef(0);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
 
+    const generation = ++generationRef.current;
+
     timerRef.current = setTimeout(() => {
-      const currentWalls = wallsRef.current ?? [];
+      if (generation !== generationRef.current) return;
+
+      const currentWalls = walls ?? [];
       if (currentWalls.length < 3) return;
 
       const detected = detectRooms(currentWalls);
-      const current = existingRoomsRef.current ?? [];
+      const current = existingRooms ?? [];
 
       // Merge by centroid proximity — preserve existing room names/types
       const merged: Room[] = detected.map((d) => {
@@ -66,5 +66,5 @@ export function useRoomDetection(): void {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [walls, setRoomsDirectly]);
+  }, [walls, existingRooms, setRoomsDirectly]);
 }

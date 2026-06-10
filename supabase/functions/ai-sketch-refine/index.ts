@@ -89,8 +89,9 @@ serve(async (req) => {
   if (!allowed) return Errors.rateLimited('Sketch refinement rate limit exceeded — try again later');
 
   // Determine quota type and model based on user tier
-  const { data: tierData } = await supabase.rpc('get_user_tier', { user_id: userId });
-  const tier = (tierData as string) ?? 'starter';
+  const { data: tierData, error: tierError } = await supabase.rpc('get_user_tier', { user_id: userId });
+  if (tierError || !tierData) return Errors.internal('tier lookup failed');
+  const tier = tierData as string;
 
   let quotaType: 'ai_edit' | 'ai_chat';
   let model: string | null;
@@ -193,10 +194,11 @@ serve(async (req) => {
     return Errors.internal('Failed to save refined blueprint');
   }
 
-  await logAudit(supabase, userId, 'sketch_refine', {
-    blueprintId,
-    model,
-    tier,
+  await logAudit({
+    user_id: userId,
+    action: 'sketch_refine',
+    resource_id: blueprintId,
+    metadata: { model, tier },
   });
 
   return new Response(

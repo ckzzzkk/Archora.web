@@ -31,6 +31,8 @@ export interface GenerationPayload {
   layoutStyle?: 'traditional' | 'open_plan' | 'mixed';
   /** Selected house archetype ID from the reference library. */
   archetypeId?: string;
+  /** Batch generation: index of this variation (0-based). Drives creative variance server-side. */
+  variationSeed?: number;
 }
 
 export type GenerationStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;

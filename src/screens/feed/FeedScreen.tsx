@@ -8,6 +8,7 @@ import {
   Dimensions,
   Text,
 } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -44,7 +45,7 @@ const CARD_W = SCREEN_W * 0.52;
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-function TrendingCarousel({
+const TrendingCarousel = React.memo(function TrendingCarousel({
   templates,
   onPress,
   C,
@@ -105,7 +106,7 @@ function TrendingCarousel({
                 borderColor: idx === 0 ? '#FFEE8C40' : C.border,
                 overflow: 'hidden',
               },
-              itemAnimatedStyle,
+              itemAnimatedStyle as StyleProp<ViewStyle>,
             ]}
           >
             {/* Color thumbnail */}
@@ -172,7 +173,7 @@ function TrendingCarousel({
       </ScrollView>
     </View>
   );
-}
+});
 
 interface ChipConfig {
   label: string;
@@ -237,7 +238,7 @@ function FilterChipsRow({
                 borderColor: active ? C.primary : C.border,
                 backgroundColor: active ? C.accentGlow : 'transparent',
               },
-              chipAnimatedStyle,
+              chipAnimatedStyle as StyleProp<ViewStyle>,
             ]}
           >
             <View style={{ flexShrink: 1 }}>
@@ -390,20 +391,20 @@ export function FeedScreen() {
     }
   }, [searchVisible, searchBarHeight, light, filter, setFilter]);
 
-  const handleChip = useCallback((chip: ChipConfig) => {
+  const handleChip = useCallback((f: ChipConfig) => {
     light();
-    setActiveChip(chip.label);
+    setActiveChip(f.label);
     setFilter({
-      buildingType: chip.buildingType,
-      trendingOrNew: chip.trendingOrNew,
+      buildingType: f.buildingType,
+      trendingOrNew: f.trendingOrNew,
       search: searchText || undefined,
     });
   }, [light, setFilter, searchText]);
 
   const handleSearch = useCallback((text: string) => {
     setSearchText(text);
-    setFilter({ ...filter, search: text || undefined });
-  }, [filter, setFilter]);
+    setFilter({ search: text || undefined });
+  }, [setFilter]);
 
   const handleItemPress = useCallback((templateId: string) => {
     navigation.navigate('TemplateDetail', { templateId });
@@ -535,7 +536,7 @@ export function FeedScreen() {
         </Animated.View>
 
         {/* Trending carousel — only when no active search/filter */}
-        {!searchText && activeChip === 'All' && templates.length > 0 && (
+        {!searchText && activeChip === 'All' && (templates?.length ?? 0) > 0 && (
           <TrendingCarousel templates={templates} onPress={handleItemPress} C={C} />
         )}
 
@@ -562,7 +563,7 @@ export function FeedScreen() {
           </ArchText>
           <OvalButton label="Retry" variant="outline" onPress={() => { void refresh(); }} />
         </View>
-      ) : templates.length === 0 ? (
+      ) : (templates?.length ?? 0) === 0 ? (
         <FeedEmptyState />
       ) : (
         <FlashList

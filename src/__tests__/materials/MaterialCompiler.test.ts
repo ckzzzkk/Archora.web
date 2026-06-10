@@ -1,4 +1,5 @@
 // src/__tests__/materials/MaterialCompiler.test.ts
+import { describe, it, expect } from 'vitest';
 import { MaterialCompiler } from '../../materials/MaterialCompiler';
 
 describe('MaterialCompiler', () => {

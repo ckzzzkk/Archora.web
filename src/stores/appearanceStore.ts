@@ -17,6 +17,8 @@ interface AppearanceState {
   setMode: (mode: AppearanceMode) => void;
 }
 
+let _appearanceListenerInitialized = false;
+
 export const useAppearanceStore = create<AppearanceState>((set) => {
   const savedMode = (Storage.getString(STORAGE_KEY) as AppearanceMode | null) ?? 'dark';
   const systemTheme = getSystemTheme();
@@ -32,10 +34,13 @@ export const useAppearanceStore = create<AppearanceState>((set) => {
   };
 });
 
-Appearance.addChangeListener(({ colorScheme }) => {
-  const { mode } = useAppearanceStore.getState();
-  if (mode === 'system') {
-    const systemTheme: 'dark' | 'light' = colorScheme === 'light' ? 'light' : 'dark';
-    useAppearanceStore.setState({ systemTheme, resolved: systemTheme });
-  }
-});
+if (!_appearanceListenerInitialized) {
+  _appearanceListenerInitialized = true;
+  Appearance.addChangeListener(({ colorScheme }) => {
+    const { mode } = useAppearanceStore.getState();
+    if (mode === 'system') {
+      const systemTheme: 'dark' | 'light' = colorScheme === 'light' ? 'light' : 'dark';
+      useAppearanceStore.setState({ systemTheme, resolved: systemTheme });
+    }
+  });
+}

@@ -159,7 +159,8 @@ export function InHouseView({ onExit }: InHouseViewProps) {
   const tourIndexRef = useRef(0);
   const tourTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const viewShotRef = useRef<ViewShot>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const viewShotRef = useRef<any>(null);
   const capturedFramesRef = useRef<string[]>([]);
 
   const lighting = LIGHTING_PRESETS[timeOfDay];

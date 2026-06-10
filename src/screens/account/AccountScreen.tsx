@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import {
   View, ScrollView, Pressable, Switch, Alert, TextInput, Linking, Image,
 } from 'react-native';
@@ -231,7 +232,7 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
                 backgroundColor: active ? DS.colors.ink : 'transparent',
                 borderWidth: 2,
                 borderColor: active ? DS.colors.ink : DS.colors.border,
-              }, appearanceAnimatedStyle]}
+              }, appearanceAnimatedStyle as StyleProp<ViewStyle>]}
             >
               <ArchText
                 variant="body"
@@ -355,9 +356,7 @@ export function AccountScreen() {
   const submitName = async () => {
     setEditing(false);
     if (!nameVal.trim() || nameVal === user.displayName) return;
-    // Update display name in users table via Supabase
-    await supabase.from('users').update({ display_name: nameVal.trim() }).eq('id', user.id);
-    // AuthProvider's onAuthStateChange will fire and update user data reactively
+    await authService.updateProfile({ displayName: nameVal.trim() });
   };
 
   const pickAvatar = async () => {
@@ -374,7 +373,7 @@ export function AccountScreen() {
     if (!user.id) return;
     const publicUrl = await authService.uploadAvatar(user.id, file.uri);
     if (!publicUrl) { Alert.alert('Upload Failed', 'Could not upload avatar. Please try again.'); return; }
-    await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', user.id);
+    await authService.updateProfile({ avatarUrl: publicUrl });
   };
 
   const handleManageSubscription = async () => {

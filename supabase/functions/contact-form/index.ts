@@ -19,7 +19,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // Rate limit by IP (no auth required for contact form)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  const allowed = await checkRateLimit(`contact:${ip}`, 3, 3600);
+  const allowed = await checkRateLimit(`contact:${ip}`, 1, 3600);
   if (!allowed) return Errors.rateLimited('Too many messages. Please try again later.');
 
   let body: unknown;
@@ -46,7 +46,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (error) {
     console.error('[contact-form]', error);
-    return Errors.internal();
+    return new Response(JSON.stringify({ error: 'Failed to send message', details: error.message }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   return new Response(

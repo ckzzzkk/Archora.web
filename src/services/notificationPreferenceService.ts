@@ -134,8 +134,11 @@ export const notificationPreferenceService = {
 
     if (Object.keys(dbUpdates).length === 0) return;
 
-    await supabase
+    const { error: upsertError } = await supabase
       .from('notification_preferences')
       .upsert({ user_id: user.id, ...dbUpdates, updated_at: new Date().toISOString() });
+    if (upsertError) {
+      console.warn('[notificationPreferenceService] upsert failed:', upsertError.message);
+    }
   },
 };

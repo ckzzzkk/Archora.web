@@ -47,10 +47,13 @@ export async function markAllRead(): Promise<void> {
 }
 
 export async function markRead(notificationId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
   await supabase
     .from('notifications')
     .update({ read: true })
-    .eq('id', notificationId);
+    .eq('id', notificationId)
+    .eq('user_id', user.id);
 }
 
 export function subscribeToNotifications(

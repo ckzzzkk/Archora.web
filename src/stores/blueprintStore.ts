@@ -14,12 +14,20 @@ import type { ViewMode, SubscriptionTier } from '../types';
 import { clipboard } from '../utils/clipboard';
 import type { ClipboardItem } from '../utils/clipboard';
 import type { SuggestionItem } from '../types/consultation';
+import { userCache } from '../utils/userCache';
 
 const STORAGE_KEY = 'blueprint_current';
 
 // Content-hash cache for autoRepairBlueprint — avoids re-running expensive
 // JSON.parse/stringify + wall-graph analysis when blueprint content is unchanged
+const MAX_REPAIR_CACHE = 50;
 const repairCache = new Map<string, { hash: string; result: Awaited<ReturnType<typeof autoRepairBlueprint>> }>();
+
+function evictRepairCache(): void {
+  // LRU-style eviction: remove the oldest entry (first inserted key)
+  const firstKey = repairCache.keys().next().value;
+  if (firstKey !== undefined) repairCache.delete(firstKey);
+}
 
 function blueprintContentHash(bp: BlueprintData): string {
   // Cheap hash using wall/floor count + total area as proxy for content identity
@@ -27,8 +35,6 @@ function blueprintContentHash(bp: BlueprintData): string {
   const totalArea = bp.floors.reduce((a, f) => a + f.rooms.reduce((s, r) => s + (r.area ?? 0), 0), 0);
   return `${bp.version ?? 0}-${wallCount}-${Math.round(totalArea)}`;
 }
-
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getSaveDebounceMs(tier: SubscriptionTier): number {
   if (tier === 'architect') return 30_000;
@@ -57,8 +63,6 @@ interface BlueprintState {
   // Suggestions
   suggestions: SuggestionItem[];
   unreadSuggestionCount: number;
-  /** Cached subscription tier for auto-save debounce and undo limit resolution */
-  tier?: SubscriptionTier;
   actions: {
     loadBlueprint: (data: BlueprintData, tier?: SubscriptionTier) => void;
     clearBlueprint: () => void;
@@ -145,6 +149,9 @@ function updateCurrentFloor(
 }
 
 export const useBlueprintStore = create<BlueprintState>((set, get) => {
+  // Instance-bound save timer — each store instance gets its own timer,
+  // avoiding race conditions across multiple concurrent instances.
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   function scheduleSave(data: BlueprintData, tier: SubscriptionTier = 'starter'): void {
     const debounce = getSaveDebounceMs(tier);
@@ -163,22 +170,21 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
   }
 
   function getCurrentTier(explicitTier?: SubscriptionTier): SubscriptionTier {
-    // If tier is explicitly passed (from authenticated action call), use it.
-    // Otherwise try to read from store state, falling back to 'starter' for
-    // unauthenticated or legacy contexts.
+    // Tier must always be passed explicitly from call sites.
+    // Never call useAuth() here — this function is invoked outside React render context.
+    // Fall back to the cached user for offline access (userCache is synchronous).
     if (explicitTier) return explicitTier;
-    const state = get();
-    return (state as { tier?: SubscriptionTier }).tier ?? 'starter';
+    const cached = userCache.load();
+    return (cached?.subscriptionTier as SubscriptionTier) ?? 'starter';
   }
 
   function pushHistory(state: BlueprintState, newBlueprint: BlueprintData, label: string, tier?: SubscriptionTier): Partial<BlueprintState> {
-    const resolvedTier = tier ?? getCurrentTier(tier);
+    const resolvedTier = tier ?? getCurrentTier();
     const maxSteps = TIER_LIMITS[resolvedTier].maxUndoSteps;
 
     const sliced = state.history.slice(0, state.historyIndex + 1);
-    const newHistory = maxSteps === -1
-      ? [...sliced, newBlueprint]
-      : [...sliced, newBlueprint].slice(-maxSteps);
+    const trimmed = maxSteps === -1 ? sliced : sliced.slice(-(maxSteps - 1));
+    const newHistory = [...trimmed, newBlueprint];
     return {
       history: newHistory,
       historyIndex: newHistory.length - 1,
@@ -194,7 +200,10 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     const state = get();
     if (!state.blueprint) return;
     const newBlueprint = updater(state);
-    if (!newBlueprint) return;
+    if (!newBlueprint) {
+      console.warn(`[blueprintStore] mutate("${label}") updater returned null — mutation rejected`);
+      return;
+    }
     const tier = getCurrentTier();
     const historyUpdate = pushHistory(state, newBlueprint, label, tier);
     scheduleSave(newBlueprint, tier);
@@ -238,6 +247,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           const result = autoRepairBlueprint(migrated);
           repaired = result.repaired;
           repairReport = result.report;
+          if (repairCache.size >= MAX_REPAIR_CACHE) evictRepairCache();
           repairCache.set(cacheKey, { hash: contentHash, result });
         }
         if (repairReport.totalFixes > 0) {
@@ -270,7 +280,6 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           dirtyNodes: [],
           history: [repaired],
           historyIndex: 0,
-          tier,
         });
         scheduleSave(repaired, tier);
       },
@@ -280,7 +289,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         set({
           blueprint: null, selectedId: null, isDirty: false, currentFloorIndex: 0,
           saveStatus: 'saved', dirtyNodes: [], history: [], historyIndex: -1,
-          suggestions: [], unreadSuggestionCount: 0, tier: undefined,
+          suggestions: [], unreadSuggestionCount: 0,
         });
         blueprintStorage.delete(STORAGE_KEY);
       },
@@ -589,17 +598,20 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         mutate('Apply style', (state) => {
           const { blueprint } = state;
           if (!blueprint) return null;
-          // Update metadata style + set all wall colours to primary
           const floors = blueprint.floors.map((f) => ({
             ...f,
             walls: f.walls.map((w) => ({
               ...w,
-              texture: 'plain_white' as WallTexture, // reset to plain so colour shows
+              texture: 'plain_white' as WallTexture,
             })),
           }));
           return {
             ...blueprint,
-            metadata: { ...blueprint.metadata, style: styleId },
+            metadata: {
+              ...blueprint.metadata,
+              style: styleId,
+              primaryWallColour: primaryColour ?? blueprint.metadata.primaryWallColour,
+            },
             floors,
             ...deriveTopLevel(floors, state.currentFloorIndex),
           };
@@ -607,38 +619,38 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
       },
 
       addCustomAsset: (asset) => {
-        const { blueprint } = get();
-        if (!blueprint) return;
-        const updated = { ...blueprint, customAssets: [...(blueprint.customAssets ?? []), asset] };
-        const tier = getCurrentTier();
-        scheduleSave(updated, tier);
-        set({ blueprint: updated, isDirty: true });
+        mutate('Add custom asset', (state) => {
+          if (!state.blueprint) return null;
+          return {
+            ...state.blueprint,
+            customAssets: [...(state.blueprint.customAssets ?? []), asset],
+          };
+        });
       },
 
       removeCustomAsset: (id) => {
-        const { blueprint } = get();
-        if (!blueprint) return;
-        const updated = { ...blueprint, customAssets: (blueprint.customAssets ?? []).filter((a) => a.id !== id) };
-        const tier = getCurrentTier();
-        scheduleSave(updated, tier);
-        set({ blueprint: updated, isDirty: true });
+        mutate('Remove custom asset', (state) => {
+          if (!state.blueprint) return null;
+          return {
+            ...state.blueprint,
+            customAssets: (state.blueprint.customAssets ?? []).filter((a) => a.id !== id),
+          };
+        });
       },
 
       addChatMessage: (msg) => {
-        const { blueprint } = get();
-        if (!blueprint) return;
-        const history = [...(blueprint.chatHistory ?? []), msg].slice(-20);
-        const updated = { ...blueprint, chatHistory: history };
-        set({ blueprint: updated });
-        blueprintStorage.set(STORAGE_KEY, JSON.stringify(updated));
+        mutate('Add chat message', (state) => {
+          if (!state.blueprint) return null;
+          const history = [...(state.blueprint.chatHistory ?? []), msg].slice(-20);
+          return { ...state.blueprint, chatHistory: history };
+        });
       },
 
       clearChatHistory: () => {
-        const { blueprint } = get();
-        if (!blueprint) return;
-        const updated = { ...blueprint, chatHistory: [] };
-        set({ blueprint: updated });
-        blueprintStorage.set(STORAGE_KEY, JSON.stringify(updated));
+        mutate('Clear chat history', (state) => {
+          if (!state.blueprint) return null;
+          return { ...state.blueprint, chatHistory: [] };
+        });
       },
 
       loadFromStorage: () => {
@@ -647,7 +659,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         try {
           const data = JSON.parse(raw) as BlueprintData;
           const migrated = migrateToMultiFloor(data);
-          set({ blueprint: migrated, isDirty: false, currentFloorIndex: 0, saveStatus: 'saved' });
+          set({ blueprint: migrated, isDirty: false, currentFloorIndex: 0, saveStatus: 'saved', dirtyNodes: [] });
         } catch (err) {
           console.warn('[blueprintStore] Corrupt storage data, resetting:', err);
           blueprintStorage.delete(STORAGE_KEY);
@@ -674,7 +686,10 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
 
       setRoomsDirectly: (rooms) => {
         const { blueprint, currentFloorIndex } = get();
-        if (!blueprint) return;
+        if (!blueprint) {
+          console.warn('[blueprintStore] setRoomsDirectly called with no active blueprint');
+          return;
+        }
         const updated = updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({ ...f, rooms }));
         const tier = getCurrentTier();
         scheduleSave(updated, tier);
@@ -692,6 +707,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           historyIndex: historyIndex - 1,
           isDirty: true,
           saveStatus: 'unsaved',
+          dirtyNodes: [],
         });
       },
 
@@ -705,6 +721,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           historyIndex: historyIndex + 1,
           isDirty: true,
           saveStatus: 'unsaved',
+          dirtyNodes: [],
         });
       },
 

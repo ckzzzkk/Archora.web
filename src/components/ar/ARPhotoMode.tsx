@@ -48,7 +48,8 @@ function ARPhotoModeContent() {
   const insets = useSafeAreaInsets();
   const device = useCameraDevice('back');
   const { hasPermission, requestPermission } = useCameraPermission();
-  const camera = useRef<Camera>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const camera = useRef<any>(null);
 
   const [captures, setCaptures] = useState<PhotoCapture[]>([]);
   const [currentDirection, setCurrentDirection] = useState<WallDirection>('front');
@@ -114,7 +115,7 @@ function ARPhotoModeContent() {
       // Convert to blueprint
       const { walls, rooms, openings } = photoAnalysisToBlueprint(
         results as [PhotoAnalysisResult, PhotoAnalysisResult, PhotoAnalysisResult, PhotoAnalysisResult],
-        WALL_DIRECTIONS as unknown as ['front', 'left', 'back', 'right']
+        [...WALL_DIRECTIONS] as ['front', 'left', 'back', 'right']
       );
 
       const blueprint = buildBlueprintFromAR(walls, rooms, [], openings);
@@ -205,7 +206,6 @@ function ARPhotoModeContent() {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         device={device}
         isActive={true}
-        photo={true}
       />
 
       {/* Overlay UI */}

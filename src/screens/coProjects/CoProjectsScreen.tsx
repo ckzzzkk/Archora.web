@@ -115,12 +115,15 @@ export function CoProjectsScreen() {
   const { light } = useHaptics();
   const C = useThemeColors();
   const { user } = useSession();
-  const { coProjects, isLoading, fetchCoProjects, createCoProject } = useCoProjectStore();
+  const { coProjects, isLoading, fetchCoProjects, createCoProject, subscribeToUpdates } = useCoProjectStore();
   const [refreshing, setRefreshing] = React.useState(false);
   const [showCreate, setShowCreate] = React.useState(false);
 
   useEffect(() => {
-    if (user?.id) void fetchCoProjects();
+    if (!user?.id) return;
+    void fetchCoProjects();
+    const unsubscribe = subscribeToUpdates(user.id);
+    return unsubscribe;
   }, [user?.id]);
 
   const handleRefresh = useCallback(async () => {
@@ -131,12 +134,12 @@ export function CoProjectsScreen() {
   const handleCreate = async (name: string) => {
     const project = await createCoProject(name);
     setShowCreate(false);
-    navigation.navigate('CoProjectDetail' as any, { projectId: project.id } as any);
+    navigation.navigate('CoProjectDetail', { projectId: project.id });
   };
 
   const handleProjectPress = (project: CoProject) => {
     light();
-    navigation.navigate('CoProjectDetail' as any, { projectId: project.id } as any);
+    navigation.navigate('CoProjectDetail', { projectId: project.id });
   };
 
   const renderItem = useCallback(

@@ -21,6 +21,7 @@ interface CoProjectStore {
   addActivity: (action: string, entity?: { type: string; id: string; snapshot?: any }) => Promise<void>;
   setActiveProject: (project: CoProject | null) => void;
   clearError: () => void;
+  subscribeToUpdates: (userId: string) => () => void;
 }
 
 export const useCoProjectStore = create<CoProjectStore>((set, get) => ({
@@ -47,7 +48,7 @@ export const useCoProjectStore = create<CoProjectStore>((set, get) => ({
       const project = await coProjectService.getCoProject(projectId);
       set({ activeProject: project, isLoading: false });
     } catch (e: any) {
-      set({ error: e.message ?? 'Failed to fetch co-project', isLoading: false });
+      set({ activeProject: null, error: e.message ?? 'Failed to fetch co-project', isLoading: false });
     }
   },
 
@@ -67,9 +68,11 @@ export const useCoProjectStore = create<CoProjectStore>((set, get) => ({
   },
 
   updateCoProject: async (projectId: string, updates: { name?: string; description?: string }) => {
+    set({ isLoading: true });
     try {
       await coProjectService.updateCoProject(projectId, updates);
       set((state) => ({
+        isLoading: false,
         coProjects: state.coProjects.map((p) =>
           p.id === projectId ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p,
         ),
@@ -79,20 +82,22 @@ export const useCoProjectStore = create<CoProjectStore>((set, get) => ({
             : state.activeProject,
       }));
     } catch (e: any) {
-      set({ error: e.message ?? 'Failed to update co-project' });
+      set({ error: e.message ?? 'Failed to update co-project', isLoading: false });
       throw e;
     }
   },
 
   deleteCoProject: async (projectId: string) => {
+    set({ isLoading: true });
     try {
       await coProjectService.deleteCoProject(projectId);
       set((state) => ({
+        isLoading: false,
         coProjects: state.coProjects.filter((p) => p.id !== projectId),
         activeProject: state.activeProject?.id === projectId ? null : state.activeProject,
       }));
     } catch (e: any) {
-      set({ error: e.message ?? 'Failed to delete co-project' });
+      set({ error: e.message ?? 'Failed to delete co-project', isLoading: false });
       throw e;
     }
   },
@@ -153,4 +158,11 @@ export const useCoProjectStore = create<CoProjectStore>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  /** Subscribe to Realtime co-project changes. Returns unsubscribe fn. */
+  subscribeToUpdates: (userId: string): (() => void) => {
+    return coProjectService.subscribeToCoProjectUpdates(userId, () => {
+      void get().fetchCoProjects();
+    });
+  },
 }));

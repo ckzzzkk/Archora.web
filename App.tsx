@@ -85,13 +85,21 @@ export default function App() {
     };
   }, []);
 
-  // Handle deep links for Stripe subscription callback only
+  // Handle deep links for Stripe callbacks
   useEffect(() => {
     const handleUrl = ({ url }: { url: string }) => {
       if (url.startsWith('asoria://subscription-success')) {
-        // Stripe webhook updated subscription tier — reload session
-        // AuthProvider will pick up the new session via onAuthStateChange
-        supabase.auth.getSession();
+        // Stripe webhook updated subscription tier. refreshSession triggers
+        // TOKEN_REFRESHED → AuthProvider.onAuthStateChange → fetchUserData
+        // which re-reads the users table and picks up the new tier.
+        void supabase.auth.refreshSession();
+      } else if (url.startsWith('asoria://purchase-success')) {
+        // Template purchase complete — navigate to the purchased template
+        const templateId = new URL(url.replace('asoria://', 'https://app/')).searchParams.get('templateId');
+        if (templateId && navigationRef.current?.isReady()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (navigationRef.current as any).navigate('TemplateDetail', { templateId });
+        }
       }
     };
     const sub = Linking.addEventListener('url', handleUrl);

@@ -10,6 +10,7 @@ import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
  *     import('../screens/MyScreen').then(m => ({ default: m.MyScreen }))
  *   );
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function lazyScreen<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
 ): ComponentType<React.ComponentPropsWithRef<T>> {
@@ -18,7 +19,8 @@ export function lazyScreen<T extends ComponentType<any>>(
   function LazyWrapper(props: React.ComponentPropsWithRef<T>) {
     return (
       <Suspense fallback={<CompassRoseLoader />}>
-        <LazyComponent {...(props as any)} />
+        {/* LazyExoticComponent props are invariant; cast required due to Suspense/lazy generics */}
+        <LazyComponent {...(props as React.ComponentProps<T>)} />
       </Suspense>
     );
   }

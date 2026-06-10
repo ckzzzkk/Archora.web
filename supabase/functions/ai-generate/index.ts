@@ -499,7 +499,6 @@ OUTPUT FORMAT
 Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble, no postscript.
 
 **SINGLE-FLOOR (floors === 1 or absent) — return flat v1 format:**
-```json
 {
   "id": "uuid-string",
   "version": 1,
@@ -511,10 +510,8 @@ Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble
   "createdAt": "ISO string",
   "updatedAt": "ISO string"
 }
-```
 
 **MULTI-FLOOR (floors >= 2) — return floors[] array with version: 2:**
-```json
 {
   "id": "uuid-string",
   "version": 2,
@@ -535,7 +532,6 @@ Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble
   "createdAt": "ISO string",
   "updatedAt": "ISO string"
 }
-```
 
 **CRITICAL RULES FOR MULTI-FLOOR OUTPUT:**
 1. One floor object per floor. label must match: index -1 = "B1", index 0 = "G", index 1 = "1", index 2 = "2"
@@ -558,7 +554,7 @@ Coordinates in metres. (0,0) is bottom-left. Walls form closed rooms. Every room
 
 Think deeply. Apply everything. Create something genuinely beautiful.
 A real family will live in this as inspiration.
-Make it worthy of that trust.`;
+Make it worthy of that trust.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ARCHITECTURAL KNOWLEDGE
@@ -1421,7 +1417,18 @@ Return ONLY valid JSON matching this exact schema. No markdown, no explanation, 
 }
 
 All coordinates in metres. (0,0) is bottom-left. Walls form closed rooms. Every room fully enclosed.
-Apply ALL structural and climate rules to this design. Mark every loadbearing wall with isLoadbearing:true.`;
+Apply ALL structural and climate rules to this design. Mark every loadbearing wall with isLoadbearing:true.
+
+━━━━ GEOMETRIC INVARIANTS (NON-NEGOTIABLE) ━━━━
+A plan that breaks any of these is INVALID and will be rejected:
+1. CLOSED LOOPS: each room's walls form a closed polygon — trace them end-to-end and return to start.
+2. SHARED ENDPOINTS: walls that meet share the EXACT same coordinate (identical x AND y to 2 decimals) — never leave a gap.
+3. NO OVERLAPS: no two rooms occupy the same floor area; rooms tile the footprint edge-to-edge.
+4. AREA = SHOELACE: each room's "area" equals the actual polygon area of its walls (shoelace), not a guess.
+5. WALLS REFERENCED: every room wallId, opening wallId, and furniture roomId must reference an element that exists.
+6. FURNITURE FITS: each piece sits fully inside its room with ≥0.3m wall clearance and doesn't overlap other pieces.
+7. SHARED INTERIOR WALLS: a wall between two rooms is ONE wall, listed once, referenced by both rooms — never duplicated.
+Before returning, trace each room: do its walls close, does its area match, do all referenced ids exist? Fix any that fail.`;
 
 // ──────────────────────────────────────
 // Server-side blueprint validation (lightweight Deno version)
@@ -1765,8 +1772,9 @@ Return ONLY valid JSON, no markdown.`;
 
     // Get user tier for model routing
     const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
-    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
-    const tier = (tierData as string) ?? 'starter';
+    const { data: tierData, error: tierError } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    if (tierError || !tierData) return Errors.internal('tier lookup failed');
+    const tier = tierData as string;
     const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
     const selectedModel = modelConfig.generation;
 

@@ -15,40 +15,51 @@
         "EXPO_PUBLIC_STRIPE_PRICE_PRO_MONTHLY": "${STRIPE_PRICE_PRO_MONTHLY}",
         "EXPO_PUBLIC_STRIPE_PRICE_PRO_ANNUAL": "${STRIPE_PRICE_PRO_ANNUAL}",
         "EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_MONTHLY": "${STRIPE_PRICE_ARCHITECT_MONTHLY}",
-        "EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_ANNUAL": "${STRIPE_PRICE_ARCHITECT_ANNUAL}"
+        "EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_ANNUAL": "${STRIPE_PRICE_ARCHITECT_ANNUAL}",
+        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "${REVENUECAT_IOS_KEY}",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_KEY": "${REVENUECAT_ANDROID_KEY}"
       }
     },
     "development": {
       "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug"
+        "gradleCommand": ":app:assembleDebug",
+        "resourceClass": "medium"
       },
       "ios": {
         "simulator": true,
-        "buildConfiguration": "Debug"
+        "buildConfiguration": "Debug",
+        "resourceClass": "medium"
       }
     },
     "preview": {
       "extends": "base",
       "distribution": "internal",
+      "channel": "preview",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "resourceClass": "medium"
       },
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "resourceClass": "medium"
       }
     },
     "production": {
       "extends": "base",
       "autoIncrement": true,
+      "channel": "production",
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "resourceClass": "medium"
       },
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "resourceClass": "medium"
       }
     }
   },

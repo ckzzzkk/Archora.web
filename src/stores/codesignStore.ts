@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { TIER_LIMITS } from '../utils/tierLimits';
 
 export interface CursorPosition {
   x: number;
@@ -75,6 +76,14 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
+        // Tier gate: Codesign is Architect-only — read tier from users table, not auth.users
+        const { data: userData } = await supabase.from('users').select('subscription_tier').eq('id', user.id).single();
+        const tier = (userData?.subscription_tier as string) ?? 'starter';
+        if (!TIER_LIMITS[tier as keyof typeof TIER_LIMITS]?.codesignEnabled) {
+          set({ isConnecting: false, connectionError: 'Codesign requires an Architect tier subscription' });
+          return undefined;
+        }
+
         const sessionId = generateId();
         const participant: Participant = {
           userId: user.id,
@@ -109,6 +118,14 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
+        // Tier gate: Codesign is Architect-only — read tier from users table, not auth.users
+        const { data: joinUserData } = await supabase.from('users').select('subscription_tier').eq('id', user.id).single();
+        const tier = (joinUserData?.subscription_tier as string) ?? 'starter';
+        if (!TIER_LIMITS[tier as keyof typeof TIER_LIMITS]?.codesignEnabled) {
+          set({ isConnecting: false, connectionError: 'Codesign requires an Architect tier subscription' });
+          return;
+        }
+
         const { data: sessionData, error } = await supabase
           .from('codesign_sessions')
           .select('*')
@@ -121,8 +138,10 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
         }
 
         // Get existing participants and add this user
-        const existingParticipants = sessionData.participants ?? [];
-        const colorIndex = existingParticipants.length % PARTICIPANT_COLORS.length;
+        // Use retry loop for optimistic concurrency — two concurrent joins
+        // can read the same participant count and assign duplicate colors.
+        let existingParticipants: Participant[] = sessionData.participants ?? [];
+        let colorIndex = existingParticipants.length % PARTICIPANT_COLORS.length;
         const participant: Participant = {
           userId: user.id,
           displayName: user.user_metadata?.display_name ?? user.email ?? 'Guest',
@@ -132,12 +151,39 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
           color: PARTICIPANT_COLORS[colorIndex],
         };
 
-        const updatedParticipants = [...existingParticipants, participant];
+        let updatedParticipants = [...existingParticipants, participant];
+        let insertSucceeded = false;
 
-        await supabase
-          .from('codesign_sessions')
-          .update({ participants: updatedParticipants })
-          .eq('id', sessionId);
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const { error: updateError } = await supabase
+            .from('codesign_sessions')
+            .update({ participants: updatedParticipants })
+            .eq('id', sessionId)
+            .eq('is_active', true);
+
+          if (!updateError) {
+            insertSucceeded = true;
+            break;
+          }
+
+          // Conflict or not found — re-fetch and recompute
+          const { data: reFetched } = await supabase
+            .from('codesign_sessions')
+            .select('participants')
+            .eq('id', sessionId)
+            .eq('is_active', true)
+            .single();
+
+          if (!reFetched) break; // session gone
+          existingParticipants = reFetched.participants ?? [];
+          colorIndex = existingParticipants.length % PARTICIPANT_COLORS.length;
+          // Avoid duplicate color by appending a fresh participant
+          updatedParticipants = [...existingParticipants, participant];
+        }
+
+        if (!insertSucceeded) {
+          throw new Error('Failed to join session — please try again');
+        }
 
         const session: CodesignSession = {
           id: sessionId,
@@ -167,14 +213,21 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        set({ session: null });
+        return;
+      }
 
       // Remove participant from session in DB
       const updatedParticipants = session.participants.filter(p => p.userId !== user.id);
-      await supabase
+      const { error } = await supabase
         .from('codesign_sessions')
         .update({ participants: updatedParticipants })
         .eq('id', session.id);
+
+      if (error) {
+        console.warn('[codesignStore] leaveSession: failed to sync participant removal to DB, clearing locally anyway:', error.message);
+      }
 
       set({ session: null });
     },
@@ -208,6 +261,21 @@ export const useCodesignStore = create<CodesignStore>((set, get) => ({
     },
 
     removeParticipant: (userId: string) => {
+      const { session } = get();
+      if (!session) return;
+
+      // Sync removal to DB so other clients see the change
+      const updatedParticipants = session.participants.filter(p => p.userId !== userId);
+      supabase
+        .from('codesign_sessions')
+        .update({ participants: updatedParticipants })
+        .eq('id', session.id)
+        .then(({ error }) => {
+          if (error) {
+            console.warn('[codesignStore] removeParticipant: failed to sync to DB:', error.message);
+          }
+        });
+
       set((state) => {
         if (!state.session) return {};
         return {

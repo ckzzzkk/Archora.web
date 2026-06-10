@@ -73,7 +73,7 @@ export function BlueprintThumbnail({
           strokeLinejoin="round"
         >
           <AnimatedPath
-            d={PATHS[kind]}
+            d={PATHS[kind] ?? PATHS.house}
             strokeDasharray="600"
             animatedProps={animatedProps}
           />

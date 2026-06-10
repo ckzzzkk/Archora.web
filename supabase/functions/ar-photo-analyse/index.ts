@@ -98,17 +98,17 @@ serve(async (req: Request) => {
       });
     }
 
-    // Tier-based model selection
+    // Tier-based model selection — always use Claude for photo analysis (DeepSeek has no vision API)
     const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
-    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
-    const tier = (tierData as string) ?? 'starter';
+    const { data: tierData, error: tierError } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    if (tierError || !tierData) return Errors.internal('tier lookup failed');
+    const tier = tierData as string;
     const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
-    const selectedModel = modelConfig.generation;
-    if (!selectedModel) {
-      return new Response(JSON.stringify({ error: 'AI_NOT_AVAILABLE', message: 'AI generation not available on your tier' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const photoAnalysisModel = modelConfig.photoAnalysis;
+    if (!photoAnalysisModel) {
+      return new Response(JSON.stringify({ error: 'AI_NOT_AVAILABLE', message: 'Photo analysis not available on your tier' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const provider = getModelProvider(selectedModel);
     const systemPrompt = `You are analysing a photograph of an interior room. Estimate room dimensions from visual cues. Return ONLY a valid JSON object.`;
     const userMessage = {
       role: 'user' as const,
@@ -128,34 +128,29 @@ serve(async (req: Request) => {
       ],
     };
 
-    let claudeResponse: Response;
-    if (provider === 'deepseek') {
-      // DeepSeek doesn't support Vision — fall back to a text-only request
-      const reqConfig = buildAIRequest(selectedModel, systemPrompt, [userMessage as unknown as { role: string; content: string }], 1024);
-      claudeResponse = await fetch(reqConfig.url, { method: 'POST', headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
-    } else {
-      const reqConfig = buildAIRequest(selectedModel, systemPrompt, [userMessage as unknown as { role: string; content: string }], 1024);
-      claudeResponse = await fetch(reqConfig.url, { method: 'POST', headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
-      if (claudeResponse.ok) {
-        const responseData = await claudeResponse.json();
-        const { content } = parseAIResponse(reqConfig.provider, responseData);
-        if (content) {
-          try {
-            result = safeParseResult(content);
-          } catch {
-            console.warn('[ar-photo-analyse] Parse error');
-          }
+    let result = FALLBACK_RESULT;
+    const reqConfig = buildAIRequest(photoAnalysisModel, systemPrompt, [userMessage as unknown as { role: string; content: string }], 1024);
+    const claudeResponse = await fetch(reqConfig.url, { method: 'POST', headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
+    if (claudeResponse.ok) {
+      const responseData = await claudeResponse.json();
+      const { content } = parseAIResponse(reqConfig.provider, responseData);
+      if (content) {
+        try {
+          result = safeParseResult(content);
+        } catch {
+          console.warn('[ar-photo-analyse] Parse error');
         }
-      } else {
-        console.error('[ar-photo-analyse] AI API error:', claudeResponse.status, await claudeResponse.text());
       }
+    } else {
+      console.error('[ar-photo-analyse] AI API error:', claudeResponse.status, await claudeResponse.text());
+    }
 
     await logAudit({
       user_id: user.id,
       action: 'ar_photo_analyse',
       resource_type: 'ar_scan',
       resource_id: null,
-      meta: { direction: wallDirection, ...extractRequestMeta(req) },
+      metadata: { direction: wallDirection, ...extractRequestMeta(req) },
     });
 
     return new Response(JSON.stringify(result), {

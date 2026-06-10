@@ -4,7 +4,6 @@ import {
   ScrollView,
   Pressable,
   Alert,
-  Linking,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -209,7 +208,7 @@ export function SubscriptionScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [billing, setBilling] = useState<BillingInterval>('monthly');
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useSession();
+  const { user, refreshUser } = useSession();
   const tier = user?.subscriptionTier ?? 'starter';
 
   // Billing toggle animation
@@ -222,29 +221,33 @@ export function SubscriptionScreen({ navigation }: Props) {
   };
 
   const handleUpgrade = async (newTier: Exclude<SubscriptionTier, 'starter'>) => {
-    const STRIPE_PRICE_IDS: Record<string, string> = {
-      creator_monthly:    process.env.EXPO_PUBLIC_STRIPE_PRICE_CREATOR_MONTHLY    ?? '',
-      creator_annual:     process.env.EXPO_PUBLIC_STRIPE_PRICE_CREATOR_ANNUAL     ?? '',
-      pro_monthly:       process.env.EXPO_PUBLIC_STRIPE_PRICE_PRO_MONTHLY       ?? '',
-      pro_annual:        process.env.EXPO_PUBLIC_STRIPE_PRICE_PRO_ANNUAL        ?? '',
-      architect_monthly: process.env.EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_MONTHLY ?? '',
-      architect_annual:  process.env.EXPO_PUBLIC_STRIPE_PRICE_ARCHITECT_ANNUAL  ?? '',
-    };
-    const priceIdKey = `${newTier}_${billing}`;
-    const priceId = STRIPE_PRICE_IDS[priceIdKey];
-    if (!priceId) {
-      console.error(`[SubscriptionScreen] Missing price ID for key: "${priceIdKey}" — env var not set or empty`);
-      Alert.alert('Configuration Error', 'Payment is not yet configured on this server. Please contact support.');
-      return;
-    }
     setIsLoading(true);
     try {
-      const url = await subscriptionService.createCheckout(priceId);
-      if (url) await Linking.openURL(url);
+      const result = await subscriptionService.purchase(newTier, billing);
+      if (result.cancelled) return;
+      Alert.alert('You\'re upgraded!', `Welcome to ${newTier.charAt(0).toUpperCase() + newTier.slice(1)}.`);
+      await refreshUser();
     } catch (err) {
-      console.error('[SubscriptionScreen] checkout error:', err);
-      const message = err instanceof Error ? err.message : 'Could not start checkout. Please try again.';
-      Alert.alert('Payment Error', message);
+      const message = err instanceof Error ? err.message : 'Purchase could not be completed.';
+      Alert.alert('Purchase Error', message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setIsLoading(true);
+    try {
+      const { tier: restored } = await subscriptionService.restorePurchases();
+      if (restored === 'starter') {
+        Alert.alert('Nothing to restore', 'No active subscription was found for this account.');
+      } else {
+        Alert.alert('Restored', `Your ${restored} subscription is active again.`);
+        await refreshUser();
+      }
+    } catch (err) {
+      console.error('[SubscriptionScreen] restore error:', err);
+      Alert.alert('Restore failed', 'Could not restore purchases. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -253,10 +256,10 @@ export function SubscriptionScreen({ navigation }: Props) {
   const handleManageSubscription = async () => {
     try {
       setIsLoading(true);
-      const url = await subscriptionService.manageSubscriptionPortal('asoria://account');
-      if (url) await Linking.openURL(url);
+      await subscriptionService.openStoreManagement();
     } catch (err) {
-      Alert.alert('Error', 'Could not open subscription management. Please visit asoria.app/account on web.');
+      console.error('[SubscriptionScreen] manage subscription error:', err);
+      Alert.alert('Error', 'Could not open subscription management.');
     } finally {
       setIsLoading(false);
     }
@@ -358,10 +361,21 @@ export function SubscriptionScreen({ navigation }: Props) {
               label={isLoading ? 'Loading…' : 'Manage Subscription'}
               variant="outline"
               fullWidth
+              disabled={isLoading}
               onPress={() => { void handleManageSubscription(); }}
             />
           </View>
         )}
+
+        <View style={{ marginBottom: DS.spacing.lg }}>
+          <OvalButton
+            label="Restore Purchases"
+            variant="ghost"
+            fullWidth
+            disabled={isLoading}
+            onPress={() => { void handleRestore(); }}
+          />
+        </View>
 
         {/* Feature comparison table */}
         <ArchText variant="heading" style={{ fontSize: 18, marginBottom: DS.spacing.sm }}>

@@ -1,4 +1,5 @@
 // src/__tests__/materials/materialLibrary.test.ts
+import { describe, it, expect } from 'vitest';
 import { materialLibrary, getMaterial, getMaterialsByCategory } from '../../materials/materialLibrary';
 
 describe('materialLibrary', () => {

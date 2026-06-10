@@ -1,44 +1,35 @@
-const isProduction = Deno.env.get('APP_ENV') === 'production';
-
-// Production allows: web app, mobile deep link, and subdomains
-// Development allows all origins for testing
-const allowedOrigins = isProduction
-  ? ['https://asoria.app', 'asoria://']
-  : ['*'];
-
-function getCorsOrigin(origin: string | null): string {
-  if (!isProduction) return '*';
-  if (!origin) return 'null';
-  // Allow exact matches
-  if (allowedOrigins.includes(origin)) return origin;
-  // Allow subdomain matches for the main app
-  if (origin.endsWith('.asoria.app') || origin === 'https://asoria.app') return origin;
-  return 'null'; // Reject unknown origins in production
-}
-
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': getCorsOrigin,
+// CORS + security headers shared by every edge function.
+//
+// This is a Bearer-token API (auth is sent in the Authorization header, never
+// cookies), so a wildcard origin is safe and correct:
+//   - CORS does not gate who can call the API (any server/curl can); it only
+//     controls whether a browser lets cross-origin JS READ the response.
+//   - With no cookies, there is nothing for a malicious origin to ride on, so
+//     `*` exposes nothing extra.
+// `Access-Control-Allow-Credentials` is intentionally NOT set: it is unnecessary
+// without cookies and is invalid in combination with a wildcard origin.
+//
+// NOTE: the previous version assigned a FUNCTION to `Access-Control-Allow-Origin`,
+// which serialized to an invalid header value and broke CORS for every web client
+// (mobile was unaffected). If strict per-origin allow-listing is ever needed,
+// compute the origin per-request and pass it into each response (a wildcard cannot
+// be narrowed from a single shared static object).
+export const corsHeaders: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Credentials': 'true',
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "default-src 'self' https://asoria.app",
 };
 
-// Alias — all new functions should import securityHeaders
+// Alias — some functions import securityHeaders
 export const securityHeaders = corsHeaders;
 
 export function handleCors(req: Request): Response | null {
   if (req.method === 'OPTIONS') {
-    const origin = req.headers.get('origin');
-    const responseHeaders = {
-      ...corsHeaders,
-      'Access-Control-Allow-Origin': getCorsOrigin(origin),
-    };
-    return new Response('ok', { headers: responseHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
   return null;
 }

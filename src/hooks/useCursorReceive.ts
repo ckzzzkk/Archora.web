@@ -37,7 +37,7 @@ export function useCursorReceive(sessionId: string) {
       unsubscribe();
       setChannelRef(null);
     };
-  }, [sessionId, setParticipantCursor, setChannelRef, blueprintActions]);
+  }, [sessionId, setParticipantCursor, setChannelRef]);
 }
 
 /**

@@ -661,8 +661,9 @@ serve(async (req) => {
 
     // Tier-based model selection with soft cap for chat
     const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
-    const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
-    const userTier = (tierData as string) ?? 'starter';
+    const { data: tierData, error: tierError } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+    if (tierError || !tierData) return Errors.internal('tier lookup failed');
+    const userTier = tierData as string;
     const todayCount = conversationHistory.filter(m => m.role === 'user' && m.content).length;
     const { model: effectiveModel, provider } = resolveChatModel(userTier, todayCount);
     if (!effectiveModel) {

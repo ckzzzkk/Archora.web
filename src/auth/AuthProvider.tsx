@@ -12,6 +12,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { signOut } from './signOut';
+import { configureRevenueCat, loginRevenueCat, logoutRevenueCat } from '../lib/revenuecat';
 import { userCache } from '../utils/userCache';
 import type { User } from '../types';
 import type { Session } from '@supabase/supabase-js';
@@ -21,6 +22,7 @@ interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -48,6 +50,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Network offline — return cached user so tier/limits still work
       return userCache.load();
     }
+  }, []);
+
+  // Re-fetch the current user's profile row (e.g. after a purchase changes their tier).
+  const refreshUser = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    const uid = data.session?.user?.id;
+    if (uid) {
+      const userData = await fetchUserData(uid);
+      if (userData) setUser(userData);
+    }
+  }, [fetchUserData]);
+
+  // Configure RevenueCat once at app start (no-op when keys are absent).
+  useEffect(() => {
+    configureRevenueCat();
   }, []);
 
   // Initial session load + auth state listener
@@ -85,8 +102,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [fetchUserData]);
 
+  // Bind RevenueCat purchases to the Supabase user id (used by revenuecat-webhook
+  // as app_user_id); detach on sign-out.
+  useEffect(() => {
+    if (isLoading) return;
+    if (user?.id) {
+      void loginRevenueCat(user.id);
+    } else {
+      void logoutRevenueCat();
+    }
+  }, [user?.id, isLoading]);
+
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user, isLoading, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

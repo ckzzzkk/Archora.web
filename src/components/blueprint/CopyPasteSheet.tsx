@@ -38,6 +38,7 @@ interface ClipboardRowProps {
 }
 
 function ClipboardRow({ item, onPaste, onDelete }: ClipboardRowProps) {
+  // ClipboardData is a union of complex types; probe for name/category via unknown
   const data = item.data as unknown as Record<string, unknown>;
   const name = typeof data.name === 'string' ? data.name :
     typeof data.category === 'string' ? String(data.category) : TYPE_LABELS[item.type] ?? item.type;

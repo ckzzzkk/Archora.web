@@ -1,0 +1,160 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from '../_shared/cors.ts';
+import { Errors, requireEnv } from '../_shared/errors.ts';
+import { logAudit } from '../_shared/audit.ts';
+import { resolveTierForEvent } from './tierResolver.ts';
+
+// Product-id → tier mapping comes from env, mirroring stripe-webhook's price map.
+// CONTRACT: each RC_PRODUCT_* env var's VALUE must equal the exact product
+// identifier produced by getProductId() in src/utils/iapProducts.ts — i.e.
+// 'asoria_creator_monthly', 'asoria_pro_annual', etc. RevenueCat sends that same
+// string as event.product_id. If an env value does not match, every event for
+// that product silently resolves to 'starter' (no error is logged). Keep these
+// in sync with iapProducts.ts and the App Store / Play product identifiers.
+function buildEnvMap(): Record<string, string> {
+  const pairs: Array<[string | undefined, string]> = [
+    [Deno.env.get('RC_PRODUCT_CREATOR_MONTHLY'), 'creator'],
+    [Deno.env.get('RC_PRODUCT_CREATOR_ANNUAL'), 'creator'],
+    [Deno.env.get('RC_PRODUCT_PRO_MONTHLY'), 'pro'],
+    [Deno.env.get('RC_PRODUCT_PRO_ANNUAL'), 'pro'],
+    [Deno.env.get('RC_PRODUCT_ARCHITECT_MONTHLY'), 'architect'],
+    [Deno.env.get('RC_PRODUCT_ARCHITECT_ANNUAL'), 'architect'],
+  ];
+  const map: Record<string, string> = {};
+  for (const [id, tier] of pairs) if (id) map[id] = tier;
+  return map;
+}
+
+interface RCWebhookBody {
+  event?: {
+    type?: string;
+    id?: string;
+    app_user_id?: string;
+    product_id?: string;
+  };
+}
+
+/** Constant-time string comparison to avoid timing side-channels on the shared secret. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const ae = new TextEncoder().encode(a);
+  const be = new TextEncoder().encode(b);
+  if (ae.length !== be.length) return false;
+  let diff = 0;
+  for (let i = 0; i < ae.length; i++) diff |= ae[i] ^ be[i];
+  return diff === 0;
+}
+
+Deno.serve(async (req: Request): Promise<Response> => {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  if (req.method !== 'POST') return Errors.notFound();
+
+  const expectedAuth = Deno.env.get('REVENUECAT_WEBHOOK_AUTH');
+  if (!expectedAuth) {
+    console.warn('[revenuecat-webhook] REVENUECAT_WEBHOOK_AUTH not configured — skipping');
+    return new Response(JSON.stringify({ received: true, note: 'auth_not_configured' }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // RevenueCat sends the configured value verbatim in the Authorization header.
+  const provided = req.headers.get('Authorization') ?? '';
+  if (!timingSafeEqual(provided, expectedAuth)) {
+    return Errors.unauthorized('Invalid webhook authorization');
+  }
+
+  let body: RCWebhookBody;
+  try {
+    body = await req.json() as RCWebhookBody;
+  } catch {
+    return Errors.validation('Invalid JSON body');
+  }
+
+  const event = body.event;
+  const eventType = event?.type ?? '';
+  const appUserId = event?.app_user_id ?? '';
+  const productId = event?.product_id ?? '';
+  const eventId = event?.id ?? '';
+
+  if (!eventType || !appUserId) {
+    return new Response(JSON.stringify({ received: true, note: 'missing_fields' }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Idempotency via Upstash SET NX (same pattern as stripe-webhook).
+  const upstashUrl = Deno.env.get('UPSTASH_REDIS_REST_URL');
+  const upstashToken = Deno.env.get('UPSTASH_REDIS_REST_TOKEN');
+  if (upstashUrl && upstashToken && eventId) {
+    const res = await fetch(
+      `${upstashUrl}/set/rcwebhook:${eventId}/1/NX/EX/86400`,
+      { method: 'GET', headers: { Authorization: `Bearer ${upstashToken}` } },
+    ).catch(() => null);
+    if (res?.ok) {
+      const j = await res.json() as { result: string | null };
+      if (j.result === null) {
+        return new Response(JSON.stringify({ received: true, note: 'already_processed' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      console.warn('[revenuecat-webhook] Redis unavailable for idempotency check — processing anyway');
+    }
+  }
+
+  const tier = resolveTierForEvent(eventType, productId, buildEnvMap());
+  if (tier === null) {
+    // CANCELLATION / unhandled — acknowledge without changing access.
+    return new Response(JSON.stringify({ received: true, note: 'no_tier_change' }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const supabase = createClient(
+    requireEnv('SUPABASE_URL'),
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
+  );
+
+  try {
+    // app_user_id was set via Purchases.logIn(supabaseUserId), so it equals users.id.
+    const { data: verifiedUser } = await supabase
+      .from('users').select('id').eq('id', appUserId).single();
+    if (!verifiedUser) {
+      console.warn('[revenuecat-webhook] unknown app_user_id:', appUserId);
+      return new Response(JSON.stringify({ received: true, note: 'unknown_user' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // CRITICAL write — this is what every tier gate reads.
+    await supabase.from('users').update({ subscription_tier: tier }).eq('id', appUserId);
+
+    // Best-effort record-keeping (must not throw the request).
+    try {
+      await supabase.from('subscriptions').upsert({
+        user_id: appUserId,
+        provider: 'revenuecat',
+        store: eventType === 'EXPIRATION' ? null : 'app_store_or_play',
+        rc_app_user_id: appUserId,
+        product_id: productId || null,
+        tier,
+        status: tier === 'starter' ? 'canceled' : 'active',
+      }, { onConflict: 'rc_app_user_id' });
+    } catch (e) {
+      console.warn('[revenuecat-webhook] subscriptions upsert skipped:', e);
+    }
+
+    await logAudit({
+      user_id: appUserId,
+      action: 'revenuecat_webhook',
+      metadata: { event: eventType, tier, product_id: productId },
+    });
+
+    return new Response(JSON.stringify({ received: true, tier }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    if (err instanceof Response) return err;
+    console.error('[revenuecat-webhook]', err);
+    return Errors.internal();
+  }
+});

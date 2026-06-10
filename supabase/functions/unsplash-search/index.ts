@@ -2,6 +2,8 @@ import { z } from 'https://esm.sh/zod@3.23.8';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { getAuthUser } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const RequestSchema = z.object({
   query: z.string().min(1).max(100),
@@ -28,9 +30,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  try {
+    const user = await getAuthUser(req);
+    const allowed = await checkRateLimit(`unsplash:${user.id}`, 30, 3600);
+    if (!allowed) return Errors.rateLimited('Unsplash search rate limit exceeded');
+  } catch {
+    // Allow unauthenticated access but rate limit by IP
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const allowed = await checkRateLimit(`unsplash-ip:${ip}`, 10, 3600);
+    if (!allowed) return Errors.rateLimited('Unsplash search rate limit exceeded');
+  }
+
   const apiKey = Deno.env.get('UNSPLASH_ACCESS_KEY');
   if (!apiKey) {
-    return Errors.internal('Unsplash API key not configured');
+    return Errors.upstream('Unsplash API key not configured');
   }
 
   const body = await req.json().catch(() => ({}));

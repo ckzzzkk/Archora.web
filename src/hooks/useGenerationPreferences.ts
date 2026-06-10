@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { aiService } from '../services/aiService';
 import type { GenerationPayload } from '../types/generation';
 import type { UserPreferences } from '../services/aiService';
@@ -28,14 +28,20 @@ export function useGenerationPreferences() {
     return () => { cancelled = true; };
   }, [user?.id]);
 
+  const savingRef = useRef(false);
+
   const save = useCallback(async (payload: Partial<GenerationPayload>) => {
     if (!user?.id) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
     try {
       await aiService.upsertUserPreferences(user.id, payload);
       const updated = await aiService.fetchUserPreferences(user.id);
       setPreferences(updated);
     } catch (err) {
       console.error('[useGenerationPreferences] save failed:', err);
+    } finally {
+      savingRef.current = false;
     }
   }, [user?.id]);
 

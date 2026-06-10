@@ -1,5 +1,9 @@
 import { supabase } from '../lib/supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { CursorPosition, Participant } from '../stores/codesignStore';
+
+// Keyed by sessionId — ensures publish functions reuse the subscribed channel
+const activeChannels = new Map<string, RealtimeChannel>();
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -119,6 +123,7 @@ export function subscribeToSession(
   handlers: CodesignSubscriptionHandlers,
 ): () => void {
   const channel = supabase.channel(`codesign:${sessionId}`);
+  activeChannels.set(sessionId, channel);
 
   channel
     .on('broadcast', { event: 'cursor_update' }, (payload) => {
@@ -142,6 +147,7 @@ export function subscribeToSession(
   channel.subscribe();
 
   return () => {
+    activeChannels.delete(sessionId);
     supabase.removeChannel(channel);
   };
 }
@@ -155,7 +161,8 @@ export async function publishCursorUpdate(
   userId: string,
   cursor: CursorPosition,
 ): Promise<void> {
-  const channel = supabase.channel(`codesign:${sessionId}`);
+  const channel = activeChannels.get(sessionId);
+  if (!channel) return;
   await channel.send({
     type: 'broadcast',
     event: 'cursor_update',
@@ -170,7 +177,8 @@ export async function publishBlueprintDelta(
   sessionId: string,
   delta: BlueprintDelta,
 ): Promise<void> {
-  const channel = supabase.channel(`codesign:${sessionId}`);
+  const channel = activeChannels.get(sessionId);
+  if (!channel) return;
   await channel.send({
     type: 'broadcast',
     event: 'blueprint_delta',

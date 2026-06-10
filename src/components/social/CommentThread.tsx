@@ -10,6 +10,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useHaptics } from '../../hooks/useHaptics';
 import { supabase } from '../../lib/supabase';
 import { useSession } from '../../auth/useSession';
+import { inspoService } from '../../services/inspoService';
 import type { Comment } from '../../types';
 
 interface CommentItemProps {
@@ -132,11 +133,9 @@ export function CommentThread({ templateId, comments, loading = false, onComment
     medium();
     setPosting(true);
     try {
-      await supabase.from('comments').insert({
-        template_id: templateId,
-        body: body.trim(),
-        parent_id: replyTo?.id ?? null,
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await inspoService.postComment(templateId, user.id, body.trim());
       setBody('');
       setReplyTo(null);
       onCommentPosted?.();

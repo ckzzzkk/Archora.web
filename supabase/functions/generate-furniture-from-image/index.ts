@@ -247,8 +247,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // Tier-based model selection
   const supabaseSvc = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'));
-  const { data: tierData } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
-  const tier = (tierData as string) ?? 'starter';
+  const { data: tierData, error: tierError } = await supabaseSvc.rpc('get_user_tier', { user_id: user.id });
+  if (tierError || !tierData) return Errors.internal('tier lookup failed');
+  const tier = tierData as string;
   const modelConfig = TIER_AI_MODELS[tier as keyof typeof TIER_AI_MODELS] ?? TIER_AI_MODELS.starter;
   const selectedModel = modelConfig.generation;
   if (!selectedModel) {
@@ -350,6 +351,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     dimensions,
     styleTags: identification.styleTags,
   };
+
+  // ── Increment viga quota on success ─────────────────────────────────────
+  await supabase.rpc('increment_quota', { p_user_id: user.id, p_field: 'viga_used', p_amount: 1 }).catch((e) => {
+    console.warn('[generate-furniture-from-image] Failed to increment viga_used:', e);
+  });
 
   return new Response(
     JSON.stringify({ customAsset, identification, meshGenerated }),

@@ -42,6 +42,7 @@ export function FurnitureContextMenu({ visible, position, item, onCopy, onCut, o
   }));
 
   if (!visible || !item) return null;
+  const { name, id } = item;
 
   const handlers: Record<string, () => void> = {
     copy: onCopy,
@@ -81,7 +82,7 @@ export function FurnitureContextMenu({ visible, position, item, onCopy, onCut, o
       >
         <View style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: DS.colors.border }}>
           <Text style={{ fontFamily: DS.font.medium, fontSize: 12, color: DS.colors.primaryDim }} numberOfLines={1}>
-            {item.name}
+            {name}
           </Text>
         </View>
 

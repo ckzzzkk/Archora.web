@@ -70,8 +70,11 @@ export function RatingStars({
     setLocalRating(stars);
     onRate?.(stars);
 
-    await supabase.from('template_ratings').upsert({
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('ratings').upsert({
       template_id: templateId,
+      user_id: user.id,
       rating: stars,
     }, { onConflict: 'user_id,template_id' });
   };

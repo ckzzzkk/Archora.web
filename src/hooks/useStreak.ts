@@ -63,6 +63,9 @@ export function useStreak(): StreakState {
     };
 
     updateStreak();
+    return () => {
+      hasRunRef.current = false;
+    };
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { streakCount, didIncrease };

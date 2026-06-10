@@ -49,7 +49,7 @@ let eventEmitter: NativeEventEmitter | null = null;
 
 if (native) {
   try {
-    eventEmitter = new NativeEventEmitter(native as any);
+    eventEmitter = new NativeEventEmitter(native);
   } catch {
     // Fallback if event emitter creation fails
   }

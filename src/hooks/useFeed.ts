@@ -54,6 +54,7 @@ export function useFeed(): UseFeedResult {
   const [hasMore, setHasMore] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const pageRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async (page: number, replace: boolean) => {
     try {
@@ -71,6 +72,12 @@ export function useFeed(): UseFeedResult {
   }, [filter.buildingType]);
 
   const setFilter = useCallback((f: FeedFilter) => {
+    // Abort any in-flight request before starting a new one
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setFilterState(f);
     pageRef.current = 0;
     setRawTemplates([]);
@@ -79,11 +86,13 @@ export function useFeed(): UseFeedResult {
     inspoService
       .getFeed({ page: 0, limit: PAGE_SIZE, buildingType: f.buildingType })
       .then((data) => {
+        if (abortControllerRef.current?.signal.aborted) return;
         setHasMore(data.length === PAGE_SIZE);
         setRawTemplates(data);
         pageRef.current = 0;
       })
       .catch(() => {
+        if (abortControllerRef.current?.signal.aborted) return;
         setLoadError(true);
       })
       .finally(() => setIsLoading(false));

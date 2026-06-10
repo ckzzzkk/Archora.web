@@ -19,7 +19,6 @@
  *   useDirtyProcessor(updateFnRef);
  */
 
-import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import type * as THREE from 'three';
 
@@ -33,8 +32,6 @@ export function useDirtyProcessor(
     ((nodeId: string, mesh: THREE.Object3D) => void) | null
   >,
 ): void {
-  const markDirtyRef = useRef<string[]>([]);
-
   useFrame(() => {
     const dirtyNodes = useBlueprintStore.getState().dirtyNodes;
     if (!dirtyNodes || dirtyNodes.length === 0) return;
