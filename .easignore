@@ -11,6 +11,19 @@ node_modules/
 *.aab
 *.jks
 
+# Native build outputs — regenerated fresh on the EAS builder. MUST be excluded:
+# local Gradle/CMake caches embed absolute /home paths that break the cloud native
+# build, and they balloon the upload archive (android/app/build alone is ~3 GB).
+android/app/build/
+android/build/
+android/.gradle/
+android/.kotlin/
+android/.cxx/
+android/app/.cxx/
+ios/build/
+ios/Pods/
+ios/DerivedData/
+
 # Test files and docs
 src/__tests__/
 docs/
