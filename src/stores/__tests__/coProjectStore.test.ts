@@ -45,7 +45,7 @@ describe('coProjectStore', () => {
       const { coProjectService } = await import('../../services/coProjectService');
       let resolveProject: (value: any) => void;
       const promise = new Promise((r) => { resolveProject = r; });
-      vi.mocked(coProjectService.getCoProject).mockReturnValue(promise);
+      vi.mocked(coProjectService.getCoProject).mockReturnValue(promise as ReturnType<typeof coProjectService.getCoProject>);
 
       const { fetchCoProject } = useCoProjectStore.getState();
       const fetchPromise = fetchCoProject('proj-1');
@@ -71,13 +71,13 @@ describe('coProjectStore', () => {
 
     it('sets activeProject correctly on success', async () => {
       const { coProjectService } = await import('../../services/coProjectService');
-      vi.mocked(coProjectService.getCoProject).mockResolvedValue({ id: 'proj-1', name: 'My Project' });
+      vi.mocked(coProjectService.getCoProject).mockResolvedValue({ id: 'proj-1', name: 'My Project', createdBy: 'user-1', createdAt: '', updatedAt: '' });
 
       const { fetchCoProject } = useCoProjectStore.getState();
       await fetchCoProject('proj-1');
 
       const state = useCoProjectStore.getState();
-      expect(state.activeProject).toEqual({ id: 'proj-1', name: 'My Project' });
+      expect(state.activeProject).toEqual({ id: 'proj-1', name: 'My Project', createdBy: 'user-1', createdAt: '', updatedAt: '' });
     });
   });
 });

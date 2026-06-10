@@ -1,6 +1,24 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createSupabaseMock } from '../helpers/supabaseMock';
 
+// subscriptionService transitively imports react-native-purchases (RevenueCat),
+// react-native, and lib/revenuecat — all ship Flow syntax that the node-env test
+// runner (rolldown) cannot parse. These hoisted mocks stop the real modules from
+// loading. The methods under test (Stripe checkout/portal/payment-intent/sync) use
+// `fetch` + supabase only, so no-op stubs are sufficient.
+vi.mock('react-native-purchases', () => ({
+  default: { purchasePackage: vi.fn(), restorePurchases: vi.fn(), getOfferings: vi.fn() },
+  PURCHASES_ERROR_CODE: { PURCHASE_CANCELLED_ERROR: 'PURCHASE_CANCELLED_ERROR' },
+}));
+vi.mock('react-native', () => ({
+  Linking: { openURL: vi.fn() },
+  Platform: { OS: 'ios' },
+}));
+vi.mock('../../lib/revenuecat', () => ({
+  getCurrentOffering: vi.fn(),
+  getCurrentTierFromCustomerInfo: vi.fn(),
+}));
+
 describe('subscriptionService — createCheckout', () => {
   beforeEach(() => { vi.resetModules(); });
 
@@ -68,8 +86,8 @@ describe('subscriptionService — manageSubscriptionPortal', () => {
     vi.doMock('../../lib/supabase', () => ({ supabase: m }));
     const { subscriptionService } = await import('../../services/subscriptionService');
     await subscriptionService.manageSubscriptionPortal('asoria://account');
-    const [, opts] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-    const body = JSON.parse(opts.body);
+    const opts = vi.mocked(global.fetch).mock.calls[0]?.[1];
+    const body = JSON.parse((opts?.body as string) ?? '{}');
     expect(body.returnUrl).toBe('asoria://account');
   });
 });

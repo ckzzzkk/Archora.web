@@ -74,7 +74,7 @@ describe('codesignStore', () => {
   describe('createSession', () => {
     it('rejects non-Architect tiers', async () => {
       const { supabase } = await import('../../lib/supabase');
-      vi.mocked(supabase.auth.getUser).mockResolvedValue(baseUser as ReturnType<typeof supabase.auth.getUser> extends Promise<infer T> ? T : never);
+      vi.mocked(supabase.auth.getUser).mockResolvedValue(baseUser as unknown as Awaited<ReturnType<typeof supabase.auth.getUser>>);
       mockTierLookup('starter');
 
       const { actions } = useCodesignStore.getState();

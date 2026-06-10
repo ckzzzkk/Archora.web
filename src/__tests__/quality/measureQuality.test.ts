@@ -34,7 +34,6 @@ const USE_AI = !!process.env.RUN_AI_QUALITY;
 
 function brief(over: Partial<GenerationPayload> & { buildingType: GenerationPayload['buildingType'] }): GenerationPayload {
   return {
-    buildingType: over.buildingType,
     plotSize: 175, plotUnit: 'm2', bedrooms: 3, bathrooms: 2, livingAreas: 1,
     hasGarage: false, hasGarden: true, hasPool: false, hasHomeOffice: false, hasUtilityRoom: false,
     style: 'modern', additionalNotes: '', ...over,

@@ -93,7 +93,9 @@ export function createStorageMock(uploadResult = { data: { path: 'test/path' }, 
   };
 }
 
-export function createFunctionsMock(invokeResult = { data: { success: true }, error: null }) {
+export function createFunctionsMock(
+  invokeResult: { data: unknown; error: unknown } = { data: { success: true }, error: null },
+) {
   return { invoke: vi.fn().mockResolvedValue(invokeResult) };
 }
 

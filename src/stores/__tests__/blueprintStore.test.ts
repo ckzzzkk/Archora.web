@@ -45,7 +45,7 @@ describe('blueprintStore', () => {
   describe('undo', () => {
     it('reverts blueprint to previous state and clears dirtyNodes', () => {
       const initial = makeBlueprint();
-      const modified = makeBlueprint({ metadata: { ...initial.metadata, name: 'Modified' } });
+      const modified = makeBlueprint({ metadata: { ...initial.metadata, generatedFrom: 'Modified' } });
 
       useBlueprintStore.setState({
         blueprint: initial,
@@ -87,7 +87,7 @@ describe('blueprintStore', () => {
   describe('redo', () => {
     it('restores next blueprint and clears dirtyNodes', () => {
       const initial = makeBlueprint();
-      const next = makeBlueprint({ metadata: { ...initial.metadata, name: 'Next' } });
+      const next = makeBlueprint({ metadata: { ...initial.metadata, generatedFrom: 'Next' } });
 
       useBlueprintStore.setState({
         blueprint: initial,
@@ -158,9 +158,12 @@ describe('blueprintStore', () => {
       const newRoom: Room = {
         id: 'room-1',
         name: 'Bedroom',
+        type: 'bedroom',
+        wallIds: [],
+        floorMaterial: 'oak',
+        ceilingHeight: 2.4,
         area: 20,
-        boundary: [],
-        floorMaterial: { type: 'wood', variant: 'oak' },
+        centroid: { x: 0, y: 0 },
       };
 
       actions.addRoom(newRoom);
@@ -193,7 +196,7 @@ describe('blueprintStore', () => {
       const { actions } = useBlueprintStore.getState();
 
       // Trigger any action that calls mutate — it should early-return with no error
-      actions.addRoom({ id: 'room-x', name: 'Test', area: 10, boundary: [] });
+      actions.addRoom({ id: 'room-x', name: 'Test', type: 'bedroom', wallIds: [], floorMaterial: 'oak', ceilingHeight: 2.4, area: 10, centroid: { x: 0, y: 0 } });
 
       expect(warnSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('[blueprintStore] mutate')
@@ -209,7 +212,7 @@ describe('blueprintStore', () => {
       useBlueprintStore.setState({ blueprint: { ...initial, chatHistory: [] }, isDirty: false });
 
       const { actions } = useBlueprintStore.getState();
-      const msg = { id: 'msg-1', role: 'user' as const, content: 'Hello', timestamp: Date.now() };
+      const msg = { id: 'msg-1', role: 'user' as const, content: 'Hello', timestamp: new Date().toISOString() };
 
       actions.addChatMessage(msg);
 
@@ -222,7 +225,7 @@ describe('blueprintStore', () => {
     it('early-returns when blueprint is null', () => {
       useBlueprintStore.setState({ blueprint: null });
       const { actions } = useBlueprintStore.getState();
-      const msg = { id: 'msg-1', role: 'user' as const, content: 'Hello', timestamp: Date.now() };
+      const msg = { id: 'msg-1', role: 'user' as const, content: 'Hello', timestamp: new Date().toISOString() };
 
       // Should not throw
       actions.addChatMessage(msg);
@@ -253,7 +256,7 @@ describe('blueprintStore', () => {
       });
 
       const rooms: Room[] = [
-        { id: 'room-1', name: 'Kitchen', area: 15, boundary: [], floorMaterial: { type: 'tile', variant: 'ceramic' } },
+        { id: 'room-1', name: 'Kitchen', type: 'kitchen', wallIds: [], floorMaterial: 'ceramic', ceilingHeight: 2.4, area: 15, centroid: { x: 0, y: 0 } },
       ];
 
       const { actions } = useBlueprintStore.getState();

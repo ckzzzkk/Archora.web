@@ -5,7 +5,6 @@ import type { BlueprintData, FloorData, FurniturePiece } from '../../types/bluep
 
 function brief(over: Partial<GenerationPayload> & { buildingType: GenerationPayload['buildingType'] }): GenerationPayload {
   return {
-    buildingType: over.buildingType,
     plotSize: 175, plotUnit: 'm2', bedrooms: 3, bathrooms: 2, livingAreas: 1,
     hasGarage: false, hasGarden: true, hasPool: false, hasHomeOffice: false, hasUtilityRoom: false,
     style: 'modern', additionalNotes: '', ...over,
