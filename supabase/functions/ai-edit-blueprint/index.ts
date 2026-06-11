@@ -335,10 +335,19 @@ ${SUGGEST_SYSTEM_PROMPT}`;
         };
       } else {
         const responseData = await claudeResponse.json();
-        const { content: rawText } = parseAIResponse(reqConfig.provider, responseData);
-        result = rawText
-          ? safeParseBlueprint(rawText, blueprint)
-          : { message: 'No response from AI. Please try again.', blueprint: blueprint };
+        const { content: rawText, stopReason } = parseAIResponse(reqConfig.provider, responseData);
+        if (stopReason === 'max_tokens') {
+          // Truncated mid-JSON — "try rephrasing" would mislead; the blueprint is too big.
+          console.warn('[ai-edit-blueprint] Output truncated at max_tokens for blueprint of', JSON.stringify(blueprint).length, 'chars');
+          result = {
+            message: 'This design is too large to edit in one pass. Try a smaller, more specific change.',
+            blueprint: blueprint,
+          };
+        } else {
+          result = rawText
+            ? safeParseBlueprint(rawText, blueprint)
+            : { message: 'No response from AI. Please try again.', blueprint: blueprint };
+        }
       }
     } catch (fetchErr) {
       clearTimeout(timeoutId);

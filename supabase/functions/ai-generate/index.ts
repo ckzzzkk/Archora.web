@@ -1836,7 +1836,7 @@ ${SYSTEM_PROMPT}`;
     }
 
     const responseData = await claudeResponse.json();
-    const { content: rawText, inputTokens, outputTokens } = parseAIResponse(reqConfig.provider, responseData);
+    let { content: rawText, inputTokens, outputTokens } = parseAIResponse(reqConfig.provider, responseData);
 
     if (!rawText) {
       throw new Error('Empty response from AI');
@@ -1848,7 +1848,48 @@ ${SYSTEM_PROMPT}`;
       return parsed;
     }
 
-    let blueprintData = parseBlueprint(rawText);
+    let blueprintData: Record<string, unknown>;
+    try {
+      blueprintData = parseBlueprint(rawText);
+    } catch (parseErr) {
+      const { stopReason } = parseAIResponse(reqConfig.provider, responseData);
+      if (stopReason !== 'max_tokens') throw parseErr;
+
+      // Output hit the token budget mid-JSON — retrying with the same budget
+      // would truncate again, so retry once with double the budget.
+      console.warn('[ai-generate] Output truncated at max_tokens — retrying with larger budget');
+      const truncConfig = buildAIRequest(
+        selectedModel,
+        effectiveSystemPrompt,
+        [{ role: 'user', content: userMessage }],
+        16000,
+      );
+      const truncController = new AbortController();
+      const truncTimeoutId = setTimeout(() => truncController.abort(), 55_000);
+      let truncResponse: Response;
+      try {
+        truncResponse = await fetch(truncConfig.url, {
+          method: 'POST',
+          signal: truncController.signal,
+          headers: truncConfig.headers,
+          body: JSON.stringify(truncConfig.body),
+        });
+      } finally {
+        clearTimeout(truncTimeoutId);
+      }
+      if (!truncResponse.ok) throw parseErr;
+      const truncResult = parseAIResponse(truncConfig.provider, await truncResponse.json());
+      if (truncResult.stopReason === 'max_tokens' || !truncResult.content) {
+        return new Response(JSON.stringify({
+          error: 'AI_RESPONSE_TRUNCATED',
+          message: 'The design was too complex to generate in one pass. Try fewer rooms or floors.',
+        }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      rawText = truncResult.content;
+      inputTokens += truncResult.inputTokens;
+      outputTokens += truncResult.outputTokens;
+      blueprintData = parseBlueprint(rawText);
+    }
 
     // Validate and retry if critical issues found
     const violations = validateBlueprintBasic(blueprintData);

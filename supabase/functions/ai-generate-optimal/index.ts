@@ -215,19 +215,29 @@ async function callClaude(
   selectedModel: string,
   temperature = 0,
 ): Promise<unknown> {
-  const reqConfig = buildAIRequest(selectedModel, systemPrompt, [{ role: 'user', content: userMessage }], maxTokens, temperature);
-  const response = await fetch(reqConfig.url, { method: 'POST', signal, headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
+  const attempt = async (budget: number) => {
+    const reqConfig = buildAIRequest(selectedModel, systemPrompt, [{ role: 'user', content: userMessage }], budget, temperature);
+    const response = await fetch(reqConfig.url, { method: 'POST', signal, headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Claude API error ${response.status}: ${body.slice(0, 200)}`);
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Claude API error ${response.status}: ${body.slice(0, 200)}`);
+    }
+
+    return parseAIResponse(reqConfig.provider, await response.json());
+  };
+
+  let result = await attempt(maxTokens);
+  // Parse JSON — direct first, then first embedded object (markdown fences, prose)
+  let parsed = parseFirstJson(result.content);
+
+  // Truncated mid-JSON: same budget would truncate again, so retry once doubled.
+  if (parsed === null && result.stopReason === 'max_tokens') {
+    console.warn('[ai-generate-optimal] Output truncated at max_tokens — retrying with larger budget');
+    result = await attempt(maxTokens * 2);
+    parsed = parseFirstJson(result.content);
   }
 
-  const data = await response.json();
-  const { content: rawText } = parseAIResponse(reqConfig.provider, data);
-
-  // Parse JSON — direct first, then first embedded object (markdown fences, prose)
-  const parsed = parseFirstJson(rawText);
   if (parsed === null) throw new Error('AI returned non-JSON response');
   return parsed;
 }

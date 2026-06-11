@@ -135,28 +135,38 @@ export interface AIResponse {
   content: string;
   inputTokens: number;
   outputTokens: number;
+  /**
+   * 'max_tokens' means the model hit the output budget and the content is
+   * TRUNCATED — JSON in it will not parse. Callers should retry with a larger
+   * budget or return a structured error rather than a generic parse failure.
+   */
+  stopReason: 'end' | 'max_tokens' | 'other';
 }
 
 export function parseAIResponse(provider: ModelProvider, responseData: unknown): AIResponse {
   if (provider === 'deepseek') {
     const data = responseData as {
-      choices: Array<{ message: { content: string } }>;
+      choices: Array<{ message: { content: string }; finish_reason?: string }>;
       usage: { prompt_tokens: number; completion_tokens: number };
     };
+    const finish = data.choices[0]?.finish_reason;
     return {
       content: data.choices[0]?.message?.content ?? '',
       inputTokens: data.usage?.prompt_tokens ?? 0,
       outputTokens: data.usage?.completion_tokens ?? 0,
+      stopReason: finish === 'length' ? 'max_tokens' : finish === 'stop' ? 'end' : 'other',
     };
   } else {
     const data = responseData as {
       content: Array<{ type: string; text?: string }>;
       usage?: { input_tokens: number; output_tokens: number };
+      stop_reason?: string;
     };
     return {
       content: data.content?.[0]?.type === 'text' ? (data.content[0].text ?? '') : '',
       inputTokens: data.usage?.input_tokens ?? 0,
       outputTokens: data.usage?.output_tokens ?? 0,
+      stopReason: data.stop_reason === 'max_tokens' ? 'max_tokens' : data.stop_reason === 'end_turn' ? 'end' : 'other',
     };
   }
 }
