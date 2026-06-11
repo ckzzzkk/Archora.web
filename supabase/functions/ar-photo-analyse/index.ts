@@ -50,13 +50,16 @@ const ANALYSIS_PROMPT = (direction: string) =>
   `If unsure about dimensions, use typical residential defaults: wall 3–5m wide, ceiling 2.4m. ` +
   `Always return valid JSON only — no markdown, no explanation.`;
 
-function safeParseResult(text: string): PhotoAnalysisResult {
-  try {
-    // Extract JSON from response (Claude may wrap in markdown)
-    const parsed = parseFirstJson<Partial<PhotoAnalysisResult>>(text);
-    if (parsed === null) return FALLBACK_RESULT;
+function safeParseResult(text: string): { result: PhotoAnalysisResult; usedFallback: boolean } {
+  // Extract JSON from response (Claude may wrap in markdown)
+  const parsed = parseFirstJson<Partial<PhotoAnalysisResult>>(text);
+  if (parsed === null) {
+    console.warn('[ar-photo-analyse] Failed to parse Claude response, using fallback');
+    return { result: FALLBACK_RESULT, usedFallback: true };
+  }
 
-    return {
+  return {
+    result: {
       wallWidth: typeof parsed.wallWidth === 'number' && parsed.wallWidth > 0 ? parsed.wallWidth : FALLBACK_RESULT.wallWidth,
       wallHeight: typeof parsed.wallHeight === 'number' && parsed.wallHeight > 0 ? parsed.wallHeight : FALLBACK_RESULT.wallHeight,
       ceilingHeight: typeof parsed.ceilingHeight === 'number' && parsed.ceilingHeight > 0 ? parsed.ceilingHeight : FALLBACK_RESULT.ceilingHeight,
@@ -64,11 +67,9 @@ function safeParseResult(text: string): PhotoAnalysisResult {
       doors: Array.isArray(parsed.doors) ? parsed.doors : [],
       roomType: typeof parsed.roomType === 'string' ? parsed.roomType : 'living_room',
       notes: typeof parsed.notes === 'string' ? parsed.notes : '',
-    };
-  } catch {
-    console.warn('[ar-photo-analyse] Failed to parse Claude response, using fallback');
-    return FALLBACK_RESULT;
-  }
+    },
+    usedFallback: false,
+  };
 }
 
 serve(async (req: Request) => {
@@ -93,7 +94,7 @@ serve(async (req: Request) => {
     const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_KEY) {
       console.warn('[ar-photo-analyse] ANTHROPIC_API_KEY not set — returning fallback');
-      return new Response(JSON.stringify(FALLBACK_RESULT), {
+      return new Response(JSON.stringify({ ...FALLBACK_RESULT, usedFallback: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -129,17 +130,14 @@ serve(async (req: Request) => {
     };
 
     let result = FALLBACK_RESULT;
+    let usedFallback = true;
     const reqConfig = buildAIRequest(photoAnalysisModel, systemPrompt, [userMessage as unknown as { role: string; content: string }], 1024);
     const claudeResponse = await fetch(reqConfig.url, { method: 'POST', headers: reqConfig.headers, body: JSON.stringify(reqConfig.body) });
     if (claudeResponse.ok) {
       const responseData = await claudeResponse.json();
       const { content } = parseAIResponse(reqConfig.provider, responseData);
       if (content) {
-        try {
-          result = safeParseResult(content);
-        } catch {
-          console.warn('[ar-photo-analyse] Parse error');
-        }
+        ({ result, usedFallback } = safeParseResult(content));
       }
     } else {
       console.error('[ar-photo-analyse] AI API error:', claudeResponse.status, await claudeResponse.text());
@@ -153,7 +151,7 @@ serve(async (req: Request) => {
       metadata: { direction: wallDirection, ...extractRequestMeta(req) },
     });
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify({ ...result, usedFallback }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {

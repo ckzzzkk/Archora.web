@@ -14,6 +14,8 @@ export interface PhotoAnalysisResult {
   roomType: string;
   notes: string;
   confidence?: number;
+  /** True when the server could not analyse the photo and returned default dimensions. */
+  usedFallback?: boolean;
 }
 
 // Simple UUID-like ID generator (no external dependency)

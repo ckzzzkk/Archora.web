@@ -127,8 +127,11 @@ function ARPhotoModeContent() {
       const height = Math.max(...ys) - Math.min(...ys);
       const area = width * height;
 
+      // Walls the server couldn't analyse came back as fixed defaults — they
+      // carry no real information, so they count as zero confidence.
+      const fallbackCount = results.filter((r) => r.usedFallback).length;
       const avgConfidence =
-        results.reduce((sum, r) => sum + (r.confidence ?? 0.5), 0) / results.length;
+        results.reduce((sum, r) => sum + (r.usedFallback ? 0 : (r.confidence ?? 0.5)), 0) / results.length;
 
       setScanResult({
         blueprint,
@@ -139,6 +142,13 @@ function ARPhotoModeContent() {
       });
 
       setShowResult(true);
+
+      if (fallbackCount > 0) {
+        Alert.alert(
+          'Estimated dimensions',
+          `${fallbackCount} of ${results.length} walls could not be analysed from the photos — typical room dimensions were used for them. Measurements may be inaccurate.`,
+        );
+      }
     } catch (error) {
       console.error('Analysis error:', error);
       Alert.alert('Error', 'Failed to analyze photos. Please try again.');
