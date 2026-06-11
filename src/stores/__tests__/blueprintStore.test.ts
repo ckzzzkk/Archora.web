@@ -355,20 +355,22 @@ describe('blueprintStore', () => {
   });
 
   describe('addFurnitureFromAR coordinate mapping', () => {
-    it('maps AR world coordinates onto blueprint axes (x=worldX, y=-worldZ, z=worldY)', () => {
+    it('maps AR world onto the furniture convention (x=plan east, y=up, z=plan south)', () => {
       const initial = makeBlueprint();
       useBlueprintStore.setState({ blueprint: initial, history: [initial], historyIndex: 0, currentFloorIndex: 0 });
 
       const { actions } = useBlueprintStore.getState();
       actions.addFurnitureFromAR([{
         id: 'ar-chair-1', name: 'Chair', category: 'living',
-        worldX: 1.5, worldY: 0, worldZ: 2.0, width: 0.6, depth: 0.6,
+        worldX: 1.5, worldY: 0.8, worldZ: 2.0, width: 0.6, depth: 0.6,
       }]);
 
       const state = useBlueprintStore.getState();
       const piece = state.blueprint!.floors[0].furniture.find((f) => f.id === 'ar-chair-1');
       expect(piece).toBeDefined();
-      expect(piece!.position).toEqual({ x: 1.5, y: -2.0, z: 0 });
+      // Plan position from (worldX, -worldZ); elevation pinned to the floor —
+      // AR worldY is relative to the session origin, never the blueprint floor.
+      expect(piece!.position).toEqual({ x: 1.5, y: 0, z: -2.0 });
       expect(piece!.dimensions.x).toBe(0.6);
       expect(piece!.dimensions.z).toBe(0.6);
       // Height is defaulted (AR payload carries no height yet)

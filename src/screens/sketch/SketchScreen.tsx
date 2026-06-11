@@ -788,14 +788,15 @@ export function SketchScreen() {
     toolPressScale.value = withSpring(1, { damping: 14, stiffness: 300 });
   };
 
+  // 'dimension' and 'text' annotation tools are not implemented yet — they
+  // had toolbar buttons but no gesture handlers (tapping them just disabled
+  // drawing). Hidden until the annotation feature lands.
   const TOOLS: { id: DrawTool; label: string }[] = [
     { id: 'wall', label: 'Wall' },
     { id: 'line', label: 'Line' },
     { id: 'curve', label: 'Curve' },
     { id: 'arc', label: 'Arc' },
     { id: 'eraser', label: 'Erase' },
-    { id: 'dimension', label: 'Dim' },
-    { id: 'text', label: 'Text' },
   ];
 
   return (

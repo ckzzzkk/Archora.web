@@ -490,19 +490,20 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
 
       addFurnitureFromAR: (items) => {
         const pieces: FurniturePiece[] = items.map(item => {
-          // AR world → blueprint 2D: blueprint.x = world.x, blueprint.y = -world.z
-          const bpX = item.worldX;
-          const bpY = -item.worldZ;
-          // Centre the furniture on the AR Y position (floor level = worldY)
-          const bpZ = item.worldY;
+          // Furniture position convention (furniturePlacer/Canvas2D/3D):
+          // x = plan east, y = ELEVATION (up), z = plan south.
+          // AR world is x east, y up, z toward the viewer — so the plan
+          // coords are (worldX, -worldZ) and the piece sits on the floor
+          // (y=0; AR worldY is relative to the AR session origin, not the
+          // blueprint floor, so it must not leak into the elevation).
           return {
             id: item.id,
             name: item.name,
             category: item.category,
             roomId: '', // unassigned — user can snap to room later
-            position: { x: bpX, y: bpY, z: bpZ },
+            position: { x: item.worldX, y: 0, z: -item.worldZ },
             rotation: { x: 0, y: 0, z: 0 },
-            dimensions: { x: item.width, y: 0.45, z: item.depth }, // default 45cm height
+            dimensions: { x: item.width, y: 0.45, z: item.depth }, // default 45cm height (AR payload carries no height yet)
             procedural: true,
           };
         });

@@ -223,6 +223,16 @@ export function ARScanScreen() {
                   variant="filled"
                 />
 
+                {/* Manual corner-by-corner scan — needs AR plane detection but
+                    no depth sensor; the precise option on mid-range devices */}
+                {hasAR && (
+                  <OvalButton
+                    label="Mark Corners Manually"
+                    onPress={canScan ? () => handleSelectScanMode('manual') : () => {}}
+                    variant="outline"
+                  />
+                )}
+
                 {/* Capability badges */}
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {hasLiDAR && (
