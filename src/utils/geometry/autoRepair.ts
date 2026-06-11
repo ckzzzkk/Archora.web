@@ -174,9 +174,12 @@ function snapWallEndpoints(walls: Wall[], report: RepairReport): Wall[] {
         0.05,
       );
 
-      // Apply to all walls in cluster
+      // Apply to all walls in cluster, counting only endpoints that actually move
+      // (coincident endpoints are the normal case in clean geometry, not a fix).
+      let moved = 0;
       for (const idx of cluster) {
         const ep = endpoints[idx];
+        if (distance(ep.point, avg) > 1e-9) moved++;
         if (ep.isStart) {
           result[ep.wallIndex].start = avg;
         } else {
@@ -184,7 +187,7 @@ function snapWallEndpoints(walls: Wall[], report: RepairReport): Wall[] {
         }
         visited.add(idx);
       }
-      report.wallsSnapped += cluster.length - 1;
+      report.wallsSnapped += moved;
     }
   }
 

@@ -123,7 +123,7 @@ describe('blueprintStore', () => {
       const storedBlueprint = makeBlueprint();
 
       const { blueprintStorage } = await import('../../utils/storage');
-      vi.mocked(blueprintStorage.getString).mockReturnValue(JSON.stringify(storedBlueprint));
+      vi.spyOn(blueprintStorage, 'getString').mockReturnValue(JSON.stringify(storedBlueprint));
 
       useBlueprintStore.setState({ dirtyNodes: ['node-1', 'node-2'] });
 
@@ -136,9 +136,9 @@ describe('blueprintStore', () => {
       expect(state.saveStatus).toBe('saved');
     });
 
-    it('does nothing when storage is empty', () => {
-      const { blueprintStorage } = require('../../utils/storage');
-      vi.mocked(blueprintStorage.getString).mockReturnValue(undefined);
+    it('does nothing when storage is empty', async () => {
+      const { blueprintStorage } = await import('../../utils/storage');
+      vi.spyOn(blueprintStorage, 'getString').mockReturnValue(null);
 
       const { actions } = useBlueprintStore.getState();
       actions.loadFromStorage();
@@ -267,6 +267,112 @@ describe('blueprintStore', () => {
       // history should NOT grow (setRoomsDirectly bypasses mutate)
       expect(state.history.length).toBe(1);
       expect(state.historyIndex).toBe(0);
+    });
+  });
+
+  function makeRoom(id: string): Room {
+    return { id, name: id, type: 'bedroom', wallIds: [], floorMaterial: 'oak', ceilingHeight: 2.4, area: 12, centroid: { x: 0, y: 0 } } as Room;
+  }
+
+  describe('history bounds (maxUndoSteps)', () => {
+    it('caps history length at the tier maxUndoSteps (starter = 5)', () => {
+      // No cached user in the test env → tier resolves to 'starter' (maxUndoSteps 5).
+      const initial = makeBlueprint();
+      useBlueprintStore.setState({ blueprint: initial, history: [initial], historyIndex: 0, currentFloorIndex: 0 });
+
+      const { actions } = useBlueprintStore.getState();
+      for (let i = 0; i < 12; i++) {
+        actions.addRoom(makeRoom(`room-${i}`));
+      }
+
+      const state = useBlueprintStore.getState();
+      expect(state.history.length).toBeLessThanOrEqual(5);
+      expect(state.historyIndex).toBe(state.history.length - 1);
+      // The latest state must always be the head of history.
+      expect(state.history[state.historyIndex]).toBe(state.blueprint);
+    });
+
+    it('undo bottoms out at the oldest retained state without corruption', () => {
+      const initial = makeBlueprint();
+      useBlueprintStore.setState({ blueprint: initial, history: [initial], historyIndex: 0, currentFloorIndex: 0 });
+      const { actions } = useBlueprintStore.getState();
+      for (let i = 0; i < 8; i++) actions.addRoom(makeRoom(`room-${i}`));
+
+      for (let i = 0; i < 20; i++) actions.undo(); // far more than history holds
+
+      const state = useBlueprintStore.getState();
+      expect(state.historyIndex).toBe(0);
+      expect(state.blueprint).toBe(state.history[0]);
+    });
+  });
+
+  describe('redo truncation after a new mutation', () => {
+    it('a mutation after undo discards the redo branch', () => {
+      const initial = makeBlueprint();
+      useBlueprintStore.setState({ blueprint: initial, history: [initial], historyIndex: 0, currentFloorIndex: 0 });
+      const { actions } = useBlueprintStore.getState();
+
+      actions.addRoom(makeRoom('a'));
+      actions.addRoom(makeRoom('b'));
+      actions.undo(); // back to state with room 'a' only
+
+      actions.addRoom(makeRoom('c')); // new branch — 'b' must be unreachable
+
+      const before = useBlueprintStore.getState();
+      const indexBefore = before.historyIndex;
+      actions.redo(); // must be a no-op
+      const after = useBlueprintStore.getState();
+
+      expect(after.historyIndex).toBe(indexBefore);
+      const roomIds = after.blueprint!.floors[0].rooms.map((r) => r.id);
+      expect(roomIds).toContain('a');
+      expect(roomIds).toContain('c');
+      expect(roomIds).not.toContain('b');
+    });
+  });
+
+  describe('dirtyNodes propagation', () => {
+    it('mutations with affected ids add them to dirtyNodes', () => {
+      const initial = makeBlueprint({
+        floors: [{
+          ...makeBlueprint().floors[0],
+          furniture: [{
+            id: 'sofa-1', name: 'Sofa', category: 'living', roomId: '',
+            position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 },
+            dimensions: { x: 2, y: 0.9, z: 0.85 }, procedural: true,
+          }],
+        }],
+      });
+      useBlueprintStore.setState({ blueprint: initial, history: [initial], historyIndex: 0, currentFloorIndex: 0 });
+
+      const { actions } = useBlueprintStore.getState();
+      actions.updateFurniture('sofa-1', { position: { x: 1, y: 1, z: 0 } });
+
+      const state = useBlueprintStore.getState();
+      expect(state.dirtyNodes).toContain('sofa-1');
+      expect(state.isDirty).toBe(true);
+    });
+  });
+
+  describe('addFurnitureFromAR coordinate mapping', () => {
+    it('maps AR world coordinates onto blueprint axes (x=worldX, y=-worldZ, z=worldY)', () => {
+      const initial = makeBlueprint();
+      useBlueprintStore.setState({ blueprint: initial, history: [initial], historyIndex: 0, currentFloorIndex: 0 });
+
+      const { actions } = useBlueprintStore.getState();
+      actions.addFurnitureFromAR([{
+        id: 'ar-chair-1', name: 'Chair', category: 'living',
+        worldX: 1.5, worldY: 0, worldZ: 2.0, width: 0.6, depth: 0.6,
+      }]);
+
+      const state = useBlueprintStore.getState();
+      const piece = state.blueprint!.floors[0].furniture.find((f) => f.id === 'ar-chair-1');
+      expect(piece).toBeDefined();
+      expect(piece!.position).toEqual({ x: 1.5, y: -2.0, z: 0 });
+      expect(piece!.dimensions.x).toBe(0.6);
+      expect(piece!.dimensions.z).toBe(0.6);
+      // Height is defaulted (AR payload carries no height yet)
+      expect(piece!.dimensions.y).toBeGreaterThan(0);
     });
   });
 });
