@@ -24,8 +24,10 @@ export async function checkRateLimit(
   limit: number,
   windowSeconds: number,
 ): Promise<boolean> {
-  const upstashUrl = Deno.env.get('UPSTASH_REDIS_REST_URL');
-  const upstashToken = Deno.env.get('UPSTASH_REDIS_REST_TOKEN');
+  // trim(): a secret stored with a stray trailing space/newline must not
+  // produce an invalid URL (this 500'd every rate-limited endpoint once).
+  const upstashUrl = Deno.env.get('UPSTASH_REDIS_REST_URL')?.trim();
+  const upstashToken = Deno.env.get('UPSTASH_REDIS_REST_TOKEN')?.trim();
 
   if (!upstashUrl || !upstashToken) {
     // Fail open — rate limiting is a guard, not a gate.
@@ -36,24 +38,31 @@ export async function checkRateLimit(
 
   const key = `rate_limit:${identifier}`;
 
-  const response = await fetch(`${upstashUrl}/pipeline`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${upstashToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify([
-      ['INCR', key],
-      ['EXPIRE', key, windowSeconds],
-    ]),
-  });
+  try {
+    const response = await fetch(`${upstashUrl}/pipeline`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${upstashToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([
+        ['INCR', key],
+        ['EXPIRE', key, windowSeconds],
+      ]),
+    });
 
-  if (!response.ok) {
-    // Fail open — don't block user requests if Redis is temporarily unavailable.
-    console.warn('[rateLimit] Redis request failed:', response.status, '— skipping limit for:', identifier);
+    if (!response.ok) {
+      // Fail open — don't block user requests if Redis is temporarily unavailable.
+      console.warn('[rateLimit] Redis request failed:', response.status, '— skipping limit for:', identifier);
+      return true;
+    }
+
+    const results = await response.json() as Array<{ result: number }>;
+    return results[0].result <= limit;
+  } catch (err) {
+    // Fail open on network errors / malformed URLs — a broken Redis config
+    // must degrade to "no rate limiting", never to a 500 on every endpoint.
+    console.warn('[rateLimit] Redis unreachable —', err instanceof Error ? err.message : err, '— skipping limit for:', identifier);
     return true;
   }
-
-  const results = await response.json() as Array<{ result: number }>;
-  return results[0].result <= limit;
 }

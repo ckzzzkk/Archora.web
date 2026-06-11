@@ -238,3 +238,19 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+
+# ── Edge function JWT verification overrides ─────────────────────────────────
+# These endpoints are intentionally public (no user JWT): contact-form is the
+# unauthenticated support form (rate-limited by IP), and the webhooks are
+# called by external services authenticated via shared secrets instead.
+[functions.contact-form]
+verify_jwt = false
+
+[functions.render-webhook]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.revenuecat-webhook]
+verify_jwt = false
