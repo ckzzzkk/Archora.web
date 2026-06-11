@@ -1985,6 +1985,15 @@ Return ONLY valid JSON.`;
       }
     }
 
+    // Explicit response contract: revalidate the final blueprint so the client
+    // doesn't have to dig metadata tags out to learn the geometry is broken.
+    const finalCriticals = [
+      ...validateBlueprintBasic(blueprintData).filter(v => v.severity === 'critical').map(v => v.message),
+      ...validateMultiFloorBlueprint(blueprintData, parsed.data.floors)
+        .filter(v => v.severity === 'critical').map(v => `Floor ${v.floor}: ${v.message}`),
+    ];
+    const generationStatus: 'ok' | 'degraded' = finalCriticals.length > 0 ? 'degraded' : 'ok';
+
     // Log to ai_generations table
     const supabase = createClient(
       requireEnv('SUPABASE_URL'),
@@ -2037,7 +2046,11 @@ Return ONLY valid JSON.`;
       }
     }
 
-    return new Response(JSON.stringify({ blueprint: blueprintData }), {
+    return new Response(JSON.stringify({
+      blueprint: blueprintData,
+      generationStatus,
+      ...(generationStatus === 'degraded' ? { violations: finalCriticals } : {}),
+    }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

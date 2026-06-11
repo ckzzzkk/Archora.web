@@ -72,4 +72,47 @@ describe('aiService geometry safety net — ensureSoundGeometry', () => {
     expect(result.rooms.length).toBeGreaterThan(0);
     expect(result.walls.length).toBeGreaterThan(0);
   });
+
+  it('handles a server response flagged generationStatus=degraded without throwing', async () => {
+    const { aiService } = await import('../../services/aiService');
+
+    // Server returns 200 + an explicitly degraded blueprint (broken geometry).
+    const degraded = {
+      id: 'degraded-1',
+      version: 1,
+      metadata: { style: 'modern', buildingType: 'house', totalArea: 100, roomCount: 0, generatedFrom: 'ai' },
+      floors: [],
+      walls: [
+        { id: 'a', start: { x: 0, y: 0 }, end: { x: 5, y: 0 }, thickness: 0.2, height: 2.7 },
+      ],
+      rooms: [],
+      openings: [],
+      furniture: [],
+      customAssets: [],
+      chatHistory: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({
+        blueprint: degraded,
+        generationStatus: 'degraded',
+        violations: ['Walls do not form closed loops'],
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+
+    try {
+      const result = await aiService.generateFloorPlan({ buildingType: 'house', style: 'modern' });
+      // The client safety net must turn the degraded payload into usable geometry.
+      // Depending on whether the broken payload fails schema validation or the
+      // geometry gate, the procedural replacement is marked 'layout-engine' or
+      // 'procedural_fallback' — either way the user never sees broken geometry.
+      expect(result.rooms.length).toBeGreaterThan(0);
+      expect(result.walls.length).toBeGreaterThan(0);
+      expect(['procedural_fallback', 'layout-engine']).toContain(result.metadata.generatedFrom);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
 });

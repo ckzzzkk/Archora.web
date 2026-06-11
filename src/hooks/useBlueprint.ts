@@ -29,6 +29,9 @@ export function useBlueprint() {
           buildingType: params.buildingType as 'house' | 'apartment' | 'office' | 'studio' | 'villa' | 'commercial',
         });
         actions.loadBlueprint(data);
+        if (data.metadata?.generatedFrom === 'procedural_fallback') {
+          showToast('The AI design needed repair — generated a standard layout instead', 'info');
+        }
         return data;
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Generation failed';

@@ -157,6 +157,13 @@ export const aiService = {
         ? (raw as { blueprint: BlueprintData }).blueprint
         : (raw as BlueprintData);
 
+      // Explicit server contract: the edge function revalidates its final output
+      // and reports degraded geometry top-level (not just a buried metadata tag).
+      const serverStatus = (raw as { generationStatus?: string; violations?: string[] });
+      if (serverStatus.generationStatus === 'degraded') {
+        console.warn('[aiService] server flagged degraded geometry:', serverStatus.violations ?? []);
+      }
+
       // Validate AI-generated blueprint against schema to prevent malformed/injected data
       const validation = validateBlueprintData(rawBlueprint);
       if (!validation.valid || !validation.data) {
