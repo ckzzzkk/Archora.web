@@ -58,15 +58,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
       rendered_gltf_url: status === 'done' ? gltf_url : null,
       render_status: status,
       render_error: error ?? null,
+      render_task_id: null,
       updated_at: new Date().toISOString(),
     };
 
-    const { error: updateError } = await supabase
+    // Scoped update: only the project whose in-flight render_task_id matches
+    // may be completed. A forged/replayed body (or a leaked secret) cannot
+    // overwrite arbitrary projects' render fields.
+    const { data: updated, error: updateError } = await supabase
       .from('projects')
       .update(updateData)
-      .eq('id', projectId);
+      .eq('id', projectId)
+      .eq('render_task_id', task_id)
+      .select('id');
 
     if (updateError) return Errors.internal('Failed to update project');
+    if (!updated || updated.length === 0) {
+      console.warn('[render-webhook] No project matched id + render_task_id — stale or forged callback:', projectId, task_id);
+      return Errors.notFound('No matching in-flight render');
+    }
 
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

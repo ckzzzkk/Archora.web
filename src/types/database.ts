@@ -152,6 +152,8 @@ export interface Project {
   rendered_gltf_url: string | null;
   render_status: RenderStatus;
   render_error: string | null;
+  /** Meshy/worker task id of the in-flight render; null when idle (migration 063) */
+  render_task_id: string | null;
 }
 
 export interface ProjectVersion {

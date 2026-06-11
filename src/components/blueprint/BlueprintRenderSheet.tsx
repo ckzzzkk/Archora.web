@@ -66,12 +66,32 @@ export function BlueprintRenderSheet({ onClose }: BlueprintRenderSheetProps) {
         throw new Error(err.message ?? 'Render request failed');
       }
 
-      const { gltfUrl } = await resp.json() as { taskId: string; gltfUrl: string; projectId: string };
+      // Render is dispatched asynchronously — poll render-status until the
+      // Meshy task completes (the old synchronous wait hit edge-function
+      // execution limits on slow renders).
+      await resp.json();
+      const deadline = Date.now() + 5 * 60 * 1000;
+      for (;;) {
+        await new Promise((r) => setTimeout(r, 5000));
+        const statusResp = await fetch(
+          `${supabaseUrl}/functions/v1/render-status?projectId=${encodeURIComponent(projectId)}`,
+          { headers: { Authorization: `Bearer ${session.access_token}` } },
+        );
+        if (!statusResp.ok) throw new Error('Failed to check render status');
+        const s = await statusResp.json() as { status: string; gltfUrl: string | null; error: string | null };
 
-      if (!gltfUrl) throw new Error('No GLTF URL returned');
-
-      setGltfUrl(gltfUrl);
-      setStatus('done');
+        if (s.status === 'done' && s.gltfUrl) {
+          setGltfUrl(s.gltfUrl);
+          setStatus('done');
+          return;
+        }
+        if (s.status === 'failed') {
+          throw new Error(s.error ?? 'Render failed');
+        }
+        if (Date.now() > deadline) {
+          throw new Error('Render timed out. Check back later — it may still complete.');
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setStatus('failed');

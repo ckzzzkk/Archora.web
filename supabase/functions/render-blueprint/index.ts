@@ -45,29 +45,6 @@ async function createMeshyTask(imageUrl: string, meshyKey: string): Promise<stri
   }
 }
 
-async function pollMeshyTask(taskId: string, meshyKey: string): Promise<string | null> {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    await new Promise((r) => setTimeout(r, 8000));
-    try {
-      const pollRes = await fetch(`${MESHY_BASE}/v1/image-to-3d/${taskId}`, {
-        headers: { Authorization: `Bearer ${meshyKey}` },
-      });
-      if (!pollRes.ok) break;
-      const task = await pollRes.json() as {
-        status: string;
-        model_urls?: { glb?: string };
-      };
-      if (task.status === 'SUCCEEDED' && task.model_urls?.glb) {
-        return task.model_urls.glb;
-      }
-      if (task.status === 'FAILED' || task.status === 'EXPIRED') break;
-    } catch {
-      break;
-    }
-  }
-  return null;
-}
-
 // Build a text prompt from blueprint metadata for Meshy when no reference image
 function buildBlueprintPrompt(
   buildingType: string,
@@ -140,31 +117,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return Errors.validation('A reference image is required. Please provide referenceImageUrl.');
     }
 
-    // Submit to Meshy
-    let gltfUrl: string | null = null;
-
-    // Step 1: Create the image-to-3D task
+    // Create the Meshy image-to-3D task. Completion is observed by the client
+    // via render-status (the old in-function ~2.5min poll sat at the edge
+    // function execution limit and timed out slow renders).
     const taskId = await createMeshyTask(imageUrl, meshyKey);
     if (!taskId) return Errors.internal('Failed to start Meshy render');
 
-    // Step 2: Poll until done (up to ~2.5 min)
-    gltfUrl = await pollMeshyTask(taskId, meshyKey);
-
-    if (!gltfUrl) {
-      return Errors.internal('Meshy render timed out. Try again.');
-    }
-
-    // Update projects table with render result
+    // Bind the task to the project — render-status / render-webhook may only
+    // complete a render whose task id matches.
     await supabase
       .from('projects')
       .update({
-        render_status: 'done',
-        rendered_gltf_url: gltfUrl,
+        render_status: 'rendering',
+        render_task_id: taskId,
         render_error: null,
       })
       .eq('id', blueprintId);
 
-    // Increment render quota after successful render
+    // Increment render quota at dispatch (the render has been paid for at Meshy)
     try {
       await supabase.rpc('increment_quota', { p_user_id: user.id, p_field: 'renders_used', p_amount: 1 });
     } catch (e) {
@@ -172,7 +142,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ taskId, gltfUrl, projectId: blueprintId }),
+      JSON.stringify({ taskId, projectId: blueprintId, status: 'rendering' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err) {
