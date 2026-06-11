@@ -51,6 +51,63 @@ export async function submitMeshyReconstruction(
   return { meshId: data.customAsset.id };
 }
 
+export interface FurnitureTaskStatus {
+  taskId: string;
+  status: 'pending' | 'processing' | 'done' | 'failed';
+  progress: number;
+  meshUrl: string | null;
+  thumbnailUrl: string | null;
+  customFurnitureId: string | null;
+  error: string | null;
+}
+
+/**
+ * Poll the async Meshy generation behind generate-furniture-from-image.
+ * `taskId` is the meshTaskId returned by that function.
+ */
+export async function getFurnitureTaskStatus(taskId: string): Promise<FurnitureTaskStatus> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? '';
+
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/furniture-task-status?taskId=${encodeURIComponent(taskId)}`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`furniture-task-status failed (${response.status}): ${errorBody}`);
+  }
+
+  return await response.json() as FurnitureTaskStatus;
+}
+
+/**
+ * Poll until the furniture task completes or fails. Resolves with the final
+ * status; rejects only on network/auth errors. `onProgress` fires per poll.
+ */
+export async function waitForFurnitureTask(
+  taskId: string,
+  options: { intervalMs?: number; timeoutMs?: number; onProgress?: (s: FurnitureTaskStatus) => void } = {},
+): Promise<FurnitureTaskStatus> {
+  const intervalMs = options.intervalMs ?? 5000;
+  const timeoutMs = options.timeoutMs ?? 5 * 60 * 1000;
+  const deadline = Date.now() + timeoutMs;
+
+  for (;;) {
+    const status = await getFurnitureTaskStatus(taskId);
+    options.onProgress?.(status);
+    if (status.status === 'done' || status.status === 'failed') return status;
+    if (Date.now() + intervalMs > deadline) return status; // still processing — caller decides
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+}
+
 /** Fetch all custom furniture for the current user */
 export async function fetchCustomFurniture(): Promise<VigaMesh[]> {
   const { data: { user } } = await supabase.auth.getUser();

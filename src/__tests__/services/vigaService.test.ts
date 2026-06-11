@@ -118,3 +118,83 @@ describe('vigaService — submitMeshyReconstruction', () => {
     expect(opts.headers['Authorization']).toBe('Bearer bearer-token');
   });
 });
+
+describe('vigaService — getFurnitureTaskStatus / waitForFurnitureTask', () => {
+  beforeEach(() => { vi.resetModules(); });
+
+  it('GETs furniture-task-status with the task id and auth header', async () => {
+    const m = createSupabaseMock();
+    m.auth.getSession.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        taskId: 't-1', status: 'processing', progress: 40,
+        meshUrl: null, thumbnailUrl: null, customFurnitureId: 'cf-1', error: null,
+      }),
+    } as any);
+    vi.doMock('../../lib/supabase', () => ({ supabase: m }));
+    const { getFurnitureTaskStatus } = await import('../../services/vigaService');
+
+    const status = await getFurnitureTaskStatus('t-1');
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('furniture-task-status?taskId=t-1'),
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer tok' }) }),
+    );
+    expect(status.status).toBe('processing');
+    expect(status.progress).toBe(40);
+  });
+
+  it('throws on non-ok status response', async () => {
+    const m = createSupabaseMock();
+    m.auth.getSession.mockResolvedValue({ data: { session: null }, error: null });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false, status: 404, text: () => Promise.resolve('not found'),
+    } as any);
+    vi.doMock('../../lib/supabase', () => ({ supabase: m }));
+    const { getFurnitureTaskStatus } = await import('../../services/vigaService');
+    await expect(getFurnitureTaskStatus('missing')).rejects.toThrow(/404/);
+  });
+
+  it('waitForFurnitureTask polls until done and reports progress', async () => {
+    const m = createSupabaseMock();
+    m.auth.getSession.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+    const responses = [
+      { taskId: 't-2', status: 'processing', progress: 30, meshUrl: null, thumbnailUrl: null, customFurnitureId: 'cf-2', error: null },
+      { taskId: 't-2', status: 'done', progress: 100, meshUrl: 'https://cdn/m.glb', thumbnailUrl: 'https://cdn/m.jpg', customFurnitureId: 'cf-2', error: null },
+    ];
+    let call = 0;
+    global.fetch = vi.fn().mockImplementation(() => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(responses[Math.min(call++, responses.length - 1)]),
+    } as any));
+    vi.doMock('../../lib/supabase', () => ({ supabase: m }));
+    const { waitForFurnitureTask } = await import('../../services/vigaService');
+
+    const seen: string[] = [];
+    const final = await waitForFurnitureTask('t-2', {
+      intervalMs: 1,
+      onProgress: (s) => seen.push(s.status),
+    });
+
+    expect(final.status).toBe('done');
+    expect(final.meshUrl).toBe('https://cdn/m.glb');
+    expect(seen).toEqual(['processing', 'done']);
+  });
+
+  it('waitForFurnitureTask returns the last status when the timeout elapses', async () => {
+    const m = createSupabaseMock();
+    m.auth.getSession.mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        taskId: 't-3', status: 'processing', progress: 10,
+        meshUrl: null, thumbnailUrl: null, customFurnitureId: null, error: null,
+      }),
+    } as any);
+    vi.doMock('../../lib/supabase', () => ({ supabase: m }));
+    const { waitForFurnitureTask } = await import('../../services/vigaService');
+
+    const final = await waitForFurnitureTask('t-3', { intervalMs: 5, timeoutMs: 1 });
+    expect(final.status).toBe('processing');
+  });
+});

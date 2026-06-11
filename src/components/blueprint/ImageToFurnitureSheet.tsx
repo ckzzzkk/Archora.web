@@ -7,6 +7,7 @@ import { ArchText } from '../common/ArchText';
 import { OvalButton } from '../common/OvalButton';
 import { AIProcessingIndicator } from '../common/AIProcessingIndicator';
 import { supabase } from '../../lib/supabase';
+import { waitForFurnitureTask } from '../../services/vigaService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import type { CustomAsset } from '../../types/blueprint';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,6 +29,8 @@ interface GenerationResult {
   customAsset: CustomAsset;
   identification: Identification;
   meshGenerated: boolean;
+  /** viga task id — the 3D mesh is generated asynchronously; poll for it */
+  meshTaskId?: string | null;
 }
 
 const FURNITURE_GENERATION_WORDS = [
@@ -120,6 +123,26 @@ export function ImageToFurnitureSheet({ onClose }: { onClose: () => void }) {
       const resultData = data as GenerationResult;
       setResult(resultData);
       setPhase('result');
+
+      // The 3D mesh arrives asynchronously — poll in the background and patch
+      // the result so "Add to library" picks up the mesh once Meshy completes.
+      if (resultData.meshTaskId) {
+        waitForFurnitureTask(resultData.meshTaskId)
+          .then((final) => {
+            if (final.status === 'done' && final.meshUrl) {
+              setResult((prev) => prev ? {
+                ...prev,
+                meshGenerated: true,
+                customAsset: {
+                  ...prev.customAsset,
+                  meshUrl: final.meshUrl ?? '',
+                  thumbnailUrl: final.thumbnailUrl ?? prev.customAsset.thumbnailUrl,
+                },
+              } : prev);
+            }
+          })
+          .catch((pollErr) => console.warn('[ImageToFurnitureSheet] mesh poll failed:', pollErr));
+      }
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'An unexpected error occurred.');
       setPhase('error');

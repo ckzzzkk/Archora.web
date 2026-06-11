@@ -6,7 +6,8 @@
  *   → Claude Vision API identifies furniture type + dimensions
  *   → Meshy AI generates a GLB 3D model (if MESHY_API_KEY set)
  *   → Inserts record into custom_furniture table
- *   → Returns { customAsset, identification, meshGenerated }
+ *   → Returns { customAsset, identification, meshGenerated: false, meshTaskId }
+ *     (mesh arrives asynchronously — client polls furniture-task-status)
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
@@ -132,19 +133,12 @@ Categories: ${FURNITURE_CATEGORIES.join(', ')}`;
   };
 }
 
-interface MeshyTaskResult {
-  status: 'PENDING' | 'IN_PROGRESS' | 'SUCCEEDED' | 'FAILED' | 'EXPIRED';
-  progress: number;
-  model_urls?: { glb?: string; fbx?: string };
-  thumbnail_url?: string;
-  error?: { message: string };
-}
-
-async function generateMeshyModel(
+async function createMeshyTask(
   imageUrl: string,
   meshyKey: string,
-): Promise<{ meshUrl: string | null; thumbnailUrl: string | null }> {
-  // Start image-to-3D task
+): Promise<string | null> {
+  // Start image-to-3D task — completion is observed by the client via the
+  // furniture-task-status function (no blocking poll inside this function).
   const createRes = await fetch(`${MESHY_BASE}/v1/image-to-3d`, {
     method: 'POST',
     headers: {
@@ -163,41 +157,11 @@ async function generateMeshyModel(
 
   if (!createRes.ok) {
     console.warn('[generate-furniture-from-image] Meshy task creation failed:', await createRes.text());
-    return { meshUrl: null, thumbnailUrl: null };
+    return null;
   }
 
   const { result: taskId } = await createRes.json() as { result: string };
-
-  // Poll up to 20 times, 8s interval, 2s initial delay
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const pollRes = await fetch(`${MESHY_BASE}/v1/image-to-3d/${taskId}`, {
-      headers: { Authorization: `Bearer ${meshyKey}` },
-    });
-
-    if (!pollRes.ok) break;
-
-    const task = await pollRes.json() as MeshyTaskResult;
-
-    if (task.status === 'SUCCEEDED') {
-      return {
-        meshUrl: task.model_urls?.glb ?? null,
-        thumbnailUrl: task.thumbnail_url ?? null,
-      };
-    }
-
-    if (task.status === 'FAILED' || task.status === 'EXPIRED') {
-      console.warn('[generate-furniture-from-image] Meshy task failed:', task.error?.message);
-      return { meshUrl: null, thumbnailUrl: null };
-    }
-
-    // Wait 8s before next poll
-    await new Promise((resolve) => setTimeout(resolve, 8000));
-  }
-
-  console.warn('[generate-furniture-from-image] Meshy polling timed out after 20 attempts');
-  return { meshUrl: null, thumbnailUrl: null };
+  return taskId || null;
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -263,24 +227,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return Errors.upstream('Furniture identification failed. Please try a clearer photo.');
   }
 
-  // ── Step 2: Generate 3D mesh via Meshy (optional) ─────────────────────────
-  let meshUrl: string | null = null;
-  let thumbnailUrl: string | null = null;
-  let meshGenerated = false;
-
-  const meshyKey = Deno.env.get('MESHY_API_KEY') ?? '';
-  if (meshyKey) {
-    try {
-      const meshResult = await generateMeshyModel(imageUrl, meshyKey);
-      meshUrl = meshResult.meshUrl;
-      thumbnailUrl = meshResult.thumbnailUrl;
-      meshGenerated = !!meshUrl;
-    } catch (err) {
-      console.warn('[generate-furniture-from-image] Meshy generation failed (non-fatal):', err);
-    }
-  }
-
-  // ── Step 3: Persist custom_furniture record ───────────────────────────────
+  // ── Step 2: Persist custom_furniture record (mesh arrives asynchronously) ──
   const supabase = createClient(
     requireEnv('SUPABASE_URL'),
     requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
@@ -307,8 +254,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       project_id: projectId && uuidRegex().test(projectId) ? projectId : null,
       name: name || identification.name,
       category: category || identification.category,
-      mesh_url: meshUrl,
-      thumbnail_url: thumbnailUrl,
+      mesh_url: null,
+      thumbnail_url: null,
       source_image_url: imageUrl,
       dimensions,
       style_tags: identification.styleTags,
@@ -321,6 +268,39 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Non-fatal — still return the identification result
   }
 
+  // ── Step 3: Start the Meshy image-to-3D task (async — client polls
+  //    furniture-task-status; the old in-function 20×8s poll blew through
+  //    edge-function time limits and orphaned Meshy tasks) ──────────────────
+  let meshTaskId: string | null = null;
+  const meshyKey = Deno.env.get('MESHY_API_KEY') ?? '';
+  if (meshyKey && record) {
+    try {
+      const meshyTaskId = await createMeshyTask(imageUrl, meshyKey);
+      if (meshyTaskId) {
+        const { data: taskRow, error: taskErr } = await supabase
+          .from('viga_tasks')
+          .insert({
+            user_id: user.id,
+            project_id: projectId && uuidRegex().test(projectId) ? projectId : null,
+            task_id: meshyTaskId,
+            mode: 'furniture',
+            status: 'processing',
+            source_image_url: imageUrl,
+            custom_furniture_id: record.id,
+          })
+          .select('id')
+          .single();
+        if (taskErr) {
+          console.error('[generate-furniture-from-image] viga_tasks insert failed:', taskErr);
+        } else {
+          meshTaskId = taskRow?.id ?? null;
+        }
+      }
+    } catch (err) {
+      console.warn('[generate-furniture-from-image] Meshy task creation failed (non-fatal):', err);
+    }
+  }
+
   // ── Audit log ─────────────────────────────────────────────────────────────
   await logAudit({
     user_id: user.id,
@@ -331,7 +311,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       furnitureType: identification.furnitureType,
       name: identification.name,
       category: identification.category,
-      meshGenerated,
+      meshTaskStarted: meshTaskId !== null,
       confidence: identification.confidence,
     },
   });
@@ -344,8 +324,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     prompt: identification.furnitureType,
     style: identification.styleTags.join(', ') || identification.category,
     category: identification.category,
-    meshUrl: meshUrl ?? '',
-    thumbnailUrl: thumbnailUrl ?? '',
+    meshUrl: '',
+    thumbnailUrl: '',
     dimensions,
     styleTags: identification.styleTags,
   };
@@ -356,7 +336,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
   });
 
   return new Response(
-    JSON.stringify({ customAsset, identification, meshGenerated }),
+    JSON.stringify({
+      customAsset,
+      identification,
+      // Back-compat: mesh is never ready synchronously any more.
+      meshGenerated: false,
+      // Poll furniture-task-status?taskId=<meshTaskId> for completion;
+      // null when Meshy is unconfigured or task creation failed.
+      meshTaskId,
+    }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
   );
 });
