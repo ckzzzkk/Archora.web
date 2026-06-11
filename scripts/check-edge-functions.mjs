@@ -30,6 +30,20 @@ const files = [];
   }
 })(ROOT);
 
+// checkRateLimit returns true when the request is ALLOWED. Guarding with
+// `if (varName)` therefore 429s every legitimate request — this exact inversion
+// shipped in four functions. Catch it statically; prefer requireRateLimit.
+function findInvertedRateLimitGuards(code) {
+  const hits = [];
+  const assignRe = /const\s+(\w+)\s*=\s*await\s+checkRateLimit\(/g;
+  for (const m of code.matchAll(assignRe)) {
+    const name = m[1];
+    const guardRe = new RegExp(`if\\s*\\(\\s*${name}\\s*\\)`);
+    if (guardRe.test(code)) hits.push(name);
+  }
+  return hits;
+}
+
 let failed = 0;
 for (const f of files) {
   const code = readFileSync(f, 'utf8');
@@ -43,6 +57,13 @@ for (const f of files) {
     for (const d of errors) {
       const msg = ts.flattenDiagnosticMessageText(d.messageText, '\n');
       console.error(`✗ ${f} (offset ${d.start ?? '?'}) — ${msg}`);
+    }
+  }
+  const inverted = findInvertedRateLimitGuards(code);
+  if (inverted.length) {
+    failed++;
+    for (const name of inverted) {
+      console.error(`✗ ${f} — inverted rate-limit guard: checkRateLimit returns true when ALLOWED, but \`if (${name})\` rejects allowed requests. Use requireRateLimit() or \`if (!${name})\`.`);
     }
   }
 }

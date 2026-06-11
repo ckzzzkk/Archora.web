@@ -12,7 +12,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
-import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { requireRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit } from '../_shared/audit.ts';
@@ -218,8 +218,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   // ── Rate limit & quota ────────────────────────────────────────────────────
-  const limited = await checkRateLimit(`furniture_image:${user.id}`, 10, 3600);
-  if (limited) return Errors.rateLimited('Image-to-furniture rate limit exceeded (10/hr)');
+  const limited = await requireRateLimit(`furniture_image:${user.id}`, 10, 3600, 'Image-to-furniture rate limit exceeded (10/hr)');
+  if (limited) return limited;
 
   const quotaOk = await checkQuota(user.id, 'viga');
   if (!quotaOk) return Errors.quotaExceeded('AI generation quota exceeded');

@@ -1,3 +1,24 @@
+import { Errors } from './errors.ts';
+
+/**
+ * Preferred entry point: returns a ready-to-send 429 Response when the caller
+ * is over the limit, or null when the request is allowed. Unlike the boolean
+ * checkRateLimit, this cannot be accidentally inverted at the call site:
+ *
+ *   const limited = await requireRateLimit(`key:${user.id}`, 10, 3600);
+ *   if (limited) return limited;
+ */
+export async function requireRateLimit(
+  identifier: string,
+  limit: number,
+  windowSeconds: number,
+  message = 'Too many requests',
+): Promise<Response | null> {
+  const allowed = await checkRateLimit(identifier, limit, windowSeconds);
+  return allowed ? null : Errors.rateLimited(message);
+}
+
+/** Returns true when the request is ALLOWED (fails open if Redis is down). */
 export async function checkRateLimit(
   identifier: string,
   limit: number,

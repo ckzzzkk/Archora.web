@@ -12,7 +12,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
-import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { requireRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit } from '../_shared/audit.ts';
@@ -115,8 +115,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   // ── POST: create a text-to-3D task ───────────────────────────────────────
-  const limited = await checkRateLimit(`generate_furniture:${user.id}`, 5, 3600);
-  if (limited) return Errors.rateLimited('Furniture generation rate limit exceeded (5/hr)');
+  const limited = await requireRateLimit(`generate_furniture:${user.id}`, 5, 3600, 'Furniture generation rate limit exceeded (5/hr)');
+  if (limited) return limited;
 
   let body: unknown;
   try {

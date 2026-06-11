@@ -9,7 +9,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { getAuthUser, requireOwnership } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
-import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { requireRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors, requireEnv } from '../_shared/errors.ts';
 
@@ -85,8 +85,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     const user = await getAuthUser(req);
 
-    const limited = await checkRateLimit(`render:${user.id}`, 3, 3600);
-    if (limited) return Errors.rateLimited('Render rate limit exceeded');
+    const limited = await requireRateLimit(`render:${user.id}`, 3, 3600, 'Render rate limit exceeded');
+    if (limited) return limited;
 
     const body = await req.json() as unknown;
     const parsed = RequestSchema.safeParse(body);

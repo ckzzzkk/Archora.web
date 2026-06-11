@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
-import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { requireRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
@@ -341,8 +341,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     const user = await getAuthUser(req);
 
-    const limited = await checkRateLimit(`ar:${user.id}`, 5, 3600);
-    if (limited) return Errors.rateLimited('AR scan rate limit exceeded');
+    const limited = await requireRateLimit(`ar:${user.id}`, 5, 3600, 'AR scan rate limit exceeded');
+    if (limited) return limited;
 
     const quotaOk = await checkQuota(user.id, 'ar_scan');
     if (!quotaOk) return Errors.quotaExceeded('AR scan quota exceeded');
