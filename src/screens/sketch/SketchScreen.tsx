@@ -32,6 +32,7 @@ import { getResponsiveTokens } from '../../theme/responsive';
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData, Wall, Room, RoomType, Vector2D, FloorData } from '../../types/blueprint';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
+import { curveToSegments, arcToSegments } from '../../utils/sketch/curves';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -142,121 +143,23 @@ function rectWalls(x: number, y: number, w: number, h: number): SketchWall[] {
   }));
 }
 
-/** Compute the 3 control points for a circular arc from start to end with given bulge direction */
-function circularArcPoints(start: Vector2D, end: Vector2D, bulgeDir: Vector2D): { cx: number; cy: number; r: number; startAngle: number; endAngle: number } {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const chord = Math.sqrt(dx * dx + dy * dy);
-  const dist = Math.sqrt(bulgeDir.x * bulgeDir.x + bulgeDir.y * bulgeDir.y);
-  if (dist === 0) {
-    // Degenerate — just return midpoint
-    return { cx: (start.x + end.x) / 2, cy: (start.y + end.y) / 2, r: chord / 2, startAngle: 0, endAngle: Math.PI };
-  }
-  // Unit direction from bulge
-  const nx = bulgeDir.x / dist;
-  const ny = bulgeDir.y / dist;
-  // Perpendicular to chord (for arc center offset)
-  const perpX = -dy / chord;
-  const perpY = dx / chord;
-  // Signed distance from chord midpoint to arc center (sagitta)
-  const midX = (start.x + end.x) / 2;
-  const midY = (start.y + end.y) / 2;
-  const sagitta = Math.abs(dx * nx + dy * ny);
-  const r = (chord / 2) / Math.sin(Math.atan2(sagitta, chord / 2));
-  // Sign: dot product with perpendicular determines which side
-  const sign = (dx * perpX + dy * perpY) >= 0 ? 1 : -1;
-  const cx = midX + sign * perpX * r * (1 - Math.cos(Math.atan2(sagitta, chord / 2)));
-  const cy = midY + sign * perpY * r * (1 - Math.cos(Math.atan2(sagitta, chord / 2)));
-  const startAngle = Math.atan2(start.y - cy, start.x - cx);
-  const endAngle = Math.atan2(end.y - cy, end.x - cx);
-  return { cx, cy, r, startAngle, endAngle };
-}
-
-/** Catmull-Rom cubic Bezier spline through points — returns array of {cp1, cp2, end} for Skia cubicTo */
-function catmullRomToBezier(pts: Vector2D[], tension = 0.5): Array<{ cp1: Vector2D; cp2: Vector2D; end: Vector2D }> {
-  if (pts.length < 2) return [];
-  if (pts.length === 2) {
-    return [{ cp1: pts[0], cp2: pts[1], end: pts[1] }];
-  }
-  const result: Array<{ cp1: Vector2D; cp2: Vector2D; end: Vector2D }> = [];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = i > 0 ? pts[i - 1] : pts[0];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = i < pts.length - 2 ? pts[i + 2] : pts[pts.length - 1];
-    const cp1: Vector2D = { x: p1.x + (p2.x - p0.x) * tension / 3, y: p1.y + (p2.y - p0.y) * tension / 3 };
-    const cp2: Vector2D = { x: p2.x - (p3.x - p1.x) * tension / 3, y: p2.y - (p3.y - p1.y) * tension / 3 };
-    result.push({ cp1, cp2, end: p2 });
-  }
-  return result;
-}
-
 // --- Curve / arc tessellation to wall segments ---
+// Geometry lives in src/utils/sketch/curves.ts (pure, unit-tested); the
+// wrappers below only attach sketch ids.
 
 /** Convert a smooth curve (array of points) to SketchWall segments for the blueprint */
 function curveToWalls(pts: Vector2D[], resolution = 0.1): SketchWall[] {
-  if (pts.length < 2) return [];
-  const walls: SketchWall[] = [];
-  const segments = catmullRomToBezier(pts);
-  for (const seg of segments) {
-    // Sample cubic Bezier at intervals
-    const steps = Math.max(4, Math.ceil(Math.sqrt((seg.end.x - seg.cp2.x) ** 2 + (seg.end.y - seg.cp2.y) ** 2) / resolution));
-    let prevPt = pts[segments.indexOf(seg)];
-    if (segments.indexOf(seg) === 0) prevPt = pts[0];
-    for (let i = 1; i <= steps; i++) {
-      const t = i / steps;
-      // Cubic Bezier: B(t) = (1-t)³P0 + 3(1-t)²tP1 + 3(1-t)t²P2 + t³P3
-      const t2 = t * t, t3 = t2 * t, mt = 1 - t, mt2 = mt * mt;
-      const prevSegIdx = segments.indexOf(seg);
-      const startPt = i === 1 ? (prevSegIdx === 0 ? pts[0] : pts[prevSegIdx]) : prevPt;
-      const endPt = {
-        x: mt2 * mt * (prevSegIdx === 0 ? pts[0].x : pts[prevSegIdx].x) + 3 * mt2 * t * seg.cp1.x + 3 * mt * t2 * seg.cp2.x + t3 * seg.end.x,
-        y: mt2 * mt * (prevSegIdx === 0 ? pts[0].y : pts[prevSegIdx].y) + 3 * mt2 * t * seg.cp1.y + 3 * mt * t2 * seg.cp2.y + t3 * seg.end.y,
-      };
-      if (i > 1) {
-        walls.push({ id: genId(), start: prevPt, end: endPt, isPreview: false });
-      }
-      prevPt = endPt;
-    }
-  }
-  // Simpler approximation: just connect points linearly for reliability
-  const simpleWalls: SketchWall[] = [];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const steps = Math.max(2, Math.ceil(dist2D(pts[i], pts[i + 1]) / resolution));
-    for (let s = 0; s < steps; s++) {
-      const t0 = s / steps;
-      const t1 = (s + 1) / steps;
-      const x0 = pts[i].x + (pts[i + 1].x - pts[i].x) * t0;
-      const y0 = pts[i].y + (pts[i + 1].y - pts[i].y) * t0;
-      const x1 = pts[i].x + (pts[i + 1].x - pts[i].x) * t1;
-      const y1 = pts[i].y + (pts[i + 1].y - pts[i].y) * t1;
-      simpleWalls.push({ id: genId(), start: { x: x0, y: y0 }, end: { x: x1, y: y1 }, isPreview: false });
-    }
-  }
-  return simpleWalls;
+  return curveToSegments(pts, resolution).map((s) => ({ id: genId(), start: s.start, end: s.end, isPreview: false }));
 }
 
-/** Convert a circular arc to SketchWall segments */
-function arcToWalls(start: Vector2D, end: Vector2D, bulgeDir: Vector2D, resolution = 0.1): SketchWall[] {
-  const { cx, cy, r, startAngle, endAngle } = circularArcPoints(start, end, bulgeDir);
-  const arcLen = Math.abs(r * ((endAngle - startAngle + Math.PI * 3) % (Math.PI * 2) - Math.PI));
-  const steps = Math.max(4, Math.ceil(arcLen / resolution));
-  const walls: SketchWall[] = [];
-  let prevAngle = startAngle;
-  for (let i = 1; i <= steps; i++) {
-    const t = i / steps;
-    const totalRange = ((endAngle - startAngle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-    const angle = startAngle + totalRange * t;
-    const x0 = cx + r * Math.cos(prevAngle);
-    const y0 = cy + r * Math.sin(prevAngle);
-    const x1 = cx + r * Math.cos(angle);
-    const y1 = cy + r * Math.sin(angle);
-    if (i > 1) {
-      walls.push({ id: genId(), start: { x: x0, y: y0 }, end: { x: x1, y: y1 }, isPreview: false });
-    }
-    prevAngle = angle;
-  }
-  return walls;
+/**
+ * Convert a circular arc to SketchWall segments. `dragPoint` is the absolute
+ * position the user dragged to — the arc bulges through it (apex at its
+ * perpendicular offset from the chord midpoint).
+ */
+function arcToWalls(start: Vector2D, end: Vector2D, dragPoint: Vector2D, resolution = 0.1): SketchWall[] {
+  const bulge = { x: dragPoint.x - (start.x + end.x) / 2, y: dragPoint.y - (start.y + end.y) / 2 };
+  return arcToSegments(start, end, bulge, resolution).map((s) => ({ id: genId(), start: s.start, end: s.end, isPreview: false }));
 }
 
 function findClosedPolygon(walls: SketchWall[]): SketchWall[] | null {
@@ -1097,31 +1000,26 @@ export function SketchScreen() {
                   const dragPx = skArcDragActive.current ? { x: metreToPixel(skArcDragX.current, skScale.current, skOffsetX.current), y: metreToPixel(skArcDragY.current, skScale.current, skOffsetY.current) } : null;
 
                   let arcPath: ReturnType<typeof Skia.Path.Make> | null = null;
-                  if (endPx !== null && dragPx !== null) {
-                    // Circular arc from start to end through drag direction
-                    const { r, startAngle, endAngle } = circularArcPoints(
-                      arcStart,
-                      arcEnd ?? arcStart,
-                      { x: skArcDragX.current - (arcStart.x), y: skArcDragY.current - (arcStart.y) }
-                    );
-                    const arcR = r * skScale.current * PIXELS_PER_METRE;
-                    const sweep = ((endAngle - startAngle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-                    const useSmallArc = Math.abs(sweep) <= Math.PI;
-                    const isCCW = sweep < 0;
-                    arcPath = Skia.Path.Make();
-                    arcPath.moveTo(startPx.x, startPx.y);
-                    // Sample arc as line segments
-                    const { cx, cy } = circularArcPoints(
-                      arcStart,
-                      arcEnd ?? arcStart,
-                      { x: skArcDragX.current - arcStart.x, y: skArcDragY.current - arcStart.y }
-                    );
-                    const acx = metreToPixel(cx, skScale.current, skOffsetX.current);
-                    const acy = metreToPixel(cy, skScale.current, skOffsetY.current);
-                    const asteps = 24;
-                    for (let i = 1; i <= asteps; i++) {
-                      const a = startAngle + (sweep / asteps) * i;
-                      arcPath.lineTo(acx + arcR * Math.cos(a), acy + arcR * Math.sin(a));
+                  if (endPx !== null && dragPx !== null && arcEnd !== null) {
+                    // Preview with the exact tessellation that commit will use,
+                    // so what the user sees is what gets drawn.
+                    const segs = arcToSegments(arcStart, arcEnd, {
+                      x: skArcDragX.current - (arcStart.x + arcEnd.x) / 2,
+                      y: skArcDragY.current - (arcStart.y + arcEnd.y) / 2,
+                    }, 0.2);
+                    if (segs.length > 0) {
+                      arcPath = Skia.Path.Make();
+                      const first = segs[0].start;
+                      arcPath.moveTo(
+                        metreToPixel(first.x, skScale.current, skOffsetX.current),
+                        metreToPixel(first.y, skScale.current, skOffsetY.current),
+                      );
+                      for (const s of segs) {
+                        arcPath.lineTo(
+                          metreToPixel(s.end.x, skScale.current, skOffsetX.current),
+                          metreToPixel(s.end.y, skScale.current, skOffsetY.current),
+                        );
+                      }
                     }
                   }
                   return (
