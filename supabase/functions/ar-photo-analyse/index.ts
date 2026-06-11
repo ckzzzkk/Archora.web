@@ -7,6 +7,7 @@ import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
+import { parseFirstJson } from '../_shared/extractJson.ts';
 
 const RequestSchema = z.object({
   photoBase64: z.string().min(100),
@@ -52,9 +53,8 @@ const ANALYSIS_PROMPT = (direction: string) =>
 function safeParseResult(text: string): PhotoAnalysisResult {
   try {
     // Extract JSON from response (Claude may wrap in markdown)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return FALLBACK_RESULT;
-    const parsed = JSON.parse(jsonMatch[0]) as Partial<PhotoAnalysisResult>;
+    const parsed = parseFirstJson<Partial<PhotoAnalysisResult>>(text);
+    if (parsed === null) return FALLBACK_RESULT;
 
     return {
       wallWidth: typeof parsed.wallWidth === 'number' && parsed.wallWidth > 0 ? parsed.wallWidth : FALLBACK_RESULT.wallWidth,

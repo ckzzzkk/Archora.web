@@ -7,6 +7,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit, extractRequestMeta } from '../_shared/audit.ts';
 import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
+import { parseFirstJson } from '../_shared/extractJson.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
@@ -157,11 +158,10 @@ function safeParseBlueprint(
   original: Record<string, unknown>,
 ): { message: string; blueprint?: Record<string, unknown> } {
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
+    const parsed = parseFirstJson<Record<string, unknown>>(text);
+    if (parsed === null) {
       return { message: 'I understood your request but had trouble applying it. Please try rephrasing.' };
     }
-    const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
 
     // Basic sanity check: must have rooms array (core BlueprintData field)
     if (!Array.isArray(parsed.rooms) && !Array.isArray((parsed as { floors?: unknown[] }).floors)) {
@@ -267,12 +267,9 @@ ${SUGGEST_SYSTEM_PROMPT}`;
         if (claudeResponse.ok) {
           const responseData = await claudeResponse.json();
           const { content: rawText } = parseAIResponse(reqConfig.provider, responseData);
-          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed_2 = JSON.parse(jsonMatch[0]) as { suggestions?: unknown[] };
-            if (Array.isArray(parsed_2.suggestions)) {
-              suggestions = parsed_2.suggestions;
-            }
+          const parsed_2 = parseFirstJson<{ suggestions?: unknown[] }>(rawText);
+          if (parsed_2 && Array.isArray(parsed_2.suggestions)) {
+            suggestions = parsed_2.suggestions;
           }
         }
       } catch (fetchErr) {

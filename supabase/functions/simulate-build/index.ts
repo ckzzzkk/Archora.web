@@ -6,6 +6,7 @@ import { Errors, requireEnv } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
+import { parseFirstJson } from '../_shared/extractJson.ts';
 
 const RequestSchema = z.object({
   blueprint: z.record(z.unknown()),
@@ -186,18 +187,8 @@ ${JSON.stringify(blueprint, null, 2)}`;
       throw new Error('Empty response from AI');
     }
 
-    let reportData: unknown;
-    try {
-      reportData = JSON.parse(rawText);
-    } catch {
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('AI returned invalid JSON');
-      try {
-        reportData = JSON.parse(jsonMatch[0]);
-      } catch {
-        throw new Error('AI returned invalid JSON');
-      }
-    }
+    const reportData: unknown = parseFirstJson(rawText);
+    if (reportData === null) throw new Error('AI returned invalid JSON');
 
     // Stamp generatedAt
     const report = {

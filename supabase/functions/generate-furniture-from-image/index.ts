@@ -13,6 +13,7 @@ import { z } from 'https://esm.sh/zod@3.23.8';
 import { getAuthUser } from '../_shared/auth.ts';
 import { checkQuota } from '../_shared/quota.ts';
 import { requireRateLimit } from '../_shared/rateLimit.ts';
+import { parseFirstJson } from '../_shared/extractJson.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors, requireEnv } from '../_shared/errors.ts';
 import { logAudit } from '../_shared/audit.ts';
@@ -116,12 +117,9 @@ Categories: ${FURNITURE_CATEGORIES.join(', ')}`;
   const textContent = data.content.find((c) => c.type === 'text');
   if (!textContent?.text) throw new Error('No response text from Claude Vision');
 
-  // Extract JSON from response (Claude may wrap in markdown code blocks)
-  let jsonStr = textContent.text.trim();
-  const jsonMatch = jsonStr.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
-  if (jsonMatch) jsonStr = jsonMatch[1].trim();
-
-  const parsed = JSON.parse(jsonStr) as Record<string, unknown>;
+  // Extract JSON from response (Claude may wrap in markdown or prose)
+  const parsed = parseFirstJson<Record<string, unknown>>(textContent.text);
+  if (parsed === null) throw new Error('Claude Vision returned invalid JSON');
   return {
     furnitureType: String(parsed.furnitureType ?? 'unknown'),
     name: String(parsed.name ?? 'Custom Furniture'),

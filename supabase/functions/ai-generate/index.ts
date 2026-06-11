@@ -8,6 +8,7 @@ import { logAudit } from '../_shared/audit.ts';
 import { Errors } from '../_shared/errors.ts';
 import { getArchitectById, buildArchitectPromptSection } from '../_shared/architects.ts';
 import { TIER_AI_MODELS, buildAIRequest, parseAIResponse, getModelProvider } from '../_shared/aiLimits.ts';
+import { parseFirstJson } from '../_shared/extractJson.ts';
 import { requireEnv } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
@@ -1842,13 +1843,9 @@ ${SYSTEM_PROMPT}`;
     }
 
     function parseBlueprint(text: string): Record<string, unknown> {
-      try {
-        return JSON.parse(text) as Record<string, unknown>;
-      } catch {
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('AI returned invalid JSON');
-        return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
-      }
+      const parsed = parseFirstJson<Record<string, unknown>>(text);
+      if (parsed === null) throw new Error('AI returned invalid JSON');
+      return parsed;
     }
 
     let blueprintData = parseBlueprint(rawText);

@@ -8,6 +8,7 @@ import { logAudit } from '../_shared/audit.ts';
 import { Errors, requireEnv } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
+import { parseFirstJson } from '../_shared/extractJson.ts';
 
 // ── Request schema ────────────────────────────────────────────────────────────
 
@@ -225,14 +226,10 @@ async function callClaude(
   const data = await response.json();
   const { content: rawText } = parseAIResponse(reqConfig.provider, data);
 
-  // Parse JSON — try direct first, then strip markdown fences
-  try {
-    return JSON.parse(rawText);
-  } catch {
-    const match = rawText.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('AI returned non-JSON response');
-    return JSON.parse(match[0]);
-  }
+  // Parse JSON — direct first, then first embedded object (markdown fences, prose)
+  const parsed = parseFirstJson(rawText);
+  if (parsed === null) throw new Error('AI returned non-JSON response');
+  return parsed;
 }
 
 interface ScoreResult {
