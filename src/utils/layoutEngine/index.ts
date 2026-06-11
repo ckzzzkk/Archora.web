@@ -6,11 +6,12 @@ import type {
 } from '../../types/blueprint';
 import type { LayoutRoom, WallSegment, Opening as LOpening, LayoutConfig } from './types';
 import { inferCommonSenseRooms } from './types';
-import { detectOverlaps } from './geometry';
-import { buildWalls } from './wallBuilder';
-import { placeDoors, placeWindows } from './openingPlacer';
-import type { DoorPlacementOptions } from './openingPlacer';
-import { placeRoomsInZones } from './zones';
+import { placeWindows } from './openingPlacer';
+import { partitionBuilding } from './partition';
+import type { FloorPartition } from './partition';
+import { buildWallsFromTiles } from './wallGraphBuilder';
+import { planDoors } from './doorPlanner';
+import type { DoorPlanOptions } from './doorPlanner';
 import { placeFurniture } from './furniturePlacer';
 
 const FLOOR_HEIGHT = 3.0;
@@ -106,35 +107,45 @@ function openingToBPOpening(op: LOpening): BPOpening {
   };
 }
 
-function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloors: number, doorOpts?: DoorPlacementOptions): FloorData {
-  const elevation = floorIndex * FLOOR_HEIGHT;
-  const walls = buildWalls(layoutRooms);
-  const doors = placeDoors(walls, doorOpts);
-  const windows = placeWindows(walls);
-  const furniture = placeFurniture(layoutRooms, floorIndex);
+function buildFloorData(
+  partition: FloorPartition,
+  floorIndex: number,
+  totalFloors: number,
+  footprint: { width: number; depth: number },
+  doorOpts?: DoorPlanOptions,
+): FloorData {
+  const layoutRooms = partition.rooms;
+  const walls = buildWallsFromTiles(layoutRooms);
+  const doors = planDoors(walls, layoutRooms, doorOpts);
 
+  // Windows go on exterior walls — but never on a wall that already carries a
+  // door (the entry wall is short; a window there would overlap the door).
+  const doorWallIds = new Set(doors.map((d) => d.wallId));
+  const windows = placeWindows(walls).filter((w) => !doorWallIds.has(w.wallId));
+
+  const furniture = placeFurniture(layoutRooms, floorIndex);
   const blueprintWalls = walls.map(wallSegmentToWall);
 
-  // Each WallSegment.adjacentRooms[0] is the room the wall was built for — invert
-  // that into per-room boundary wall lists so room.wallIds is populated (a closed loop).
+  // Shared walls belong to BOTH bordering rooms' boundary lists.
   const wallsByRoom = new Map<string, string[]>();
   for (const w of walls) {
-    const owner = w.adjacentRooms[0];
-    if (!owner) continue;
-    const arr = wallsByRoom.get(owner) ?? [];
-    arr.push(w.id);
-    wallsByRoom.set(owner, arr);
+    for (const owner of w.adjacentRooms) {
+      if (!owner) continue;
+      const arr = wallsByRoom.get(owner) ?? [];
+      arr.push(w.id);
+      wallsByRoom.set(owner, arr);
+    }
   }
   const blueprintRooms = layoutRooms.map(lr => layoutRoomToRoom(lr, wallsByRoom.get(lr.id) ?? []));
   const blueprintOpenings = [...doors, ...windows].map(openingToBPOpening);
 
-  // Staircase connecting floors
+  // Staircase connecting floors — sits in the corridor, same spot every floor.
   const staircases: StaircaseData[] = [];
-  if (floorIndex < totalFloors - 1) {
+  if (floorIndex < totalFloors - 1 && partition.stairPosition) {
     staircases.push({
       id: randomUUID(),
       type: 'straight',
-      position: { x: layoutRooms[0]?.width ?? 0, y: (layoutRooms[0]?.height ?? 0) * 0.5 },
+      position: partition.stairPosition,
       connectsFloors: [floorIndex, floorIndex + 1],
       width: 0.9,
       totalRise: FLOOR_HEIGHT,
@@ -143,6 +154,10 @@ function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloo
       fillToFloor: true,
     });
   }
+
+  const footprintPolygon: [number, number][] = [
+    [0, 0], [0, footprint.depth], [footprint.width, footprint.depth], [footprint.width, 0],
+  ];
 
   return {
     id: randomUUID(),
@@ -156,7 +171,7 @@ function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloo
     elevators: [],
     slabs: [{
       id: randomUUID(),
-      polygon: [[0, 0], [0, 10], [10, 10], [10, 0]] as [number, number][],
+      polygon: footprintPolygon,
       holes: [],
       holeMetadata: [],
       elevation: floorIndex === 0 ? 0.05 : floorIndex * FLOOR_HEIGHT + 0.05,
@@ -164,7 +179,7 @@ function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloo
     }],
     ceilings: [{
       id: randomUUID(),
-      polygon: [[0, 0], [0, 10], [10, 10], [10, 0]] as [number, number][],
+      polygon: footprintPolygon,
       holes: [],
       holeMetadata: [],
       height: FLOOR_HEIGHT,
@@ -178,16 +193,15 @@ function buildFloorData(layoutRooms: LayoutRoom[], floorIndex: number, totalFloo
 
 export function generateFloorPlan(payload: GenerationPayload): BlueprintData {
   const config = generationPayloadToLayoutConfig(payload);
-  const allLayoutRooms = placeRoomsInZones(config, 0);
+  const building = partitionBuilding(config);
+  const footprint = { width: building.buildWidth, depth: building.buildDepth };
 
-  const floors: FloorData[] = [];
-  for (let i = 0; i < config.floors; i++) {
-    // Each floor gets its own zone-appropriate rooms
-    const floorRooms = i === 0 ? allLayoutRooms : placeRoomsInZones(config, i);
-    floors.push(buildFloorData(floorRooms, i, config.floors, { hasGarden: config.hasGarden, hasGarage: config.hasGarage }));
-  }
+  const floors: FloorData[] = building.floors.map((partition, i) =>
+    buildFloorData(partition, i, config.floors, footprint, { hasGarden: config.hasGarden }),
+  );
 
   const firstFloor = floors[0];
+  const roomCount = building.floors.reduce((n, f) => n + f.rooms.length, 0);
 
   return {
     id: randomUUID(),
@@ -195,8 +209,8 @@ export function generateFloorPlan(payload: GenerationPayload): BlueprintData {
     metadata: {
       style: payload.style,
       buildingType: payload.buildingType === 'commercial' ? 'office' : payload.buildingType,
-      totalArea: config.plotWidth * config.plotDepth,
-      roomCount: allLayoutRooms.length,
+      totalArea: building.buildWidth * building.buildDepth * config.floors,
+      roomCount,
       generatedFrom: 'layout-engine',
       enrichedPrompt: payload.additionalNotes,
     },
