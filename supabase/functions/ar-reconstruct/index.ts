@@ -374,6 +374,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (hasMeshInput) {
       // LiDAR mesh path: extract walls directly from mesh
       const meshResult = processMeshToBlueprint(meshVertices!, meshFaces ?? []);
+      // A degenerate mesh (no faces, all-floor/ceiling triangles, near-zero
+      // extent) yields no usable walls — reject instead of persisting an empty
+      // blueprint marked 'completed'.
+      if (
+        meshResult.walls.length < 3 ||
+        meshResult.dimensions.width <= 0 ||
+        meshResult.dimensions.depth <= 0
+      ) {
+        return Errors.validation(
+          'Mesh too sparse to reconstruct a room — rescan with more wall coverage',
+        );
+      }
       blueprintData = buildBlueprintFromMesh(
         meshResult.walls,
         meshResult.rooms,
