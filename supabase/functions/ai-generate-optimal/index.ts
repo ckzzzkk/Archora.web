@@ -9,6 +9,8 @@ import { Errors, requireEnv } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { TIER_AI_MODELS, buildAIRequest, parseAIResponse } from '../_shared/aiLimits.ts';
 import { parseFirstJson } from '../_shared/extractJson.ts';
+import { buildClimatePromptSection } from '../_shared/climateBriefs.ts';
+import { buildStandardsPromptSection } from '../_shared/buildingStandards.ts';
 
 // ── Request schema ────────────────────────────────────────────────────────────
 
@@ -34,6 +36,7 @@ const RequestSchema = z.object({
   transcript:      z.string().max(2000).optional(),
   climateZone:     z.enum(['tropical', 'subtropical', 'temperate', 'arid', 'cold', 'alpine']).optional().default('temperate'),
   hemisphere:      z.enum(['north', 'south']).optional().default('north'),
+  orientation:     z.enum(['N', 'S', 'E', 'W']).optional().default('S'),
   // Batch generation: when present, this call is one variation of a batch.
   // Drives an elevated generation temperature + a per-variation prompt directive.
   variationSeed:   z.number().int().min(0).optional(),
@@ -72,12 +75,9 @@ FOUNDATION: temperate/cold = strip | tropical = pad+termite barrier | arid = raf
 
 ━━━━ CLIMATE-RESPONSIVE DESIGN ━━━━
 
-TROPICAL: steep roof 45°+, eaves 1.2m, 40%+ openings, no thermal mass, raised floor, verandas
-SUBTROPICAL: 25-35° roof, 900mm eaves, cross-ventilation, moderate thermal mass
-TEMPERATE: south-facing (NH) glazing, 35° roof min, 600mm eaves, triple glaze north windows
-ARID: courtyard plan, flat/low roof, thick walls 350mm+ thermal mass, small west openings, water harvest
-COLD: max south glazing, 45°+ roof for snow, 200mm insulation, double-door airlock entry, no flat roofs
-ALPINE: 60°+ roof for snow shedding, snow load 3.0 kN/m², MVHR, compact building form
+Follow the CLIMATE-SPECIFIC DESIGN RULES section appended to this prompt — it is
+resolved for the user's actual climate zone and hemisphere, with concrete numbers
+for roof pitch, eaves, glazing ratios per facade, thermal mass and ventilation.
 
 ━━━━ DESIGN STYLES ━━━━
 
@@ -290,8 +290,7 @@ function buildInitialUserMessage(p: Parsed): string {
   if (p.hasHomeOffice) details.push('Include home office');
   if (p.hasUtilityRoom) details.push('Include utility/laundry room');
   if (p.style)      details.push(`Style: ${p.style}`);
-  if (p.climateZone) details.push(`Climate zone: ${p.climateZone}`);
-  if (p.hemisphere) details.push(`Hemisphere: ${p.hemisphere}`);
+  details.push(`Entry facade faces: ${p.orientation} (the street is on the ${p.orientation} side)`);
 
   const notes = [p.prompt, p.additionalNotes, p.transcript].filter(Boolean).join('\n');
 
@@ -427,6 +426,13 @@ serve(async (req) => {
     const genTemperature = p.variationSeed != null ? 0.85 : 0;
 
     try {
+      // Site-resolved climate rules + standards, appended once per request.
+      const effectiveSystemPrompt = `${SYSTEM_PROMPT}
+
+${buildClimatePromptSection(p.climateZone, p.hemisphere)}
+
+${buildStandardsPromptSection(p.buildingType)}`;
+
       for (let i = 1; i <= MAX_ITERATIONS; i++) {
         // ── Generate ────────────────────────────────────────────────────────
         const genMessage = i === 1
@@ -443,7 +449,7 @@ serve(async (req) => {
           ? buildInitialUserMessage(p)
           : buildRefineUserMessage(bestBlueprint, lastScoreResult!, i);
 
-        const blueprint = await callClaude(anthropicKey, SYSTEM_PROMPT, userMessage, 5500, controller.signal, selectedModel, genTemperature);
+        const blueprint = await callClaude(anthropicKey, effectiveSystemPrompt, userMessage, 5500, controller.signal, selectedModel, genTemperature);
 
         // ── Score ────────────────────────────────────────────────────────────
         await updateSession(supabase, sessionId, {

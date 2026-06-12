@@ -42,6 +42,8 @@ import { ConsultationChat } from '../../components/consultation/ConsultationChat
 import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData } from '../../types/blueprint';
 import type { GenerationPayload, ConsultationSummary } from '../../types/generation';
+import type { ClimateZone } from '../../types/blueprint';
+import { suggestSiteDefaults } from '../../utils/siteDefaults';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type BuildingType = GenerationPayload['buildingType'];
@@ -116,6 +118,11 @@ export function GenerationScreen() {
   const [plotUnit, setPlotUnit] = useState<'m2' | 'ft2'>('m2');
   const [explicitPlotWidth, setExplicitPlotWidth] = useState<string>('');
   const [explicitPlotDepth, setExplicitPlotDepth] = useState<string>('');
+  // Site context — defaults suggested from the device timezone, user-overridable
+  const [siteDefaults] = useState(() => suggestSiteDefaults());
+  const [climateZone, setClimateZone] = useState<ClimateZone>(siteDefaults.climateZone);
+  const [hemisphere, setHemisphere] = useState<'north' | 'south'>(siteDefaults.hemisphere);
+  const [orientation, setOrientation] = useState<'N' | 'S' | 'E' | 'W'>('S');
   const [rooms, setRooms] = useState<RoomsState>({
     bedrooms: 3,
     bathrooms: 0,
@@ -234,6 +241,9 @@ export function GenerationScreen() {
       additionalNotes: notes,
       transcript,
       architectId: selectedArchitectId ?? undefined,
+      climateZone,
+      hemisphere,
+      orientation,
       explicitPlotWidth: hasExplicit ? parseFloat(explicitPlotWidth) : undefined,
       explicitPlotDepth: hasExplicit ? parseFloat(explicitPlotDepth) : undefined,
       roomSizes: Object.keys(roomSizes).length > 0 ? roomSizes : undefined,
@@ -454,10 +464,16 @@ export function GenerationScreen() {
             plotUnit={plotUnit}
             explicitPlotWidth={explicitPlotWidth}
             explicitPlotDepth={explicitPlotDepth}
+            climateZone={climateZone}
+            hemisphere={hemisphere}
+            orientation={orientation}
             onPlotSizeChange={setPlotSize}
             onPlotUnitChange={(u) => setPlotUnit(u)}
             onExplicitWidthChange={setExplicitPlotWidth}
             onExplicitDepthChange={setExplicitPlotDepth}
+            onClimateZoneChange={setClimateZone}
+            onHemisphereChange={setHemisphere}
+            onOrientationChange={setOrientation}
             onNext={goNext}
           />
         )}

@@ -241,7 +241,18 @@ export interface BuildingMetadata {
     daylightCode: number;
     structural: number;
     adjacency: number;
+    environment?: number;
   };
+  // ── Site & climate (optional — older blueprints predate these) ─────────────
+  climateZone?: ClimateZone;
+  hemisphere?: 'north' | 'south';
+  /** Compass direction the entry facade faces (street side). */
+  orientation?: 'N' | 'S' | 'E' | 'W';
+  /** Roof pitch in degrees. */
+  roofPitch?: number;
+  /** Eave/overhang depth in metres. */
+  eaveDepth?: number;
+  foundationType?: string;
 }
 
 export type StaircaseType = 'straight' | 'l_shape' | 'spiral';

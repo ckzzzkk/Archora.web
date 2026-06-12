@@ -9,6 +9,8 @@ import { Errors } from '../_shared/errors.ts';
 import { getArchitectById, buildArchitectPromptSection } from '../_shared/architects.ts';
 import { TIER_AI_MODELS, buildAIRequest, parseAIResponse, getModelProvider } from '../_shared/aiLimits.ts';
 import { parseFirstJson } from '../_shared/extractJson.ts';
+import { buildClimatePromptSection } from '../_shared/climateBriefs.ts';
+import { buildStandardsPromptSection } from '../_shared/buildingStandards.ts';
 import { requireEnv } from '../_shared/errors.ts';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
@@ -33,6 +35,7 @@ const RequestSchema = z.object({
   transcript: z.string().max(2000).optional(),
   climateZone: z.enum(['tropical', 'subtropical', 'temperate', 'arid', 'cold', 'alpine']).optional().default('temperate'),
   hemisphere: z.enum(['north', 'south']).optional().default('north'),
+  orientation: z.enum(['N', 'S', 'E', 'W']).optional().default('S'),
   architectId: z.string().optional(),
   floors: z.number().int().min(1).max(20).optional().default(1),
   explicitPlotWidth: z.number().positive().optional(),
@@ -503,7 +506,7 @@ Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble
 {
   "id": "uuid-string",
   "version": 1,
-  "metadata": { "style": "", "buildingType": "", "totalArea": 0, "roomCount": 0, "generatedFrom": "aria", "enrichedPrompt": "", "climateZone": "temperate", "hemisphere": "north", "structuralNotes": [], "roofType": "string", "roofPitch": 0, "foundationType": "string", "estimatedBuildCost": "string", "weatherRating": "string", "structuralRating": "string", "orientation": "string" },
+  "metadata": { "style": "", "buildingType": "", "totalArea": 0, "roomCount": 0, "generatedFrom": "aria", "enrichedPrompt": "", "climateZone": "temperate", "hemisphere": "north", "structuralNotes": [], "roofType": "string", "roofPitch": 0, "eaveDepth": 0, "foundationType": "string", "estimatedBuildCost": "string", "weatherRating": "string", "structuralRating": "string", "orientation": "N|S|E|W (entry facade compass direction)" },
   "walls": [{ "id": "", "start": { "x": 0, "y": 0 }, "end": { "x": 0, "y": 0 }, "thickness": 0.2, "height": 2.7, "isLoadbearing": true, "material": "" }],
   "rooms": [{ "id": "", "name": "", "type": "", "wallIds": [], "floorMaterial": "", "ceilingHeight": 2.7, "area": 0, "centroid": { "x": 0, "y": 0 }, "naturalLightRating": "", "ventilationRating": "" }],
   "openings": [{ "id": "", "wallId": "", "type": "", "position": 0, "width": 0, "height": 0, "sillHeight": 0 }],
@@ -516,7 +519,7 @@ Return ONLY valid JSON. No markdown, no explanation, no code fences, no preamble
 {
   "id": "uuid-string",
   "version": 2,
-  "metadata": { "style": "", "buildingType": "", "totalArea": 0, "roomCount": 0, "generatedFrom": "aria", "enrichedPrompt": "", "climateZone": "temperate", "hemisphere": "north", "structuralNotes": [], "roofType": "string", "roofPitch": 0, "foundationType": "string", "estimatedBuildCost": "string", "weatherRating": "string", "structuralRating": "string", "orientation": "string", "floorCount": 0 },
+  "metadata": { "style": "", "buildingType": "", "totalArea": 0, "roomCount": 0, "generatedFrom": "aria", "enrichedPrompt": "", "climateZone": "temperate", "hemisphere": "north", "structuralNotes": [], "roofType": "string", "roofPitch": 0, "eaveDepth": 0, "foundationType": "string", "estimatedBuildCost": "string", "weatherRating": "string", "structuralRating": "string", "orientation": "N|S|E|W (entry facade compass direction)", "floorCount": 0 },
   "floors": [
     {
       "id": "uuid-string",
@@ -982,26 +985,13 @@ MULTI-FLOOR BUILDINGS
 SUSTAINABLE DESIGN
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  South-facing (northern hemisphere) or north-facing (southern hemisphere) living rooms maximise winter sun
-  Overhanging eaves: 600mm stops summer sun, allows low winter sun
-  Cross ventilation: windows on opposing walls in every habitable room
-  Thermal mass: concrete or stone floors in sun-facing rooms store heat
-  Triple glazing on north-facing windows (cold climates)
+  Follow the CLIMATE-SPECIFIC DESIGN RULES section appended below — it resolves
+  orientation, glazing ratios, roof pitch, eaves, thermal mass and ventilation
+  for the user's actual climate zone and hemisphere. Those numbers override any
+  generic guidance.
   Rainwater harvesting tank in utility/garden
   EV charging point in garage standard
-  Solar panel zone on south-facing roof slope
-
-WINDOW-TO-WALL RATIO: Aim for 20–40% window area on each facade for residential.
-  Less than 15%: rooms feel dark and require artificial lighting even during day
-  More than 40%: thermal gain/loss problems, increased heating and cooling loads
-  North-facing (NH): can be 30–40% — diffuse light is gentle, no solar gain concern
-  South-facing (NH): limit to 25–35% unless overhangs control summer sun
-  East/West: 20–30% — morning east sun is welcome; western heat is problematic
-
-INSULATION ZONES by climate:
-  Temperate: 200mm roof insulation, 150mm wall insulation, U-value ≤ 0.2 W/m²K
-  Cold/Arctic: 400mm roof, 250mm wall, U-value ≤ 0.1 W/m²K
-  Hot/arid: 100mm reflective roof insulation, thermal mass walls
+  Solar panel zone on the sun-side roof slope
   All climates: insulated door seals, thermally broken window frames
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1708,7 +1698,7 @@ serve(async (req) => {
       plotSize, plotUnit, bedrooms, bathrooms, livingAreas,
       hasGarage, hasGarden, hasPool, poolSize,
       hasHomeOffice, hasUtilityRoom, referenceImageUrl, additionalNotes, transcript,
-      climateZone, hemisphere, architectId,
+      climateZone, hemisphere, orientation, architectId,
       explicitPlotWidth, explicitPlotDepth,
       roomSizes, layoutStyle, archetypeId,
     } = parsed.data;
@@ -1740,8 +1730,7 @@ serve(async (req) => {
       const sizes = Object.entries(roomSizes).map(([t, s]) => `${t}: ${s.width}m × ${s.depth}m`).join(', ');
       details.push(`Room sizes (override defaults): ${sizes}`);
     }
-    details.push(`Climate zone: ${climateZone}`);
-    details.push(`Hemisphere: ${hemisphere}`);
+    details.push(`Entry facade faces: ${orientation} (use this to orient the plan; the street is on the ${orientation} side)`);
 
     const combinedNotes = [prompt, additionalNotes, transcript].filter(Boolean).join('\n');
 
@@ -1798,6 +1787,16 @@ Return ONLY valid JSON, no markdown.`;
 ${SYSTEM_PROMPT}`;
       }
     }
+
+    // Site-specific climate rules + international standards (always injected,
+    // resolved for the user's actual zone/hemisphere — supersedes the generic
+    // climate notes that used to live in the static prompt).
+    effectiveSystemPrompt = `${effectiveSystemPrompt}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${buildClimatePromptSection(climateZone, hemisphere)}
+
+${buildStandardsPromptSection(buildingType)}`;
 
     const startMs = Date.now();
     const controller = new AbortController();

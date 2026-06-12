@@ -310,7 +310,11 @@ export function BlueprintWorkspaceScreen() {
     }
     setIsSimulating(true);
     try {
-      const result = await simulationService.simulate(blueprint, 'temperate', 'north');
+      const result = await simulationService.simulate(
+        blueprint,
+        blueprint.metadata?.climateZone ?? 'temperate',
+        blueprint.metadata?.hemisphere ?? 'north',
+      );
       setSimulationReport(result);
       setShowSimulation(true);
     } catch {

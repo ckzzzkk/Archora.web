@@ -185,6 +185,13 @@ const buildingMetadataSchema = z.object({
   enrichedPrompt: z.string().optional(),
   simulationReport: z.any().optional(),
   structuralNotes: z.array(z.string()).optional(),
+  // Site & climate — optional for backward compatibility with stored blueprints
+  climateZone: z.enum(['tropical', 'subtropical', 'temperate', 'arid', 'cold', 'alpine']).optional(),
+  hemisphere: z.enum(['north', 'south']).optional(),
+  orientation: z.enum(['N', 'S', 'E', 'W']).optional(),
+  roofPitch: z.number().min(0).max(89).optional(),
+  eaveDepth: z.number().min(0).max(5).optional(),
+  foundationType: z.string().max(100).optional(),
 });
 
 export const blueprintDataSchema = z.object({

@@ -19,6 +19,8 @@ export interface GenerationPayload {
   transcript?: string;
   climateZone?: ClimateZone;
   hemisphere?: 'north' | 'south';
+  /** Compass direction the entry facade faces (street side). Defaults to 'S' server-side. */
+  orientation?: 'N' | 'S' | 'E' | 'W';
   architectId?: string;
   /** Number of floors. Defaults to 1. Pro/Architect tiers: 1–20 */
   floors?: number;
