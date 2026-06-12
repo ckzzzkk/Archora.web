@@ -67,6 +67,8 @@ function generationPayloadToLayoutConfig(payload: GenerationPayload): LayoutConf
     floors: payload.floors ?? 1,
     hasGarden: payload.hasGarden,
     hasGarage: payload.hasGarage,
+    orientation: payload.orientation ?? 'S',
+    hemisphere: payload.hemisphere ?? 'north',
     rooms,
   };
 }
@@ -213,6 +215,9 @@ export function generateFloorPlan(payload: GenerationPayload): BlueprintData {
       roomCount,
       generatedFrom: 'layout-engine',
       enrichedPrompt: payload.additionalNotes,
+      climateZone: payload.climateZone ?? 'temperate',
+      hemisphere: payload.hemisphere ?? 'north',
+      orientation: payload.orientation ?? 'S',
     },
     floors,
     walls: firstFloor.walls,

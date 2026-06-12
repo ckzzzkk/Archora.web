@@ -6,7 +6,7 @@ import type { Tier } from '../utils/tierLimits';
 import { validateBlueprintData } from '../utils/blueprintValidation';
 import { autoRepairBlueprint } from '../utils/geometry/autoRepair';
 import { validateBlueprint, violationSummary } from '../utils/geometry/blueprintValidator';
-import { assessArchitecturalQuality } from '../utils/geometry/architecturalQuality';
+import { assessFullQuality } from '../utils/environment';
 import { generateFloorPlan } from '../utils/layoutEngine';
 import { toAppError } from '../types/AppError';
 
@@ -97,7 +97,7 @@ export function ensureSoundGeometry(
 
   // Attach an objective architect-grade quality score to every generation so real
   // usage continuously self-reports quality (observability — not a gate).
-  const q = assessArchitecturalQuality(result);
+  const q = assessFullQuality(result);
   result.metadata = {
     ...result.metadata,
     architecturalQuality: {
@@ -106,11 +106,12 @@ export function ensureSoundGeometry(
       daylightCode: q.daylightCode.score,
       structural: q.structural.score,
       adjacency: q.adjacency.score,
+      environment: q.environment.score,
     },
   };
   console.log(
     `[aiService] architectural quality — overall ${q.overall} ` +
-    `(circ ${q.circulation.score}, day ${q.daylightCode.score}, struct ${q.structural.score}, adj ${q.adjacency.score})`,
+    `(circ ${q.circulation.score}, day ${q.daylightCode.score}, struct ${q.structural.score}, adj ${q.adjacency.score}, env ${q.environment.score})`,
   );
   return result;
 }
@@ -192,8 +193,21 @@ export const aiService = {
   async editBlueprint(params: {
     prompt: string;
     blueprint: BlueprintData;
+    architectId?: string;
   }): Promise<{ message: string; blueprint?: BlueprintData }> {
     const headers = await getAuthHeader();
+
+    // Site awareness: attach the deterministic environment findings for THIS
+    // blueprint so ARIA reasons about light/warmth/ventilation from real data.
+    let environmentFindings: string[] | undefined;
+    try {
+      const { simulateEnvironment } = await import('../utils/environment');
+      const env = simulateEnvironment(params.blueprint);
+      environmentFindings = env.recommendations.slice(0, 12).map((r) => r.issue);
+      if (environmentFindings.length === 0) environmentFindings = undefined;
+    } catch {
+      environmentFindings = undefined; // analysis is an enhancement, never a blocker
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60_000);
@@ -202,7 +216,7 @@ export const aiService = {
       const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-edit-blueprint`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(params),
+        body: JSON.stringify({ ...params, environmentFindings }),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);

@@ -36,7 +36,7 @@ export interface ArchitecturalQualityReport {
   overall: number;      // average of the four, 0–100
 }
 
-interface FloorView {
+export interface FloorView {
   index: number;
   walls: Wall[];
   rooms: Room[];
@@ -44,7 +44,7 @@ interface FloorView {
 }
 
 /** Geometric association of rooms ↔ boundary walls, derived from coordinates. */
-interface Assoc {
+export interface Assoc {
   roomPoly: Map<string, Vector2D[]>;     // roomId → boundary polygon vertices
   roomWalls: Map<string, Set<string>>;   // roomId → boundary wall ids
   wallToRooms: Map<string, string[]>;    // wallId → roomIds that border it
@@ -57,7 +57,7 @@ function clamp(score: number): number {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-function floorViews(bp: BlueprintData): FloorView[] {
+export function floorViews(bp: BlueprintData): FloorView[] {
   if (bp.floors && bp.floors.length > 0) {
     return bp.floors.map((f: FloorData) => ({
       index: f.index,
@@ -77,7 +77,7 @@ function dist(a: Vector2D, b: Vector2D): number {
  * Associate each semantic room with the traced wall polygon that encloses it,
  * picking the SMALLEST enclosing polygon (the room itself, not the building shell).
  */
-function associate(view: FloorView): Assoc {
+export function associate(view: FloorView): Assoc {
   const graph = buildWallGraph(view.walls);
   const roomPoly = new Map<string, Vector2D[]>();
   const roomWalls = new Map<string, Set<string>>();

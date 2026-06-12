@@ -22,6 +22,7 @@
 import type { RoomType } from '../../types/blueprint';
 import type { LayoutConfig, LayoutRoom } from './types';
 import { ROOM_MINIMA, GROUND_FLOOR_ONLY } from './types';
+import { planDirectionToCompass } from '../environment/sunPath';
 
 export const CORRIDOR_WIDTH = 1.2;
 // Structural rule: spans strictly over 6.0m need a beam. Tiles stay at 5.9m
@@ -73,6 +74,29 @@ interface RoomSpec {
   type: RoomType;
   name: string;
   targetArea: number;
+}
+
+/** Which column's OUTER facade catches the sun / the morning east light. */
+interface ColumnSunPrefs {
+  sunColumn: 'A' | 'B' | null;
+  eastColumn: 'A' | 'B' | null;
+}
+
+/**
+ * Column A's outer facade points plan -x, column B's +x. Resolve both against
+ * the building orientation, then against the hemisphere's equator side.
+ * When the columns face N/S (entry E or W) one of them is the sun column;
+ * when they face E/W (entry N or S) one is the morning-light column.
+ */
+function columnSunPrefs(config: LayoutConfig): ColumnSunPrefs {
+  const orientation = config.orientation ?? 'S';
+  const equator = (config.hemisphere ?? 'north') === 'north' ? 'S' : 'N';
+  const colACompass = planDirectionToCompass('xminus', orientation);
+  const colBCompass = planDirectionToCompass('xplus', orientation);
+  return {
+    sunColumn: colACompass === equator ? 'A' : colBCompass === equator ? 'B' : null,
+    eastColumn: colACompass === 'E' ? 'A' : colBCompass === 'E' ? 'B' : null,
+  };
 }
 
 export interface FloorPartition {
@@ -160,6 +184,7 @@ function assignColumns(
   specs: RoomSpec[],
   colWidth: number,
   floorIndex: number,
+  sunPrefs: ColumnSunPrefs,
 ): { colA: RoomSpec[]; colB: RoomSpec[] } {
   const depthOf = (col: RoomSpec[]) => col.reduce((s, r) => s + depthFor(r, colWidth), 0);
 
@@ -179,9 +204,26 @@ function assignColumns(
   const colA: RoomSpec[] = [...garageBlock];
   const colB: RoomSpec[] = [...serviceBlock];
 
-  // Greedy balance the rest by depth need, largest first (deterministic).
+  // Greedy balance by depth need, largest first (deterministic) — but honour
+  // a SOFT climate preference: living rooms toward the sun column (their
+  // windows face the equator), bedrooms toward the east column (morning sun).
+  // The guard keeps the columns from drifting more than one room out of
+  // balance, so the tiling geometry stays the same shape it always had.
+  const preferredCol = (s: RoomSpec): 'A' | 'B' | null => {
+    if (s.type === 'living_room' || s.type === 'office') return sunPrefs.sunColumn;
+    if (s.type === 'bedroom') return sunPrefs.eastColumn;
+    return null;
+  };
   free.sort((a, b) => depthFor(b, colWidth) - depthFor(a, colWidth) || a.name.localeCompare(b.name));
   for (const s of free) {
+    const pref = preferredCol(s);
+    if (pref) {
+      const [target, other] = pref === 'A' ? [colA, colB] : [colB, colA];
+      if (depthOf(target) - depthOf(other) < depthFor(s, colWidth)) {
+        target.push(s);
+        continue;
+      }
+    }
     (depthOf(colA) <= depthOf(colB) ? colA : colB).push(s);
   }
 
@@ -294,7 +336,8 @@ export function partitionBuilding(config: LayoutConfig): BuildingPartition {
   const colWidth = snap(Math.min(MAX_SPAN, Math.max(2.8, (Math.min(plotWidth, 2 * MAX_SPAN + CORRIDOR_WIDTH) - CORRIDOR_WIDTH) / 2)));
   const buildWidth = snap(colWidth * 2 + CORRIDOR_WIDTH);
 
-  const floorsColumns = floorsSpecs.map((specs, floorIndex) => assignColumns(specs, colWidth, floorIndex));
+  const sunPrefs = columnSunPrefs(config);
+  const floorsColumns = floorsSpecs.map((specs, floorIndex) => assignColumns(specs, colWidth, floorIndex, sunPrefs));
 
   // Building depth: the deepest column across all floors dictates it.
   let buildDepth = 0;

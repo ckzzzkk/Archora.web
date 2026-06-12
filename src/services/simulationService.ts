@@ -1,50 +1,44 @@
-import { supabase } from '../lib/supabase';
-import type { SimulationReport, BlueprintData } from '../types/blueprint';
+import type { SimulationReport, BlueprintData, ClimateZone } from '../types/blueprint';
+import { simulateEnvironment, toSimulationReport } from '../utils/environment';
 
+/**
+ * Blueprint simulation — runs the deterministic environment engine locally.
+ * Previously this called the simulate-build edge function (an AI call with
+ * 30s+ latency and quota cost); the engine produces the same SimulationReport
+ * shape instantly, offline, and reproducibly. The climateZone/hemisphere
+ * params override blueprint metadata when provided (workspace passes
+ * metadata values; older blueprints fall back to temperate/north).
+ */
 export const simulationService = {
   async simulate(
     blueprint: BlueprintData,
     climateZone: string = 'temperate',
     hemisphere: 'north' | 'south' = 'north',
   ): Promise<SimulationReport> {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
-
-    const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/simulate-build`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+      // Respect explicit caller context without mutating the caller's object.
+      const bp: BlueprintData = {
+        ...blueprint,
+        metadata: {
+          ...blueprint.metadata,
+          climateZone: (blueprint.metadata?.climateZone ?? climateZone) as ClimateZone,
+          hemisphere: blueprint.metadata?.hemisphere ?? hemisphere,
         },
-        body: JSON.stringify({ blueprint, climateZone, hemisphere }),
-      });
-
-      if (!response.ok) {
-        const err = await response.json() as { error?: string };
-        throw Object.assign(new Error(err.error ?? 'Simulation failed'), { code: 'SIMULATION_FAILED' });
-      }
-
-      const raw = await response.json();
-      if (!raw || typeof raw !== 'object' || !('report' in raw)) {
-        throw new Error('Invalid simulation response');
-      }
-      return (raw as { report: SimulationReport }).report;
+      };
+      return toSimulationReport(simulateEnvironment(bp), bp);
     } catch (err) {
       console.warn('[simulationService] simulate failed:', err);
       // Graceful fallback — return a placeholder report so callers don't crash
       return {
         available: false,
-        error: err instanceof Error ? err.message : 'Simulation service temporarily unavailable',
+        error: err instanceof Error ? err.message : 'Simulation temporarily unavailable',
         overall: 0,
         structural: 0,
         weather: 0,
         flow: 0,
         codeCompliance: 0,
         grade: 'F' as const,
-        summary: 'Simulation service is currently unavailable. Your blueprint has been saved.',
+        summary: 'Simulation is currently unavailable. Your blueprint has been saved.',
         strengths: [],
         recommendations: [],
         weatherProfile: {

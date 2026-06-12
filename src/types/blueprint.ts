@@ -27,6 +27,18 @@ export interface SimulationReport {
     foundationFit: 'excellent' | 'good' | 'fair' | 'poor';
     shearWalls: 'excellent' | 'good' | 'fair' | 'poor';
   };
+  /** Per-room environment detail (deterministic engine; absent on old reports). */
+  roomEnvironment?: Array<{
+    roomName: string;
+    floorIndex: number;
+    /** Dominant window facade compass letter, or '—' when windowless. */
+    facade: string;
+    /** Solar gain indices (window·irradiance ÷ floor area). */
+    winterSun: number;
+    summerSun: number;
+    crossVentilation: boolean;
+    habitable: boolean;
+  }>;
   generatedAt: string;
   available?: boolean;
   error?: string;

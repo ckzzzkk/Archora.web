@@ -50,6 +50,9 @@ export interface LayoutConfig {
   floors: number;
   hasGarden: boolean;
   hasGarage: boolean;
+  /** Compass direction the entry facade (plan -y) faces. Default 'S'. */
+  orientation?: 'N' | 'S' | 'E' | 'W';
+  hemisphere?: 'north' | 'south';
   rooms: Array<{
     type: RoomType;
     name: string;

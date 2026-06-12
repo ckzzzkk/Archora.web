@@ -160,6 +160,41 @@ function ProfileChip({ label, value }: ProfileChipProps) {
   );
 }
 
+type RoomEnv = NonNullable<SimulationReport['roomEnvironment']>[number];
+
+/** One habitable room's winter-sun bar + ventilation marker. */
+function RoomSunRow({ room }: { room: RoomEnv }) {
+  // A winter index of 0.08 (≈ generous well-oriented glazing) fills the bar.
+  const fill = Math.max(0.04, Math.min(1, room.winterSun / 0.08));
+  const barColor = room.winterSun >= 0.04 ? '#7AB87A' : room.winterSun >= 0.01 ? DS.colors.warning : DS.colors.error;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+      <ArchText
+        variant="body"
+        numberOfLines={1}
+        style={{ fontFamily: DS.font.regular, fontSize: 12, color: DS.colors.primary, width: 110 }}
+      >
+        {room.roomName}
+      </ArchText>
+      <View style={{ flex: 1, height: 8, borderRadius: 999, backgroundColor: DS.colors.border, overflow: 'hidden' }}>
+        <View style={{ width: `${fill * 100}%`, height: '100%', borderRadius: 999, backgroundColor: barColor }} />
+      </View>
+      <ArchText
+        variant="body"
+        style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryDim, width: 16, textAlign: 'center' }}
+      >
+        {room.facade}
+      </ArchText>
+      <ArchText
+        variant="body"
+        style={{ fontSize: 12, color: room.crossVentilation ? '#7AB87A' : DS.colors.primaryGhost, width: 18, textAlign: 'center' }}
+      >
+        ⇄
+      </ArchText>
+    </View>
+  );
+}
+
 export function SimulationPanel({ report, onReanalyse, onClose }: SimulationPanelProps) {
   const gColor = gradeColor(report.grade);
 
@@ -334,6 +369,44 @@ export function SimulationPanel({ report, onReanalyse, onClose }: SimulationPane
           <ProfileChip label="Thermal Mass" value={report.weatherProfile.thermalMass} />
         </View>
       </View>
+
+      {/* Room-by-room sun & airflow (deterministic engine detail) */}
+      {report.roomEnvironment && report.roomEnvironment.some((r) => r.habitable) && (
+        <View
+          style={{
+            marginHorizontal: 20,
+            marginBottom: 20,
+            padding: 16,
+            borderRadius: DS.radius.card,
+            backgroundColor: DS.colors.surface,
+            borderWidth: 1,
+            borderColor: DS.colors.border,
+          }}
+        >
+          <ArchText
+            variant="body"
+            style={{
+              fontFamily: DS.font.medium,
+              fontSize: 12,
+              color: DS.colors.primaryDim,
+              marginBottom: 12,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
+          >
+            Room Sun &amp; Airflow
+          </ArchText>
+          {report.roomEnvironment.filter((r) => r.habitable).map((room) => (
+            <RoomSunRow key={`${room.floorIndex}-${room.roomName}`} room={room} />
+          ))}
+          <ArchText
+            variant="body"
+            style={{ fontFamily: DS.font.regular, fontSize: 10, color: DS.colors.primaryGhost, marginTop: 8 }}
+          >
+            ☀ winter sun capture · ⇄ cross-ventilation path · letter = window facade
+          </ArchText>
+        </View>
+      )}
 
       {/* Structural profile */}
       <View

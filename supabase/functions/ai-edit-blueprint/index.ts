@@ -16,6 +16,9 @@ const RequestSchema = z.object({
   blueprint: z.record(z.unknown()),
   architectId: z.string().optional(),
   mode: z.enum(['edit', 'suggest']).optional().default('edit'),
+  // Deterministic client-side environment analysis (solar/ventilation/exposure
+  // findings) — gives ARIA site awareness when explaining or fixing issues.
+  environmentFindings: z.array(z.string().max(300)).max(12).optional(),
 });
 
 const SYSTEM_PROMPT = `You are ARIA — a senior architect with 20 years of experience designing homes that people genuinely love living in. You've worked with young couples finding their first place together, growing families who need their home to flex with them, and retirees creating spaces that will serve them beautifully for decades.
@@ -209,7 +212,7 @@ serve(async (req: Request) => {
       return Errors.validation('Invalid request body', parsed.error.issues);
     }
 
-    const { prompt, blueprint, architectId, mode } = parsed.data;
+    const { prompt, blueprint, architectId, mode, environmentFindings } = parsed.data;
 
     // Inject architect influence if specified
     let effectiveSystemPrompt = SYSTEM_PROMPT;
@@ -224,6 +227,18 @@ ${SYSTEM_PROMPT}`;
 
 ${SUGGEST_SYSTEM_PROMPT}`;
       }
+    }
+
+    // Site awareness: current environmental analysis of this exact blueprint.
+    if (environmentFindings && environmentFindings.length > 0) {
+      const findingsBlock = `
+
+## CURRENT ENVIRONMENTAL ANALYSIS OF THIS BLUEPRINT
+A deterministic simulation of this design in its climate found:
+${environmentFindings.map((f) => `- ${f}`).join('\n')}
+When the user's request touches light, warmth, ventilation, weather or comfort, ground your reasoning and edits in these findings.`;
+      effectiveSystemPrompt += findingsBlock;
+      effectiveSuggestPrompt += findingsBlock;
     }
 
     // Handle suggest mode

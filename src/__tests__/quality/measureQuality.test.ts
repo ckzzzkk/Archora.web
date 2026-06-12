@@ -25,7 +25,7 @@ import { describe, it, expect } from 'vitest';
 import { writeFileSync } from 'node:fs';
 import { generateFloorPlan } from '../../utils/layoutEngine';
 import { autoRepairBlueprint } from '../../utils/geometry/autoRepair';
-import { assessArchitecturalQuality } from '../../utils/geometry/architecturalQuality';
+import { assessFullQuality } from '../../utils/environment';
 import { validateBlueprint, violationSummary } from '../../utils/geometry/blueprintValidator';
 import type { GenerationPayload } from '../../types/generation';
 import type { BlueprintData } from '../../types/blueprint';
@@ -84,11 +84,11 @@ describe('architectural quality measurement harness', () => {
   it('reports quality scores across representative briefs', async () => {
     const PASS = 80;
 
-    const rows: Array<{ label: string; geo: ReturnType<typeof violationSummary>; q: ReturnType<typeof assessArchitecturalQuality> }> = [];
+    const rows: Array<{ label: string; geo: ReturnType<typeof violationSummary>; q: ReturnType<typeof assessFullQuality> }> = [];
     for (const { label, payload } of BRIEFS) {
       const bp = await produce(payload);
       const geo = violationSummary(validateBlueprint(bp));
-      const q = assessArchitecturalQuality(bp);
+      const q = assessFullQuality(bp);
       rows.push({ label, geo, q });
     }
 
@@ -97,35 +97,35 @@ describe('architectural quality measurement harness', () => {
     const lines: string[] = [];
     lines.push('');
     lines.push(`═══ ARCHITECTURAL QUALITY REPORT (source: ${source}) ═══`);
-    lines.push(pad('Brief', 24) + pad('Circ', 6) + pad('Day', 6) + pad('Struct', 8) + pad('Adj', 6) + pad('Overall', 9) + pad('GeoCrit', 9));
-    lines.push('─'.repeat(68));
+    lines.push(pad('Brief', 24) + pad('Circ', 6) + pad('Day', 6) + pad('Struct', 8) + pad('Adj', 6) + pad('Env', 6) + pad('Overall', 9) + pad('GeoCrit', 9));
+    lines.push('─'.repeat(74));
     for (const { label, geo, q } of rows) {
       lines.push(
         pad(label, 24) + pad(q.circulation.score, 6) + pad(q.daylightCode.score, 6) +
-        pad(q.structural.score, 8) + pad(q.adjacency.score, 6) + pad(q.overall, 9) + pad(geo.critical, 9),
+        pad(q.structural.score, 8) + pad(q.adjacency.score, 6) + pad(q.environment.score, 6) + pad(q.overall, 9) + pad(geo.critical, 9),
       );
     }
-    lines.push('─'.repeat(68));
+    lines.push('─'.repeat(74));
 
     const avg = (sel: (r: typeof rows[number]) => number) => Math.round(rows.reduce((s, r) => s + sel(r), 0) / rows.length);
     const rate = (sel: (r: typeof rows[number]) => number) => Math.round((rows.filter((r) => sel(r) >= PASS).length / rows.length) * 100);
 
     lines.push(
       pad('AVERAGE', 24) + pad(avg((r) => r.q.circulation.score), 6) + pad(avg((r) => r.q.daylightCode.score), 6) +
-      pad(avg((r) => r.q.structural.score), 8) + pad(avg((r) => r.q.adjacency.score), 6) + pad(avg((r) => r.q.overall), 9),
+      pad(avg((r) => r.q.structural.score), 8) + pad(avg((r) => r.q.adjacency.score), 6) + pad(avg((r) => r.q.environment.score), 6) + pad(avg((r) => r.q.overall), 9),
     );
     lines.push(
       pad(`PASS RATE (≥${PASS})`, 24) + pad(rate((r) => r.q.circulation.score) + '%', 6) + pad(rate((r) => r.q.daylightCode.score) + '%', 6) +
-      pad(rate((r) => r.q.structural.score) + '%', 8) + pad(rate((r) => r.q.adjacency.score) + '%', 6) + pad(rate((r) => r.q.overall) + '%', 9),
+      pad(rate((r) => r.q.structural.score) + '%', 8) + pad(rate((r) => r.q.adjacency.score) + '%', 6) + pad(rate((r) => r.q.environment.score) + '%', 6) + pad(rate((r) => r.q.overall) + '%', 9),
     );
-    lines.push('═'.repeat(68));
+    lines.push('═'.repeat(74));
 
     const withIssues = rows.find((r) =>
-      r.q.circulation.issues.length || r.q.daylightCode.issues.length || r.q.structural.issues.length || r.q.adjacency.issues.length,
+      r.q.circulation.issues.length || r.q.daylightCode.issues.length || r.q.structural.issues.length || r.q.adjacency.issues.length || r.q.environment.issues.length,
     );
     if (withIssues) {
       lines.push(`Example issues — ${withIssues.label}:`);
-      for (const cat of ['circulation', 'daylightCode', 'structural', 'adjacency'] as const) {
+      for (const cat of ['circulation', 'daylightCode', 'structural', 'adjacency', 'environment'] as const) {
         for (const issue of withIssues.q[cat].issues.slice(0, 3)) lines.push(`  • [${cat}] ${issue}`);
       }
     }
@@ -138,6 +138,12 @@ describe('architectural quality measurement harness', () => {
     for (const { q } of rows) {
       expect(q.overall).toBeGreaterThanOrEqual(0);
       expect(q.overall).toBeLessThanOrEqual(100);
+    }
+
+    // Regression gate (procedural only): the baseline must not crater when
+    // scoring gains new dimensions. See plan: target ≥90 overall average.
+    if (!USE_AI) {
+      expect(avg((r) => r.q.overall)).toBeGreaterThanOrEqual(90);
     }
   }, USE_AI ? 900_000 : 30_000); // live AI: up to 15 min for 8 generations
 });
