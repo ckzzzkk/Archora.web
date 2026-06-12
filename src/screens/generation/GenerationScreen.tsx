@@ -10,7 +10,7 @@ import Svg, { Rect, Line, Path, Circle } from 'react-native-svg';
 import Animated, {
   useSharedValue as useSV, useAnimatedStyle as useAS, withTiming, withRepeat,
   withDelay as wDelay, withSpring, Easing as EA, interpolate,
-  runOnJS,
+  runOnJS, FadeInRight, FadeInLeft,
 } from 'react-native-reanimated';
 
 import { aiService } from '../../services/aiService';
@@ -212,6 +212,11 @@ export function GenerationScreen() {
     const id = setInterval(() => setLoadingPhase((p) => (p + 1) % LOADING_PHASES.length), 3500);
     return () => clearInterval(id);
   }, [screenState]);
+
+  // Step transition direction: forward slides in from the right, back from the left.
+  const prevStepRef = useRef<number>(step);
+  const stepDirection = step >= prevStepRef.current ? 1 : -1;
+  useEffect(() => { prevStepRef.current = step; }, [step]);
 
   const goBack = useCallback(() => {
     if (step > 0) {
@@ -438,6 +443,13 @@ export function GenerationScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* key={step} remounts on every step change so the directional
+            entrance fires; back-swipes slide from the left. */}
+        <Animated.View
+          key={step}
+          entering={(stepDirection > 0 ? FadeInRight : FadeInLeft).duration(250)}
+          style={{ flex: 1 }}
+        >
         {step === 0 && (
           <Step0Architect
             selectedId={selectedArchitectId}
@@ -614,6 +626,7 @@ export function GenerationScreen() {
             onBatchCountChange={setBatchCount}
           />
         )}
+        </Animated.View>
       </ScrollView>
 
       {/* Room Studio modal — Pro/Architect */}

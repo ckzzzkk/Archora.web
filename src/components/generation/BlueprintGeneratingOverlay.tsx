@@ -45,6 +45,37 @@ const segments = [
   { x1: 24, y1: 68, x2: 80, y2: 68 },
 ];
 
+/** Indeterminate shimmer bar — visible motion proves work is happening even
+ *  between phase-label changes (those swap only every few seconds). */
+function ShimmerBar() {
+  const sweep = useSV(0);
+  useEffect(() => {
+    sweep.value = withRepeat(withTiming(1, { duration: 1300, easing: EA.inOut(EA.cubic) }), -1, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const TRACK_W = 180;
+  const BAR_W = 56;
+  const barStyle = useAS(() => ({
+    transform: [{ translateX: interpolate(sweep.value, [0, 1], [-BAR_W, TRACK_W]) }],
+  }));
+  return (
+    <View
+      style={{
+        width: TRACK_W,
+        height: 4,
+        borderRadius: 999,
+        backgroundColor: DS.colors.border,
+        overflow: 'hidden',
+        marginTop: DS.spacing.md,
+      }}
+    >
+      <Animated.View
+        style={[barStyle, { width: BAR_W, height: '100%', borderRadius: 999, backgroundColor: DS.colors.accent }]}
+      />
+    </View>
+  );
+}
+
 export function BlueprintGeneratingOverlay({
   phase,
   iterationProgress,
@@ -162,6 +193,8 @@ export function BlueprintGeneratingOverlay({
           />
         ))}
       </View>
+
+      <ShimmerBar />
 
       <View style={{
         marginTop: DS.spacing.xl,

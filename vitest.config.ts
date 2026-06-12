@@ -7,6 +7,9 @@ export default defineConfig({
       // react-native-mmkv imports react-native (Flow syntax) which Vite cannot
       // parse — substitute an in-memory store for the node test environment.
       'react-native-mmkv': resolve(__dirname, 'src/__tests__/helpers/mmkvStub.ts'),
+      // Same Flow problem; pure modules (animationPresets) need only Easing +
+      // entering-builder shapes.
+      'react-native-reanimated': resolve(__dirname, 'src/__tests__/helpers/reanimatedStub.ts'),
     },
   },
   test: {

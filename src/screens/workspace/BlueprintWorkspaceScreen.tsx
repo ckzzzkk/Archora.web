@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, Share, Modal } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, interpolate,
 } from 'react-native-reanimated';
+import { enterUp } from '../../utils/animationPresets';
 import Svg, { Rect, Line, Path, Circle } from 'react-native-svg';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -445,8 +446,10 @@ export function BlueprintWorkspaceScreen() {
               )}
             </View>
           )}
-          {TOOLS.map((tool) => (
-            <ToolButton key={tool.id} tool={tool} active={activeTool === tool.id} onPress={() => handleToolPress(tool.id)} />
+          {TOOLS.map((tool, i) => (
+            <Animated.View key={tool.id} entering={enterUp(i)}>
+              <ToolButton tool={tool} active={activeTool === tool.id} onPress={() => handleToolPress(tool.id)} />
+            </Animated.View>
           ))}
           {/* Structural grid toggle — Architect only */}
           {commercialAllowed && viewMode === '2D' && (

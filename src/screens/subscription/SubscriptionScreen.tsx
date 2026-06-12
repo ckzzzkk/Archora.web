@@ -9,7 +9,9 @@ import Animated, {
   useSharedValue,
   withSpring,
   useAnimatedStyle,
+  FadeIn,
 } from 'react-native-reanimated';
+import { SPRING, enterUp } from '../../utils/animationPresets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession } from '../../auth/useSession';
 import { ArchText } from '../../components/common/ArchText';
@@ -114,7 +116,7 @@ function StarterCard({ isCurrent }: { isCurrent: boolean }) {
 }
 
 function TierCard({
-  tier, billing, isCurrent, isHighlighted, onUpgrade, disabled,
+  tier, billing, isCurrent, isHighlighted, onUpgrade, disabled, index = 0,
 }: {
   tier: Exclude<SubscriptionTier, 'starter'>;
   billing: BillingInterval;
@@ -122,6 +124,7 @@ function TierCard({
   isHighlighted: boolean;
   onUpgrade: (t: Exclude<SubscriptionTier, 'starter'>) => void;
   disabled: boolean;
+  index?: number;
 }) {
   const price = PRICES[tier];
   const accent = TIER_ACCENT[tier];
@@ -129,8 +132,12 @@ function TierCard({
   const perks = TIER_PERKS[tier];
   const label = TIER_LABEL[tier];
 
+  // CTA press feedback
+  const ctaScale = useSharedValue(1);
+  const ctaStyle = useAnimatedStyle(() => ({ transform: [{ scale: ctaScale.value }] }));
+
   return (
-    <View style={{
+    <Animated.View entering={enterUp(index)} style={{
       borderRadius: DS.radius.card, // 24px — oval-first design system
       borderWidth: isHighlighted ? 2 : 1,
       borderColor: isHighlighted ? accent : DS.colors.border,
@@ -156,12 +163,13 @@ function TierCard({
       <View style={{ padding: DS.spacing.lg }}>
         <ArchText variant="heading" style={{ fontSize: 22, marginBottom: DS.spacing.xs }}>{label}</ArchText>
 
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: DS.spacing.xs }}>
+        {/* key={billing} cross-fades the price when the interval flips */}
+        <Animated.View key={billing} entering={FadeIn.duration(200)} style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: DS.spacing.xs }}>
           <ArchText variant="body" style={{ fontFamily: DS.font.bold, fontSize: DS.fontSize.xxxl, color: accent }}>
             ${displayPrice.toFixed(2)}
           </ArchText>
           <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.primaryGhost, marginLeft: 4 }}>/mo</ArchText>
-        </View>
+        </Animated.View>
 
         {billing === 'annual' && (
           <ArchText variant="body" style={{ fontSize: 12, color: DS.colors.primaryDim, marginBottom: DS.spacing.md }}>
@@ -178,29 +186,33 @@ function TierCard({
           ))}
         </View>
 
-        <Pressable
-          onPress={() => !isCurrent && onUpgrade(tier)}
-          disabled={disabled || isCurrent}
-          style={{
-            backgroundColor: isCurrent ? DS.colors.border : accent,
-            borderRadius: 50,
-            paddingVertical: 14,
-            paddingHorizontal: 14,
-            alignItems: 'center',
-          }}
-        >
-          <View style={{ flexShrink: 1 }}>
-            <ArchText variant="body" style={{
-              fontFamily: DS.font.bold,
-              fontSize: 15,
-              color: isCurrent ? DS.colors.primaryGhost : DS.colors.background,
-            }} numberOfLines={1}>
-              {isCurrent ? 'Current Plan' : tier === 'creator' ? 'Start Creating' : tier === 'pro' ? 'Go Pro' : 'Go Architect'}
-            </ArchText>
-          </View>
-        </Pressable>
+        <Animated.View style={ctaStyle}>
+          <Pressable
+            onPress={() => !isCurrent && onUpgrade(tier)}
+            onPressIn={() => { ctaScale.value = withSpring(0.96, SPRING.snappy); }}
+            onPressOut={() => { ctaScale.value = withSpring(1, SPRING.snappy); }}
+            disabled={disabled || isCurrent}
+            style={{
+              backgroundColor: isCurrent ? DS.colors.border : accent,
+              borderRadius: 50,
+              paddingVertical: 14,
+              paddingHorizontal: 14,
+              alignItems: 'center',
+            }}
+          >
+            <View style={{ flexShrink: 1 }}>
+              <ArchText variant="body" style={{
+                fontFamily: DS.font.bold,
+                fontSize: 15,
+                color: isCurrent ? DS.colors.primaryGhost : DS.colors.background,
+              }} numberOfLines={1}>
+                {isCurrent ? 'Current Plan' : tier === 'creator' ? 'Start Creating' : tier === 'pro' ? 'Go Pro' : 'Go Architect'}
+              </ArchText>
+            </View>
+          </Pressable>
+        </Animated.View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -350,9 +362,9 @@ export function SubscriptionScreen({ navigation }: Props) {
 
         {/* Tier cards */}
         <StarterCard isCurrent={tier === 'starter'} />
-        <TierCard tier="creator"   billing={billing} isCurrent={tier === 'creator'}   isHighlighted={false} onUpgrade={handleUpgrade}   disabled={isLoading} />
-        <TierCard tier="pro"       billing={billing} isCurrent={tier === 'pro'}       isHighlighted         onUpgrade={handleUpgrade} disabled={isLoading} />
-        <TierCard tier="architect" billing={billing} isCurrent={tier === 'architect'} isHighlighted={false} onUpgrade={handleUpgrade} disabled={isLoading} />
+        <TierCard tier="creator"   billing={billing} isCurrent={tier === 'creator'}   isHighlighted={false} onUpgrade={handleUpgrade}   disabled={isLoading} index={0} />
+        <TierCard tier="pro"       billing={billing} isCurrent={tier === 'pro'}       isHighlighted         onUpgrade={handleUpgrade} disabled={isLoading} index={1} />
+        <TierCard tier="architect" billing={billing} isCurrent={tier === 'architect'} isHighlighted={false} onUpgrade={handleUpgrade} disabled={isLoading} index={2} />
 
         {/* Manage subscription for paying users */}
         {tier !== 'starter' && (
