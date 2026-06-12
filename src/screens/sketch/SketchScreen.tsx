@@ -33,6 +33,9 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { BlueprintData, Wall, Room, RoomType, Vector2D, FloorData } from '../../types/blueprint';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { curveToSegments, arcToSegments } from '../../utils/sketch/curves';
+import { smartSnap, type SnapKind } from '../../utils/sketch/snapping';
+import { createHistory } from '../../utils/sketch/history';
+import { useShakeDetector } from '../../hooks/useShakeDetector';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -530,57 +533,99 @@ export function SketchScreen() {
     },
   );
 
+  // ── Undo/redo: bounded snapshot history of the walls array ────────────────
+  const historyRef = useRef(createHistory<SketchWall[]>([]));
+  const [, bumpHistory] = useReducer((n: number) => n + 1, 0);
+
+  /** All mutations land through here so every change is undoable. */
+  const commitWalls = useCallback((next: SketchWall[]) => {
+    historyRef.current.push(next);
+    setWalls(next);
+    bumpHistory();
+  }, []);
+
+  const performUndo = useCallback(() => {
+    const prev = historyRef.current.undo();
+    if (prev) {
+      light();
+      setWalls(prev);
+      bumpHistory();
+    }
+  }, [light]);
+
+  const performRedo = useCallback(() => {
+    const next = historyRef.current.redo();
+    if (next) {
+      light();
+      setWalls(next);
+      bumpHistory();
+    }
+  }, [light]);
+
+  // Shake to undo, double-shake to redo (same convention as the workspace).
+  useShakeDetector({ onShake: performUndo, onDoubleShake: performRedo, enabled: mode === 'draw' });
+
   const addWall = useCallback(
     (startX: number, startY: number, endX: number, endY: number) => {
-      setWalls((prev) => [
-        ...prev,
-        { id: genId(), start: { x: startX, y: startY }, end: { x: endX, y: endY }, isPreview: false },
+      // Same smart snap the live preview shows: chain onto existing endpoints,
+      // square up near-orthogonal segments, close loops back to the start.
+      const s = smartSnap({ x: startX, y: startY }, walls, null);
+      const e = smartSnap({ x: endX, y: endY }, walls, s.point);
+      if (dist2D(s.point, e.point) <= 0.1) return;
+      commitWalls([
+        ...walls,
+        { id: genId(), start: s.point, end: e.point, isPreview: false },
       ]);
     },
-    [],
+    [walls, commitWalls],
   );
 
   const eraseWallAt = useCallback((mx: number, my: number) => {
-    setWalls((prev) =>
-      prev.filter((w) => pointToSegmentDist({ x: mx, y: my }, w.start, w.end) >= 0.3),
-    );
-  }, []);
+    const next = walls.filter((w) => pointToSegmentDist({ x: mx, y: my }, w.start, w.end) >= 0.3);
+    if (next.length !== walls.length) commitWalls(next);
+  }, [walls, commitWalls]);
 
   // Line tool: tap once = first anchor, tap twice = commit wall
   const handleLineTap = useCallback((mx: number, my: number) => {
     if (lineAnchor === null) {
-      setLineAnchor({ x: mx, y: my });
+      setLineAnchor(smartSnap({ x: mx, y: my }, walls, null).point);
     } else {
-      setWalls((prev) => [
-        ...prev,
-        { id: genId(), start: lineAnchor, end: { x: mx, y: my }, isPreview: false },
-      ]);
+      const end = smartSnap({ x: mx, y: my }, walls, lineAnchor).point;
+      if (dist2D(lineAnchor, end) > 0.1) {
+        commitWalls([
+          ...walls,
+          { id: genId(), start: lineAnchor, end, isPreview: false },
+        ]);
+      }
       setLineAnchor(null);
     }
-  }, [lineAnchor]);
+  }, [lineAnchor, walls, commitWalls]);
 
   // Curve tool: tap to add points, double-tap to commit as tessellated walls
   const handleCurveTap = useCallback((mx: number, my: number) => {
-    setCurvePoints((prev) => [...prev, { x: mx, y: my }]);
-  }, []);
+    setCurvePoints((prev) => [
+      ...prev,
+      smartSnap({ x: mx, y: my }, walls, prev[0] ?? null).point,
+    ]);
+  }, [walls]);
 
   const handleCurveCommit = useCallback(() => {
     if (curvePoints.length < 2) { setCurvePoints([]); return; }
     const tessellated = curveToWalls(curvePoints);
-    setWalls((prev) => [...prev, ...tessellated]);
+    commitWalls([...walls, ...tessellated]);
     setCurvePoints([]);
-  }, [curvePoints]);
+  }, [curvePoints, walls, commitWalls]);
 
   // Arc tool: tap start → tap end → drag bulge → release commits
   const handleArcTap = useCallback((mx: number, my: number) => {
     if (arcStart === null) {
-      setArcStart({ x: mx, y: my });
+      setArcStart(smartSnap({ x: mx, y: my }, walls, null).point);
       setArcEnd(null);
       setArcDragBulge(null);
     } else if (arcEnd === null) {
-      setArcEnd({ x: mx, y: my });
+      setArcEnd(smartSnap({ x: mx, y: my }, walls, arcStart).point);
     }
-  }, [arcStart, arcEnd]);
+  }, [arcStart, arcEnd, walls]);
 
   const handleArcDrag = useCallback((mx: number, my: number) => {
     setArcDragBulge({ x: mx, y: my });
@@ -588,13 +633,13 @@ export function SketchScreen() {
 
   const handleArcCommit = useCallback(() => {
     if (arcStart !== null && arcEnd !== null && arcDragBulge !== null) {
-      const walls = arcToWalls(arcStart, arcEnd, arcDragBulge);
-      setWalls((prev) => [...prev, ...walls]);
+      const arcSegs = arcToWalls(arcStart, arcEnd, arcDragBulge);
+      commitWalls([...walls, ...arcSegs]);
     }
     setArcStart(null);
     setArcEnd(null);
     setArcDragBulge(null);
-  }, [arcStart, arcEnd, arcDragBulge]);
+  }, [arcStart, arcEnd, arcDragBulge, walls, commitWalls]);
 
   // Pinch gesture
   const pinchGesture = Gesture.Pinch()
@@ -731,9 +776,9 @@ export function SketchScreen() {
     const maxX = walls.reduce((m, wl) => Math.max(m, wl.start.x, wl.end.x), 0);
     const startX = maxX > 0 ? maxX + 1 : 0;
     const newWalls = rectWalls(startX, 0, w, h);
-    setWalls((prev) => [...prev, ...newWalls]);
+    commitWalls([...walls, ...newWalls]);
     setMode('draw');
-  }, [walls, light]);
+  }, [walls, light, commitWalls]);
 
   const handlePresetToWorkspace = useCallback((preset: PresetEntry, size: PresetSize) => {
     medium();
@@ -798,6 +843,25 @@ export function SketchScreen() {
     { id: 'arc', label: 'Arc' },
     { id: 'eraser', label: 'Erase' },
   ];
+
+  // Live smart-snap preview for the wall tool. The canvas re-renders on every
+  // gesture frame (forceCanvasRender), so this recomputes from fresh refs and
+  // matches EXACTLY what addWall will commit on release.
+  const liveDraw = (tool === 'wall' && skIsDrawing.current) ? (() => {
+    const s = smartSnap({ x: skDrawStartX.current, y: skDrawStartY.current }, walls, null);
+    const e = smartSnap({ x: skPreviewEndX.current, y: skPreviewEndY.current }, walls, s.point);
+    return { start: s.point, end: e.point, kind: e.kind };
+  })() : null;
+
+  const snapIndicatorColor = (kind: SnapKind): string | null => {
+    switch (kind) {
+      case 'close-loop': return '#7AB87A';
+      case 'endpoint': return accentColor;
+      case 'midpoint': return `${accentColor}aa`;
+      case 'axis': return DS.colors.warning;
+      default: return null;
+    }
+  };
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: DS.colors.background }}>
@@ -905,21 +969,36 @@ export function SketchScreen() {
                   );
                 })()}
 
-                {/* Preview wall */}
-                {skIsDrawing.current && (
+                {/* Preview wall — drawn at the smart-snapped position so the
+                    preview is exactly what commit produces */}
+                {liveDraw && (
                   <SkiaLine
                     p1={{
-                      x: metreToPixel(skDrawStartX.current, skScale.current, skOffsetX.current),
-                      y: metreToPixel(skDrawStartY.current, skScale.current, skOffsetY.current),
+                      x: metreToPixel(liveDraw.start.x, skScale.current, skOffsetX.current),
+                      y: metreToPixel(liveDraw.start.y, skScale.current, skOffsetY.current),
                     }}
                     p2={{
-                      x: metreToPixel(skPreviewEndX.current, skScale.current, skOffsetX.current),
-                      y: metreToPixel(skPreviewEndY.current, skScale.current, skOffsetY.current),
+                      x: metreToPixel(liveDraw.end.x, skScale.current, skOffsetX.current),
+                      y: metreToPixel(liveDraw.end.y, skScale.current, skOffsetY.current),
                     }}
                     strokeWidth={2}
                     color={`${accentColor}99`}
                   />
                 )}
+
+                {/* Snap indicator: what the endpoint will lock onto */}
+                {liveDraw && (() => {
+                  const c = snapIndicatorColor(liveDraw.kind);
+                  if (!c) return null;
+                  return (
+                    <SkiaCircle
+                      cx={metreToPixel(liveDraw.end.x, skScale.current, skOffsetX.current)}
+                      cy={metreToPixel(liveDraw.end.y, skScale.current, skOffsetY.current)}
+                      r={liveDraw.kind === 'close-loop' ? 10 : 7}
+                      color={`${c}cc`}
+                    />
+                  );
+                })()}
 
                 {/* Line tool preview: first anchor dot */}
                 {tool === 'line' && lineAnchor !== null && (
@@ -1053,6 +1132,37 @@ export function SketchScreen() {
               </GestureDetector>
             </ErrorBoundary>
 
+            {/* Live dimension label while drawing */}
+            {liveDraw && (() => {
+              const len = dist2D(liveDraw.start, liveDraw.end);
+              if (len < 0.05) return null;
+              const midX = metreToPixel((liveDraw.start.x + liveDraw.end.x) / 2, skScale.current, skOffsetX.current);
+              const midY = metreToPixel((liveDraw.start.y + liveDraw.end.y) / 2, skScale.current, skOffsetY.current);
+              return (
+                <View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: midX - 34,
+                    top: midY - 34,
+                    backgroundColor: `${DS.colors.background}e6`,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: DS.colors.border,
+                    paddingHorizontal: 10,
+                    paddingVertical: 3,
+                  }}
+                >
+                  <ArchText
+                    variant="body"
+                    style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 12, color: DS.colors.primary }}
+                  >
+                    {len.toFixed(1)}m
+                  </ArchText>
+                </View>
+              );
+            })()}
+
             {/* Refine with AI loading overlay */}
             {isRefining && (
               <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11,30,61,0.85)', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
@@ -1109,6 +1219,37 @@ export function SketchScreen() {
                     color: tool === t.id ? DS.colors.background : DS.colors.primaryDim,
                   }}>
                     {t.label}
+                  </ArchText>
+                </Pressable>
+              ))}
+
+              {/* Divider */}
+              <View style={{ width: 1, height: 24, backgroundColor: DS.colors.border, marginHorizontal: 4 }} />
+
+              {/* Undo / redo (also: shake = undo, double-shake = redo) */}
+              {([
+                { label: '↶', action: performUndo, enabled: historyRef.current.canUndo(), a11y: 'Undo last sketch change' },
+                { label: '↷', action: performRedo, enabled: historyRef.current.canRedo(), a11y: 'Redo sketch change' },
+              ] as const).map((b) => (
+                <Pressable
+                  key={b.label}
+                  onPress={b.action}
+                  onPressIn={handleToolPressIn}
+                  onPressOut={handleToolPressOut}
+                  disabled={!b.enabled}
+                  accessibilityLabel={b.a11y}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !b.enabled }}
+                  style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 8,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    opacity: b.enabled ? 1 : 0.3,
+                  }}
+                >
+                  <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 16, color: DS.colors.primaryDim }}>
+                    {b.label}
                   </ArchText>
                 </Pressable>
               ))}
