@@ -209,6 +209,14 @@ export const blueprintDataSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   simulationReport: z.any().optional(),
+  annotations: z.array(z.object({
+    id: z.string(),
+    label: z.string().max(120),
+    lengthM: z.number().min(0).max(1000),
+    kind: z.enum(['wall', 'room']),
+    source: z.literal('ar_measure'),
+    createdAt: z.string(),
+  })).max(200).optional(),
 });
 
 export type ValidatedBlueprintData = z.infer<typeof blueprintDataSchema>;

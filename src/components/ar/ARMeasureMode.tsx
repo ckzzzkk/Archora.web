@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Alert } from 'react-native';
 import Svg, { Line, Circle, Path, Text as SvgText, Polygon } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import { ArchText } from '../common/ArchText';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
 import { useARCore } from '../../hooks/useARCore';
+import { useBlueprintStore } from '../../stores/blueprintStore';
 import type { Vector3D } from '../../native/ARCoreModule';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -103,6 +104,27 @@ function WallMeasure() {
   const [point2, setPoint2] = useState<{ world: Vector3D; screen: Point2D } | null>(null);
   const [measurements, setMeasurements] = useState<Measurement3D[]>([]);
   const [status, setStatus] = useState<'ready' | 'point1' | 'point2' | 'done'>('ready');
+
+  // Persist measurements onto the open blueprint (they used to vanish on exit).
+  const blueprint = useBlueprintStore((s) => s.blueprint);
+  const addMeasurementAnnotations = useBlueprintStore((s) => s.actions.addMeasurementAnnotations);
+  const handlePersistMeasurements = useCallback(() => {
+    if (measurements.length === 0) return;
+    if (!blueprint) {
+      // No project open — show the values so they aren't lost.
+      Alert.alert(
+        'No project open',
+        'Open a project in Studio to save measurements onto it.\n\nYour measurements:\n' +
+          measurements.map((m, i) => `${i + 1}. ${m.metres.toFixed(2)}m`).join('\n'),
+      );
+      return;
+    }
+    addMeasurementAnnotations(
+      measurements.map((m, i) => ({ label: `AR wall ${i + 1}`, lengthM: m.metres, kind: 'wall' as const })),
+    );
+    Alert.alert('Saved', `${measurements.length} measurement${measurements.length === 1 ? '' : 's'} saved to the blueprint.`);
+    setMeasurements([]);
+  }, [measurements, blueprint, addMeasurementAnnotations]);
 
   // Start AR session
   useEffect(() => {
@@ -205,6 +227,21 @@ function WallMeasure() {
               </ArchText>
             </View>
           ))}
+          <Pressable
+            onPress={(e) => { e.stopPropagation(); handlePersistMeasurements(); }}
+            accessibilityLabel="Save measurements to blueprint"
+            accessibilityRole="button"
+            style={{
+              alignSelf: 'flex-start',
+              backgroundColor: 'rgba(34,34,34,0.92)', borderRadius: 50,
+              paddingHorizontal: 16, paddingVertical: 8,
+              borderWidth: 1, borderColor: DS.colors.success,
+            }}
+          >
+            <ArchText variant="body" style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: DS.colors.success }}>
+              Save {measurements.length} to Blueprint
+            </ArchText>
+          </Pressable>
         </View>
       )}
 

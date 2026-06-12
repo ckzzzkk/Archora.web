@@ -358,6 +358,16 @@ export interface FloorData {
   roofSegments: RoofSegment[];
 }
 
+/** A real-world measurement captured in AR, kept as documentation on the blueprint. */
+export interface MeasurementAnnotation {
+  id: string;
+  label: string;
+  lengthM: number;
+  kind: 'wall' | 'room';
+  source: 'ar_measure';
+  createdAt: string;
+}
+
 export interface BlueprintData {
   id: string;
   version: number;
@@ -373,6 +383,8 @@ export interface BlueprintData {
   createdAt: string;
   updatedAt: string;
   simulationReport?: SimulationReport;
+  /** AR-captured measurements (optional — older blueprints predate this). */
+  annotations?: MeasurementAnnotation[];
 }
 
 export type SceneObjectType = 'wall' | 'room' | 'opening' | 'furniture';

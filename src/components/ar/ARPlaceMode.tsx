@@ -1,17 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Pressable, ScrollView, GestureResponderEvent, useWindowDimensions, Alert } from 'react-native';
 import Animated, {
   useAnimatedStyle, useSharedValue, withRepeat, withTiming, withSpring, Easing,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ArchText } from '../common/ArchText';
 import { TierGate } from '../common/TierGate';
 import { DS } from '../../theme/designSystem';
 import { useARCore } from '../../hooks/useARCore';
+import { useHaptics } from '../../hooks/useHaptics';
 import { useBlueprintStore } from '../../stores/blueprintStore';
 import { fetchCustomFurniture, type VigaMesh } from '../../services/vigaService';
+import { snapAngle, collidesWithAny, type Footprint } from '../../utils/ar/collision';
 import type { Vector3D } from '../../native/ARCoreModule';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -54,6 +57,14 @@ interface PlacedItem {
   /** Physical dimensions (metres) */
   width: number;
   depth: number;
+  /** Yaw rotation (degrees) — set with the two-finger rotate gesture. */
+  rotationDeg: number;
+  /** Overlaps another placed item's footprint — cannot be confirmed. */
+  colliding: boolean;
+}
+
+function toFootprint(item: Pick<PlacedItem, 'worldX' | 'worldZ' | 'width' | 'depth' | 'rotationDeg'>): Footprint {
+  return { x: item.worldX, z: item.worldZ, width: item.width, depth: item.depth, rotationDeg: item.rotationDeg };
 }
 
 function SurfaceGuide({ active }: { active: boolean }) {
@@ -163,31 +174,81 @@ function ARPlaceModeContent() {
 
       const itemId = `${selectedFurniture.id}_${Date.now()}`;
 
-      setPlacedItems(prev => [...prev, {
-        id: itemId,
-        label: selectedFurniture.label,
-        icon: selectedFurniture.icon,
-        category: selectedFurniture.cat,
-        worldX: worldPos.x,
-        worldY: worldPos.y,
-        worldZ: worldPos.z,
-        screenX: locationX - 30,
-        screenY: locationY - 20,
-        confirmed: false,
-        width: selectedFurniture.w,
-        depth: selectedFurniture.d,
-      }]);
+      setPlacedItems(prev => {
+        const candidate = {
+          worldX: worldPos.x,
+          worldZ: worldPos.z,
+          width: selectedFurniture.w,
+          depth: selectedFurniture.d,
+          rotationDeg: 0,
+        };
+        return [...prev, {
+          id: itemId,
+          label: selectedFurniture.label,
+          icon: selectedFurniture.icon,
+          category: selectedFurniture.cat,
+          worldX: worldPos.x,
+          worldY: worldPos.y,
+          worldZ: worldPos.z,
+          screenX: locationX - 30,
+          screenY: locationY - 20,
+          confirmed: false,
+          width: selectedFurniture.w,
+          depth: selectedFurniture.d,
+          rotationDeg: 0,
+          colliding: collidesWithAny(toFootprint(candidate), prev.map(toFootprint)),
+        }];
+      });
     },
     [surfaceDetected, state.isSessionActive, selectedFurniture, arHitTest],
   );
 
   const confirmItem = (id: string) => {
-    setPlacedItems(prev => prev.map(item => item.id === id ? { ...item, confirmed: true } : item));
+    setPlacedItems(prev => prev.map(item =>
+      item.id === id && !item.colliding ? { ...item, confirmed: true } : item,
+    ));
   };
 
   const removeItem = (id: string) => {
     setPlacedItems(prev => prev.filter(item => item.id !== id));
   };
+
+  // ── Two-finger rotation: spins the most recent unconfirmed item ────────────
+  const { light } = useHaptics();
+  const rotationBaseRef = useRef(0);
+
+  const applyRotationToActive = useCallback((deg: number, snap: boolean) => {
+    setPlacedItems(prev => {
+      const active = [...prev].reverse().find(i => !i.confirmed);
+      if (!active) return prev;
+      const rotationDeg = snap ? snapAngle(deg) : deg;
+      return prev.map(item => {
+        if (item.id !== active.id) return item;
+        const next = { ...item, rotationDeg };
+        return {
+          ...next,
+          colliding: collidesWithAny(
+            toFootprint(next),
+            prev.filter(p => p.id !== item.id).map(toFootprint),
+          ),
+        };
+      });
+    });
+  }, []);
+
+  const rotationGesture = Gesture.Rotation()
+    .runOnJS(true)
+    .onStart(() => {
+      const active = [...placedItems].reverse().find(i => !i.confirmed);
+      rotationBaseRef.current = active?.rotationDeg ?? 0;
+    })
+    .onUpdate((e) => {
+      applyRotationToActive(rotationBaseRef.current + (e.rotation * 180) / Math.PI, false);
+    })
+    .onEnd((e) => {
+      applyRotationToActive(rotationBaseRef.current + (e.rotation * 180) / Math.PI, true);
+      light();
+    });
 
   // Export placed furniture to blueprint store
   const addFurnitureFromAR = useBlueprintStore((s) => s.actions.addFurnitureFromAR);
@@ -208,13 +269,15 @@ function ARPlaceModeContent() {
       worldZ: item.worldZ,
       width: item.width,
       depth: item.depth,
+      rotationDeg: item.rotationDeg,
     })));
     navigation.navigate('Workspace', { fromAR: true });
   }, [placedItems, addFurnitureFromAR, blueprint, navigation]);
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Tappable camera area */}
+      {/* Tappable camera area (two-finger twist rotates the pending item) */}
+      <GestureDetector gesture={rotationGesture}>
       <Pressable style={{ flex: 1 }} onPress={handleTap}>
         <SurfaceGuide active={surfaceDetected} />
 
@@ -244,30 +307,36 @@ function ARPlaceModeContent() {
               position: 'absolute',
               left: item.screenX,
               top: item.screenY,
-              backgroundColor: item.confirmed ? 'rgba(34,34,34,0.92)' : 'rgba(200,200,200,0.2)',
+              backgroundColor: item.colliding
+                ? 'rgba(192,96,74,0.25)'
+                : item.confirmed ? 'rgba(34,34,34,0.92)' : 'rgba(200,200,200,0.2)',
               borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6,
               borderWidth: 1.5,
-              borderColor: item.confirmed ? DS.colors.success : DS.colors.primary,
+              borderColor: item.colliding
+                ? DS.colors.error
+                : item.confirmed ? DS.colors.success : DS.colors.primary,
               borderStyle: item.confirmed ? 'solid' : 'dashed',
+              transform: [{ rotate: `${item.rotationDeg}deg` }],
             }}
           >
             <ArchText variant="body" style={{ fontSize: 18 }}>{item.icon}</ArchText>
-            <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: DS.colors.primary }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: item.colliding ? DS.colors.error : DS.colors.primary }}>
               {item.label}
             </ArchText>
             {item.confirmed && (
               <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 8, color: DS.colors.success }}>
-                {item.worldX.toFixed(1)}m
+                {item.worldX.toFixed(1)}m{item.rotationDeg !== 0 ? ` ∠${item.rotationDeg}°` : ''}
               </ArchText>
             )}
             {!item.confirmed && (
-              <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 9, color: DS.colors.primaryDim }}>
-                tap to confirm
+              <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 9, color: item.colliding ? DS.colors.error : DS.colors.primaryDim }}>
+                {item.colliding ? 'overlaps — move or rotate' : item.rotationDeg !== 0 ? `∠${item.rotationDeg.toFixed(0)}° · tap to confirm` : 'tap to confirm · twist to rotate'}
               </ArchText>
             )}
           </Pressable>
         ))}
       </Pressable>
+      </GestureDetector>
 
       {/* Furniture catalogue strip */}
       {showCatalogue && (

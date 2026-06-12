@@ -8,7 +8,7 @@ import { computeDimensionAccuracy } from '../utils/geometry/dimensionAccuracy';
 import type {
   BlueprintData, FloorData, Wall, Room, Opening, FurniturePiece,
   CustomAsset, ChatMessage, WallTexture, MaterialType, CeilingType,
-  StaircaseData, ElevatorData,
+  StaircaseData, ElevatorData, MeasurementAnnotation,
 } from '../types/blueprint';
 import type { ViewMode, SubscriptionTier } from '../types';
 import { clipboard } from '../utils/clipboard';
@@ -101,6 +101,14 @@ interface BlueprintState {
       worldZ: number;
       width: number;
       depth: number;
+      /** Yaw set in AR via the two-finger rotate gesture (degrees). */
+      rotationDeg?: number;
+    }>) => void;
+    /** Persist AR-captured measurements as documentation annotations. */
+    addMeasurementAnnotations: (measurements: Array<{
+      label: string;
+      lengthM: number;
+      kind: 'wall' | 'room';
     }>) => void;
     // Surfaces
     setWallTexture: (wallId: string, texture: WallTexture) => void;
@@ -502,7 +510,8 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
             category: item.category,
             roomId: '', // unassigned — user can snap to room later
             position: { x: item.worldX, y: 0, z: -item.worldZ },
-            rotation: { x: 0, y: 0, z: 0 },
+            // rotation.y is radians (R3F convention, same as furniturePlacer)
+            rotation: { x: 0, y: ((item.rotationDeg ?? 0) * Math.PI) / 180, z: 0 },
             dimensions: { x: item.width, y: 0.45, z: item.depth }, // default 45cm height (AR payload carries no height yet)
             procedural: true,
           };
@@ -513,6 +522,22 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
           return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, furniture: [...f.furniture, ...pieces],
           }));
+        });
+      },
+
+      addMeasurementAnnotations: (measurements) => {
+        const stamped: MeasurementAnnotation[] = measurements.map((m, i) => ({
+          id: `arm-${Date.now()}-${i}`,
+          label: m.label,
+          lengthM: m.lengthM,
+          kind: m.kind,
+          source: 'ar_measure',
+          createdAt: new Date().toISOString(),
+        }));
+        mutate('Add AR measurements', (state) => {
+          const { blueprint } = state;
+          if (!blueprint) return null;
+          return { ...blueprint, annotations: [...(blueprint.annotations ?? []), ...stamped] };
         });
       },
 

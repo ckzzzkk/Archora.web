@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -74,7 +74,9 @@ function ARDepthScanContent() {
     return () => clearInterval(interval);
   }, [stage, refresh]);
 
-  const quality = calculateScanQuality(capturedWalls.length);
+  const quality = calculateScanQuality(capturedWalls.length, {
+    totalPlaneAreaM2: capturedWalls.reduce((sum, p) => sum + p.extentX * p.extentZ, 0),
+  });
   const canComplete = capturedWalls.length >= 3;
 
   const handleStartScan = useCallback(() => {
@@ -275,7 +277,26 @@ function ARDepthScanContent() {
               </ArchText>
             </Pressable>
             {canComplete && (
-              <OvalButton label="Complete Room" onPress={handleComplete} variant="success" />
+              <OvalButton
+                label={`Complete Room · ${quality.qualityPercent}%`}
+                onPress={() => {
+                  if (quality.qualityPercent < 60) {
+                    // Low-confidence gate: a fragmented scan reconstructs badly
+                    // and burns the user's scan quota — confirm before sending.
+                    Alert.alert(
+                      `Scan confidence ${quality.qualityPercent}%`,
+                      'The captured wall planes look incomplete. Scanning each wall again usually gives a much better room. Continue anyway?',
+                      [
+                        { text: 'Keep Scanning', style: 'cancel' },
+                        { text: 'Use This Scan', onPress: () => void handleComplete() },
+                      ],
+                    );
+                    return;
+                  }
+                  void handleComplete();
+                }}
+                variant="success"
+              />
             )}
           </View>
         )}
