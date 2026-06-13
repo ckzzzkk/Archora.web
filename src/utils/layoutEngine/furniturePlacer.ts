@@ -61,17 +61,11 @@ export function placeFurniture(rooms: LayoutRoom[], floorIndex = 0): FurniturePi
         if (chosen) break;
       }
 
-      // Fallback: no slot found — place at room centre (only overflow ever stacks).
-      if (!chosen) {
-        chosen = {
-          cx: room.x + room.width / 2,
-          cz: room.y + room.height / 2,
-          rotY: 0,
-          box: { x0: 0, z0: 0, x1: 0, z1: 0 },
-        };
-      } else {
-        placed.push(chosen.box);
-      }
+      // No slot found — DROP the piece rather than stacking it at the room
+      // centre. An over-furnished room with one fewer item beats two pieces
+      // clipping through each other in the 2D plan and 3D scene.
+      if (!chosen) continue;
+      placed.push(chosen.box);
 
       furniture.push({
         id: randomUUID(),

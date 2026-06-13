@@ -15,6 +15,7 @@ import { clipboard } from '../utils/clipboard';
 import type { ClipboardItem } from '../utils/clipboard';
 import type { SuggestionItem } from '../types/consultation';
 import { userCache } from '../utils/userCache';
+import { normalizeBlueprintFurniture, assignFurnitureToRooms } from '../utils/furniture/normalizeFurniture';
 
 const STORAGE_KEY = 'blueprint_current';
 
@@ -519,9 +520,14 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         mutate('Add AR furniture', (state) => {
           const { blueprint, currentFloorIndex } = state;
           if (!blueprint) return null;
-          return updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
+          const withPieces = updateCurrentFloor(blueprint, currentFloorIndex, (f) => ({
             ...f, furniture: [...f.furniture, ...pieces],
           }));
+          // Assign each AR piece to the room it falls in, then de-collide that
+          // room's furniture (snap dimensions + resolve overlaps with any
+          // existing pieces). AR placement already guards same-session overlap;
+          // this also catches AR-vs-existing-furniture collisions.
+          return normalizeBlueprintFurniture(assignFurnitureToRooms(withPieces)).blueprint;
         });
       },
 

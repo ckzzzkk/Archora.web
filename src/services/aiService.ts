@@ -7,6 +7,7 @@ import { validateBlueprintData } from '../utils/blueprintValidation';
 import { autoRepairBlueprint } from '../utils/geometry/autoRepair';
 import { validateBlueprint, violationSummary } from '../utils/geometry/blueprintValidator';
 import { assessFullQuality } from '../utils/environment';
+import { normalizeBlueprintFurniture } from '../utils/furniture/normalizeFurniture';
 import { generateFloorPlan } from '../utils/layoutEngine';
 import { toAppError } from '../types/AppError';
 
@@ -93,6 +94,19 @@ export function ensureSoundGeometry(
     const fallback = generateFloorPlan(coerceToFullPayload(payload));
     result = autoRepairBlueprint(fallback).repaired;
     result.metadata = { ...result.metadata, generatedFrom: 'procedural_fallback' };
+  }
+
+  // Furniture quality pass: snap every piece to a realistically-sized catalogue
+  // preset and re-seat so nothing overlaps, nothing escapes its room, and
+  // over-furnished rooms drop overflow instead of stacking it. This is what
+  // keeps the 2D plan and 3D scene from looking wonky regardless of how the AI
+  // placed things (and fixes the legacy clampFurniture axis bug for good).
+  const norm = normalizeBlueprintFurniture(result);
+  result = norm.blueprint;
+  if (norm.snapped || norm.moved || norm.dropped) {
+    console.log(
+      `[aiService] furniture normalised — snapped ${norm.snapped}, moved ${norm.moved}, dropped ${norm.dropped}`,
+    );
   }
 
   // Attach an objective architect-grade quality score to every generation so real
