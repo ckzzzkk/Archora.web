@@ -5,9 +5,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
   withSequence,
-  Easing,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -15,12 +13,16 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useHaptics } from '../hooks/useHaptics';
 import { DS } from '../theme/designSystem';
+import { withAlpha } from '../theme/colors';
 import type { RootStackParamList } from './types';
 import { useTabDirection } from './TabDirectionContext';
 import { CompassRose } from '../components/common/CompassRose';
 import { ScribbleCircle } from '../components/common/ScribbleCircle';
+import { ArchText } from '../components/common/ArchText';
 import { useDeviceType } from '../hooks/useDeviceType';
 import { getResponsiveTokens } from '../theme/responsive';
+import { useAppearanceStore, type TabKey } from '../stores/appearanceStore';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 // Hand-drawn SVG icons (all stroke-only, sketchy style)
 const ICONS: Record<string, (color: string, size?: number, strokeWidth?: number) => React.ReactElement> = {
@@ -65,6 +67,8 @@ interface TabItemProps {
   onPress: () => void;
   touchTarget: number;
   iconSize: number;
+  showLabel: boolean;
+  accent: string;
 }
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -75,7 +79,7 @@ const ROUTE_LABELS: Record<string, string> = {
   Account: 'Account',
 };
 
-function TabItem({ routeName, label, isFocused, onPress, touchTarget, iconSize }: TabItemProps) {
+function TabItem({ routeName, label, isFocused, onPress, touchTarget, iconSize, showLabel, accent }: TabItemProps) {
   const pressScale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -118,7 +122,7 @@ function TabItem({ routeName, label, isFocused, onPress, touchTarget, iconSize }
             right: 2,
             bottom: 2,
             borderRadius: 22,
-            backgroundColor: isFocused ? 'rgba(212, 168, 75, 0.30)' : 'transparent',
+            backgroundColor: isFocused ? withAlpha(accent, 0.30) : 'transparent',
           },
           animatedStyle,
         ]}
@@ -130,8 +134,17 @@ function TabItem({ routeName, label, isFocused, onPress, touchTarget, iconSize }
         )}
       </Animated.View>
 
-      <View style={{ position: 'relative', zIndex: 10 }}>
+      <View style={{ position: 'relative', zIndex: 10, alignItems: 'center' }}>
         {iconRenderer ? iconRenderer(iconColor, iconSize) : null}
+        {showLabel && (
+          <ArchText
+            variant="body"
+            style={{ fontFamily: 'Inter_500Medium', fontSize: 9, marginTop: 2,
+                     color: isFocused ? DS.colors.ink : DS.colors.mutedForeground }}
+          >
+            {label}
+          </ArchText>
+        )}
       </View>
     </Pressable>
   );
@@ -211,24 +224,10 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   const device = useDeviceType();
   const tokens = getResponsiveTokens(device.layout);
 
-  // Sliding active indicator shared values
-  const indicatorX = useSharedValue(0);
-  const pillPadding = device.isTablet ? 12 : 8;
-  const tabWidth = device.touchTarget;
-
-  // Initialize indicator position on first render
-  useEffect(() => {
-    indicatorX.value = pillPadding + state.index * tabWidth;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Animate indicator when focused tab changes
-  useEffect(() => {
-    indicatorX.value = withSpring(pillPadding + state.index * tabWidth, {
-      damping: 20,
-      stiffness: 250,
-    });
-  }, [state.index, device.touchTarget, device.isTablet]);
+  const navOrder   = useAppearanceStore((s) => s.nav.order);
+  const navHidden  = useAppearanceStore((s) => s.nav.hidden);
+  const showLabels = useAppearanceStore((s) => s.nav.showLabels);
+  const themeC     = useThemeColors();
 
   useEffect(() => {
     prevIndexRef.current = state.index;
@@ -240,16 +239,40 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     return null;
   }
 
-  // Route order: Home, Create, Inspo, AR, Account
-  // FAB is between Create and Inspo
-  const tabs = [
-    { name: 'Home', routeIndex: 0 },
-    { name: 'Create', routeIndex: 1 },
-    // FAB inserted here
-    { name: 'Inspo', routeIndex: 2 },
-    { name: 'AR', routeIndex: 3 },
-    { name: 'Account', routeIndex: 4 },
-  ];
+  const routeIndexByName = (name: string) => state.routes.findIndex((r) => r.name === name);
+  const visible: TabKey[] = navOrder.filter(
+    (t) => !navHidden.includes(t) && routeIndexByName(t) >= 0,
+  );
+  const splitAt = Math.floor(visible.length / 2);
+  const leftTabs = visible.slice(0, splitAt);
+  const rightTabs = visible.slice(splitAt);
+
+  const renderTab = (name: TabKey) => {
+    const routeIndex = routeIndexByName(name);
+    const route = state.routes[routeIndex];
+    const isFocused = state.index === routeIndex;
+    const onPress = () => {
+      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+      if (!isFocused && !event.defaultPrevented) {
+        medium();
+        setDirection(routeIndex > prevIndexRef.current ? 'right' : 'left');
+        navigation.navigate(route.name, route.params);
+      }
+    };
+    return (
+      <TabItem
+        key={route.key}
+        routeName={name}
+        label={ROUTE_LABELS[name]}
+        isFocused={isFocused}
+        onPress={onPress}
+        touchTarget={device.touchTarget}
+        iconSize={device.iconSize}
+        showLabel={showLabels}
+        accent={themeC.accent}
+      />
+    );
+  };
 
   return (
     <View
@@ -287,83 +310,14 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           width: '100%',
         }}
       >
-        {/* Sliding active indicator — behind tabs */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            top: 2,
-            bottom: 2,
-            width: device.touchTarget - 4,
-            left: indicatorX,
-            borderRadius: (device.touchTarget - 4) / 2,
-            backgroundColor: 'rgba(212, 168, 75, 0.25)',
-          }}
-        />
-
-        {tabs.slice(0, 2).map((tab) => {
-          const route = state.routes[tab.routeIndex];
-          const isFocused = state.index === tab.routeIndex;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              medium();
-              setDirection(tab.routeIndex > prevIndexRef.current ? 'right' : 'left');
-              navigation.navigate(route.name, route.params);
-            }
-          };
-
-          return (
-            <TabItem
-              key={route.key}
-              routeName={tab.name}
-              label={ROUTE_LABELS[tab.name]}
-              isFocused={isFocused}
-              onPress={onPress}
-              touchTarget={device.touchTarget}
-              iconSize={device.iconSize}
-            />
-          );
-        })}
+        {leftTabs.map(renderTab)}
 
         {/* FAB compass — raised above the bar */}
         <View style={{ marginTop: -(device.fabSize / 2) - 4, marginHorizontal: 2 }}>
           <FABButton onPress={() => rootNav.navigate('Generation')} fabSize={device.fabSize} />
         </View>
 
-        {tabs.slice(2).map((tab) => {
-          const route = state.routes[tab.routeIndex];
-          const isFocused = state.index === tab.routeIndex;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              medium();
-              setDirection(tab.routeIndex > prevIndexRef.current ? 'right' : 'left');
-              navigation.navigate(route.name, route.params);
-            }
-          };
-
-          return (
-            <TabItem
-              key={route.key}
-              routeName={tab.name}
-              label={ROUTE_LABELS[tab.name]}
-              isFocused={isFocused}
-              onPress={onPress}
-              touchTarget={device.touchTarget}
-              iconSize={device.iconSize}
-            />
-          );
-        })}
+        {rightTabs.map(renderTab)}
       </View>
     </View>
   );
