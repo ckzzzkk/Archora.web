@@ -1,85 +1,68 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Storage } from '../utils/storage';
-import { BASE_COLORS, COLOR_THEMES, type ThemeName, type ColorTheme } from '../theme/colors';
+// src/hooks/useTheme.ts
+import { useEffect } from 'react';
+import { COLOR_THEMES, withAlpha, type ThemeName, type ColorTheme } from '../theme/colors';
+import { useAppearanceStore } from '../stores/appearanceStore';
+import { useThemeColors } from './useThemeColors';
 import { useUIStore } from '../stores/uiStore';
 
-const THEME_KEY = 'asoria_theme';
-const CUSTOM_PRIMARY_KEY = 'asoria_custom_primary';
-
 export interface ThemeColors {
-  // Base
   background: string;
   surface: string;
   surfaceHigh: string;
   border: string;
-  // Accent
   primary: string;
   primaryDim: string;
   primaryGlow: string;
   scratchLine: string;
-  // Text
   textPrimary: string;
   textSecondary: string;
   textDim: string;
-  // Semantic
   success: string;
   warning: string;
   error: string;
 }
 
 export function useTheme() {
-  const [themeName, setThemeNameState] = useState<ThemeName>('drafting');
-  const [customPrimary, setCustomPrimary] = useState<string | null>(null);
-  const setPrimaryColor = useUIStore((s) => s.actions.setPrimaryColor);
-
-  useEffect(() => {
-    const v = Storage.getString(THEME_KEY);
-    if (v) setThemeNameState(v as ThemeName);
-    const cp = Storage.getString(CUSTOM_PRIMARY_KEY);
-    setCustomPrimary(cp);
-  }, []);
+  const cset          = useThemeColors();
+  const themeName     = useAppearanceStore((s) => s.themeName);
+  const customPalette = useAppearanceStore((s) => s.customPalette);
+  const setThemeStore     = useAppearanceStore((s) => s.setTheme);
+  const setPaletteStore   = useAppearanceStore((s) => s.setCustomPalette);
+  const clearPaletteStore = useAppearanceStore((s) => s.clearCustomPalette);
+  const setPrimaryColor   = useUIStore((s) => s.actions.setPrimaryColor);
 
   const themeConfig: ColorTheme = COLOR_THEMES[themeName] ?? COLOR_THEMES.drafting;
 
-  const resolvedPrimary = customPrimary ?? themeConfig.primary;
+  // Accent dim/glow: preset values when no custom palette, else derived from accent.
+  const primaryDim  = customPalette ? withAlpha(cset.accent, 0.7) : themeConfig.primaryDim;
+  const primaryGlow = customPalette ? withAlpha(cset.accent, 0.4) : themeConfig.primaryGlow;
 
   const colors: ThemeColors = {
-    ...BASE_COLORS,
-    primary: resolvedPrimary,
-    primaryDim: themeConfig.primaryDim,
-    primaryGlow: themeConfig.primaryGlow,
-    scratchLine: customPrimary ?? themeConfig.scratchLine,
+    background: cset.background,
+    surface: cset.surface,
+    surfaceHigh: cset.surfaceHigh,
+    // Ink Blueprint border IS the ink color (ink-white on dark, near-black on light),
+    // NOT cset.border (#333). Mapping to cset.primary preserves the legacy look in both modes.
+    border: cset.primary,
+    primary: cset.accent,
+    primaryDim,
+    primaryGlow,
+    scratchLine: cset.accent,
+    textPrimary: cset.primary,
+    textSecondary: cset.primaryDim,
+    textDim: cset.primaryGhost,
+    success: cset.success,
+    warning: cset.warning,
+    error: cset.error,
   };
 
-  // Keep uiStore in sync whenever resolved primary changes
-  useEffect(() => {
-    setPrimaryColor(resolvedPrimary);
-  }, [resolvedPrimary, setPrimaryColor]);
+  useEffect(() => { setPrimaryColor(cset.accent); }, [cset.accent, setPrimaryColor]);
 
-  const setTheme = useCallback((name: ThemeName) => {
-    setThemeNameState(name);
-    Storage.set(THEME_KEY, name);
-    const cfg = COLOR_THEMES[name] ?? COLOR_THEMES.drafting;
-    setPrimaryColor(customPrimary ?? cfg.primary);
-  }, [customPrimary, setPrimaryColor]);
-
-  const setCustomPrimaryColor = useCallback((color: string | null) => {
-    setCustomPrimary(color);
-    if (color !== null) {
-      Storage.set(CUSTOM_PRIMARY_KEY, color);
-      setPrimaryColor(color);
-    } else {
-      Storage.delete(CUSTOM_PRIMARY_KEY);
-      setPrimaryColor(themeConfig.primary);
-    }
-  }, [themeConfig.primary, setPrimaryColor]);
-
-  return {
-    colors,
-    themeName,
-    themeConfig,
-    setTheme,
-    setCustomPrimaryColor,
-    allThemes: COLOR_THEMES,
+  const setTheme = (name: ThemeName) => setThemeStore(name);
+  const setCustomPrimaryColor = (color: string | null) => {
+    if (color !== null) setPaletteStore({ accent: color, bgTint: customPalette?.bgTint ?? null });
+    else clearPaletteStore();
   };
+
+  return { colors, themeName, themeConfig, setTheme, setCustomPrimaryColor, allThemes: COLOR_THEMES };
 }
