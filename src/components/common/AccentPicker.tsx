@@ -9,9 +9,25 @@ import { useThemeColors } from '../../hooks/useThemeColors';
 const SWATCHES = ['#D4A84B','#C9FFFD','#4A90D9','#FFEE8C','#FF8C9A','#A888E8','#FFB870','#7AB87A','#E89AB0','#8FB3D9'];
 const TRACK_WIDTH = 260;
 
+function hueFromHex(hex: string): number {
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return 0;
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  if (d === 0) return 0;
+  let hue: number;
+  if (max === r) hue = ((g - b) / d) % 6;
+  else if (max === g) hue = (b - r) / d + 2;
+  else hue = (r - g) / d + 4;
+  hue *= 60;
+  return hue < 0 ? hue + 360 : hue;
+}
+
 export function AccentPicker({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
   const C = useThemeColors();
-  const knobX = useSharedValue(0);
+  const knobX = useSharedValue((hueFromHex(value) / 360) * TRACK_WIDTH);
 
   const setFromX = (x: number) => {
     const clamped = Math.max(0, Math.min(TRACK_WIDTH, x));
@@ -20,7 +36,7 @@ export function AccentPicker({ value, onChange }: { value: string; onChange: (he
   };
 
   const pan = Gesture.Pan()
-    .onUpdate((e) => { knobX.value = Math.max(0, Math.min(TRACK_WIDTH, e.x)); })
+    .onUpdate((e) => { knobX.value = Math.max(0, Math.min(TRACK_WIDTH, e.x)); runOnJS(setFromX)(e.x); })
     .onEnd((e) => { runOnJS(setFromX)(e.x); });
 
   const knobStyle = useAnimatedStyle(() => ({ transform: [{ translateX: knobX.value }] }));
