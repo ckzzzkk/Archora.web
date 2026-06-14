@@ -88,4 +88,15 @@ describe('appearanceStore — theme + palette + nav', () => {
     expect(s.themeName).toBe('copper');
     expect(s.customPalette?.accent).toBe('#123456');
   });
+
+  it('resetAppearance removes legacy keys so cold-start hydrates drafting', async () => {
+    // Seed a legacy theme key and call setTheme, then reset
+    store['asoria_theme'] = 'copper';
+    const useS = await freshStore();
+    useS.getState().setTheme('copper');
+    useS.getState().resetAppearance();
+    // Fresh module re-import simulates a cold start — all keys should be gone
+    const useS2 = await freshStore();
+    expect(useS2.getState().themeName).toBe('drafting');
+  });
 });

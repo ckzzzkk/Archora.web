@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { Appearance } from 'react-native';
 import { Storage } from '../utils/storage';
 import type { ThemeName } from '../theme/colors';
-import type { CustomPalette, BgTint } from '../theme/resolveTheme';
+import { COLOR_THEMES } from '../theme/colors';
+import type { CustomPalette } from '../theme/resolveTheme';
 
 export type AppearanceMode = 'dark' | 'light' | 'system';
 export type TabKey = 'Home' | 'Create' | 'Inspo' | 'AR' | 'Account';
@@ -43,7 +44,7 @@ function getSystemTheme(): 'dark' | 'light' {
 
 function hydrateTheme(): ThemeName {
   const v = Storage.getString(THEME_KEY) ?? Storage.getString(LEGACY_THEME_KEY);
-  return (v as ThemeName | null) ?? 'drafting';
+  return v && Object.prototype.hasOwnProperty.call(COLOR_THEMES, v) ? (v as ThemeName) : 'drafting';
 }
 
 function hydratePalette(): CustomPalette | null {
@@ -86,6 +87,7 @@ export const useAppearanceStore = create<AppearanceState>((set, get) => {
     clearCustomPalette: () => { Storage.delete(PALETTE_KEY); set({ customPalette: null }); },
 
     reorderTabs: (order) => {
+      if (new Set(order).size !== DEFAULT_ORDER.length) return;
       const nav = { ...get().nav, order };
       Storage.set(NAV_KEY, JSON.stringify(nav)); set({ nav });
     },
@@ -112,6 +114,7 @@ export const useAppearanceStore = create<AppearanceState>((set, get) => {
 
     resetAppearance: () => {
       Storage.delete(THEME_KEY); Storage.delete(PALETTE_KEY); Storage.delete(NAV_KEY);
+      Storage.delete(LEGACY_THEME_KEY); Storage.delete(LEGACY_PRIMARY_KEY);
       set({
         themeName: 'drafting',
         customPalette: null,
