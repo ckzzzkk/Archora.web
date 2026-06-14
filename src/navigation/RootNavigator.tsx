@@ -35,6 +35,10 @@ const ThemeCustomiserScreen = lazyScreen(() =>
   import('../screens/account/ThemeCustomiserScreen')
     .then((m) => ({ default: m.ThemeCustomiserScreen })));
 
+const NavCustomiserScreen = lazyScreen(() =>
+  import('../screens/account/NavCustomiserScreen')
+    .then((m) => ({ default: m.NavCustomiserScreen })));
+
 const PublishTemplateScreen = lazyScreen(() =>
   import('../screens/feed/PublishTemplateScreen')
     .then((m) => ({ default: m.PublishTemplateScreen })));
@@ -250,6 +254,11 @@ export function RootNavigator() {
           <Stack.Screen
             name="ThemeCustomiser"
             component={ThemeCustomiserScreen}
+            options={{ presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="NavCustomiser"
+            component={NavCustomiserScreen}
             options={{ presentation: 'modal' }}
           />
           <Stack.Screen

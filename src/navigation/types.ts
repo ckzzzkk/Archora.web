@@ -35,6 +35,7 @@ export type RootStackParamList = {
   Subscription: { feature?: string } | undefined;
   TemplateDetail: { templateId: string };
   ThemeCustomiser: undefined;
+  NavCustomiser: undefined;
   PublishTemplate: { projectId: string };
   PurchaseTemplate: { templateId: string };
   CoProjects: undefined;
