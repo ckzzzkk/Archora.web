@@ -49,6 +49,7 @@ export interface TierLimits {
   vipSupport: boolean;
   coProjectsEnabled: boolean;
   codesignEnabled: boolean;
+  appearanceCustomization: boolean;  // Creator+: themes, custom palette, nav customization
 
   // Collaboration
   maxCollaborators: number;     // 0 = none
@@ -126,6 +127,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     vipSupport: false,
     coProjectsEnabled: false,
     codesignEnabled: false,
+    appearanceCustomization: false,
 
     maxCollaborators: 0,
     collaborationLimit: 0,
@@ -197,6 +199,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     vipSupport: false,
     coProjectsEnabled: false,
     codesignEnabled: false,
+    appearanceCustomization: true,
 
     maxCollaborators: 1,
     collaborationLimit: 1,
@@ -268,6 +271,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     vipSupport: false,
     coProjectsEnabled: false,
     codesignEnabled: false,
+    appearanceCustomization: true,
 
     maxCollaborators: 1,
     collaborationLimit: 1,
@@ -339,6 +343,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     vipSupport: true,
     coProjectsEnabled: true,
     codesignEnabled: true,
+    appearanceCustomization: true,
 
     maxCollaborators: 5,
     collaborationLimit: 5,
