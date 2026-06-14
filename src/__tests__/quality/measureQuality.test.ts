@@ -26,6 +26,7 @@ import { writeFileSync } from 'node:fs';
 import { generateFloorPlan } from '../../utils/layoutEngine';
 import { autoRepairBlueprint } from '../../utils/geometry/autoRepair';
 import { assessFullQuality } from '../../utils/environment';
+import { countFurnitureOverlaps, normalizeBlueprintFurniture } from '../../utils/furniture/normalizeFurniture';
 import { validateBlueprint, violationSummary } from '../../utils/geometry/blueprintValidator';
 import type { GenerationPayload } from '../../types/generation';
 import type { BlueprintData } from '../../types/blueprint';
@@ -84,12 +85,20 @@ describe('architectural quality measurement harness', () => {
   it('reports quality scores across representative briefs', async () => {
     const PASS = 80;
 
-    const rows: Array<{ label: string; geo: ReturnType<typeof violationSummary>; q: ReturnType<typeof assessFullQuality> }> = [];
+    const rows: Array<{
+      label: string;
+      geo: ReturnType<typeof violationSummary>;
+      q: ReturnType<typeof assessFullQuality>;
+      ovRaw: number;   // furniture overlaps BEFORE the normalize pass
+      ovFix: number;   // furniture overlaps AFTER the normalize pass
+    }> = [];
     for (const { label, payload } of BRIEFS) {
       const bp = await produce(payload);
       const geo = violationSummary(validateBlueprint(bp));
       const q = assessFullQuality(bp);
-      rows.push({ label, geo, q });
+      const ovRaw = countFurnitureOverlaps(bp);
+      const ovFix = countFurnitureOverlaps(normalizeBlueprintFurniture(bp).blueprint);
+      rows.push({ label, geo, q, ovRaw, ovFix });
     }
 
     const pad = (s: string | number, n: number) => String(s).padEnd(n);
@@ -97,15 +106,16 @@ describe('architectural quality measurement harness', () => {
     const lines: string[] = [];
     lines.push('');
     lines.push(`═══ ARCHITECTURAL QUALITY REPORT (source: ${source}) ═══`);
-    lines.push(pad('Brief', 24) + pad('Circ', 6) + pad('Day', 6) + pad('Struct', 8) + pad('Adj', 6) + pad('Env', 6) + pad('Overall', 9) + pad('GeoCrit', 9));
-    lines.push('─'.repeat(74));
-    for (const { label, geo, q } of rows) {
+    lines.push(pad('Brief', 24) + pad('Circ', 6) + pad('Day', 6) + pad('Struct', 8) + pad('Adj', 6) + pad('Env', 6) + pad('Overall', 9) + pad('GeoCrit', 9) + pad('FurnOv→Fix', 12));
+    lines.push('─'.repeat(86));
+    for (const { label, geo, q, ovRaw, ovFix } of rows) {
       lines.push(
         pad(label, 24) + pad(q.circulation.score, 6) + pad(q.daylightCode.score, 6) +
-        pad(q.structural.score, 8) + pad(q.adjacency.score, 6) + pad(q.environment.score, 6) + pad(q.overall, 9) + pad(geo.critical, 9),
+        pad(q.structural.score, 8) + pad(q.adjacency.score, 6) + pad(q.environment.score, 6) + pad(q.overall, 9) + pad(geo.critical, 9) +
+        pad(`${ovRaw}→${ovFix}`, 12),
       );
     }
-    lines.push('─'.repeat(74));
+    lines.push('─'.repeat(86));
 
     const avg = (sel: (r: typeof rows[number]) => number) => Math.round(rows.reduce((s, r) => s + sel(r), 0) / rows.length);
     const rate = (sel: (r: typeof rows[number]) => number) => Math.round((rows.filter((r) => sel(r) >= PASS).length / rows.length) * 100);
@@ -118,7 +128,10 @@ describe('architectural quality measurement harness', () => {
       pad(`PASS RATE (≥${PASS})`, 24) + pad(rate((r) => r.q.circulation.score) + '%', 6) + pad(rate((r) => r.q.daylightCode.score) + '%', 6) +
       pad(rate((r) => r.q.structural.score) + '%', 8) + pad(rate((r) => r.q.adjacency.score) + '%', 6) + pad(rate((r) => r.q.environment.score) + '%', 6) + pad(rate((r) => r.q.overall) + '%', 9),
     );
-    lines.push('═'.repeat(74));
+    const totRaw = rows.reduce((s, r) => s + r.ovRaw, 0);
+    const totFix = rows.reduce((s, r) => s + r.ovFix, 0);
+    lines.push(pad('FURNITURE OVERLAPS', 24) + pad('', 35) + pad(`${totRaw} → ${totFix} after fix`, 20));
+    lines.push('═'.repeat(86));
 
     const withIssues = rows.find((r) =>
       r.q.circulation.issues.length || r.q.daylightCode.issues.length || r.q.structural.issues.length || r.q.adjacency.issues.length || r.q.environment.issues.length,

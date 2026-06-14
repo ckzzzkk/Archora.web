@@ -88,6 +88,31 @@ function overlaps(a: AABB, b: AABB): boolean {
   return a.x0 < b.x1 && a.x1 > b.x0 && a.z0 < b.z1 && a.z1 > b.z0;
 }
 
+function pieceAABB(p: FurniturePiece): AABB {
+  return {
+    x0: p.position.x - p.dimensions.x / 2, x1: p.position.x + p.dimensions.x / 2,
+    z0: p.position.z - p.dimensions.z / 2, z1: p.position.z + p.dimensions.z / 2,
+  };
+}
+
+/**
+ * Count overlapping furniture pairs across a blueprint (per floor, all pairs).
+ * A quality probe: clean placement → 0. Used by the quality harness to measure
+ * how often raw AI output collides vs after the normalize pass.
+ */
+export function countFurnitureOverlaps(bp: BlueprintData): number {
+  let count = 0;
+  for (const floor of bp.floors ?? []) {
+    const items = (floor.furniture ?? []).map(pieceAABB);
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        if (overlaps(items[i], items[j])) count++;
+      }
+    }
+  }
+  return count;
+}
+
 /** Plan bounding box of a room from its boundary walls (wall.y ↔ piece.z). */
 function roomBoundsXZ(room: Room, wallById: Map<string, Wall>): { minX: number; maxX: number; minZ: number; maxZ: number } | null {
   const pts: Vector2D[] = [];
