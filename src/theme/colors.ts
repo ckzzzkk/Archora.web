@@ -40,7 +40,9 @@ export const BASE_COLORS = {
 
 // ─── Legacy theme color maps (for useTheme / ThemeCustomiser) ─────────────────
 // Re-exports for backward compatibility
-export type ThemeName = 'drafting' | 'blueprint' | 'sketchbook' | 'studio' | 'night_shift' | 'copper';
+export type ThemeName =
+  | 'drafting' | 'blueprint' | 'sketchbook' | 'studio' | 'night_shift' | 'copper'
+  | 'charcoal' | 'forest' | 'rose' | 'slate';
 
 export interface ColorTheme {
   name: ThemeName;
@@ -106,6 +108,26 @@ export const COLOR_THEMES: Record<ThemeName, ColorTheme> = {
     primaryGlow: '#FFD4A0',
     secondary: '#1A1000',
     scratchLine: '#FFB870',
+  },
+  charcoal: {
+    name: 'charcoal', label: 'Charcoal',
+    primary: '#C8C8C8', primaryDim: '#8A8A8A', primaryGlow: '#E4E4E4',
+    secondary: '#101010', scratchLine: '#C8C8C8',
+  },
+  forest: {
+    name: 'forest', label: 'Forest',
+    primary: '#7AB87A', primaryDim: '#4E824E', primaryGlow: '#A6D6A6',
+    secondary: '#08160A', scratchLine: '#7AB87A',
+  },
+  rose: {
+    name: 'rose', label: 'Rose',
+    primary: '#E89AB0', primaryDim: '#B05E74', primaryGlow: '#FFC2D2',
+    secondary: '#1A0A10', scratchLine: '#E89AB0',
+  },
+  slate: {
+    name: 'slate', label: 'Slate',
+    primary: '#8FB3D9', primaryDim: '#5E80A8', primaryGlow: '#B6D2F0',
+    secondary: '#0A1018', scratchLine: '#8FB3D9',
   },
 };
 
