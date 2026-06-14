@@ -6,6 +6,7 @@ describe('hslToHex', () => {
   it('converts pure red', () => expect(hslToHex(0, 1, 0.5)).toBe('#ff0000'));
   it('converts pure green', () => expect(hslToHex(120, 1, 0.5)).toBe('#00ff00'));
   it('produces 7-char hex', () => expect(hslToHex(210, 0.5, 0.3)).toMatch(/^#[0-9a-f]{6}$/));
+  it('hue 360 wraps to same as hue 0', () => expect(hslToHex(360, 1, 0.5)).toBe(hslToHex(0, 1, 0.5)));
 });
 
 describe('resolveThemeColors', () => {
@@ -35,5 +36,15 @@ describe('resolveThemeColors', () => {
   it('bgTint in light mode stays light', () => {
     const c = resolveThemeColors('light', 'drafting', { accent: '#FF8800', bgTint: { hue: 30, warmth: 0.5 } });
     expect(parseInt(c.background.slice(1, 3), 16)).toBeGreaterThan(0xC0);
+  });
+  it('out-of-range hue (400) still produces valid dark hex', () => {
+    const c = resolveThemeColors('dark', 'drafting', { accent: '#FF8800', bgTint: { hue: 400, warmth: 0.5 } });
+    expect(c.background).toMatch(/^#[0-9a-f]{6}$/);
+    expect(parseInt(c.background.slice(1, 3), 16)).toBeLessThan(0x60);
+  });
+  it('NaN hue and warmth still produce valid hex (no NaN substring)', () => {
+    const c = resolveThemeColors('dark', 'drafting', { accent: '#FF8800', bgTint: { hue: NaN, warmth: NaN } });
+    expect(c.background).toMatch(/^#[0-9a-f]{6}$/);
+    expect(c.background).not.toContain('NaN');
   });
 });

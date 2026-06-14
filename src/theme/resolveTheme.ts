@@ -62,12 +62,14 @@ const LIGHT_L = { background: 0.95, surface: 0.92, surfaceHigh: 0.88, surfaceTop
 
 function deriveSurfaces(mode: 'dark' | 'light', tint: BgTint) {
   const L = mode === 'dark' ? DARK_L : LIGHT_L;
-  const sat = 0.05 + Math.max(0, Math.min(1, tint.warmth)) * 0.10; // 0.05..0.15
+  const hue = Number.isFinite(tint.hue) ? (((tint.hue % 360) + 360) % 360) : 0;
+  const w = Number.isFinite(tint.warmth) ? Math.max(0, Math.min(1, tint.warmth)) : 0;
+  const sat = 0.05 + w * 0.10; // 0.05..0.15
   return {
-    background:  hslToHex(tint.hue, sat, L.background),
-    surface:     hslToHex(tint.hue, sat, L.surface),
-    surfaceHigh: hslToHex(tint.hue, sat, L.surfaceHigh),
-    surfaceTop:  hslToHex(tint.hue, sat, L.surfaceTop),
+    background:  hslToHex(hue, sat, L.background),
+    surface:     hslToHex(hue, sat, L.surface),
+    surfaceHigh: hslToHex(hue, sat, L.surfaceHigh),
+    surfaceTop:  hslToHex(hue, sat, L.surfaceTop),
   };
 }
 
