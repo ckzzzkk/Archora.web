@@ -109,15 +109,24 @@ export function NavCustomiserScreen({ navigation }: Props) {
                   >
                     <ArchText variant="body" style={{ color: i === nav.order.length - 1 ? C.primaryGhost : C.primary, fontSize: 18 }}>↓</ArchText>
                   </Pressable>
-                  <Pressable
-                    onPress={() => onToggleHidden(tab)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${hidden ? 'Show' : 'Hide'} ${LABELS[tab]} tab`}
-                  >
-                    <ArchText variant="body" style={{ color: hidden ? C.primaryGhost : C.accent, fontFamily: 'Inter_500Medium' }}>
-                      {hidden ? 'Hidden' : 'Shown'}
+                  {tab === 'Account' ? (
+                    <ArchText
+                      variant="body"
+                      style={{ color: C.primaryGhost, fontFamily: 'Inter_500Medium' }}
+                    >
+                      Always shown
                     </ArchText>
-                  </Pressable>
+                  ) : (
+                    <Pressable
+                      onPress={() => onToggleHidden(tab)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${hidden ? 'Show' : 'Hide'} ${LABELS[tab]} tab`}
+                    >
+                      <ArchText variant="body" style={{ color: hidden ? C.primaryGhost : C.accent, fontFamily: 'Inter_500Medium' }}>
+                        {hidden ? 'Hidden' : 'Shown'}
+                      </ArchText>
+                    </Pressable>
+                  )}
                 </View>
               </View>
             );

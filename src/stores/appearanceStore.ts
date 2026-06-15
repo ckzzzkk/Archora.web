@@ -99,6 +99,7 @@ export const useAppearanceStore = create<AppearanceState>((set, get) => {
       if (isHidden) {
         hidden = nav.hidden.filter((t) => t !== tab);            // unhide always ok
       } else {
+        if (tab === 'Account') return;                           // Account is never hideable
         const visibleAfter = nav.order.length - (nav.hidden.length + 1);
         if (visibleAfter < MIN_VISIBLE_TABS) return;             // floor: reject
         hidden = [...nav.hidden, tab];

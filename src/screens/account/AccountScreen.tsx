@@ -712,7 +712,7 @@ export function AccountScreen() {
             <>
               <SectionLabel title="More" C={C} />
               <SettingsCard C={C}>
-                {navHidden.map((tab) => (
+                {navHidden.map((tab, i) => (
                   <SettingsRow
                     key={tab}
                     label={tab === 'Inspo' ? 'Inspiration' : tab}
@@ -720,6 +720,7 @@ export function AccountScreen() {
                     onPressIn={handleSettingsPressIn}
                     onPressOut={handleSettingsPressOut}
                     animatedStyle={settingsAnimatedStyle}
+                    last={i === navHidden.length - 1}
                     C={C}
                   />
                 ))}

@@ -51,13 +51,23 @@ describe('appearanceStore — theme + palette + nav', () => {
   it('toggleTabHidden hides and unhides, enforcing min 2 visible', async () => {
     const useS = await freshStore();
     useS.getState().toggleTabHidden('AR');       // 5 -> 4 visible, ok
-    useS.getState().toggleTabHidden('Account');   // 4 -> 3 visible, ok
-    useS.getState().toggleTabHidden('Inspo');     // 3 -> 2 visible, ok
-    expect(useS.getState().nav.hidden.sort()).toEqual(['AR','Account','Inspo']);
-    useS.getState().toggleTabHidden('Create');    // would be 1 visible -> rejected
+    useS.getState().toggleTabHidden('Inspo');    // 4 -> 3 visible, ok
+    useS.getState().toggleTabHidden('Home');     // 3 -> 2 visible, ok
+    expect(useS.getState().nav.hidden.sort()).toEqual(['AR','Home','Inspo']);
+    useS.getState().toggleTabHidden('Create');   // would be 1 visible -> rejected
     expect(useS.getState().nav.hidden).not.toContain('Create');
-    useS.getState().toggleTabHidden('AR');         // unhide always ok
+    useS.getState().toggleTabHidden('AR');        // unhide always ok
     expect(useS.getState().nav.hidden).not.toContain('AR');
+  });
+
+  it('toggleTabHidden: Account tab is never hideable', async () => {
+    const useS = await freshStore();
+    useS.getState().toggleTabHidden('Account');
+    expect(useS.getState().nav.hidden).not.toContain('Account');
+    // Calling it repeatedly is also a no-op
+    useS.getState().toggleTabHidden('Account');
+    useS.getState().toggleTabHidden('Account');
+    expect(useS.getState().nav.hidden).toEqual([]);
   });
 
   it('setShowLabels and reorderTabs persist', async () => {
