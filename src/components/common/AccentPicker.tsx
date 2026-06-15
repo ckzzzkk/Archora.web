@@ -37,7 +37,11 @@ export function AccentPicker({ value, onChange }: { value: string; onChange: (he
 
   const pan = Gesture.Pan()
     .onUpdate((e) => { knobX.value = Math.max(0, Math.min(TRACK_WIDTH, e.x)); runOnJS(setFromX)(e.x); })
-    .onEnd((e) => { runOnJS(setFromX)(e.x); });
+    .onEnd((e) => {
+      const clamped = Math.max(0, Math.min(TRACK_WIDTH, e.x));
+      knobX.value = clamped;
+      runOnJS(setFromX)(clamped);
+    });
 
   const knobStyle = useAnimatedStyle(() => ({ transform: [{ translateX: knobX.value }] }));
 
@@ -58,7 +62,7 @@ export function AccentPicker({ value, onChange }: { value: string; onChange: (he
       </View>
 
       <GestureDetector gesture={pan}>
-        <View style={{ height: 28, justifyContent: 'center' }}>
+        <View style={{ height: 28, justifyContent: 'center', width: TRACK_WIDTH, alignSelf: 'center' }}>
           <View style={{ height: 10, borderRadius: 999, overflow: 'hidden', flexDirection: 'row' }}>
             {Array.from({ length: 36 }).map((_, i) => (
               <View key={i} style={{ flex: 1, backgroundColor: hslToHex((i / 36) * 360, 0.7, 0.6) }} />
