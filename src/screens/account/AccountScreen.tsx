@@ -716,7 +716,7 @@ export function AccountScreen() {
                   <SettingsRow
                     key={tab}
                     label={tab === 'Inspo' ? 'Inspiration' : tab}
-                    onPress={() => { light(); navigation.navigate(tab as never); }}
+                    onPress={() => { light(); navigation.navigate('Main', { screen: tab } as never); }}
                     onPressIn={handleSettingsPressIn}
                     onPressOut={handleSettingsPressOut}
                     animatedStyle={settingsAnimatedStyle}
