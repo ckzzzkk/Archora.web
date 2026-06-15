@@ -269,6 +269,7 @@ export function AccountScreen() {
   const insets = useSafeAreaInsets();
   const { light, medium } = useHaptics();
   const C = useThemeColors();
+  const navHidden = useAppearanceStore((s) => s.nav.hidden);
 
   const { user, signOut } = useUser();
 
@@ -642,6 +643,14 @@ export function AccountScreen() {
               C={C}
             />
             <SettingsRow
+              label="Nav Layout"
+              onPress={() => { light(); navigation.navigate('NavCustomiser'); }}
+              onPressIn={handleSettingsPressIn}
+              onPressOut={handleSettingsPressOut}
+              animatedStyle={settingsAnimatedStyle}
+              C={C}
+            />
+            <SettingsRow
               label="Notifications"
               onPress={() => { light(); navigation.navigate('NotificationPreferences'); }}
               onPressIn={handleSettingsPressIn}
@@ -697,6 +706,26 @@ export function AccountScreen() {
               C={C}
             />
           </SettingsCard>
+
+          {/* MORE — hidden tabs shortcuts */}
+          {navHidden.length > 0 && (
+            <>
+              <SectionLabel title="More" C={C} />
+              <SettingsCard C={C}>
+                {navHidden.map((tab) => (
+                  <SettingsRow
+                    key={tab}
+                    label={tab === 'Inspo' ? 'Inspiration' : tab}
+                    onPress={() => { light(); navigation.navigate(tab as never); }}
+                    onPressIn={handleSettingsPressIn}
+                    onPressOut={handleSettingsPressOut}
+                    animatedStyle={settingsAnimatedStyle}
+                    C={C}
+                  />
+                ))}
+              </SettingsCard>
+            </>
+          )}
 
           {/* DANGER ZONE */}
           <SectionLabel title="Danger Zone" C={C} />
