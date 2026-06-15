@@ -59,7 +59,7 @@ export function NavCustomiserScreen({ navigation }: Props) {
             Customizing your navigation is a {requiredTier ?? 'Creator'} feature.
           </ArchText>
           <Pressable
-            onPress={() => navigation.navigate('Subscription')}
+            onPress={() => navigation.navigate('Subscription', { feature: 'appearanceCustomization' })}
             style={{ backgroundColor: C.accent, borderRadius: 50, paddingVertical: 14, alignItems: 'center' }}
           >
             <ArchText variant="body" style={{ color: C.background, fontFamily: 'Inter_600SemiBold' }}>Upgrade</ArchText>
@@ -69,7 +69,13 @@ export function NavCustomiserScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <ArchText variant="body" style={{ color: C.primary, fontFamily: 'Inter_500Medium' }}>Show labels</ArchText>
-            <Switch value={nav.showLabels} onValueChange={setShowLabels} />
+            <Switch
+              value={nav.showLabels}
+              onValueChange={setShowLabels}
+              trackColor={{ false: C.border, true: C.accent }}
+              thumbColor={nav.showLabels ? C.background : C.primaryDim}
+              accessibilityLabel="Show tab labels"
+            />
           </View>
 
           {nav.order.map((tab, i) => {
@@ -85,13 +91,29 @@ export function NavCustomiserScreen({ navigation }: Props) {
               >
                 <ArchText variant="body" style={{ color: C.primary, fontFamily: 'Inter_500Medium' }}>{LABELS[tab]}</ArchText>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18 }}>
-                  <Pressable onPress={() => move(i, -1)} disabled={i === 0}>
+                  <Pressable
+                    onPress={() => move(i, -1)}
+                    disabled={i === 0}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Move ${LABELS[tab]} tab up`}
+                    accessibilityState={{ disabled: i === 0 }}
+                  >
                     <ArchText variant="body" style={{ color: i === 0 ? C.primaryGhost : C.primary, fontSize: 18 }}>↑</ArchText>
                   </Pressable>
-                  <Pressable onPress={() => move(i, 1)} disabled={i === nav.order.length - 1}>
+                  <Pressable
+                    onPress={() => move(i, 1)}
+                    disabled={i === nav.order.length - 1}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Move ${LABELS[tab]} tab down`}
+                    accessibilityState={{ disabled: i === nav.order.length - 1 }}
+                  >
                     <ArchText variant="body" style={{ color: i === nav.order.length - 1 ? C.primaryGhost : C.primary, fontSize: 18 }}>↓</ArchText>
                   </Pressable>
-                  <Pressable onPress={() => onToggleHidden(tab)}>
+                  <Pressable
+                    onPress={() => onToggleHidden(tab)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${hidden ? 'Show' : 'Hide'} ${LABELS[tab]} tab`}
+                  >
                     <ArchText variant="body" style={{ color: hidden ? C.primaryGhost : C.accent, fontFamily: 'Inter_500Medium' }}>
                       {hidden ? 'Hidden' : 'Shown'}
                     </ArchText>
