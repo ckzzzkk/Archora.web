@@ -167,7 +167,7 @@ export function AIChatPanel({ visible, onToggle, selectedArchitectId, architectN
       recordingRef.current = recording;
       setIsRecording(true);
       pulseScale.value = withRepeat(
-        // eslint-disable-next-line no-undefined
+         
         withTiming(1.15, { duration: 600 }),
         -1,
         true,

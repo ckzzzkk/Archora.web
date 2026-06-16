@@ -16,7 +16,7 @@ function generateId(): string {
  * Creates walls connecting consecutive points, closing the loop
  */
 export function convertPointsToWalls(
-  pointPairs: Array<{ p1: Vector3D; p2: Vector3D }>,
+  pointPairs: { p1: Vector3D; p2: Vector3D }[],
   ceilingHeight = 2.4
 ): Wall[] {
   return pointPairs.map((pair) => {
@@ -86,7 +86,7 @@ export function detectRoomTypeFromDimensions(
 /**
  * Calculate room area from wall vertices using shoelace formula
  */
-export function calculateRoomArea(vertices: Array<{ x: number; y: number }>): number {
+export function calculateRoomArea(vertices: { x: number; y: number }[]): number {
   if (vertices.length < 3) return 0;
 
   let area = 0;
@@ -104,7 +104,7 @@ export function calculateRoomArea(vertices: Array<{ x: number; y: number }>): nu
 /**
  * Calculate centroid of a polygon
  */
-export function calculateCentroid(vertices: Array<{ x: number; y: number }>): { x: number; y: number } {
+export function calculateCentroid(vertices: { x: number; y: number }[]): { x: number; y: number } {
   if (vertices.length === 0) return { x: 0, y: 0 };
 
   const sum = vertices.reduce(

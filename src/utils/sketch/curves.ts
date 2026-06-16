@@ -30,12 +30,12 @@ function pointsToSegments(pts: Vector2D[]): CurveSegment[] {
 export function catmullRomToBezier(
   pts: Vector2D[],
   tension = 0.5,
-): Array<{ cp1: Vector2D; cp2: Vector2D; end: Vector2D }> {
+): { cp1: Vector2D; cp2: Vector2D; end: Vector2D }[] {
   if (pts.length < 2) return [];
   if (pts.length === 2) {
     return [{ cp1: pts[0], cp2: pts[1], end: pts[1] }];
   }
-  const result: Array<{ cp1: Vector2D; cp2: Vector2D; end: Vector2D }> = [];
+  const result: { cp1: Vector2D; cp2: Vector2D; end: Vector2D }[] = [];
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = i > 0 ? pts[i - 1] : pts[0];
     const p1 = pts[i];

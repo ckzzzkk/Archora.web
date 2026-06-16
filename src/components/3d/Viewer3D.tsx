@@ -73,7 +73,7 @@ export function Viewer3D({ showControls = true }: Viewer3DProps) {
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.colors.background }}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      { }
       <Canvas
         {...({ frameloop: 'always' } as any)}
         shadows={showShadows}

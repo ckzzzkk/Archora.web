@@ -98,7 +98,7 @@ export function ProceduralRoof({
     [opacity],
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const handleClick = useCallback((e: any) => {
     e.stopPropagation();
     if (onSelect) onSelect(roof.id);

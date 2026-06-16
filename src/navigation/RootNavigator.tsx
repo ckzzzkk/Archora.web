@@ -6,6 +6,9 @@ import { useSession } from '../auth/useSession';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { lazyScreen } from '../utils/lazyScreen';
+import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
+import { Storage } from '../utils/storage';
+import type { RootStackParamList } from './types';
 
 const BlueprintWorkspaceScreen = lazyScreen(() =>
   import('../screens/workspace/BlueprintWorkspaceScreen')
@@ -86,9 +89,6 @@ const CoProjectDetailScreen = lazyScreen(() =>
 const CodesignSessionScreen = lazyScreen(() =>
   import('../screens/codesign/CodesignSessionScreen')
     .then((m) => ({ default: m.CodesignSessionScreen })));
-import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
-import { Storage } from '../utils/storage';
-import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

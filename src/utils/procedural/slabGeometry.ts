@@ -66,7 +66,7 @@ interface WallEndpoint {
  * If targetRoomId is provided, only walls belonging to that room are used.
  */
 export function computePolygonFromWalls(
-  walls: Array<{ id: string; start: { x: number; y: number }; end: { x: number; y: number } }>,
+  walls: { id: string; start: { x: number; y: number }; end: { x: number; y: number } }[],
   targetRoomId?: string,
 ): [number, number][] {
   if (walls.length === 0) return [];
@@ -89,7 +89,7 @@ export function computePolygonFromWalls(
   };
 
   // Start from the first wall
-  const sorted: Array<{ id: string; start: { x: number; y: number }; end: { x: number; y: number } }> = [];
+  const sorted: { id: string; start: { x: number; y: number }; end: { x: number; y: number } }[] = [];
   const used = new Set<string>();
 
   // Sort walls so we can start from any wall and trace the loop

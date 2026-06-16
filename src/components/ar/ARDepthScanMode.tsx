@@ -21,8 +21,7 @@ import { DS } from '../../theme/designSystem';
 import { useARCore, useARPlanes } from '../../hooks/useARCore';
 import type { DetectedPlane } from '../../native/ARCoreModule';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { buildBlueprintFromAR } from '../../utils/ar/arToBlueprintConverter';
-import { wallPlanesToWallPairs, arPlaneToBlueprintRoom } from '../../utils/ar/arToBlueprintConverter';
+import { buildBlueprintFromAR , wallPlanesToWallPairs, arPlaneToBlueprintRoom } from '../../utils/ar/arToBlueprintConverter';
 import { convertPointsToWalls } from '../../utils/ar/scanConverter';
 import { ARResultScreen } from './ARResultScreen';
 import { ARScanRing } from './ARScanRing';
@@ -53,7 +52,7 @@ function ARDepthScanContent() {
     roomDimensions: { width: number; length: number };
     roomLabel: string;
     wallCount: number;
-    detectedObjects: Array<{ label: string; width: number; length: number }>;
+    detectedObjects: { label: string; width: number; length: number }[];
   } | null>(null);
 
   // Start AR session

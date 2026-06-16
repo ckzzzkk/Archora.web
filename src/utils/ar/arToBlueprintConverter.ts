@@ -9,8 +9,8 @@ export interface PhotoAnalysisResult {
   wallWidth: number;
   wallHeight: number;
   ceilingHeight: number;
-  windows: Array<{ width: number; height: number; positionX: number }>;
-  doors: Array<{ width: number; height: number; positionX: number }>;
+  windows: { width: number; height: number; positionX: number }[];
+  doors: { width: number; height: number; positionX: number }[];
   roomType: string;
   notes: string;
   confidence?: number;
@@ -39,7 +39,7 @@ function toBlueprint2D(v: Vector3D): Vector2D {
 
 // Convert wall point pairs (from hit tests) → Blueprint Wall array
 export function arWallsToBlueprintWalls(
-  pairs: Array<{ p1: Vector3D; p2: Vector3D }>,
+  pairs: { p1: Vector3D; p2: Vector3D }[],
 ): Wall[] {
   return pairs.map((pair) => ({
     id: generateId(),
@@ -76,7 +76,7 @@ export function arPlaneToBlueprintRoom(
 // Convert depth-detected wall planes → wall point pairs
 export function wallPlanesToWallPairs(
   planes: DetectedPlane[],
-): Array<{ p1: Vector3D; p2: Vector3D }> {
+): { p1: Vector3D; p2: Vector3D }[] {
   return planes.map((plane) => {
     const halfX = plane.extentX / 2;
     const halfZ = plane.extentZ / 2;
@@ -145,7 +145,7 @@ export function photoAnalysisToBlueprint(
 
   // Convert window/door positions from front wall to Opening objects
   const openings: Opening[] = [];
-  const allWallResults: Array<{ result: PhotoAnalysisResult; wall: Wall }> = [
+  const allWallResults: { result: PhotoAnalysisResult; wall: Wall }[] = [
     { result: front, wall: wallFront },
     { result: right, wall: wallRight },
     { result: back, wall: wallBack },

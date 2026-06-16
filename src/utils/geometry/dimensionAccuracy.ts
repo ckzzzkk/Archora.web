@@ -75,7 +75,7 @@ function getWallForOpening(opening: Opening, walls: Wall[]): Wall | undefined {
 
 // ─── Sub-checkers ─────────────────────────────────────────────────────────────
 
-function checkViolations(violations: Violation[]): Array<{ label: string; penaltyCm: number; severity: ViolationSeverity }> {
+function checkViolations(violations: Violation[]): { label: string; penaltyCm: number; severity: ViolationSeverity }[] {
   return violations.map(v => ({
     label: v.message,
     penaltyCm: VIOLATION_PENALTIES[v.severity],
@@ -83,8 +83,8 @@ function checkViolations(violations: Violation[]): Array<{ label: string; penalt
   }));
 }
 
-function checkRoomMinima(rooms: Room[]): Array<{ label: string; penaltyCm: number; severity: 'major' | 'minor' }> {
-  const results: Array<{ label: string; penaltyCm: number; severity: 'major' | 'minor' }> = [];
+function checkRoomMinima(rooms: Room[]): { label: string; penaltyCm: number; severity: 'major' | 'minor' }[] {
+  const results: { label: string; penaltyCm: number; severity: 'major' | 'minor' }[] = [];
 
   for (const room of rooms) {
     const minima = ROOM_MINIMA[room.type];
@@ -127,8 +127,8 @@ function checkRoomMinima(rooms: Room[]): Array<{ label: string; penaltyCm: numbe
   return results;
 }
 
-function checkStairs(staircases: StaircaseData[]): Array<{ label: string; penaltyCm: number; severity: 'major' | 'minor' }> {
-  const results: Array<{ label: string; penaltyCm: number; severity: 'major' | 'minor' }> = [];
+function checkStairs(staircases: StaircaseData[]): { label: string; penaltyCm: number; severity: 'major' | 'minor' }[] {
+  const results: { label: string; penaltyCm: number; severity: 'major' | 'minor' }[] = [];
 
   for (const stair of staircases) {
     const totalRise = stair.totalRise ?? 3.0;
@@ -161,8 +161,8 @@ function checkStairs(staircases: StaircaseData[]): Array<{ label: string; penalt
 function checkOpenings(
   openings: Opening[],
   walls: Wall[],
-): Array<{ label: string; penaltyCm: number; severity: 'major' | 'minor' }> {
-  const results: Array<{ label: string; penaltyCm: number; severity: 'major' | 'minor' }> = [];
+): { label: string; penaltyCm: number; severity: 'major' | 'minor' }[] {
+  const results: { label: string; penaltyCm: number; severity: 'major' | 'minor' }[] = [];
 
   for (const op of openings) {
     const wall = getWallForOpening(op, walls);
@@ -201,9 +201,9 @@ function checkOpenings(
   return results;
 }
 
-function checkFloatingWalls(walls: Wall[]): Array<{ label: string; penaltyCm: number; severity: 'major' }> {
+function checkFloatingWalls(walls: Wall[]): { label: string; penaltyCm: number; severity: 'major' }[] {
   const graph = buildWallGraph(walls);
-  const results: Array<{ label: string; penaltyCm: number; severity: 'major' }> = [];
+  const results: { label: string; penaltyCm: number; severity: 'major' }[] = [];
 
   for (const wallId of graph.floatingWalls) {
     results.push({

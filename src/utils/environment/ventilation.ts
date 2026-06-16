@@ -49,7 +49,7 @@ export function computeCrossVentilation(
         perRoom.push({ roomId: room.id, roomName: room.name, floorIndex: view.index, hasOpposedOpenings: false, openingCount: 0, habitable });
         continue;
       }
-      const dirs: Array<ReturnType<typeof resolveWallFacades> extends Map<string, infer V> ? V : never> = [];
+      const dirs: (ReturnType<typeof resolveWallFacades> extends Map<string, infer V> ? V : never)[] = [];
       let count = 0;
       for (const op of view.openings) {
         if (!VENT_OPENINGS.has(op.type) || !walls.has(op.wallId)) continue;

@@ -40,9 +40,8 @@ import { BlueprintGeneratingOverlay } from '../../components/generation/Blueprin
 import { ConsultationChat } from '../../components/consultation/ConsultationChat';
 
 import type { RootStackParamList } from '../../navigation/types';
-import type { BlueprintData } from '../../types/blueprint';
+import type { BlueprintData , ClimateZone } from '../../types/blueprint';
 import type { GenerationPayload, ConsultationSummary } from '../../types/generation';
-import type { ClimateZone } from '../../types/blueprint';
 import { suggestSiteDefaults } from '../../utils/siteDefaults';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -87,7 +86,7 @@ interface IterationProgress {
   status: string;
   iteration: number;
   message: string;
-  scores: Array<{ n: number; score: number; keyChange: string }>;
+  scores: { n: number; score: number; keyChange: string }[];
 }
 
 

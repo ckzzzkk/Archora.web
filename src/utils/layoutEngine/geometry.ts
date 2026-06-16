@@ -38,7 +38,7 @@ interface BSPNode {
 /** Build a BSP tree by recursively splitting space for each room requirement */
 function buildBSPTree(
   rect: Rectangle,
-  roomReqs: Array<{ type: LayoutRoom['type']; name: string; minW: number; minH: number; count: number; aspect: number }>,
+  roomReqs: { type: LayoutRoom['type']; name: string; minW: number; minH: number; count: number; aspect: number }[],
   depth: number,
 ): BSPNode {
   if (roomReqs.length === 0) {
@@ -126,7 +126,7 @@ export function packRooms(config: LayoutConfig): LayoutRoom[] {
   const plotRect: Rectangle = { x: 0, y: 0, width: config.plotWidth, height: config.plotDepth };
 
   // Expand room requirements with individual rooms
-  const roomReqs: Array<{ type: LayoutRoom['type']; name: string; minW: number; minH: number; count: number; aspect: number }> = [];
+  const roomReqs: { type: LayoutRoom['type']; name: string; minW: number; minH: number; count: number; aspect: number }[] = [];
 
   for (const room of config.rooms) {
     const count = room.count ?? 1;

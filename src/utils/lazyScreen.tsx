@@ -10,7 +10,7 @@ import { CompassRoseLoader } from '../components/common/CompassRoseLoader';
  *     import('../screens/MyScreen').then(m => ({ default: m.MyScreen }))
  *   );
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export function lazyScreen<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
 ): ComponentType<React.ComponentPropsWithRef<T>> {

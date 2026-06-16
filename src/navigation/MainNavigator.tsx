@@ -4,6 +4,9 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { lazyScreen } from '../utils/lazyScreen';
+import { CustomTabBar } from './CustomTabBar';
+import { TabDirectionProvider } from './TabDirectionContext';
+import type { MainTabParamList } from './types';
 
 const SketchScreen  = lazyScreen(() =>
   import('../screens/sketch/SketchScreen').then((m) => ({ default: m.SketchScreen })));
@@ -19,9 +22,6 @@ const FeedScreen    = lazyScreen(() =>
 
 const AccountScreen = lazyScreen(() =>
   import('../screens/account/AccountScreen').then((m) => ({ default: m.AccountScreen })));
-import { CustomTabBar } from './CustomTabBar';
-import { TabDirectionProvider } from './TabDirectionContext';
-import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 

@@ -1,5 +1,7 @@
 import type { RoomType } from '../../types/blueprint';
 
+import type { GenerationPayload } from '../../types/generation';
+
 /**
  * Internal layout engine types (before conversion to BlueprintData)
  */
@@ -53,14 +55,14 @@ export interface LayoutConfig {
   /** Compass direction the entry facade (plan -y) faces. Default 'S'. */
   orientation?: 'N' | 'S' | 'E' | 'W';
   hemisphere?: 'north' | 'south';
-  rooms: Array<{
+  rooms: {
     type: RoomType;
     name: string;
     minWidth: number;
     minHeight: number;
     preferredAspect: number; // width / height
     count?: number;          // how many of this type (for bedrooms, bathrooms, etc.)
-  }>;
+  }[];
 }
 
 /** Minimum room sizes enforced during BSP packing */
@@ -83,7 +85,7 @@ export const ROOM_MINIMA: Record<RoomType, { minArea: number; minWidth: number; 
 export const GROUND_FLOOR_ONLY: RoomType[] = ['garage', 'laundry', 'storage', 'staircase'];
 
 /** Default furniture per room type */
-export const DEFAULT_FURNITURE: Record<RoomType, Array<{ name: string; category: string; w: number; h: number; d: number }>> = {
+export const DEFAULT_FURNITURE: Record<RoomType, { name: string; category: string; w: number; h: number; d: number }[]> = {
   bedroom: [
     { name: 'bed',       category: 'bedroom',  w: 1.6, h: 0.5,  d: 2.0 },
     { name: 'wardrobe',  category: 'storage',   w: 1.2, h: 0.6,  d: 0.6 },
@@ -119,8 +121,6 @@ export const DEFAULT_FURNITURE: Record<RoomType, Array<{ name: string; category:
   balcony:  [{ name: 'outdoor_chair', category: 'outdoor', w: 0.6, h: 0.8, d: 0.6 }],
   staircase: [],
 };
-
-import type { GenerationPayload } from '../../types/generation';
 
 /**
  * Infer common sense rooms the user didn't explicitly request.

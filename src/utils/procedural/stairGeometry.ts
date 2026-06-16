@@ -31,7 +31,7 @@ export interface StairSegment {
  */
 export function buildStairSegmentGeometry(
   segment: StairSegment,
-): { geometry: THREE.BufferGeometry; materialGroups: Array<{ position: number[]; materialIndex: number }> } {
+): { geometry: THREE.BufferGeometry; materialGroups: { position: number[]; materialIndex: number }[] } {
   const { width, length, height, stepCount, thickness, fillToFloor } = segment;
 
   if (stepCount < 1 || width <= 0 || length <= 0 || height <= 0) {
@@ -78,7 +78,7 @@ export function buildStairSegmentGeometry(
   // Build material group assignments: each triangle's materialIndex based on centroid Y
   const posAttr = geometry.getAttribute('position');
   const triCount = posAttr.count / 3;
-  const materialGroups: Array<{ position: number[]; materialIndex: number }> = [];
+  const materialGroups: { position: number[]; materialIndex: number }[] = [];
 
   for (let i = 0; i < triCount; i++) {
     // Use the first vertex's Y (before rotation) as proxy: Y > 0.75 of height → TREAD group
@@ -251,7 +251,7 @@ export function buildSpiralStaircase(
     const stepBufferGeo = stepGeo.clone();
     stepBufferGeo.applyMatrix4(stepMesh.matrixWorld);
     geometries.push(stepBufferGeo);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (stepMesh as any).dispose();
   }
 
@@ -262,7 +262,7 @@ export function buildSpiralStaircase(
   topPlatMesh.castShadow = true;
   topPlatMesh.receiveShadow = true;
   geometries.push(topPlatGeo.clone().applyMatrix4(topPlatMesh.matrixWorld));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   (topPlatMesh as any).dispose();
 
   return mergeStairGeometries(geometries, []);
@@ -274,7 +274,7 @@ export function buildSpiralStaircase(
 
 export function mergeStairGeometries(
   geometries: THREE.BufferGeometry[],
-  _transforms: Array<{ position: [number, number, number]; rotation?: [number, number, number] }>,
+  _transforms: { position: [number, number, number]; rotation?: [number, number, number] }[],
 ): THREE.BufferGeometry {
   if (geometries.length === 0) return new THREE.BufferGeometry();
   if (geometries.length === 1) return geometries[0]!;
@@ -292,7 +292,7 @@ export function mergeStairGeometries(
   });
 
   // Use BufferGeometryUtils.mergeBufferGeometries if available, otherwise manual merge
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const merge = (THREE as any).BufferGeometryUtils?.mergeGeometries;
   if (typeof merge === 'function') {
     return merge(positioned, false) as THREE.BufferGeometry;

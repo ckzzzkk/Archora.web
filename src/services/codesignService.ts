@@ -297,6 +297,6 @@ async function fetchCurrentBlueprintState(
     return {};
   }
 
-  const data = await response.json() as Array<{ state: Record<string, unknown> }>;
+  const data = await response.json() as { state: Record<string, unknown> }[];
   return data[0]?.state ?? {};
 }

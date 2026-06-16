@@ -38,13 +38,12 @@ import { CostEstimatorModal } from '../../components/common/CostEstimatorModal';
 import { EditLimitModal } from '../../components/workspace/EditLimitModal';
 import { exportBlueprintToDXF } from '../../utils/dxfExport';
 import { simulationService } from '../../services/simulationService';
-import type { SimulationReport } from '../../types/blueprint';
+import type { SimulationReport , StaircaseType } from '../../types/blueprint';
 import { randomUUID } from 'expo-crypto';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import type { RootStackParamList } from '../../navigation/types';
 import type { ViewMode } from '../../types';
-import type { StaircaseType } from '../../types/blueprint';
 import type { FurnitureDef } from '../../hooks/useFurniturePlacement';
 
 const Viewer3D = React.lazy(() =>

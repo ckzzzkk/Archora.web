@@ -9,12 +9,12 @@ export interface SimulationReport {
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   summary: string;
   strengths: string[];
-  recommendations: Array<{
+  recommendations: {
     category: 'structural' | 'weather' | 'flow' | 'code';
     severity: 'critical' | 'major' | 'minor';
     issue: string;
     fix: string;
-  }>;
+  }[];
   weatherProfile: {
     solarGain: 'excellent' | 'good' | 'fair' | 'poor';
     windResistance: 'excellent' | 'good' | 'fair' | 'poor';
@@ -28,7 +28,7 @@ export interface SimulationReport {
     shearWalls: 'excellent' | 'good' | 'fair' | 'poor';
   };
   /** Per-room environment detail (deterministic engine; absent on old reports). */
-  roomEnvironment?: Array<{
+  roomEnvironment?: {
     roomName: string;
     floorIndex: number;
     /** Dominant window facade compass letter, or '—' when windowless. */
@@ -38,7 +38,7 @@ export interface SimulationReport {
     summerSun: number;
     crossVentilation: boolean;
     habitable: boolean;
-  }>;
+  }[];
   generatedAt: string;
   available?: boolean;
   error?: string;
@@ -51,11 +51,11 @@ export interface DimensionAccuracy {
   /** Human-readable confidence label */
   confidence: 'high' | 'moderate' | 'low';
   /** Individual contributing factors and their penalties */
-  factors: Array<{
+  factors: {
     label: string;
     penaltyCm: number;
     severity: 'critical' | 'major' | 'minor';
-  }>;
+  }[];
   /** Raw score 0–100 (100 = perfect) */
   score: number;
   computedAt: string;

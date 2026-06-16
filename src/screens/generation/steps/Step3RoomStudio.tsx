@@ -13,7 +13,7 @@ import { HOUSE_ARCHETYPES } from '../../../data/houseArchetypes';
 const { width: SCREEN_W } = Dimensions.get('window');
 
 /** Size presets for each room type */
-const SIZE_PRESETS: Record<string, Array<{ label: string; width: number; depth: number }>> = {
+const SIZE_PRESETS: Record<string, { label: string; width: number; depth: number }[]> = {
   bedroom: [
     { label: 'Small', width: 2.4, depth: 3.0 },
     { label: 'Medium', width: 3.0, depth: 3.5 },
@@ -219,7 +219,7 @@ function LayoutStyleSelector({
   value, onChange,
 }: { value: LayoutStyle; onChange: (s: LayoutStyle) => void }) {
   const { light } = useHaptics();
-  const options: Array<{ value: LayoutStyle; label: string; desc: string }> = [
+  const options: { value: LayoutStyle; label: string; desc: string }[] = [
     { value: 'traditional', label: 'Traditional', desc: 'Separate rooms, hallways' },
     { value: 'open_plan', label: 'Open Plan', desc: 'Open living, kitchen, dining' },
     { value: 'mixed', label: 'Mixed', desc: 'Best of both worlds' },

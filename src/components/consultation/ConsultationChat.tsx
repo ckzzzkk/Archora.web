@@ -22,8 +22,7 @@ import { aiService } from '../../services/aiService';
 import { ArchText } from '../common/ArchText';
 import { CompassRoseLoader } from '../common/CompassRoseLoader';
 import type { ChatMessage } from '../../types/blueprint';
-import type { ConsultationSummary, QuestionCategory } from '../../types/generation';
-import type { GenerationPayload } from '../../types/generation';
+import type { ConsultationSummary, QuestionCategory , GenerationPayload } from '../../types/generation';
 import type { Tier } from '../../utils/tierLimits';
 
 // ─── Phase transition messages ─────────────────────────────────────────────

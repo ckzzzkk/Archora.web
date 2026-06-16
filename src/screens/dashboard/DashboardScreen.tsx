@@ -14,7 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession } from '../../auth/useSession';
 import { useProjectStore } from '../../stores/projectStore';
-import type { Project } from '../../types';
+import type { Project , BuildingType } from '../../types';
 import { useHaptics } from '../../hooks/useHaptics';
 import { useStreak } from '../../hooks/useStreak';
 import { useThemeColors } from '../../hooks/useThemeColors';
@@ -35,7 +35,6 @@ import { useDeviceType } from '../../hooks/useDeviceType';
 import { getResponsiveTokens } from '../../theme/responsive';
 import { TIER_LIMITS } from '../../utils/tierLimits';
 import type { RootStackParamList } from '../../navigation/types';
-import type { BuildingType } from '../../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -795,7 +794,7 @@ export function DashboardScreen() {
         </View>
       </>
     ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [insets, C, streakCount, points, projects.length, hasUnread, handleOpenNotifications, handleNewProject],
   );
 

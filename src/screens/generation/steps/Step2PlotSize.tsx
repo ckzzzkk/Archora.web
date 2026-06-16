@@ -14,7 +14,7 @@ const QUICK_PICKS = [
   { label: 'Estate', value: 700 },
 ];
 
-const CLIMATE_ZONES: Array<{ id: ClimateZone; label: string }> = [
+const CLIMATE_ZONES: { id: ClimateZone; label: string }[] = [
   { id: 'tropical', label: 'Tropical' },
   { id: 'subtropical', label: 'Subtropical' },
   { id: 'temperate', label: 'Temperate' },
@@ -23,7 +23,7 @@ const CLIMATE_ZONES: Array<{ id: ClimateZone; label: string }> = [
   { id: 'alpine', label: 'Alpine' },
 ];
 
-const ORIENTATIONS: Array<'N' | 'E' | 'S' | 'W'> = ['N', 'E', 'S', 'W'];
+const ORIENTATIONS: ('N' | 'E' | 'S' | 'W')[] = ['N', 'E', 'S', 'W'];
 
 interface Props {
   plotSize: string;

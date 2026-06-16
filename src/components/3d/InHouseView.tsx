@@ -4,22 +4,6 @@ import { View, Text, TouchableOpacity, PanResponder, Pressable, Platform } from 
 import { Canvas, useFrame, useThree } from '@react-three/fiber/native';
 import * as THREE from 'three';
 import ViewShot from 'react-native-view-shot';
-// FFmpegKit is conditionally loaded to allow builds without it.
-// If unavailable, video export will show a graceful notice instead of crashing.
-let FFmpegKit: any = null;
-let ReturnCode: any = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mod = require('ffmpeg-kit-react-native');
-  FFmpegKit = mod.FFmpegKit;
-  ReturnCode = mod.ReturnCode;
-} catch {
-  FFmpegKit = null;
-  ReturnCode = null;
-}
-const ffmpegAvailable = (): boolean => {
-  return FFmpegKit != null && ReturnCode != null;
-};
 import * as MediaLibrary from 'expo-media-library';
 import ExpoFileSystem from 'expo-file-system';
 import { ProceduralBuilding } from './ProceduralBuilding';
@@ -32,6 +16,22 @@ import { computeFirstPersonPreset, DEFAULT_LIGHTING } from '../../utils/procedur
 import { getFloorLabel } from '../../utils/floorHelpers';
 import { resolveCollision } from '../../utils/collisionDetection';
 import type { BlueprintData, Room } from '../../types/blueprint';
+// FFmpegKit is conditionally loaded to allow builds without it.
+// If unavailable, video export will show a graceful notice instead of crashing.
+let FFmpegKit: any = null;
+let ReturnCode: any = null;
+try {
+   
+  const mod = require('ffmpeg-kit-react-native');
+  FFmpegKit = mod.FFmpegKit;
+  ReturnCode = mod.ReturnCode;
+} catch {
+  FFmpegKit = null;
+  ReturnCode = null;
+}
+const ffmpegAvailable = (): boolean => {
+  return FFmpegKit != null && ReturnCode != null;
+};
 
 
 type TimeOfDay = 'dawn' | 'day' | 'dusk' | 'night';
@@ -159,7 +159,7 @@ export function InHouseView({ onExit }: InHouseViewProps) {
   const tourIndexRef = useRef(0);
   const tourTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const viewShotRef = useRef<any>(null);
   const capturedFramesRef = useRef<string[]>([]);
 

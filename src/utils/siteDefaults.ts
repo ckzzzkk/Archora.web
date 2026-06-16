@@ -29,7 +29,7 @@ const SOUTHERN_MARKERS = [
 ];
 
 /** Rough climate hints for common timezones; anything unmatched → temperate. */
-const CLIMATE_HINTS: Array<{ match: string; zone: ClimateZone }> = [
+const CLIMATE_HINTS: { match: string; zone: ClimateZone }[] = [
   // Tropical belt
   { match: 'Asia/Singapore', zone: 'tropical' },
   { match: 'Asia/Jakarta', zone: 'tropical' },

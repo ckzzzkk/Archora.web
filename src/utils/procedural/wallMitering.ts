@@ -25,10 +25,10 @@ export interface WallMiterBoundaryPoints {
 
 export interface Junction {
   meetingPoint: Point2D
-  connectedWalls: Array<{
+  connectedWalls: {
     wallId: string
     endType: 'start' | 'end' | 'passthrough'
-  }>
+  }[]
 }
 
 export interface WallMiterResult {

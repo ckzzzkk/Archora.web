@@ -88,7 +88,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
 
   // useCanvasRef / CanvasRef are not re-exported from Skia's public index in this version;
   // useRef<any> is the required workaround until the package types stabilise.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const skiaCanvasRef = useRef<any>(null);
   useImperativeHandle(ref, () => ({
     makeImageSnapshot: () => skiaCanvasRef.current?.makeImageSnapshot?.() as { encodeToBase64: () => string } | undefined,
@@ -483,7 +483,7 @@ export const Canvas2D = forwardRef<Canvas2DHandle, Props>(function Canvas2DInner
       <GestureDetector gesture={combined}>
         <View style={{ width: SCREEN_W, height: CANVAS_H }}>
           {/* Skia Canvas ref prop type (CanvasRef) is not re-exported from the public index in this version */}
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          { }
           <Canvas {...({ ref: skiaCanvasRef } as any)} style={{ width: SCREEN_W, height: CANVAS_H }}>
             <Group>
 

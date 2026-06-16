@@ -1,7 +1,7 @@
 import type { LayoutRoom, AdjacencyEdge } from './types';
 
 /** Pairs of room types that should be adjacent */
-const PREFERRED_ADJACENCIES: Array<[LayoutRoom['type'], LayoutRoom['type'], number]> = [
+const PREFERRED_ADJACENCIES: [LayoutRoom['type'], LayoutRoom['type'], number][] = [
   ['bedroom', 'bathroom', 1.0],
   ['kitchen', 'dining_room', 0.95],
   ['living_room', 'dining_room', 0.9],

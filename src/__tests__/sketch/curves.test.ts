@@ -11,7 +11,7 @@ function dist(a: Vector2D, b: Vector2D): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function expectChainContinuity(segments: Array<{ start: Vector2D; end: Vector2D }>) {
+function expectChainContinuity(segments: { start: Vector2D; end: Vector2D }[]) {
   for (let i = 1; i < segments.length; i++) {
     expect(dist(segments[i].start, segments[i - 1].end)).toBeLessThan(1e-9);
   }

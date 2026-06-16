@@ -10,10 +10,8 @@
  * Now using TurboModuleRegistry for type-safe access instead of NativeModules.
  */
 
-import { Platform, NativeEventEmitter } from 'react-native';
-import { TurboModuleRegistry } from 'react-native';
-import type { Spec } from './ARModuleNativeSpec';
-import type {
+import { Platform, NativeEventEmitter , TurboModuleRegistry } from 'react-native';
+import type { Spec ,
   Vector3D,
   DetectedPlane,
   ARSupport,

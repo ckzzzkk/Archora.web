@@ -108,9 +108,9 @@ export function sanitizeCoordinate(value: number | string, allowNegative = true)
  */
 export function buildSelectedContext(params: {
   selectedId?: string | null;
-  walls?: Array<{ id: string; texture?: string }>;
-  rooms?: Array<{ id: string; name: string; area: number }>;
-  furniture?: Array<{ id: string; name: string; category: string; position: { x: number; y: number; z: number } }>;
+  walls?: { id: string; texture?: string }[];
+  rooms?: { id: string; name: string; area: number }[];
+  furniture?: { id: string; name: string; category: string; position: { x: number; y: number; z: number } }[];
 }): string {
   const { selectedId, walls = [], rooms = [], furniture = [] } = params;
 

@@ -405,7 +405,7 @@ export const aiService = {
       status: string;
       iteration: number;
       message: string;
-      scores: Array<{ n: number; score: number; keyChange: string }>;
+      scores: { n: number; score: number; keyChange: string }[];
     }) => void,
   ): Promise<BlueprintData> {
     // Subscribe to session progress via Realtime
@@ -425,7 +425,7 @@ export const aiService = {
             status:    (row.status as string) ?? 'generating',
             iteration: (row.iteration as number) ?? 1,
             message:   (row.current_message as string) ?? '',
-            scores:    (row.iteration_scores as Array<{ n: number; score: number; keyChange: string }>) ?? [],
+            scores:    (row.iteration_scores as { n: number; score: number; keyChange: string }[]) ?? [],
           });
         },
       )
@@ -507,7 +507,7 @@ export const aiService = {
       status: string;
       iteration: number;
       message: string;
-      scores: Array<{ n: number; score: number; keyChange: string }>;
+      scores: { n: number; score: number; keyChange: string }[];
     }) => void,
   ): Promise<BlueprintData[]> {
     const tasks = Array.from({ length: count }, async (_, i) => {

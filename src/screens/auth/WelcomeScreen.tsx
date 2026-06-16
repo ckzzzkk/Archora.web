@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
 import { View, Pressable, Platform, Dimensions } from 'react-native';
-
-const SCREEN_W = Dimensions.get('window').width;
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +12,8 @@ import { DS } from '../../theme/designSystem';
 import { signInWithGoogle } from '../../auth/signInWithGoogle';
 import { BRAND } from '../../utils/branding';
 import type { AuthStackParamList } from '../../navigation/types';
+
+const SCREEN_W = Dimensions.get('window').width;
 
 function CompassLogo() {
   return (

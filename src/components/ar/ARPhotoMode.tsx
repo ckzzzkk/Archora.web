@@ -20,8 +20,7 @@ import { DS } from '../../theme/designSystem';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { arService } from '../../services/arService';
 import { useBlueprintStore } from '../../stores/blueprintStore';
-import { buildBlueprintFromAR } from '../../utils/ar/arToBlueprintConverter';
-import { photoAnalysisToBlueprint } from '../../utils/ar/arToBlueprintConverter';
+import { buildBlueprintFromAR , photoAnalysisToBlueprint } from '../../utils/ar/arToBlueprintConverter';
 import type { PhotoAnalysisResult } from '../../utils/ar/arToBlueprintConverter';
 import { ARResultScreen } from './ARResultScreen';
 
@@ -48,7 +47,7 @@ function ARPhotoModeContent() {
   const insets = useSafeAreaInsets();
   const device = useCameraDevice('back');
   const { hasPermission, requestPermission } = useCameraPermission();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const camera = useRef<any>(null);
 
   const [captures, setCaptures] = useState<PhotoCapture[]>([]);

@@ -89,7 +89,7 @@ export function buildRoofSegmentGeometry(
     baseY: number,
     matIndex: number,
     isVoid: boolean,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     extra?: any,
   ): THREE.BufferGeometry => {
     const wV = Math.max(0.01, width + 2 * wExt);
@@ -595,7 +595,7 @@ function getModuleFaces(
  */
 function createFacesGeometry(
   faces: THREE.Vector3[][],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   matRule: number | ((normal: THREE.Vector3) => number) | null = null,
 ): THREE.BufferGeometry {
   const positions: number[] = [];

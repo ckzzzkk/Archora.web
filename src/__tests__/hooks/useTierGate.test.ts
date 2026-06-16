@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 
+// Import after mocks
+import { TIER_LIMITS } from '../../utils/tierLimits';
+
 // Mock useSession to return a controllable user
 const mockUser = {
   subscriptionTier: 'starter' as 'starter' | 'creator' | 'pro' | 'architect',
@@ -15,9 +18,6 @@ vi.mock('../../auth/useSession', () => ({
 vi.mock('../../data/architectProfiles', () => ({
   getArchitectTierRequired: vi.fn().mockReturnValue('creator'),
 }));
-
-// Import after mocks
-import { TIER_LIMITS } from '../../utils/tierLimits';
 
 describe('useTierGate — logic (tested via TIER_LIMITS directly)', () => {
   it('starter has 0 AI generations per month', () => {

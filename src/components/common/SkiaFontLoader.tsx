@@ -18,7 +18,7 @@ import {
   JetBrainsMono_400Regular,
 } from '@expo-google-fonts/jetbrains-mono';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type SkiaFont = ReturnType<typeof useFont> | null;
 
 export interface SkiaFonts {

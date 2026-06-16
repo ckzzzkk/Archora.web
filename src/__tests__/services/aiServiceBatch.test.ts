@@ -15,7 +15,7 @@ describe('aiService.generateBatch', () => {
   it('fires N parallel generateOptimal calls each with a distinct variationSeed', async () => {
     const { aiService } = await import('../../services/aiService');
 
-    const seeds: Array<number | undefined> = [];
+    const seeds: (number | undefined)[] = [];
     vi.spyOn(aiService, 'createGenerationSession').mockImplementation(async () => crypto.randomUUID());
     vi.spyOn(aiService, 'generateOptimal').mockImplementation(async (payload) => {
       const seed = (payload as { variationSeed?: number }).variationSeed;

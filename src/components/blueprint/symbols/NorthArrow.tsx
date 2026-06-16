@@ -7,7 +7,7 @@
 import { Group, Path, Line, Text as SkiaText, Skia } from '@shopify/react-native-skia';
 import { ARCH_COLORS, SYMBOLS } from '../../../utils/architecture/drawingConventions';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 interface NorthArrowProps {
   x: number;
   y: number;

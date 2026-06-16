@@ -134,7 +134,7 @@ function roomToPolyline(room: Room, walls: Wall[], floorIndex: number): string {
   if (usedWalls.length < 3) return '';
 
   // Build ordered polygon from wall graph
-  const points: Array<{ x: number; y: number }> = [];
+  const points: { x: number; y: number }[] = [];
   const wallMap = new Map<string, Wall>();
   usedWalls.forEach(w => wallMap.set(w.id, w));
 

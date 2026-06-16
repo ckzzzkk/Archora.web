@@ -21,10 +21,10 @@ interface IterationProgress {
   status: string;
   iteration: number;
   message: string;
-  scores: Array<{ n: number; score: number; keyChange: string }>;
+  scores: { n: number; score: number; keyChange: string }[];
 }
 
-const gridPositions: Array<{ r: number; c: number }> = [];
+const gridPositions: { r: number; c: number }[] = [];
 for (let r = 0; r < 4; r++) {
   for (let c = 0; c < 5; c++) {
     gridPositions.push({ r, c });

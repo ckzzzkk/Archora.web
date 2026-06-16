@@ -41,7 +41,7 @@ function brief(over: Partial<GenerationPayload> & { buildingType: GenerationPayl
   };
 }
 
-const BRIEFS: Array<{ label: string; payload: GenerationPayload }> = [
+const BRIEFS: { label: string; payload: GenerationPayload }[] = [
   { label: 'Studio',                 payload: brief({ buildingType: 'studio', bedrooms: 0, bathrooms: 1, livingAreas: 1, plotSize: 45 }) },
   { label: '1-bed apartment',        payload: brief({ buildingType: 'apartment', bedrooms: 1, bathrooms: 1, plotSize: 60 }) },
   { label: '2-bed apartment',        payload: brief({ buildingType: 'apartment', bedrooms: 2, bathrooms: 1, plotSize: 85 }) },
@@ -85,13 +85,13 @@ describe('architectural quality measurement harness', () => {
   it('reports quality scores across representative briefs', async () => {
     const PASS = 80;
 
-    const rows: Array<{
+    const rows: {
       label: string;
       geo: ReturnType<typeof violationSummary>;
       q: ReturnType<typeof assessFullQuality>;
       ovRaw: number;   // furniture overlaps BEFORE the normalize pass
       ovFix: number;   // furniture overlaps AFTER the normalize pass
-    }> = [];
+    }[] = [];
     for (const { label, payload } of BRIEFS) {
       const bp = await produce(payload);
       const geo = violationSummary(validateBlueprint(bp));
@@ -144,7 +144,7 @@ describe('architectural quality measurement harness', () => {
     }
 
     const report = lines.join('\n');
-    // eslint-disable-next-line no-console
+     
     console.log(report);
     try { writeFileSync('quality-report.txt', report + '\n'); } catch { /* ignore in restricted envs */ }
 

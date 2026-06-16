@@ -455,7 +455,7 @@ export function buildDroppedCeilingGeometry(
 
 function mergeGeometries(geometries: THREE.BufferGeometry[]): THREE.BufferGeometry {
   // Use BufferGeometryUtils merge if available, otherwise manually merge
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const BufferGeometryUtils = (THREE as any).BufferGeometryUtils;
   if (BufferGeometryUtils && typeof BufferGeometryUtils.mergeBufferGeometries === 'function') {
     return BufferGeometryUtils.mergeBufferGeometries(geometries, false);

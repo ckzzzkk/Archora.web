@@ -18,7 +18,7 @@ export interface ARResultScreenProps {
   wallCount?: number;
   roomDimensions?: { width: number; length: number };
   roomLabel?: string;
-  detectedObjects?: Array<{ label: string; width: number; length: number }>;
+  detectedObjects?: { label: string; width: number; length: number }[];
   onImportToStudio: () => void;
   onSaveScan: () => void;
   onScanAgain: () => void;

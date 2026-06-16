@@ -2,7 +2,7 @@ import React from 'react';
 import { ProceduralWall } from './ProceduralWall';
 import { ProceduralFloor } from './ProceduralFloor';
 import { ProceduralRoof } from './ProceduralRoof';
-import { getModelVariant } from '../../data/designStyles';
+import { getModelVariant , getFurnitureVariant } from '../../data/designStyles';
 
 // Base components
 import { Sofa } from './furniture/Sofa';
@@ -54,7 +54,6 @@ import {
 import { SpiralStaircase, LStaircase } from './furniture/StairsFurniture';
 
 import { getFloorYOffset } from '../../utils/floorHelpers';
-import { getFurnitureVariant } from '../../data/designStyles';
 import type { BlueprintData, FurniturePiece, FloorData, Room, Wall, Opening, Slab, Ceiling, Roof, RoofSegment } from '../../types';
 import { ProceduralCeiling } from './ProceduralCeiling';
 
@@ -69,7 +68,7 @@ interface ProceduralBuildingProps {
   currentFloorIndex?: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type FurnitureComponent = React.ComponentType<any>;
 
 /** Maps FurnitureType key → 3D component. Order-sensitive for overlapping types. */

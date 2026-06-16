@@ -93,7 +93,7 @@ interface BlueprintState {
     updateFurniture: (id: string, updates: Partial<FurniturePiece>) => void;
     deleteFurniture: (id: string) => void;
     // AR furniture placement — converts AR world positions to blueprint furniture
-    addFurnitureFromAR: (items: Array<{
+    addFurnitureFromAR: (items: {
       id: string;
       name: string;
       category: string;
@@ -104,13 +104,13 @@ interface BlueprintState {
       depth: number;
       /** Yaw set in AR via the two-finger rotate gesture (degrees). */
       rotationDeg?: number;
-    }>) => void;
+    }[]) => void;
     /** Persist AR-captured measurements as documentation annotations. */
-    addMeasurementAnnotations: (measurements: Array<{
+    addMeasurementAnnotations: (measurements: {
       label: string;
       lengthM: number;
       kind: 'wall' | 'room';
-    }>) => void;
+    }[]) => void;
     // Surfaces
     setWallTexture: (wallId: string, texture: WallTexture) => void;
     setRoomFloor: (roomId: string, material: MaterialType) => void;
