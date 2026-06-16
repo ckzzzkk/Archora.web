@@ -42,6 +42,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return Errors.validation('task_id is required (query param or body)');
     }
 
+    // taskId is interpolated into a PostgREST .or() filter below; constrain it to
+    // safe id characters (UUIDs / worker task ids) to prevent filter injection.
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(taskId)) {
+      return Errors.validation('Invalid task_id format');
+    }
+
     // Admin client to read viga_tasks and write custom_furniture
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,

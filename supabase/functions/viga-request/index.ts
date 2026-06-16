@@ -28,6 +28,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const { imageUrl, projectId, mode, name, category } = parsed.data;
 
+    // Graceful degradation: if the GPU worker isn't configured, fail fast WITHOUT
+    // creating an orphaned pending task (and without fetching "undefined/reconstruct").
+    const workerUrl = Deno.env.get('VIGA_WORKER_URL');
+    if (!workerUrl) {
+      console.warn('[viga-request] VIGA_WORKER_URL not configured — refusing request');
+      return Errors.upstream('VIGA reconstruction is not available right now');
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -53,8 +61,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (error) throw error;
 
-    // Call VIGA GPU worker
-    const workerUrl = Deno.env.get('VIGA_WORKER_URL');
+    // Call VIGA GPU worker (workerUrl guaranteed non-empty by the early guard above)
     const callbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/viga-webhook?task_id=${task.id}`;
 
     const workerResponse = await fetch(`${workerUrl}/reconstruct`, {

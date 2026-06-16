@@ -11,10 +11,9 @@ import type { RootStackParamList } from '../../navigation/types';
 export function EditLimitModal() {
   const activeModal = useUIStore((s) => s.activeModal);
   const closeModal = useUIStore((s) => s.actions.closeModal);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   if (activeModal !== 'edit_limit_reached') return null;
-
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const now = new Date();
   const midnight = new Date();

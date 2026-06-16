@@ -54,6 +54,25 @@ function OpeningMesh({
   const leafH = frameH - FRAME * 2;
   const leafW = frameW - FRAME * 2;
 
+  // Door swing-arc line — memoized UNCONDITIONALLY (returns null when not a door)
+  // so this hook runs in the same order every render (rules-of-hooks).
+  const swingArc = useMemo(() => {
+    if (!isDoor) return null;
+    const leafZ = depth / 2 + 0.02;
+    const hingeX = hingeSide === 'left' ? (-frameW / 2 + FRAME / 2) : (frameW / 2 - FRAME / 2);
+    const arcRadius = frameW;
+    const points: THREE.Vector3[] = [];
+    for (let i = 0; i <= 12; i++) {
+      const t = i / 12;
+      const yOff = -leafH / 2 + t * leafH;
+      const zOff = leafZ + Math.sin(t * Math.PI / 2) * arcRadius;
+      points.push(new THREE.Vector3(hingeX, yOff, zOff));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({ color: '#D4A84B', transparent: true, opacity: 0.6 });
+    return <primitive object={new THREE.Line(geo, mat)} />;
+  }, [isDoor, depth, hingeSide, frameW, leafH]);
+
   if (isDoor) {
     // Leaf Z: forward of wall centre (positive Z = into room)
     const leafZ = depth / 2 + 0.02;
@@ -115,19 +134,7 @@ function OpeningMesh({
 
         {/* Door swing arc — 90° arc in the plane of the swing (perpendicular to wall) */}
         {/* Rendered as a line of points in YZ plane from hinge, sweeping 90° */}
-        {useMemo(() => {
-          const points: THREE.Vector3[] = []
-          for (let i = 0; i <= 12; i++) {
-            const t = i / 12
-            const yOff = -leafH / 2 + t * leafH
-            const zOff = leafZ + Math.sin(t * Math.PI / 2) * arcRadius
-            points.push(new THREE.Vector3(hingeX, yOff, zOff))
-          }
-          const geo = new THREE.BufferGeometry().setFromPoints(points)
-          const mat = new THREE.LineBasicMaterial({ color: '#D4A84B', transparent: true, opacity: 0.6 })
-          const arcLine = new THREE.Line(geo, mat)
-          return <primitive object={arcLine} />
-        }, [hingeX, leafH, leafZ, arcRadius])}
+        {swingArc}
       </group>
     );
   }
