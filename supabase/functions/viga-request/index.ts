@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://esm.sh/zod@3.23.8';
 import { getAuthUser } from '../_shared/auth.ts';
-import { checkRateLimit } from '../_shared/rateLimit.ts';
+import { requireRateLimit } from '../_shared/rateLimit.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { Errors } from '../_shared/errors.ts';
 
@@ -19,8 +19,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     const user = await getAuthUser(req);
 
-    const limited = await checkRateLimit(`viga:${user.id}`, 10, 3600);
-    if (limited) return Errors.rateLimited('VIGA request rate limit exceeded');
+    const limited = await requireRateLimit(`viga:${user.id}`, 10, 3600, 'VIGA request rate limit exceeded');
+    if (limited) return limited;
 
     const body = await req.json() as unknown;
     const parsed = RequestSchema.safeParse(body);
