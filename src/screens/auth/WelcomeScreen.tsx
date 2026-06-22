@@ -100,7 +100,7 @@ export function WelcomeScreen() {
         <Animated.View style={[{ alignItems: 'center', marginTop: DS.spacing.md }, titleStyle]}>
           <ArchText
             variant="heading"
-            style={{ fontSize: Math.min(48, SCREEN_W * 0.125), letterSpacing: Math.min(10, SCREEN_W * 0.026), color: DS.colors.primary }}
+            style={{ fontFamily: 'Inter_700Bold', fontSize: Math.min(48, SCREEN_W * 0.125), letterSpacing: Math.min(10, SCREEN_W * 0.026), color: DS.colors.primary }}
           >
             {BRAND.displayName}
           </ArchText>
