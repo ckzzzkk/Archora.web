@@ -21,13 +21,20 @@ Supabase (Postgres + RLS + Auth + Storage + Edge Functions, Deno TS)
 Upstash Redis · Stripe · Cloudflare CDN
 AI: Claude claude-sonnet-4-6 · Groq Whisper · fal.ai Flux Schnell · Meshy · Roboflow · SAM
 
-## Brand and Design Language
-Oval-first UI — every button, card, input, chip is soft-cornered. Never sharp corners.
-Border radius: buttons 50px · cards 20–24px · inputs 50px · tab bar pill 999px · modals 24px top
-Fonts: ArchitectsDaughter_400Regular (headings) · Inter (body) · JetBrainsMono (numbers/measurements)
-Sketchy white line illustrations as accents on dark backgrounds — SVG stroke-only, never bitmap
+## Brand and Design Language — "Muted Editorial" (see docs/adr/004-muted-editorial-redesign.md)
+Calm, content-first, premium-dark. Soft-cornered (never sharp), but NOT 50px-everything.
+Border radius: buttons/inputs 14 · cards 18 · chips & tab bar pill 999 · modals 24 top
+Fonts: Inter (headings AND body) · JetBrainsMono (numbers/measurements).
+  ArchitectsDaughter (DS.font.display) is RESERVED for the logo/wordmark only — never headings.
+Borders: hairline `rgba(240,237,232,0.08)` (DS.colors.border). NO white ink borders.
+Depth: soft real shadows (black, blurred) or none. NO hard offset "sketch" shadows.
+Amber #D4A84B is a RARE spark only — active-tab dot, "live"/progress, key CTA, premium sheen.
+  Most screens are fully monochrome ink-on-dark. Never amber as a fill/background.
+Motion = life: AmbientAura drifting glow on dark screens, staggered entrances, calm
+  press-scale (no wobble/rotation). Signature: the self-constructing 3D generation animation.
+Real building imagery edge-to-edge where possible — not flat colored boxes.
 BASE_COLORS are final — never override. Theme variants in src/theme/colors.ts.
-Background #1A1A1A · Surface #222222 · Elevated #2C2C2C · Border #333333
+Background #1A1A1A · Surface #222222 · Elevated #2C2C2C
 Text Primary #F0EDE8 · Text Secondary #9A9590 · Text Dim #5A5550
 Success #7AB87A · Warning #D4A84B · Error #C0604A · Primary #C8C8C8
 
