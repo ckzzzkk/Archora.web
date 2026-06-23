@@ -5,8 +5,7 @@ import {
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSpring,
-  withRepeat, withSequence, Easing,
+  useSharedValue, useAnimatedStyle, withTiming, withDelay, withSpring, Easing,
 } from 'react-native-reanimated';
 import Svg, { Path, Circle, Line, Rect, Polyline, G } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +19,7 @@ import { useStreak } from '../../hooks/useStreak';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { NotificationPanel } from '../../components/dashboard/NotificationPanel';
 import { OvalButton } from '../../components/common/OvalButton';
+import { AmbientAura } from '../../components/common/AmbientAura';
 import { ArchText } from '../../components/common/ArchText';
 import { CompassRose } from '../../components/common/CompassRose';
 import { BlueprintThumbnail as SharedBlueprintThumbnail } from '../../components/common/BlueprintThumbnail';
@@ -165,9 +165,9 @@ function ProjectCardSkeleton() {
       flex: 1,
       marginHorizontal: DS.spacing.xs,
       marginBottom: DS.spacing.sm,
-      borderRadius: DS.radius.large,
-      borderWidth: 2,
-      borderColor: DS.colors.ink,
+      borderRadius: DS.radius.card,
+      borderWidth: 1,
+      borderColor: DS.colors.border,
       overflow: 'hidden',
       backgroundColor: DS.colors.card,
     }}>
@@ -199,55 +199,46 @@ function SkeletonCards() {
 
 function DailyChallengeBanner({ C }: { C: ReturnType<typeof useThemeColors> }) {
   const challenge = getDailyChallenge();
-  const scale  = useSharedValue(0.97);
-  const rotate = useSharedValue(0);
+  const scale = useSharedValue(0.98);
+  const op    = useSharedValue(0);
 
   useEffect(() => {
-    scale.value = withSpring(1, { damping: 12, stiffness: 180 });
-    // Slow infinite wobble — ±0.6deg like reference
-    rotate.value = withRepeat(
-      withSequence(
-        withTiming(-0.6, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.6,  { duration: 1200, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      true,
-    );
+    scale.value = withSpring(1, { damping: 16, stiffness: 200 });
+    op.value = withTiming(1, { duration: 360 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const bannerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { rotate: `${rotate.value}deg` }],
+    opacity: op.value,
+    transform: [{ scale: scale.value }],
   }));
 
   return (
     <Animated.View style={[bannerStyle, { marginHorizontal: DS.spacing.lg, marginBottom: DS.spacing.md }]}>
       <View style={{
-        borderRadius: DS.radius.large,
-        borderWidth: 2, borderColor: DS.colors.ink,
-        backgroundColor: DS.colors.amber,
+        borderRadius: DS.radius.card,
+        borderWidth: 1, borderColor: DS.colors.border,
+        backgroundColor: DS.colors.card,
         padding: DS.spacing.md,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: DS.spacing.sm,
-        shadowColor: DS.colors.ink, shadowOffset: { width: 3, height: 4 }, shadowOpacity: 1, shadowRadius: 0,
+        gap: DS.spacing.md,
       }}>
         <View style={{
-          width: 36, height: 36, borderRadius: 18,
-          backgroundColor: DS.colors.background,
-          borderWidth: 2, borderColor: DS.colors.ink,
+          width: 38, height: 38, borderRadius: 12,
+          backgroundColor: DS.colors.accentGlow,
           alignItems: 'center', justifyContent: 'center',
         }}>
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
             <Path d="M12 2L14.5 9H22L16 13.5L18.5 20.5L12 16L5.5 20.5L8 13.5L2 9H9.5Z"
-              stroke={DS.colors.ink} strokeWidth="1.5" strokeLinejoin="round" />
+              stroke={DS.colors.amber} strokeWidth="1.5" strokeLinejoin="round" />
           </Svg>
         </View>
         <View style={{ flex: 1 }}>
-          <ArchText variant="label" style={{ fontSize: 9, color: DS.colors.paper }}>
+          <ArchText variant="label" style={{ fontSize: 9, color: DS.colors.mutedForeground }}>
             Daily Challenge
           </ArchText>
-          <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.paper, fontFamily: DS.font.bold }}>
+          <ArchText variant="body" style={{ fontSize: 13, color: DS.colors.ink, fontFamily: DS.font.semibold }}>
             {challenge}
           </ArchText>
         </View>
@@ -298,52 +289,33 @@ function EmptyState({ onPress }: { onPress: () => void }) {
   );
 }
 
-const ProjectThumbnailColors: Record<string, string> = {
-  house:     '#C9FFFD',
-  apartment: '#FFEE8C',
-  office:    '#C9FFFD',
-  villa:     '#FFEE8C',
-  studio:    '#C9FFFD',
-};
-
-// 2-column portrait grid card with pop-in rotation + press-squish
+// 2-column portrait grid card with staggered fade-up + press-squish
 function ProjectGridCard({ project, onPress, index }: { project: Project; onPress: () => void; index: number }) {
   const opacity      = useSharedValue(0);
-  const entryScale   = useSharedValue(0.85);
-  const entryRotate  = useSharedValue(-3);
+  const entryY       = useSharedValue(10);
   const pressScale   = useSharedValue(1);
-  const pressRotate  = useSharedValue(0);
 
   useEffect(() => {
-    const delay = index * 80;
-    opacity.value = withDelay(delay, withTiming(1, { duration: 240 }));
-    entryScale.value = withDelay(delay, withSequence(
-      withSpring(1.03, { damping: 10, stiffness: 180 }),
-      withSpring(1,    { damping: 14, stiffness: 280 }),
-    ));
-    entryRotate.value = withDelay(delay, withSequence(
-      withSpring(1, { damping: 10, stiffness: 180 }),
-      withSpring(0, { damping: 14, stiffness: 280 }),
-    ));
+    const delay = index * DS.motion.stagger;
+    opacity.value = withDelay(delay, withTiming(1, { duration: 320 }));
+    entryY.value = withDelay(delay, withSpring(0, { damping: 16, stiffness: 220 }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const entryStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [{ scale: entryScale.value }, { rotate: `${entryRotate.value}deg` }],
+    transform: [{ translateY: entryY.value }],
   }));
 
   const pressStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }, { rotate: `${pressRotate.value}deg` }],
+    transform: [{ scale: pressScale.value }],
   }));
 
   const handlePressIn = () => {
-    pressScale.value  = withSpring(0.93, { damping: 14, stiffness: 400 });
-    pressRotate.value = withSpring(-1,   { damping: 14, stiffness: 400 });
+    pressScale.value = withSpring(0.97, DS.motion.press);
   };
   const handlePressOut = () => {
-    pressScale.value  = withSpring(1, { damping: 14, stiffness: 400 });
-    pressRotate.value = withSpring(0, { damping: 14, stiffness: 400 });
+    pressScale.value = withSpring(1, DS.motion.press);
   };
 
   const formattedDate = new Date(project.updatedAt ?? project.createdAt ?? Date.now())
@@ -365,13 +337,10 @@ function ProjectGridCard({ project, onPress, index }: { project: Project; onPres
         <Animated.View style={[pressStyle, {
           flex: 1,
           backgroundColor: DS.colors.card,
-          borderRadius: DS.radius.large,
-          borderWidth: 2,
-          borderColor: DS.colors.ink,
-          shadowColor: DS.colors.ink,
-          shadowOffset: { width: 3, height: 4 },
-          shadowOpacity: 1,
-          shadowRadius: 0,
+          borderRadius: DS.radius.card,
+          borderWidth: 1,
+          borderColor: DS.colors.border,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.32, shadowRadius: 14, elevation: 6,
           overflow: 'hidden',
         }]}>
           {/* Thumbnail */}
@@ -380,8 +349,8 @@ function ProjectGridCard({ project, onPress, index }: { project: Project; onPres
             backgroundColor: DS.colors.background,
             alignItems: 'center',
             justifyContent: 'center',
-            borderBottomWidth: 2,
-            borderBottomColor: DS.colors.ink,
+            borderBottomWidth: 1,
+            borderBottomColor: DS.colors.border,
           }}>
             <SharedBlueprintThumbnail kind={btype} color={DS.colors.ink} size={72} animate={true} />
           </View>
@@ -399,10 +368,10 @@ function ProjectGridCard({ project, onPress, index }: { project: Project; onPres
             </ArchText>
             {/* Oval chips — oval-first rule: borderRadius 50 */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-              <View style={{ borderWidth: 1, borderColor: DS.colors.ink, borderRadius: 50, paddingHorizontal: 7, paddingVertical: 2 }}>
+              <View style={{ backgroundColor: DS.colors.surfaceHigh, borderRadius: 50, paddingHorizontal: 8, paddingVertical: 3 }}>
                 <ArchText variant="mono" style={{ fontSize: 9, color: DS.colors.ink }}>{roomCount}r</ArchText>
               </View>
-              <View style={{ borderWidth: 1, borderColor: DS.colors.ink, borderRadius: 50, paddingHorizontal: 7, paddingVertical: 2 }}>
+              <View style={{ backgroundColor: DS.colors.surfaceHigh, borderRadius: 50, paddingHorizontal: 8, paddingVertical: 3 }}>
                 <ArchText variant="mono" style={{ fontSize: 9, color: DS.colors.mutedForeground, textTransform: 'capitalize' }}>{btype}</ArchText>
               </View>
             </View>
@@ -436,9 +405,9 @@ function NewProjectModal({ visible, onClose, onCreate }: {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={{
             backgroundColor: DS.colors.card,
-            borderTopLeftRadius: 40, borderTopRightRadius: 40,
-            borderTopWidth: 2, borderColor: DS.colors.ink,
-            borderLeftWidth: 2, borderRightWidth: 2,
+            borderTopLeftRadius: DS.radius.modal, borderTopRightRadius: DS.radius.modal,
+            borderTopWidth: 1, borderColor: DS.colors.border,
+            borderLeftWidth: 1, borderRightWidth: 1,
             paddingHorizontal: DS.spacing.lg,
             paddingTop: DS.spacing.lg,
             paddingBottom: Math.max(DS.spacing.xxl, modalInsets.bottom + DS.spacing.lg),
@@ -456,9 +425,9 @@ function NewProjectModal({ visible, onClose, onCreate }: {
               autoFocus
               style={{
                 backgroundColor: DS.colors.background,
-                borderRadius: 50, borderWidth: 2, borderColor: DS.colors.ink,
-                paddingHorizontal: DS.spacing.lg, paddingVertical: 14,
-                fontFamily: DS.font.heading, fontSize: 15, color: DS.colors.ink,
+                borderRadius: DS.radius.input, borderWidth: 1, borderColor: DS.colors.border,
+                paddingHorizontal: DS.spacing.md, paddingVertical: 14,
+                fontFamily: DS.font.regular, fontSize: 15, color: DS.colors.ink,
                 marginBottom: DS.spacing.lg,
               }}
             />
@@ -476,12 +445,12 @@ function NewProjectModal({ visible, onClose, onCreate }: {
                   accessibilityHint="Double tap to select this building type"
                   style={{
                     paddingHorizontal: DS.spacing.md, paddingVertical: DS.spacing.sm,
-                    borderRadius: 50, borderWidth: 2,
+                    borderRadius: 50, borderWidth: 1,
                     borderColor: buildingType === bt.key ? DS.colors.ink : DS.colors.border,
-                    backgroundColor: buildingType === bt.key ? DS.colors.amber : 'transparent',
+                    backgroundColor: buildingType === bt.key ? DS.colors.ink : 'transparent',
                   }}
                 >
-                  <ArchText variant="body" style={{ fontSize: 13, fontFamily: DS.font.heading, color: buildingType === bt.key ? DS.colors.paper : DS.colors.mutedForeground }}>
+                  <ArchText variant="body" style={{ fontSize: 13, fontFamily: DS.font.medium, color: buildingType === bt.key ? DS.colors.paper : DS.colors.mutedForeground }}>
                     {bt.label}
                   </ArchText>
                 </Pressable>
@@ -513,14 +482,10 @@ function WeekCalendar({ streakCount }: { streakCount: number }) {
       marginHorizontal: DS.spacing.lg,
       marginBottom: DS.spacing.md,
       borderRadius: DS.radius.card,
-      borderWidth: 2,
-      borderColor: DS.colors.ink,
+      borderWidth: 1,
+      borderColor: DS.colors.border,
       backgroundColor: DS.colors.card,
       padding: DS.spacing.md,
-      shadowColor: DS.colors.ink,
-      shadowOffset: { width: 2, height: 2 },
-      shadowOpacity: 1,
-      shadowRadius: 0,
     }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: DS.spacing.sm }}>
         <ArchText variant="label" style={{ fontSize: 9, color: DS.colors.mutedForeground }}>this week</ArchText>
@@ -541,10 +506,8 @@ function WeekCalendar({ streakCount }: { streakCount: number }) {
             style={{
               flex: 1,
               borderRadius: DS.radius.small,
-              borderWidth: 2,
-              borderColor: DS.colors.ink,
-              backgroundColor: day.on ? DS.colors.amber : DS.colors.background,
-              paddingVertical: 6,
+              backgroundColor: day.on ? DS.colors.ink : DS.colors.surfaceHigh,
+              paddingVertical: 7,
               alignItems: 'center',
               gap: 2,
             }}
@@ -595,7 +558,6 @@ function DashboardHeader({
         paddingTop: insets.top + 12,
         paddingHorizontal: DS.spacing.lg,
         paddingBottom: DS.spacing.lg,
-        backgroundColor: DS.colors.background,
       }}
     >
       {/* Top bar */}
@@ -616,10 +578,10 @@ function DashboardHeader({
             accessibilityHint="Opens the new project dialog"
             style={{
               width: 44, height: 44, borderRadius: 22,
-              borderWidth: 2, borderColor: DS.colors.ink,
+              borderWidth: 1, borderColor: DS.colors.border,
               backgroundColor: DS.colors.card,
               alignItems: 'center', justifyContent: 'center',
-              shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
+              shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 4,
             }}
           >
             <Svg width={18} height={18} viewBox="0 0 24 24">
@@ -633,10 +595,10 @@ function DashboardHeader({
             accessibilityHint="Opens the notifications panel"
             style={{
               width: 44, height: 44, borderRadius: 22,
-              borderWidth: 2, borderColor: DS.colors.ink,
+              borderWidth: 1, borderColor: DS.colors.border,
               backgroundColor: DS.colors.card,
               alignItems: 'center', justifyContent: 'center',
-              shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
+              shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 4,
             }}
           >
             <Svg width={18} height={18} viewBox="0 0 24 24">
@@ -650,7 +612,17 @@ function DashboardHeader({
         </View>
       </View>
 
-      {/* Streak + stats strip — ink bordered cards with sketch shadow */}
+      {/* Greeting */}
+      <View style={{ marginBottom: DS.spacing.lg }}>
+        <ArchText variant="heading" style={{ fontSize: 26, color: DS.colors.ink, letterSpacing: -0.5 }}>
+          {greeting}
+        </ArchText>
+        <ArchText variant="caption" style={{ fontSize: 13, color: DS.colors.mutedForeground, marginTop: 2 }}>
+          What will you build today?
+        </ArchText>
+      </View>
+
+      {/* Stats strip */}
       <View style={{
         flexDirection: 'row',
         gap: DS.spacing.sm,
@@ -662,9 +634,9 @@ function DashboardHeader({
           alignItems: 'center',
           gap: DS.spacing.sm,
           backgroundColor: DS.colors.card,
-          borderWidth: 2, borderColor: DS.colors.ink,
-          borderRadius: 50, paddingHorizontal: DS.spacing.md, paddingVertical: 10,
-          shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
+          borderWidth: 1, borderColor: DS.colors.border,
+          borderRadius: 14, paddingHorizontal: DS.spacing.md, paddingVertical: 12,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 4,
         }}>
           <Svg width={18} height={18} viewBox="0 0 24 24">
             <Path d="M12 2C12 2 8 6 8 10C8 12.2 9.5 14 12 14C14.5 14 16 12.2 16 10C16 6 12 2 12 2Z" fill={DS.colors.amber} stroke={DS.colors.ink} strokeWidth="1" />
@@ -681,9 +653,9 @@ function DashboardHeader({
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: DS.colors.card,
-          borderWidth: 2, borderColor: DS.colors.ink,
-          borderRadius: 50, paddingVertical: 10,
-          shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
+          borderWidth: 1, borderColor: DS.colors.border,
+          borderRadius: 14, paddingVertical: 12,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 4,
         }}>
           <ArchText variant="mono" style={{ fontSize: 14, fontFamily: DS.font.bold, color: DS.colors.amber }}>{points.toLocaleString()}</ArchText>
           <ArchText variant="label" style={{ fontSize: 9 }}>pts</ArchText>
@@ -694,9 +666,9 @@ function DashboardHeader({
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: DS.colors.card,
-          borderWidth: 2, borderColor: DS.colors.ink,
-          borderRadius: 50, paddingVertical: 10,
-          shadowColor: DS.colors.ink, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0,
+          borderWidth: 1, borderColor: DS.colors.border,
+          borderRadius: 14, paddingVertical: 12,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 4,
         }}>
           <ArchText variant="mono" style={{ fontSize: 14, fontFamily: DS.font.bold, color: DS.colors.ink }}>{projectCount}</ArchText>
           <ArchText variant="label" style={{ fontSize: 9 }}>designs</ArchText>
@@ -812,6 +784,7 @@ export function DashboardScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.background }}>
+      <AmbientAura intensity={0.7} />
       {isLoading ? (
         <>
           {listHeader()}
