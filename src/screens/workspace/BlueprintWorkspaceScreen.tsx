@@ -374,7 +374,7 @@ export function BlueprintWorkspaceScreen() {
           <ArchText variant="body" style={{ color: DS.colors.primaryDim, fontSize: 16 }}>✕</ArchText>
         </Pressable>
         <View style={{ flex: 1 }}>
-          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primary }} numberOfLines={1}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.primary }} numberOfLines={1}>
             {blueprint?.metadata.style ?? 'Design Studio'}
           </ArchText>
           {isDirty && (

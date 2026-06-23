@@ -170,7 +170,7 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
       <Animated.View style={[{ flex: 1 }, contentStyle]}>
         <ScrollView contentContainerStyle={{ padding: 20 }} showsVerticalScrollIndicator={false}>
           {/* Title row */}
-          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 22, color: DS.colors.primary, marginBottom: 4 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 22, color: DS.colors.primary, marginBottom: 4 }}>
             {template.title}
           </ArchText>
           <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, marginBottom: 10 }}>
@@ -239,7 +239,7 @@ export function PurchaseTemplateScreen({ navigation, route }: PurchaseTemplateSc
               {purchasing ? (
                 <CompassRoseLoader size="small" />
               ) : (
-                <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: DS.colors.background }}>
+                <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 18, color: DS.colors.background }}>
                   {isFree ? 'Use This Template' : `Buy for $${template.price.toFixed(2)}`}
                 </ArchText>
               )}

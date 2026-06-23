@@ -32,7 +32,7 @@ export function ARPermissionRequest({ onRequest }: Props) {
     <View style={{ flex: 1, backgroundColor: DS.colors.background, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
       <CameraIllustration />
       <ArchText variant="body" style={{
-        fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 26,
+        fontFamily: 'Inter_600SemiBold', fontSize: 26,
         color: DS.colors.primary, textAlign: 'center', marginTop: 28, marginBottom: 12,
       }}>
         Camera Access
@@ -53,7 +53,7 @@ export function ARPermissionRequest({ onRequest }: Props) {
         onPress={onRequest}
         style={{ backgroundColor: DS.colors.primary, paddingHorizontal: 40, paddingVertical: 16, borderRadius: 50, width: '100%', alignItems: 'center' }}
       >
-        <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: DS.colors.background }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 17, color: DS.colors.background }}>
           Allow Camera
         </ArchText>
       </Pressable>

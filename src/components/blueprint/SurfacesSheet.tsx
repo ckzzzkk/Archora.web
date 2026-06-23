@@ -115,7 +115,7 @@ export function SurfacesSheet({ visible, onClose }: Props) {
           <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: DS.colors.border }} />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10 }}>
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: DS.colors.primary, flex: 1 }}>Surfaces</Text>
+          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 18, color: DS.colors.primary, flex: 1 }}>Surfaces</Text>
           <Pressable onPress={onClose} style={{ padding: 8 }}><Text style={{ color: DS.colors.primaryDim, fontSize: 18 }}>✕</Text></Pressable>
         </View>
 

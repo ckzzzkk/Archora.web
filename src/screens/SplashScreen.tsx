@@ -144,7 +144,7 @@ export function SplashScreen({ appReady, onComplete }: Props) {
       <Animated.View style={[{ alignItems: 'center', marginTop: 60 }, wordStyle]}>
         <Animated.Text
           style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             fontSize: 46,
             color: COLORS.letterformLight,
             letterSpacing: 16,

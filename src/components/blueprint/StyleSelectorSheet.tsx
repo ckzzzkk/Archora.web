@@ -114,7 +114,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
         >
           <Text
             style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               fontSize: 20,
               color: DS.colors.primary,
               flex: 1,
@@ -183,7 +183,7 @@ export function StyleSelectorSheet({ visible, onClose }: Props) {
                     >
                       <Text
                         style={{
-                          fontFamily: 'ArchitectsDaughter_400Regular',
+                          fontFamily: 'Inter_600SemiBold',
                           fontSize: 13,
                           color: DS.colors.primary,
                         }}

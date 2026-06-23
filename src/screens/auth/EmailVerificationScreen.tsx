@@ -170,7 +170,7 @@ export function EmailVerificationScreen() {
 
           <Animated.View style={[titleStyle, { alignItems: 'center', width: '100%' }]}>
             <ArchText variant="body" style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               fontSize: 32,
               color: DS.colors.primary,
               textAlign: 'center',

@@ -28,6 +28,7 @@ import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
 import { SkeletonLoader , MasonryCardSkeleton } from '../../components/common/SkeletonLoader';
 import { ArchText } from '../../components/common/ArchText';
 import { OvalButton } from '../../components/common/OvalButton';
+import { AmbientAura } from '../../components/common/AmbientAura';
 import { NotificationPanel } from '../../components/dashboard/NotificationPanel';
 import { useFeed } from '../../hooks/useFeed';
 import { useHaptics } from '../../hooks/useHaptics';
@@ -421,6 +422,7 @@ export function FeedScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.background }}>
+      <AmbientAura intensity={0.5} />
       {/* Header */}
       <Animated.View style={[{
         paddingTop: insets.top + 16,

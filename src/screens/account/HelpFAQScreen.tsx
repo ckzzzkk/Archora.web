@@ -105,7 +105,7 @@ export function HelpFAQScreen() {
           style={{
             color: DS.colors.primary,
             fontSize: 24,
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             flex: 1,
           }}
         >

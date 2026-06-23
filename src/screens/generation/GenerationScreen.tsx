@@ -391,7 +391,7 @@ export function GenerationScreen() {
         <ArchText
           variant="body"
           style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             fontSize: 22,
             color: DS.colors.error,
             textAlign: 'center',

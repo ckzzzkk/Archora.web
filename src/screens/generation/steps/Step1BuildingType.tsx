@@ -93,7 +93,7 @@ export function Step1BuildingType({ selected, onSelect }: Props) {
     <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
       <ArchText variant="body"
         style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
+          fontFamily: 'Inter_600SemiBold',
           fontSize: 22,
           color: DS.colors.primary,
           marginBottom: 24,

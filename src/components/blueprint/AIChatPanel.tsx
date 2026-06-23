@@ -316,7 +316,7 @@ export function AIChatPanel({ visible, onToggle, selectedArchitectId, architectN
           {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(240, 237, 232, 0.08)' }}>
             <ChatBubbleIcon color={DS.colors.primary} />
-            <ArchText variant="heading" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.primary, marginLeft: 8, flex: 1 }}>
+            <ArchText variant="heading" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.primary, marginLeft: 8, flex: 1 }}>
               AI Blueprint Editor
             </ArchText>
             {/* Architect philosophy label */}

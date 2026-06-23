@@ -419,7 +419,7 @@ export function InHouseView({ onExit }: InHouseViewProps) {
               borderColor: DS.colors.border,
             }}
           >
-            <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 13, color: DS.colors.primary }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: DS.colors.primary }}>
               {currentRoomName}
             </Text>
           </View>
@@ -504,7 +504,7 @@ export function InHouseView({ onExit }: InHouseViewProps) {
             borderColor: DS.colors.border,
           }}
         >
-          <Text style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 14, color: DS.colors.primary }}>
+          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: DS.colors.primary }}>
             {selectedObject.name}
           </Text>
           <Text style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 11, color: DS.colors.primaryDim, marginTop: 2 }}>
@@ -524,7 +524,7 @@ export function InHouseView({ onExit }: InHouseViewProps) {
         >
           <Text
             style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               fontSize: 32,
               color: 'rgba(255,255,255,0.15)',
               transform: [{ rotate: '-30deg' }],

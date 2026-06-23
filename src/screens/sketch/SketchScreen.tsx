@@ -328,7 +328,7 @@ function PresetCard({ preset, accentColor, onAddToCanvas, onSendToWorkspace }: P
 
       <ArchText variant="body"
         style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
+          fontFamily: 'Inter_600SemiBold',
           fontSize: 16,
           color: DS.colors.primary,
           marginBottom: 10,
@@ -869,7 +869,7 @@ export function SketchScreen() {
         {/* Header */}
         <Animated.View style={[headerAnimStyle, { paddingHorizontal: 20, paddingVertical: 14 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 24, color: DS.colors.primary }}>
               Sketch
             </ArchText>
           </View>

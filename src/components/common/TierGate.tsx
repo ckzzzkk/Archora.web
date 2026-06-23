@@ -89,7 +89,7 @@ export function TierGate({ feature, featureLabel, children }: Props) {
 
         <Text
           className="text-xl mb-2 text-center"
-          style={{ color: colors.textPrimary, fontFamily: 'ArchitectsDaughter_400Regular' }}
+          style={{ color: colors.textPrimary, fontFamily: 'Inter_600SemiBold' }}
         >
           {TIER_LABELS[tier]} Feature
         </Text>

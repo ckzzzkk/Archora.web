@@ -325,7 +325,7 @@ export function Step3RoomStudio(props: Props) {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12 }}>
               <View>
                 <ArchText variant="body"
-                  style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary }}
+                  style={{ fontFamily: 'Inter_600SemiBold', fontSize: 20, color: DS.colors.primary }}
                 >
                   Room Studio
                 </ArchText>

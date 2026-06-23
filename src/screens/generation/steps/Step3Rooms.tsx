@@ -130,7 +130,7 @@ export function Step3Rooms(props: Props) {
     <Animated.View entering={FadeIn.duration(150)} style={{ paddingHorizontal: DS.spacing.lg, flex: 1 }}>
       <ArchText variant="body"
         style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
+          fontFamily: 'Inter_600SemiBold',
           fontSize: 24,
           color: DS.colors.primary,
           marginBottom: 24,

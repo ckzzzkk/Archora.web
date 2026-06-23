@@ -135,7 +135,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: DS.colors.background }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary, textAlign: 'center', marginBottom: 12 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 24, color: DS.colors.primary, textAlign: 'center', marginBottom: 12 }}>
             Upgrade to Publish
           </ArchText>
           <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: DS.colors.primaryDim, textAlign: 'center', lineHeight: 22, marginBottom: 28 }}>
@@ -145,7 +145,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
             onPress={() => navigation.navigate('Subscription', { feature: 'publishTemplates' })}
             style={{ backgroundColor: DS.colors.primary, borderRadius: 50, paddingVertical: 14, paddingHorizontal: 32 }}
           >
-            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.background }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>
               View Plans
             </ArchText>
           </Pressable>
@@ -165,7 +165,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
           <Pressable onPress={() => navigation.goBack()} style={{ marginRight: 14 }}>
             <BackArrow color={DS.colors.primary} />
           </Pressable>
-          <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary, flex: 1 }}>
+          <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 20, color: DS.colors.primary, flex: 1 }}>
             Publish Design
           </ArchText>
         </View>
@@ -339,7 +339,7 @@ export function PublishTemplateScreen({ navigation, route }: PublishTemplateScre
               {loading ? (
                 <CompassRoseLoader size="small" />
               ) : (
-                <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: DS.colors.background }}>
+                <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 17, color: DS.colors.background }}>
                   Publish Template
                 </ArchText>
               )}

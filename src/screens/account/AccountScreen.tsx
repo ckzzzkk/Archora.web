@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser } from '../../auth/useUser';
 import { OvalButton } from '../../components/common/OvalButton';
+import { AmbientAura } from '../../components/common/AmbientAura';
 import { ArchText } from '../../components/common/ArchText';
 import { SkeletonLoader } from '../../components/common/SkeletonLoader';
 import { CompassRoseLoader } from '../../components/common/CompassRoseLoader';
@@ -118,10 +119,10 @@ function SettingsCard({ children, danger = false, C }: { children: React.ReactNo
   return (
     <View style={{
       backgroundColor: danger ? `${C.error}15` : DS.colors.card,
-      borderRadius: DS.radius.large,
+      borderRadius: DS.radius.card,
       overflow: 'hidden',
-      borderWidth: 2,
-      borderColor: danger ? DS.colors.error : DS.colors.ink,
+      borderWidth: 1,
+      borderColor: danger ? `${C.error}40` : DS.colors.border,
     }}>
       {children}
     </View>
@@ -230,7 +231,7 @@ function AppearanceChips({ C }: { C: ReturnType<typeof useThemeColors> }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: active ? DS.colors.ink : 'transparent',
-                borderWidth: 2,
+                borderWidth: 1,
                 borderColor: active ? DS.colors.ink : DS.colors.border,
               }, appearanceAnimatedStyle as StyleProp<ViewStyle>]}
             >
@@ -442,6 +443,7 @@ export function AccountScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.background }}>
+      <AmbientAura intensity={0.55} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -464,8 +466,8 @@ export function AccountScreen() {
               backgroundColor: DS.colors.surfaceHigh,
               alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden',
-              borderWidth: 2,
-              borderColor: DS.colors.ink,
+              borderWidth: 1,
+              borderColor: DS.colors.border,
             }}>
               {user.avatarUrl ? (
                 <Image source={{ uri: user.avatarUrl }} style={{ width: 88, height: 88, resizeMode: 'cover' }} />
@@ -479,7 +481,7 @@ export function AccountScreen() {
               width: 28, height: 28, borderRadius: 14,
               backgroundColor: DS.colors.amber,
               alignItems: 'center', justifyContent: 'center',
-              borderWidth: 2, borderColor: DS.colors.ink,
+              borderWidth: 2, borderColor: DS.colors.background,
             }}>
               <Svg width={14} height={14} viewBox="0 0 24 24">
                 <Path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke={DS.colors.paper} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />

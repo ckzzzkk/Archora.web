@@ -27,7 +27,7 @@ export function ThemeCustomiserScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: C.background }}>
       <View style={{ padding: 24, paddingTop: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 28, color: C.primary }}>
+        <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 28, color: C.primary }}>
           Your Style
         </ArchText>
         <Pressable onPress={() => navigation.goBack()}>

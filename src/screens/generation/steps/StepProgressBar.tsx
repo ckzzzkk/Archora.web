@@ -101,7 +101,7 @@ export function StepProgressBar({ current, total, onBack }: Props) {
       >
         <ArchText variant="body"
           style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             fontSize: 18,
             color: DS.colors.primary,
             marginBottom: 10,

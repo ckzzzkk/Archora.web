@@ -71,7 +71,7 @@ function SummaryRow({ label, amount, highlight = false }: { label: string; amoun
         {label}
       </ArchText>
       <ArchText variant="body" style={{
-        fontFamily: highlight ? 'ArchitectsDaughter_400Regular' : 'JetBrainsMono_400Regular',
+        fontFamily: highlight ? 'Inter_600SemiBold' : 'JetBrainsMono_400Regular',
         fontSize: highlight ? 18 : 14,
         color: highlight ? DS.colors.success : DS.colors.primary,
       }}>
@@ -145,7 +145,7 @@ export function CostEstimatorModal({ visible, onClose }: CostEstimatorModalProps
         {/* Header */}
         <View style={{ paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <View>
-            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 20, color: DS.colors.primary }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 20, color: DS.colors.primary }}>
               Cost Estimate
             </ArchText>
             <ArchText variant="body" style={{ fontFamily: 'JetBrainsMono_400Regular', fontSize: 10, color: DS.colors.primaryDim, marginTop: 2 }}>

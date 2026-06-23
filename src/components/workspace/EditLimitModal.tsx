@@ -32,7 +32,7 @@ export function EditLimitModal() {
       zIndex: 999,
     }}>
       <CompassRoseLoader size="large" />
-      <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 24, color: DS.colors.primary, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
+      <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 24, color: DS.colors.primary, textAlign: 'center', marginTop: 24, marginBottom: 12 }}>
         Daily Editing Time Reached
       </ArchText>
       <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: DS.colors.primaryDim, textAlign: 'center', marginBottom: 8 }}>

@@ -174,7 +174,7 @@ export function ForgotPasswordScreen() {
 
           <Animated.View style={titleStyle}>
             <ArchText variant="body" style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               fontSize: 32,
               color: DS.colors.primary,
               marginBottom: 10,
@@ -197,7 +197,7 @@ export function ForgotPasswordScreen() {
               <View style={{ alignItems: 'center', paddingTop: 16 }}>
                 <SentEnvelope />
                 <ArchText variant="body" style={{
-                  fontFamily: 'ArchitectsDaughter_400Regular',
+                  fontFamily: 'Inter_600SemiBold',
                   fontSize: 22,
                   color: DS.colors.primary,
                   textAlign: 'center',

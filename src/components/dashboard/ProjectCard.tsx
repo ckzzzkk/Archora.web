@@ -163,7 +163,7 @@ function ProjectCardInner({ project, onPress, onDelete, onRename, index }: Props
             <Text
               numberOfLines={1}
               style={{
-                fontFamily: 'ArchitectsDaughter_400Regular',
+                fontFamily: 'Inter_600SemiBold',
                 fontSize: 15,
                 color: DS.colors.primary,
                 flex: 1,

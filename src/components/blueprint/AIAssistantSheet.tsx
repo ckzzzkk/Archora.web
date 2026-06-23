@@ -85,7 +85,7 @@ export function AIAssistantSheet({ onClose }: Props) {
           style={{
             color: DS.colors.primary,
             fontSize: 16,
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
           }}
         >
           ARIA — Your Architect

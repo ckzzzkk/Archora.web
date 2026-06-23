@@ -87,7 +87,7 @@ export function Toast({ message, title, type = 'info', onDismiss, duration = 300
       >
         {title && (
           <Text style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             fontSize: 15,
             color: colors.textPrimary,
             marginBottom: 4,

@@ -481,7 +481,7 @@ function ARScanModeContent() {
             paddingHorizontal: 20, paddingVertical: 14,
             borderWidth: 1, borderColor: DS.colors.success,
           }}>
-            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 18, color: DS.colors.success, textAlign: 'center' }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 18, color: DS.colors.success, textAlign: 'center' }}>
               Scan Complete
             </ArchText>
             <ArchText variant="body" style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: DS.colors.primaryDim, textAlign: 'center', marginTop: 4 }}>
@@ -501,7 +501,7 @@ function ARScanModeContent() {
           {/* Action buttons */}
           <View style={{ position: 'absolute', bottom: 48, left: 20, right: 20, gap: 10 }}>
             <Pressable style={{ backgroundColor: DS.colors.primary, borderRadius: 50, paddingVertical: 16, alignItems: 'center' }}>
-              <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.background }}>
+              <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>
                 Import to Studio
               </ArchText>
             </Pressable>

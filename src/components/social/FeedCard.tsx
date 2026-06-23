@@ -119,7 +119,7 @@ function FeedCardInner({ template, onPress, index = 0, height = 240 }: FeedCardP
               left: 10,
               right: 10,
               fontSize: 13,
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               color: DS.colors.primary,
             }}
           >

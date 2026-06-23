@@ -254,7 +254,7 @@ function BudgetSlider({
     <View style={{ alignItems: 'center', gap: 16 }}>
       <ArchText variant="body"
         style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
+          fontFamily: 'Inter_600SemiBold',
           fontSize: 28,
           color: DS.colors.primary,
         }}
@@ -363,7 +363,7 @@ function LoadingOverlay() {
         style={[
           textStyle,
           {
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             fontSize: 20,
             color: DS.colors.primary,
             textAlign: 'center',
@@ -552,7 +552,7 @@ export function OnboardingQuizScreen() {
       <View style={{ paddingTop: 60, paddingHorizontal: 32, paddingBottom: 8 }}>
         <ArchText variant="body"
           style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             fontSize: 14,
             color: DS.colors.primaryGhost,
             letterSpacing: 1.5,
@@ -614,7 +614,7 @@ export function OnboardingQuizScreen() {
         >
           <ArchText variant="body"
             style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               fontSize: 17,
               color: ready ? DS.colors.background : DS.colors.primaryGhost,
             }}
@@ -632,7 +632,7 @@ export function OnboardingQuizScreen() {
 
 const styles = {
   question: {
-    fontFamily: 'ArchitectsDaughter_400Regular',
+    fontFamily: 'Inter_600SemiBold',
     fontSize: 26,
     color: DS.colors.primary,
     textAlign: 'center' as const,

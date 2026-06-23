@@ -36,7 +36,7 @@ export function AcceptPrivacyScreen() {
             variant="heading"
             style={{
               fontSize: 28,
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               color: DS.colors.primary,
               marginBottom: 16,
               textAlign: 'center',

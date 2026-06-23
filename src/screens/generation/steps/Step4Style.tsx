@@ -38,7 +38,7 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
     <Animated.View entering={FadeIn.duration(150)} style={{ flex: 1 }}>
       <ArchText variant="body"
         style={{
-          fontFamily: 'ArchitectsDaughter_400Regular',
+          fontFamily: 'Inter_600SemiBold',
           fontSize: 24,
           color: DS.colors.primary,
           marginBottom: 24,
@@ -91,7 +91,7 @@ export function Step4Style({ selected, onSelect, onNext }: Props) {
               />
               <ArchText variant="body"
                 style={{
-                  fontFamily: 'ArchitectsDaughter_400Regular',
+                  fontFamily: 'Inter_600SemiBold',
                   fontSize: 14,
                   color: DS.colors.primary,
                   textAlign: 'center',

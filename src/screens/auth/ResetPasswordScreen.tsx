@@ -217,7 +217,7 @@ export function ResetPasswordScreen() {
         <View style={{ flex: 1, padding: 32, paddingTop: 80 }}>
           <Animated.View style={titleStyle}>
             <ArchText variant="body" style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               fontSize: 32,
               color: DS.colors.primary,
               marginBottom: 10,

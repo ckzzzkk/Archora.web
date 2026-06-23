@@ -261,7 +261,7 @@ function WallMeasure() {
             onPress={(e) => { e.stopPropagation(); void saveMeasurement(); }}
             style={{ backgroundColor: DS.colors.success, borderRadius: 50, paddingVertical: 14, alignItems: 'center' }}
           >
-            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.background }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>
               Save Measurement
             </ArchText>
           </Pressable>
@@ -563,7 +563,7 @@ function RoomMeasure() {
             onPress={() => navigation.navigate('Workspace', { fromAR: true })}
             style={{ backgroundColor: DS.colors.success, borderRadius: 50, paddingVertical: 14, alignItems: 'center' }}
           >
-            <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 16, color: DS.colors.background }}>
+            <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 16, color: DS.colors.background }}>
               Import Room to Studio
             </ArchText>
           </Pressable>

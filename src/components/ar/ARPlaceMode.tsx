@@ -387,7 +387,7 @@ function ARPlaceModeContent() {
                 onPress={() => void handleExportToStudio()}
                 style={{ backgroundColor: DS.colors.success, borderRadius: 50, paddingVertical: 13, alignItems: 'center' }}
               >
-                <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 15, color: DS.colors.background }}>
+                <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 15, color: DS.colors.background }}>
                   Export {placedItems.filter(i => i.confirmed).length} Item{placedItems.filter(i => i.confirmed).length !== 1 ? 's' : ''} to Studio
                 </ArchText>
               </Pressable>

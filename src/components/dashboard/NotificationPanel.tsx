@@ -349,7 +349,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
         >
           <Text
             style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               fontSize: 20,
               color: DS.colors.primary,
               flex: 1,
@@ -430,7 +430,7 @@ export function NotificationPanel({ visible, onClose }: Props) {
               <Path d="M24 44 H50" stroke="#333333" strokeWidth="1" strokeLinecap="round" />
             </Svg>
             <Text style={{
-              fontFamily: 'ArchitectsDaughter_400Regular',
+              fontFamily: 'Inter_600SemiBold',
               fontSize: 16,
               color: DS.colors.primary,
               textAlign: 'center',

@@ -159,7 +159,7 @@ export function CommentThread({ templateId, comments, loading = false, onComment
       <View style={{ padding: 16 }}>
         <Text
           style={{
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             fontSize: 16,
             color: DS.colors.primary,
             marginBottom: 16,

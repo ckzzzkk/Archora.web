@@ -52,7 +52,7 @@ export function TermsScreen() {
           style={{
             color: DS.colors.primary,
             fontSize: 24,
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             flex: 1,
           }}
         >
@@ -75,7 +75,7 @@ export function TermsScreen() {
         <ArchText variant="body"
           style={{
             color: DS.colors.error,
-            fontFamily: 'ArchitectsDaughter_400Regular',
+            fontFamily: 'Inter_600SemiBold',
             fontSize: 14,
           }}
         >
@@ -108,7 +108,7 @@ export function TermsScreen() {
                 style={{
                   color: DS.colors.primary,
                   fontSize: 18,
-                  fontFamily: 'ArchitectsDaughter_400Regular',
+                  fontFamily: 'Inter_600SemiBold',
                   marginBottom: 8,
                 }}
               >

@@ -134,7 +134,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
             />
           ) : (
             <View style={{ flex: 1, backgroundColor: DS.colors.surfaceHigh, alignItems: 'center', justifyContent: 'center' }}>
-              <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 60, color: DS.colors.primaryDim }}>◻</ArchText>
+              <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 60, color: DS.colors.primaryDim }}>◻</ArchText>
             </View>
           )}
         </Animated.View>
@@ -216,7 +216,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
               {/* Title */}
               <ArchText variant="body"
                 style={{
-                  fontFamily: 'ArchitectsDaughter_400Regular',
+                  fontFamily: 'Inter_600SemiBold',
                   fontSize: 26,
                   color: DS.colors.primary,
                   marginBottom: 12,
@@ -272,7 +272,7 @@ export function TemplateDetailScreen({ navigation, route }: Props) {
                   marginBottom: 28,
                 }}
               >
-                <ArchText variant="body" style={{ fontFamily: 'ArchitectsDaughter_400Regular', fontSize: 17, color: DS.colors.background }}>
+                <ArchText variant="body" style={{ fontFamily: 'Inter_600SemiBold', fontSize: 17, color: DS.colors.background }}>
                   {template && template.price > 0 ? `Buy for $${template.price.toFixed(2)}` : 'Use This Template'}
                 </ArchText>
               </Pressable>

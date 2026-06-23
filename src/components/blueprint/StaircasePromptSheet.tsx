@@ -145,7 +145,7 @@ export function StaircasePromptSheet({ visible, floorCount, onSelect, onAddEleva
           >
             <Text
               style={{
-                fontFamily: 'ArchitectsDaughter_400Regular',
+                fontFamily: 'Inter_600SemiBold',
                 fontSize: 20,
                 color: DS.colors.primary,
                 textAlign: 'center',

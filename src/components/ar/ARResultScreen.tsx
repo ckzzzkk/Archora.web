@@ -384,7 +384,7 @@ function FloorPlanPreview({ width, dimensions, roomLabel }: FloorPlanPreviewProp
           y={centerY + 4}
           fontSize="11"
           fill={DS.colors.primary}
-          fontFamily="ArchitectsDaughter_400Regular"
+          fontFamily='Inter_600SemiBold'
           textAnchor="middle"
           opacity={0.7}
         >
