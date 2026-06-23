@@ -62,7 +62,8 @@ export function Button({
     danger: '#FFFFFF',
   }[variant];
 
-  const borderColor = variant === 'secondary' ? colors.primary : 'transparent';
+  const borderColor = variant === 'secondary' ? 'rgba(240, 237, 232, 0.16)' : 'transparent';
+  const hasFill = variant === 'primary' || variant === 'danger';
 
   return (
     <AnimatedPressable
@@ -74,15 +75,20 @@ export function Button({
         {
           backgroundColor: bgColor,
           borderColor,
-          borderWidth: variant === 'secondary' ? 1.5 : 0,
-          borderRadius: 24,
+          borderWidth: variant === 'secondary' ? 1 : 0,
+          borderRadius: 14,
           paddingHorizontal: 24,
           paddingVertical: 13,
-          minHeight: 44,
+          minHeight: 48,
           alignItems: 'center',
           justifyContent: 'center',
           opacity: disabled ? 0.5 : 1,
           alignSelf: fullWidth ? 'stretch' : 'auto',
+          // soft real depth on filled buttons only
+          ...(hasFill ? {
+            shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3, shadowRadius: 10, elevation: 5,
+          } : null),
         },
       ]}
       disabled={disabled || loading}
@@ -92,9 +98,9 @@ export function Button({
       ) : (
         <Text style={{
           color: textColor,
-          fontFamily: variant === 'primary' ? 'ArchitectsDaughter_400Regular' : 'Inter_500Medium',
+          fontFamily: variant === 'primary' ? 'Inter_600SemiBold' : 'Inter_500Medium',
           fontSize: 15,
-          letterSpacing: variant === 'primary' ? 0.5 : 0,
+          letterSpacing: 0,
         }}>
           {label}
         </Text>

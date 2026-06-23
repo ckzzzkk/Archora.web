@@ -1,18 +1,20 @@
 /**
- * ASORIA Design System — ink blueprint aesthetic
+ * ASORIA Design System — muted editorial
  * Import as: import { DS } from '../../theme/designSystem'
  *
- * Theme: Architectural navy (#0B1E3D) with pure white ink (#F0EDE8) and amber (#D4A84B)
- * All hand-drawn, wobbly, sketchy aesthetic throughout.
+ * Theme: dark drafting board (#1A1A1A) with ink text (#F0EDE8) and a rare amber spark (#D4A84B).
+ * Calm, content-first, premium-dark. Soft corners, hairline borders, soft real depth,
+ * Inter typography. Amber is a spark (active states, "live", progress) — never a fill.
  */
 export const DS = {
   colors: {
-    background:   '#0B1E3D',  // architectural navy paper
+    background:   '#1A1A1A',  // black drafting board (master plan spec)
     surface:      '#222222',  // card bg
     surfaceHigh:  '#2C2C2C',  // elevated
     surfaceTop:   '#2C2C2C',
-    border:       '#F0EDE8',  // pure white ink border
-    borderLight:  'rgba(240, 237, 232, 0.18)',
+    border:       'rgba(240, 237, 232, 0.08)',  // hairline — calm, near-invisible
+    borderStrong: 'rgba(240, 237, 232, 0.16)',  // rare emphasis / focus rings
+    borderLight:  'rgba(240, 237, 232, 0.06)',
     primary:      '#F0EDE8',  // ink white
     primaryDim:   '#9A9590',
     primaryGhost: '#5A5550',
@@ -25,7 +27,7 @@ export const DS = {
     gridLine:     'rgba(240, 237, 232, 0.18)',
     // Aliases matching reference
     ink:          '#F0EDE8',
-    paper:        '#0B1E3D',
+    paper:        '#1A1A1A',
     amber:        '#D4A84B',
     card:         '#222222',
     cardForeground:'#F0EDE8',
@@ -34,12 +36,13 @@ export const DS = {
   },
 
   radius: {
-    oval:    50,
-    card:    24,
-    input:   50,
-    chip:    50,
-    modal:   24,
-    button:  50,
+    oval:    50,   // legacy pill — kept for chips / tab bar / avatars
+    card:    18,   // cards, sheets, list tiles
+    input:   14,   // text inputs
+    chip:    50,   // filter chips stay pill
+    modal:   24,   // bottom-sheet top corners
+    button:  14,   // buttons — soft rect, not a pill
+    pill:    999,  // true pill (tab bar, badges)
     small:   12,
     medium:  16,
     large:   24,
@@ -57,7 +60,8 @@ export const DS = {
   },
 
   font: {
-    heading:  'ArchitectsDaughter_400Regular',
+    heading:  'Inter_600SemiBold',            // headings are clean now
+    display:  'ArchitectsDaughter_400Regular', // rare: logo / wordmark only
     regular:  'Inter_400Regular',
     medium:   'Inter_500Medium',
     semibold: 'Inter_600SemiBold',
@@ -107,28 +111,36 @@ export const DS = {
       shadowRadius:  16,
       elevation:     16,
     },
-    // Sketch-style ink shadows (hand-drawn aesthetic)
-    // Uses hardcoded ink color #F0EDE8 to avoid circular reference
+    // Legacy "sketch" keys — retired to soft black depth so any stray
+    // reference inherits the muted-editorial look instead of hard ink offsets.
     sketch: {
-      shadowColor:   '#F0EDE8',
-      shadowOffset:  { width: 3, height: 4 },
-      shadowOpacity: 1,
-      shadowRadius:  0,
-      elevation:     0,
+      shadowColor:   '#000',
+      shadowOffset:  { width: 0, height: 4 },
+      shadowOpacity: 0.35,
+      shadowRadius:  12,
+      elevation:     6,
     },
     sketchSm: {
-      shadowColor:   '#F0EDE8',
-      shadowOffset:  { width: 2, height: 2 },
-      shadowOpacity: 1,
-      shadowRadius:  0,
-      elevation:     0,
+      shadowColor:   '#000',
+      shadowOffset:  { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius:  6,
+      elevation:     3,
     },
     sketchLg: {
-      shadowColor:   '#F0EDE8',
-      shadowOffset:  { width: 5, height: 6 },
-      shadowOpacity: 1,
-      shadowRadius:  0,
-      elevation:     0,
+      shadowColor:   '#000',
+      shadowOffset:  { width: 0, height: 8 },
+      shadowOpacity: 0.45,
+      shadowRadius:  20,
+      elevation:     12,
     },
+  },
+
+  // Motion tokens — keep animation consistent and calm across the app.
+  motion: {
+    auraDrift:  12000,  // ms — ambient background glow drift cycle
+    stagger:    60,     // ms — per-item delay for list/feed entrances
+    pulse:      1600,   // ms — "live" dot pulse cycle
+    press: { damping: 16, stiffness: 360 }, // spring for press-scale feedback
   },
 } as const;

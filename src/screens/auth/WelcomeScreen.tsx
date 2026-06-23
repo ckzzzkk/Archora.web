@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Pressable, Platform, Dimensions } from 'react-native';
+import { View, Pressable, Platform, Dimensions, Image } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
-import Svg, { Path, Circle, Line } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,19 +17,11 @@ const SCREEN_W = Dimensions.get('window').width;
 
 function CompassLogo() {
   return (
-    <Svg width={64} height={64} viewBox="0 0 64 64">
-      {/* Outer circle */}
-      <Circle cx="32" cy="32" r="28" stroke="#F0EDE8" strokeWidth="1" fill="none" />
-      {/* The A letterform */}
-      <Path d="M32 14 L18 50 M32 14 L46 50" stroke="#F0EDE8" strokeWidth="2" fill="none" strokeLinecap="round" />
-      {/* A crossbar */}
-      <Path d="M22 40 L42 40" stroke="#F0EDE8" strokeWidth="2" strokeLinecap="round" />
-      {/* NSEW tick marks */}
-      <Line x1="32" y1="4"  x2="32" y2="10" stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="32" y1="54" x2="32" y2="60" stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="4"  y1="32" x2="10" y2="32" stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" />
-      <Line x1="54" y1="32" x2="60" y2="32" stroke="#F0EDE8" strokeWidth="1.5" strokeLinecap="round" />
-    </Svg>
+    <Image
+      source={require('../../../assets/logo-app.png')}
+      style={{ width: 104, height: 104 }}
+      resizeMode="contain"
+    />
   );
 }
 

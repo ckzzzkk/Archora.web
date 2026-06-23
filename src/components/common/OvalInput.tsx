@@ -62,7 +62,7 @@ export function OvalInput({
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: 'rgba(240, 237, 232, 0.03)',
-            borderRadius: DS.radius.oval,
+            borderRadius: DS.radius.input,
             borderWidth: 1,
             height: 52,
             paddingHorizontal: DS.spacing.md,

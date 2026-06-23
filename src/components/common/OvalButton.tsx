@@ -37,67 +37,25 @@ type VariantStyle = {
   shadowColor: string;
   shadowOffset: { width: number; height: number };
   shadowOpacity: number;
+  shadowRadius: number;
+  elevation: number;
   textColor: string;
 };
 
+// Soft real depth — black blurred shadow, no hard ink offsets.
+const SOFT  = { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 };
+const FLAT  = { shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 };
+
 const VARIANTS: Record<OvalButtonVariant, VariantStyle> = {
-  // Flat solid ink — white pill on dark navy, offset shadow gives depth
-  filled: {
-    bg: DS.colors.ink,
-    borderWidth: 2,
-    borderColor: DS.colors.ink,
-    shadowColor: DS.colors.ink,
-    shadowOffset: { width: 3, height: 4 },
-    shadowOpacity: 1,
-    textColor: DS.colors.paper,
-  },
-  // Transparent with visible 2px ink border — secondary action
-  outline: {
-    bg: 'transparent',
-    borderWidth: 2,
-    borderColor: DS.colors.ink,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    textColor: DS.colors.ink,
-  },
-  // Amber gold — primary CTA
-  amber: {
-    bg: DS.colors.amber,
-    borderWidth: 2,
-    borderColor: DS.colors.ink,
-    shadowColor: DS.colors.ink,
-    shadowOffset: { width: 3, height: 4 },
-    shadowOpacity: 1,
-    textColor: DS.colors.paper,
-  },
-  danger: {
-    bg: DS.colors.error,
-    borderWidth: 2,
-    borderColor: DS.colors.ink,
-    shadowColor: DS.colors.ink,
-    shadowOffset: { width: 2, height: 3 },
-    shadowOpacity: 1,
-    textColor: DS.colors.ink,
-  },
-  success: {
-    bg: DS.colors.success,
-    borderWidth: 2,
-    borderColor: DS.colors.ink,
-    shadowColor: DS.colors.ink,
-    shadowOffset: { width: 2, height: 3 },
-    shadowOpacity: 1,
-    textColor: DS.colors.paper,
-  },
-  ghost: {
-    bg: 'transparent',
-    borderWidth: 0,
-    borderColor: 'transparent',
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    textColor: DS.colors.ink,
-  },
+  // Primary — solid ink, no border, soft depth
+  filled:  { bg: DS.colors.ink, borderWidth: 0, borderColor: 'transparent', textColor: DS.colors.paper, ...SOFT },
+  // Secondary — transparent with a hairline border
+  outline: { bg: 'transparent', borderWidth: 1, borderColor: DS.colors.borderStrong, textColor: DS.colors.ink, ...FLAT },
+  // Accent — amber, used rarely (upgrade / key CTA)
+  amber:   { bg: DS.colors.amber, borderWidth: 0, borderColor: 'transparent', textColor: '#1A1A1A', ...SOFT },
+  danger:  { bg: DS.colors.error, borderWidth: 0, borderColor: 'transparent', textColor: '#FFFFFF', ...SOFT },
+  success: { bg: DS.colors.success, borderWidth: 0, borderColor: 'transparent', textColor: '#1A1A1A', ...SOFT },
+  ghost:   { bg: 'transparent', borderWidth: 0, borderColor: 'transparent', textColor: DS.colors.ink, ...FLAT },
 };
 
 function LoadingDots({ color }: { color: string }) {
@@ -139,29 +97,26 @@ export function OvalButton({
   fullWidth = false,
 }: Props) {
   const scale  = useSharedValue(1);
-  const rotate = useSharedValue(0);
   const pressOp = useSharedValue(1);
   const { height, ph, fs } = SIZE[size];
   const v = VARIANTS[variant];
   const isInactive = disabled || loading;
 
-  // press-squish: scale + rotation together (matches reference)
+  // press feedback: a clean scale-down (no playful rotation)
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { rotate: `${rotate.value}deg` }],
+    transform: [{ scale: scale.value }],
     opacity: pressOp.value,
   }));
 
   const handlePressIn = () => {
     if (!isInactive) {
-      scale.value  = withSpring(0.93, { damping: 18, stiffness: 420 });
-      rotate.value = withSpring(-1,   { damping: 18, stiffness: 420 });
-      pressOp.value = withTiming(0.85, { duration: 80 });
+      scale.value  = withSpring(0.96, DS.motion.press);
+      pressOp.value = withTiming(0.9, { duration: 80 });
     }
   };
 
   const handlePressOut = () => {
-    scale.value  = withSpring(1, { damping: 18, stiffness: 420 });
-    rotate.value = withSpring(0, { damping: 18, stiffness: 420 });
+    scale.value  = withSpring(1, DS.motion.press);
     pressOp.value = withTiming(1, { duration: 120 });
   };
 
@@ -185,15 +140,15 @@ export function OvalButton({
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
-          borderRadius: DS.radius.oval,
+          borderRadius: DS.radius.button,
           backgroundColor: v.bg,
           borderWidth: v.borderWidth,
           borderColor: v.borderColor,
           shadowColor: v.shadowColor,
           shadowOffset: v.shadowOffset,
           shadowOpacity: v.shadowOpacity,
-          shadowRadius: 0,
-          elevation: 0,
+          shadowRadius: v.shadowRadius,
+          elevation: v.elevation,
           opacity: isInactive ? 0.32 : 1,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
         },
