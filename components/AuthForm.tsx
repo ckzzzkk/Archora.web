@@ -2,18 +2,37 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
+import { APPLE_LOGIN_ENABLED, safeRedirect } from '@/lib/auth';
 
 export default function AuthForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = safeRedirect(searchParams.get('redirect'));
+  const callbackError = searchParams.get('error');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/account';
+  const [error, setError] = useState(callbackError ? 'Sign in did not complete. Please try again.' : '');
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'apple' | null>(null);
 
   const supabase = createClient();
+
+  // Same Supabase project as the app, so the same accounts sign in here. The OAuth round trip ends at /auth/callback,
+  // which exchanges the code for a session cookie and sends the user on to `redirectTo`.
+  async function handleOAuth(provider: 'google' | 'apple') {
+    setOauthLoading(provider);
+    setError('');
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}` },
+    });
+    if (oauthError) {
+      setError(oauthError.message);
+      setOauthLoading(null);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -47,10 +66,31 @@ export default function AuthForm() {
         <span className="text-xs">Don&apos;t have an account? Download the ASORIA app to get started.</span>
       </p>
 
+      <div className="space-y-3 mb-6">
+        <button
+          type="button"
+          onClick={() => void handleOAuth('google')}
+          disabled={oauthLoading !== null}
+          className="w-full border border-border bg-surface text-text font-body font-semibold text-sm py-3.5 rounded-button hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {oauthLoading === 'google' ? 'Opening Google...' : 'Continue with Google'}
+        </button>
+        {APPLE_LOGIN_ENABLED && (
+          <button
+            type="button"
+            onClick={() => void handleOAuth('apple')}
+            disabled={oauthLoading !== null}
+            className="w-full border border-border bg-surface text-text font-body font-semibold text-sm py-3.5 rounded-button hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {oauthLoading === 'apple' ? 'Opening Apple...' : 'Continue with Apple'}
+          </button>
+        )}
+      </div>
+
       {/* Divider */}
       <div className="flex items-center gap-4 mb-6">
         <div className="flex-1 h-px bg-border" />
-        <span className="text-text-dim text-xs font-body">sign in</span>
+        <span className="text-text-dim text-xs font-body">or use email</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
@@ -91,6 +131,12 @@ export default function AuthForm() {
             <p className="text-error text-sm font-body">{error}</p>
           </div>
         )}
+
+        <div className="text-right -mt-2">
+          <Link href="/forgot-password" className="text-primary hover:text-accent text-xs font-body transition-colors">
+            Forgot password?
+          </Link>
+        </div>
 
         <button
           type="submit"

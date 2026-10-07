@@ -23,16 +23,23 @@ async function callEdgeFunction<T>(
   });
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error((err as { error?: string }).error ?? 'Request failed');
+    const err = await response.json().catch(() => ({ error: 'Request failed' })) as { error?: string; code?: string };
+    throw new CheckoutError(err.error ?? 'Request failed', err.code);
   }
 
   return response.json() as Promise<T>;
 }
 
-export async function createCheckout(priceId: string): Promise<string> {
+export class CheckoutError extends Error {
+  constructor(message: string, readonly code?: string) {
+    super(message);
+  }
+}
+
+/** `plan` is a plan name such as "pro_annual": the server looks up the Stripe price, so the site holds no price ids. */
+export async function createCheckout(plan: string): Promise<string> {
   const data = await callEdgeFunction<{ url: string }>('stripe-checkout', {
-    priceId,
+    plan,
     successUrl: `${SITE_URL}/checkout/success`,
     cancelUrl: `${SITE_URL}/checkout/cancel`,
   });

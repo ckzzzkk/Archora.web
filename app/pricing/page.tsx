@@ -9,10 +9,9 @@ import {
   type Tier,
   type BillingInterval,
   PRICING,
-  STRIPE_PRICE_IDS,
   FEATURE_COMPARISON,
 } from '@/lib/pricing';
-import { createCheckout } from '@/lib/stripe';
+import { CheckoutError, createCheckout, getPortalUrl } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase-browser';
 
 const TIERS: Tier[] = ['starter', 'creator', 'pro', 'architect'];
@@ -40,19 +39,23 @@ export default function PricingPage() {
         return;
       }
 
-      const priceKey = `${tier}_${interval}`;
-      const priceId = STRIPE_PRICE_IDS[priceKey];
-
-      if (!priceId) {
-        alert('This plan is not available yet. Please try again later.');
-        return;
-      }
-
-      const url = await createCheckout(priceId);
+      // The server maps a plan name to its Stripe price, so the site holds no price ids.
+      const url = await createCheckout(`${tier}_${interval}`);
       window.location.href = url;
     } catch (err) {
       console.error('Checkout error:', err);
-      alert('Failed to start checkout. Please try again.');
+      if (err instanceof CheckoutError && err.code === 'ALREADY_SUBSCRIBED') {
+        // Already on a paid plan: change it in the billing portal instead of buying a second subscription.
+        if (window.confirm(`${err.message}\n\nOpen billing now?`)) {
+          try { window.location.href = await getPortalUrl(); return; } catch { /* fall through to the generic message */ }
+        }
+        return;
+      }
+      if (err instanceof CheckoutError && err.code === 'STORE_SUBSCRIPTION_ACTIVE') {
+        alert(err.message);
+        return;
+      }
+      alert(err instanceof CheckoutError && err.message ? err.message : 'Failed to start checkout. Please try again.');
     } finally {
       setLoading(null);
     }
@@ -70,7 +73,7 @@ export default function PricingPage() {
             Choose your plan
           </h1>
           <p className="text-text-secondary font-body text-lg leading-relaxed mb-10">
-            Start free, upgrade when you are ready. All paid plans include a 7-day free trial.
+            Start free, upgrade when you are ready. Cancel any time from your account.
           </p>
           <BillingToggle interval={interval} onChange={setInterval} />
         </div>

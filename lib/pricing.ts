@@ -46,15 +46,6 @@ export function maxAnnualSavingPercent(): number {
   }));
 }
 
-export const STRIPE_PRICE_IDS: Record<string, string> = {
-  creator_monthly:    process.env.NEXT_PUBLIC_STRIPE_PRICE_CREATOR_MONTHLY    ?? '',
-  creator_annual:     process.env.NEXT_PUBLIC_STRIPE_PRICE_CREATOR_ANNUAL     ?? '',
-  pro_monthly:       process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY       ?? '',
-  pro_annual:        process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_ANNUAL        ?? '',
-  architect_monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_ARCHITECT_MONTHLY ?? '',
-  architect_annual:  process.env.NEXT_PUBLIC_STRIPE_PRICE_ARCHITECT_ANNUAL  ?? '',
-};
-
 export interface FeatureRow {
   label: string;
   starter: string;

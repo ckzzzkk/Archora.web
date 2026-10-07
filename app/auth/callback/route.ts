@@ -1,11 +1,12 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
+import { safeRedirect } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const redirect = searchParams.get('redirect') || '/account';
+  const redirect = safeRedirect(searchParams.get('redirect'));
 
   if (code) {
     const cookieStore = cookies();
@@ -36,5 +37,5 @@ export async function GET(request: NextRequest) {
   }
 
   // If there's an error or no code, redirect to login
-  return NextResponse.redirect(new URL('/login', origin));
+  return NextResponse.redirect(new URL('/login?error=callback', origin));
 }
