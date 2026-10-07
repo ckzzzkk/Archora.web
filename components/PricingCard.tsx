@@ -34,7 +34,7 @@ export default function PricingCard({ tier, interval, isLoading, onSubscribe }: 
         </span>
       )}
 
-      <h3 className="font-display text-2xl">{data.label}</h3>
+      <h2 className="font-display text-2xl">{data.label}</h2>
       <p className="mt-2 min-h-[6.75rem] text-sm leading-relaxed text-ink-2">{data.description}</p>
 
       <div className="mt-6">
