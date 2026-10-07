@@ -20,20 +20,20 @@ export const PRICING: Record<Tier, {
   creator: {
     monthly: 14.99, annual: 11.99, annualTotal: 143.90,
     label: 'Creator', badge: 'Most Popular', color: '#C8C8C8',
-    description: 'AI-assisted designs powered by DeepSeek. Unlock your full creative toolkit with 40 generations per month.',
-    taglines: ['DeepSeek AI-powered designs', 'All 12 design styles', 'AR furniture placement'],
+    description: 'AI-assisted designs. Unlock your full creative toolkit with 40 generations per month.',
+    taglines: ['AI-powered designs', 'All 12 design styles', 'AR furniture placement'],
   },
   pro: {
     monthly: 24.99, annual: 19.99, annualTotal: 239.90,
     label: 'Pro', badge: 'Professional', color: '#D4A84B',
     description: 'Advanced AI editing. Watermark-free renders, unlimited AR, and professional-grade exports.',
-    taglines: ['Advanced Claude AI models', 'Unlimited AR all modes', 'Watermark-free cinematic tours'],
+    taglines: ['Advanced AI models', 'Unlimited AR all modes', 'Watermark-free cinematic tours'],
   },
   architect: {
     monthly: 39.99, annual: 31.99, annualTotal: 383.90,
     label: 'Architect', badge: null, color: '#C8C8C8',
-    description: 'Full Claude AI power. Meshy AI furniture, co-design, CAD export, and dedicated VIP support.',
-    taglines: ['Full Claude AI designs', 'Meshy AI custom furniture', 'Co-design & team collaboration'],
+    description: 'Our most capable AI models. AI custom furniture, co-design, CAD export, and dedicated VIP support.',
+    taglines: ['Most capable AI designs', 'AI custom furniture', 'Co-design & team collaboration'],
   },
 };
 
@@ -64,7 +64,7 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
   { label: 'AI designs/month',     starter: '0',        creator: '40',          pro: '100',         architect: '300'       },
   { label: 'AI edits/month',       starter: '0',        creator: '30',          pro: '80',          architect: '300'       },
   { label: 'AI chat (per day)',    starter: '0',        creator: '25',          pro: 'Unlimited',   architect: '200'       },
-  { label: 'AI model',             starter: '—',        creator: 'DeepSeek',    pro: 'Advanced AI',   architect: 'Full Claude AI' },
+  { label: 'AI model',             starter: '—',        creator: 'Standard',    pro: 'Advanced',     architect: 'Most capable' },
   // AR
   { label: 'AR furniture placement', starter: 'No',   creator: 'Yes',         pro: 'Yes',         architect: 'Yes'       },
   { label: 'AR scan & measure',    starter: 'No',      creator: 'No',          pro: 'Yes',         architect: 'Yes'       },
@@ -77,7 +77,7 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
   // Design Tools
   { label: 'Design styles',       starter: '3',         creator: 'All 12',      pro: 'All 12',      architect: 'All 12'    },
   { label: 'Custom textures (AI)', starter: 'No',      creator: 'No',          pro: 'Yes',         architect: 'Yes'       },
-  { label: 'Meshy AI furniture',  starter: 'No',       creator: 'No',          pro: 'No',          architect: 'Yes'       },
+  { label: 'AI custom furniture',  starter: 'No',       creator: 'No',          pro: 'No',          architect: 'Yes'       },
   { label: 'Batch generation',     starter: 'No',       creator: 'No',          pro: 'Yes (3)',     architect: 'Yes (5)'   },
   // 3D & Walkthrough
   { label: '3D walkthrough mode',  starter: 'No',       creator: 'Yes',          pro: 'Yes',         architect: 'Yes'       },
@@ -111,7 +111,7 @@ export const TIER_PERKS: Record<Tier, string[]> = {
   ],
   creator: [
     '25 projects, 15 rooms/project',
-    '40 AI designs/month (DeepSeek)',
+    '40 AI designs/month',
     'All 12 design styles',
     'AR furniture placement',
     '5 renders/month',
@@ -121,18 +121,18 @@ export const TIER_PERKS: Record<Tier, string[]> = {
   pro: [
     '50 projects, 20 rooms/project',
     '100 AI designs + 80 edits/month',
-    'Advanced Claude AI models',
+    'Advanced AI models',
     'Unlimited AR all modes',
     '30 renders/month (no watermark)',
-    'Custom textures (fal.ai)',
+    'Custom textures (AI)',
     'First-person 3D walkthrough',
     'Unlimited exports',
   ],
   architect: [
     '100 projects, 50 rooms/project',
     '300 AI designs + 300 edits/month',
-    'Full Claude AI power',
-    'Meshy AI custom furniture',
+    'Most capable AI models',
+    'AI custom furniture',
     'Co-design with 5 collaborators',
     '100 renders + 50 exports/month',
     'CAD export & cost estimator',

@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <section className="py-20 px-6">
       <div className="max-w-3xl mx-auto">
         <h1 className="font-heading text-4xl text-text mb-4">Privacy Policy</h1>
-        <p className="text-text-dim font-body text-sm mb-12">Last updated: 9 April 2026</p>
+        <p className="text-text-dim font-body text-sm mb-12">Last updated: 7 October 2026</p>
 
         <div className="prose-custom space-y-8">
           <div>
@@ -67,8 +67,7 @@ export default function PrivacyPage() {
               <li><strong className="text-text">Supabase (Database and Authentication):</strong> Stores your account data, designs, and application state. Data is hosted on Supabase Cloud infrastructure in EU-West region and encrypted at rest using AES-256.</li>
               <li><strong className="text-text">Stripe (Payment Processing):</strong> Processes all subscription payments. Stripe is PCI DSS Level 1 certified. We never store your full payment card details.</li>
               <li><strong className="text-text">Google (OAuth Authentication):</strong> If you choose to sign in with Google, your Google profile information is shared with us to create your account.</li>
-              <li><strong className="text-text">Anthropic (AI Generation):</strong> Design parameters are sent to Anthropic&apos;s Claude API to generate architectural blueprints. Anthropic does not use your data to train their models when accessed via the API.</li>
-              <li><strong className="text-text">OpenAI (Voice Transcription):</strong> Audio recordings are sent to OpenAI&apos;s Whisper API for transcription. Audio is processed in real-time and is not retained by OpenAI after transcription.</li>
+              <li><strong className="text-text">OpenAI (AI features):</strong> OpenAI is our only AI provider. The content you submit to an AI feature is sent to OpenAI&apos;s API to produce the result: design descriptions and plans (blueprint generation, edits, suggestions and chat), room and reference photos and AR camera frames (analysis, object detection and furniture models), plans, prompts and photos (renders and textures), voice recordings you make for voice input (transcription), and text and images for content moderation. OpenAI does not use API data to train its models, and may retain it for up to 30 days to detect abuse. We ask OpenAI not to store responses. AI results are stored in your account and you can delete them at any time.</li>
               <li><strong className="text-text">Cloudflare (CDN):</strong> Static assets and images are served through Cloudflare&apos;s content delivery network to improve performance.</li>
             </ul>
           </div>
@@ -130,7 +129,7 @@ export default function PrivacyPage() {
           <div>
             <h2 className="font-heading text-xl text-text mb-3">10. International Transfers</h2>
             <p className="text-text-secondary font-body text-sm leading-relaxed">
-              While our primary data storage is in the EU-West region, some of our third-party processors (such as Anthropic and OpenAI) may process data in the United States. Where personal data is transferred outside the UK or EEA, we ensure that appropriate safeguards are in place, including Standard Contractual Clauses (SCCs) approved by the European Commission, or reliance on the processor&apos;s participation in recognised data protection frameworks.
+              While our primary data storage is in the EU-West region, some of our third-party processors (such as OpenAI) may process data in the United States. Where personal data is transferred outside the UK or EEA, we ensure that appropriate safeguards are in place, including Standard Contractual Clauses (SCCs) approved by the European Commission, or reliance on the processor&apos;s participation in recognised data protection frameworks.
             </p>
           </div>
 
@@ -171,10 +170,7 @@ export default function PrivacyPage() {
               <tbody className="divide-y divide-border">
                 <tr><td className="px-4 py-3 text-text">Supabase</td><td className="px-4 py-3 text-text-secondary">Database, authentication, file storage</td><td className="px-4 py-3 text-primary">supabase.com/privacy</td></tr>
                 <tr><td className="px-4 py-3 text-text">Stripe</td><td className="px-4 py-3 text-text-secondary">Payment processing and billing</td><td className="px-4 py-3 text-primary">stripe.com/privacy</td></tr>
-                <tr><td className="px-4 py-3 text-text">Anthropic (Claude)</td><td className="px-4 py-3 text-text-secondary">AI floor plan generation</td><td className="px-4 py-3 text-primary">anthropic.com/privacy</td></tr>
-                <tr><td className="px-4 py-3 text-text">OpenAI (Whisper)</td><td className="px-4 py-3 text-text-secondary">Voice-to-text transcription</td><td className="px-4 py-3 text-primary">openai.com/privacy</td></tr>
-                <tr><td className="px-4 py-3 text-text">Replicate</td><td className="px-4 py-3 text-text-secondary">AI texture generation (Creator+)</td><td className="px-4 py-3 text-primary">replicate.com/privacy</td></tr>
-                <tr><td className="px-4 py-3 text-text">Meshy</td><td className="px-4 py-3 text-text-secondary">3D furniture models (Architect)</td><td className="px-4 py-3 text-primary">meshy.ai/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">OpenAI</td><td className="px-4 py-3 text-text-secondary">All AI features: blueprint generation and edits, chat, photo and AR-frame analysis, furniture models, renders and textures, voice transcription, content moderation</td><td className="px-4 py-3 text-primary">openai.com/privacy</td></tr>
                 <tr><td className="px-4 py-3 text-text">Upstash Redis</td><td className="px-4 py-3 text-text-secondary">Anonymous rate-limit counters</td><td className="px-4 py-3 text-primary">upstash.com/privacy</td></tr>
                 <tr><td className="px-4 py-3 text-text">Cloudflare CDN</td><td className="px-4 py-3 text-text-secondary">Static asset delivery</td><td className="px-4 py-3 text-primary">cloudflare.com/privacy</td></tr>
               </tbody>
@@ -188,7 +184,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc list-inside space-y-2 text-text-secondary font-body text-sm">
               <li><strong className="text-text">Camera</strong> — for AR room scanning. Images are processed on-device and used only to construct a room layout.</li>
-              <li><strong className="text-text">Microphone</strong> — for voice-to-prompt. Audio is sent to OpenAI Whisper for transcription then discarded.</li>
+              <li><strong className="text-text">Microphone</strong> — for voice-to-prompt. Audio is sent to OpenAI for transcription. We do not keep the recording; OpenAI may retain API data for up to 30 days to detect abuse.</li>
               <li><strong className="text-text">Photo Library</strong> — to save exported design renders. We do not read existing photos.</li>
             </ul>
           </div>
