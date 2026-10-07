@@ -18,24 +18,33 @@ export const PRICING: Record<Tier, {
     taglines: ['Manual architecture design', 'Community read-only access', 'Export with watermark'],
   },
   creator: {
-    monthly: 14.99, annual: 11.99, annualTotal: 143.90,
+    monthly: 24.99, annual: 17.49, annualTotal: 209.90,
     label: 'Creator', badge: 'Most Popular', color: '#C8C8C8',
     description: 'AI-assisted designs. Unlock your full creative toolkit with 40 generations per month.',
     taglines: ['AI-powered designs', 'All 12 design styles', 'AR furniture placement'],
   },
   pro: {
-    monthly: 24.99, annual: 19.99, annualTotal: 239.90,
+    monthly: 34.99, annual: 22.49, annualTotal: 269.90,
     label: 'Pro', badge: 'Professional', color: '#D4A84B',
     description: 'Advanced AI editing. Watermark-free renders, unlimited AR, and professional-grade exports.',
     taglines: ['Advanced AI models', 'Unlimited AR all modes', 'Watermark-free cinematic tours'],
   },
   architect: {
-    monthly: 39.99, annual: 31.99, annualTotal: 383.90,
+    monthly: 49.99, annual: 34.49, annualTotal: 413.90,
     label: 'Architect', badge: null, color: '#C8C8C8',
     description: 'Our most capable AI models. AI custom furniture, co-design, CAD export, and dedicated VIP support.',
     taglines: ['Most capable AI designs', 'AI custom furniture', 'Co-design & team collaboration'],
   },
 };
+
+/** Biggest percentage saved by paying annually across the paid tiers, derived from PRICING so it can never drift. */
+export function maxAnnualSavingPercent(): number {
+  const tiers: Tier[] = ['creator', 'pro', 'architect'];
+  return Math.max(...tiers.map((t) => {
+    const full = PRICING[t].monthly * 12;
+    return Math.round(((full - PRICING[t].annualTotal) / full) * 100);
+  }));
+}
 
 export const STRIPE_PRICE_IDS: Record<string, string> = {
   creator_monthly:    process.env.NEXT_PUBLIC_STRIPE_PRICE_CREATOR_MONTHLY    ?? '',

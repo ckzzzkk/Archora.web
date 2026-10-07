@@ -1,6 +1,6 @@
 'use client';
 
-import type { BillingInterval } from '@/lib/pricing';
+import { maxAnnualSavingPercent, type BillingInterval } from '@/lib/pricing';
 
 interface BillingToggleProps {
   interval: BillingInterval;
@@ -39,7 +39,7 @@ export default function BillingToggle({ interval, onChange }: BillingToggleProps
       </span>
 
       <span className="text-xs font-body font-semibold text-accent bg-accent/10 px-3 py-1 rounded-button border border-accent/20">
-        Save 20%
+        Save up to {maxAnnualSavingPercent()}%
       </span>
     </div>
   );

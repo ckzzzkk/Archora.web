@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { maxAnnualSavingPercent } from '@/lib/pricing';
 
 const FAQ_ITEMS = [
   {
@@ -16,7 +17,7 @@ const FAQ_ITEMS = [
   {
     question: 'How does billing work?',
     answer:
-      'All payments are processed securely through Stripe. You can pay monthly or annually (with a 20% discount). Your subscription automatically renews at the end of each billing cycle. You can manage your payment methods and view invoices at any time from your account page.',
+      `All payments are processed securely through Stripe. You can pay monthly or annually (with up to ${maxAnnualSavingPercent()}% off). Your subscription automatically renews at the end of each billing cycle. You can manage your payment methods and view invoices at any time from your account page.`,
   },
   {
     question: 'Can I cancel anytime?',
