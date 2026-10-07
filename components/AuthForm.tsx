@@ -56,7 +56,7 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="border border-sketch rounded-card bg-surface p-8 md:p-12 w-full max-w-md mx-auto">
+    <div className="mx-auto w-full max-w-md rounded-2xl border border-rule bg-sheet p-8 sh2 md:p-10">
       <h2 className="font-heading text-2xl text-text text-center mb-2">
         Sign in
       </h2>
@@ -66,12 +66,12 @@ export default function AuthForm() {
         <span className="text-xs">Don&apos;t have an account? Download the ASORIA app to get started.</span>
       </p>
 
-      <div className="space-y-3 mb-6">
+      <div className="mb-4 space-y-2">
         <button
           type="button"
           onClick={() => void handleOAuth('google')}
           disabled={oauthLoading !== null}
-          className="w-full border border-border bg-surface text-text font-body font-semibold text-sm py-3.5 rounded-button hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-quiet w-full"
         >
           {oauthLoading === 'google' ? 'Opening Google...' : 'Continue with Google'}
         </button>
@@ -80,7 +80,7 @@ export default function AuthForm() {
             type="button"
             onClick={() => void handleOAuth('apple')}
             disabled={oauthLoading !== null}
-            className="w-full border border-border bg-surface text-text font-body font-semibold text-sm py-3.5 rounded-button hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-quiet w-full"
           >
             {oauthLoading === 'apple' ? 'Opening Apple...' : 'Continue with Apple'}
           </button>
@@ -96,7 +96,7 @@ export default function AuthForm() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="email" className="block text-sm font-body text-text-secondary mb-2">
+          <label htmlFor="email" className="field-label">
             Email
           </label>
           <input
@@ -105,13 +105,13 @@ export default function AuthForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+            className="field"
             placeholder="you@example.com"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-body text-text-secondary mb-2">
+          <label htmlFor="password" className="field-label">
             Password
           </label>
           <input
@@ -121,14 +121,14 @@ export default function AuthForm() {
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+            className="field"
             placeholder="Your password"
           />
         </div>
 
         {error && (
           <div className="bg-error/10 border border-error/20 rounded-card px-5 py-3">
-            <p className="text-error text-sm font-body">{error}</p>
+            <p className="text-error-ink text-sm font-body">{error}</p>
           </div>
         )}
 
@@ -141,7 +141,7 @@ export default function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-primary text-background font-body font-semibold text-sm py-3.5 rounded-button hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn btn-action w-full"
         >
           {loading ? 'Signing in...' : 'Sign In'}
         </button>

@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <section className="min-h-[80vh] flex items-center justify-center px-6 py-20">
-      <div className="border border-sketch rounded-card bg-surface p-8 md:p-12 w-full max-w-md mx-auto">
+      <div className="border border-rule rounded-card bg-surface p-8 md:p-12 w-full max-w-md mx-auto">
         <h1 className="font-heading text-2xl text-text text-center mb-2">Reset your password</h1>
         {sent ? (
           <p className="text-text-secondary text-sm font-body text-center leading-relaxed">
@@ -42,26 +42,26 @@ export default function ForgotPasswordPage() {
             </p>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-body text-text-secondary mb-2">Email</label>
+                <label htmlFor="email" className="field-label">Email</label>
                 <input
                   id="email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-surface border border-border rounded-input px-5 py-3 text-text font-body text-sm placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+                  className="field"
                   placeholder="you@example.com"
                 />
               </div>
               {error && (
                 <div className="bg-error/10 border border-error/20 rounded-card px-5 py-3">
-                  <p className="text-error text-sm font-body">{error}</p>
+                  <p className="text-error-ink text-sm font-body">{error}</p>
                 </div>
               )}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary text-background font-body font-semibold text-sm py-3.5 rounded-button hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn btn-action w-full"
               >
                 {loading ? 'Sending...' : 'Send reset link'}
               </button>

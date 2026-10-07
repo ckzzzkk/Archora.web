@@ -7,7 +7,7 @@ const FAQ_ITEMS = [
   {
     question: 'Can I change plans?',
     answer:
-      'Yes, you can upgrade or downgrade your plan at any time. When upgrading, you get immediate access to the new features. When downgrading, you keep your current tier until the end of the billing period.',
+      'Yes. Change your plan any time from your account page. The switch takes effect straight away, and Stripe adjusts your next charge for the difference.',
   },
   {
     question: 'Do I lose my designs if I downgrade?',
@@ -22,12 +22,12 @@ const FAQ_ITEMS = [
   {
     question: 'Can I cancel anytime?',
     answer:
-      'Absolutely. You can cancel your subscription at any time from your account page. After cancellation, you will retain access to your paid features until the end of your current billing period. Your designs remain accessible and exportable for 30 days after that.',
+      'Absolutely. You can cancel your subscription at any time from your account page. Your plan stays active until the end of the period you have paid for, then your account returns to Starter.',
   },
   {
-    question: "Why can't I pay in the app?",
+    question: 'Should I subscribe in the app or here?',
     answer:
-      'We process all subscriptions through our website to avoid app store commission fees of up to 30%. This allows us to keep prices lower and invest more in building features you love. Your subscription syncs automatically with the app the moment you subscribe.',
+      'Either works, and it is the same account. A plan bought on the web shows up in the app the next time you open it. If you already subscribe through the App Store or Google Play, change or cancel it there, and if you subscribed here, manage it from your account page, so you are never billed twice.',
   },
 ];
 
@@ -38,38 +38,32 @@ export default function FAQ() {
     <div className="space-y-3 max-w-3xl mx-auto">
       {FAQ_ITEMS.map((item, i) => {
         const isOpen = openIndex === i;
+        const panelId = `faq-panel-${i}`;
         return (
-          <div
-            key={i}
-            className="border border-sketch rounded-card bg-surface overflow-hidden transition-all duration-300"
-          >
-            <button
-              onClick={() => setOpenIndex(isOpen ? null : i)}
-              className="w-full flex items-center justify-between p-6 text-left"
-            >
-              <span className="font-body font-medium text-text pr-4">
-                {item.question}
-              </span>
-              <svg
-                className={`w-5 h-5 text-primary flex-shrink-0 transition-transform duration-300 ${
-                  isOpen ? 'rotate-180' : ''
-                }`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+          <div key={i} className="overflow-hidden rounded-xl border border-rule bg-sheet">
+            <h3>
+              <button
+                type="button"
+                onClick={() => setOpenIndex(isOpen ? null : i)}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+                className="flex w-full items-center justify-between gap-4 p-5 text-left"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div
-              className={`transition-all duration-300 ${
-                isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-              } overflow-hidden`}
-            >
-              <p className="px-6 pb-6 text-text-secondary text-sm font-body leading-relaxed">
-                {item.answer}
-              </p>
+                <span className="font-semibold text-ink">{item.question}</span>
+                <svg
+                  className={`h-5 w-5 shrink-0 text-structure-ink transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.2}
+                  aria-hidden
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </h3>
+            <div id={panelId} role="region" hidden={!isOpen}>
+              <p className="px-5 pb-5 text-sm leading-relaxed text-ink-2">{item.answer}</p>
             </div>
           </div>
         );

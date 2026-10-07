@@ -31,20 +31,20 @@ export default function CheckoutCancelPage() {
           Changed your mind?
         </h1>
         <p className="text-text-secondary font-body text-lg leading-relaxed mb-10">
-          No worries — your account has not been charged. You can come back
+          No worries, your account has not been charged. You can come back
           and subscribe any time you are ready.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/pricing"
-            className="bg-primary text-background font-body font-semibold px-8 py-4 rounded-button text-sm hover:bg-accent transition-colors inline-block"
+            className="btn btn-action"
           >
             Return to Pricing
           </Link>
           <a
             href="asoria://home"
-            className="border border-sketch bg-surface font-body font-medium text-text px-8 py-4 rounded-button text-sm hover:bg-elevated transition-colors inline-block"
+            className="btn btn-quiet"
           >
             Open App
           </a>

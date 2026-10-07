@@ -2,6 +2,7 @@
 
 import type { Tier, BillingInterval } from '@/lib/pricing';
 import { PRICING, TIER_PERKS } from '@/lib/pricing';
+import { monthlyEquivalentFor } from '@/lib/price-format';
 
 interface PricingCardProps {
   tier: Tier;
@@ -10,78 +11,52 @@ interface PricingCardProps {
   onSubscribe: (tier: Tier) => void;
 }
 
+/**
+ * One plan. The featured plan carries the page's single magenta button, like the app's subscription screen; every
+ * other plan is quiet. Selection and emphasis are ultramarine (what a thing IS), never magenta.
+ */
 export default function PricingCard({ tier, interval, isLoading, onSubscribe }: PricingCardProps) {
   const data = PRICING[tier];
   const perks = TIER_PERKS[tier];
-  const price = interval === 'monthly' ? data.monthly : data.annual;
   const isStarter = tier === 'starter';
-  const isMostPopular = data.badge === 'Most Popular';
+  const featured = data.badge === 'Most Popular';
+  const perMonth = interval === 'monthly' ? data.monthly : monthlyEquivalentFor(tier);
 
   return (
-    <div
-      className={`relative border border-sketch rounded-card bg-surface p-8 flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl group ${
-        isMostPopular ? 'ring-2 ring-primary' : ''
+    <article
+      className={`relative flex flex-col rounded-2xl border bg-sheet p-7 ${
+        featured ? 'border-2 border-structure sh2' : 'border-rule sh1'
       }`}
-      style={{
-        ['--tier-color' as string]: data.color,
-      }}
     >
-      {/* Badge */}
-      {data.badge && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-          <span className="bg-primary text-background text-xs font-body font-semibold px-4 py-1.5 rounded-button whitespace-nowrap">
-            {data.badge}
-          </span>
-        </div>
+      {featured && (
+        <span className="absolute -top-3 left-6 rounded-sm bg-structure px-3 py-1 text-xs font-semibold text-structure-on">
+          Most popular
+        </span>
       )}
 
-      {/* Header */}
-      <div className="mb-6">
-        <h3
-          className="font-heading text-2xl mb-1"
-          style={{ color: data.color }}
-        >
-          {data.label}
-        </h3>
-        <p className="text-text-dim text-sm font-body">
-          {data.description}
-        </p>
-      </div>
+      <h3 className="font-display text-2xl">{data.label}</h3>
+      <p className="mt-2 min-h-[6.75rem] text-sm leading-relaxed text-ink-2">{data.description}</p>
 
-      {/* Price */}
-      <div className="mb-8">
+      <div className="mt-6">
         {isStarter ? (
-          <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-mono font-bold text-text">Free</span>
-          </div>
+          <p className="num text-4xl font-semibold">Free</p>
         ) : (
-          <div className="flex items-baseline gap-1">
-            <span className="text-text-dim text-lg font-body">$</span>
-            <span className="text-4xl font-mono font-bold text-text">
-              {price.toFixed(2)}
-            </span>
-            <span className="text-text-dim text-sm font-body">/month</span>
-          </div>
-        )}
-        {!isStarter && interval === 'annual' && (
-          <p className="text-text-dim text-xs font-body mt-1">
-            ${data.annualTotal.toFixed(2)} billed annually
-          </p>
+          <>
+            <p className="flex items-baseline gap-1.5">
+              <span className="num text-4xl font-semibold">${perMonth.toFixed(2)}</span>
+              <span className="text-sm text-ink-3">a month</span>
+            </p>
+            <p className="num mt-1 h-5 text-sm text-ink-2">
+              {interval === 'annual' ? `$${data.annualTotal.toFixed(2)} billed yearly` : ''}
+            </p>
+          </>
         )}
       </div>
 
-      {/* Perks */}
-      <ul className="space-y-3 mb-8 flex-1">
+      <ul className="mb-8 mt-6 flex-1 space-y-3">
         {perks.map((perk) => (
-          <li key={perk} className="flex items-start gap-3 text-sm font-body text-text-secondary">
-            <svg
-              className="w-4 h-4 mt-0.5 flex-shrink-0"
-              style={{ color: data.color }}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
+          <li key={perk} className="flex items-start gap-3 text-sm text-ink-2">
+            <svg className="mt-0.5 h-4 w-4 shrink-0 text-structure-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.6} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             {perk}
@@ -89,20 +64,15 @@ export default function PricingCard({ tier, interval, isLoading, onSubscribe }: 
         ))}
       </ul>
 
-      {/* CTA */}
       <button
+        type="button"
         onClick={() => onSubscribe(tier)}
         disabled={isLoading}
-        className={`w-full py-3.5 rounded-button font-body font-semibold text-sm transition-all duration-300 disabled:opacity-60 ${
-          isStarter
-            ? 'bg-surface text-text-secondary hover:bg-elevated hover:text-text border border-border'
-            : isMostPopular
-              ? 'bg-primary text-background hover:bg-accent'
-              : 'bg-elevated text-text hover:bg-primary hover:text-background border border-border hover:border-primary'
-        }`}
+        aria-disabled={isLoading}
+        className={`btn w-full ${featured ? 'btn-action' : 'btn-quiet'}`}
       >
-        {isLoading ? 'Loading...' : isStarter ? 'Download App' : 'Subscribe'}
+        {isLoading ? 'Opening checkout...' : isStarter ? 'Get the app' : `Choose ${data.label}`}
       </button>
-    </div>
+    </article>
   );
 }

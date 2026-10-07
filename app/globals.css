@@ -3,92 +3,204 @@
 @tailwind utilities;
 
 :root {
-  --background: #1A1A1A;
-  --surface: #222222;
-  --surface-high: #2C2C2C;
-  --border: #333333;
-  --border-light: rgba(240, 237, 232, 0.12);
-  --primary: #C8C8C8;
-  --primary-dim: #9A9590;
-  --primary-glow: rgba(200, 200, 200, 0.12);
-  --accent: #D4A84B;
-  --text: #F0EDE8;
-  --text-secondary: #9A9590;
-  --text-dim: #5A5550;
-  --success: #7AB87A;
-  --warning: #D4A84B;
-  --error: #C0604A;
-  --accent-glow: rgba(212, 168, 75, 0.15);
-  --grid-line: #2C2C2C;
+  --paper: 233 233 224;
+  --paper-deep: 222 222 210;
+  --sheet: 254 254 251;
+  --sheet-raised: 245 245 237;
+  --rule: 200 201 186;
+  --rule-soft: 221 222 209;
+  --ink: 30 33 26;
+  --ink-2: 88 93 82;
+  --ink-3: 95 98 87;
+  --action: 255 45 135;
+  --action-edge: 196 22 95;
+  --action-ink: 158 8 82;
+  --action-on: 43 3 22;
+  --structure: 50 70 232;
+  --structure-edge: 33 51 180;
+  --structure-ink: 33 51 180;
+  --structure-on: 255 255 255;
+  --ai: 123 77 240;
+  --ai-edge: 91 52 196;
+  --ai-ink: 91 52 196;
+  --ai-on: 255 255 255;
+  --success: 0 168 126;
+  --success-edge: 0 114 82;
+  --success-ink: 0 101 74;
+  --success-on: 4 33 26;
+  --error: 200 21 44;
+  --error-edge: 142 10 28;
+  --error-ink: 158 15 34;
+  --error-on: 255 255 255;
+  --fresh: 201 232 28;
+  --fresh-edge: 143 168 11;
+  --fresh-ink: 63 74 0;
+  --fresh-on: 27 31 0;
+  --shadow: 30 33 26;
+  --grain-opacity: 0.2;
+  --grain-blend: multiply;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: 21 23 15;
+    --paper-deep: 15 17 11;
+    --sheet: 32 35 26;
+    --sheet-raised: 41 45 33;
+    --rule: 59 64 50;
+    --rule-soft: 45 49 37;
+    --ink: 236 238 226;
+    --ink-2: 166 172 155;
+    --ink-3: 144 149 134;
+    --action: 255 95 163;
+    --action-edge: 196 22 95;
+    --action-ink: 255 130 184;
+    --action-on: 43 3 22;
+    --structure: 116 136 255;
+    --structure-edge: 78 96 216;
+    --structure-ink: 147 162 255;
+    --structure-on: 11 16 48;
+    --ai: 165 133 255;
+    --ai-edge: 123 90 214;
+    --ai-ink: 183 157 255;
+    --ai-on: 22 11 51;
+    --success: 46 211 163;
+    --success-edge: 25 158 120;
+    --success-ink: 46 211 163;
+    --success-on: 4 33 26;
+    --error: 255 107 126;
+    --error-edge: 196 22 43;
+    --error-ink: 255 132 148;
+    --error-on: 43 3 8;
+    --fresh: 217 242 63;
+    --fresh-edge: 143 168 11;
+    --fresh-ink: 217 242 63;
+    --fresh-on: 27 31 0;
+    --shadow: 0 0 0;
+    --grain-opacity: 0.16;
+    --grain-blend: overlay;
+    color-scheme: dark;
+  }
+}
+
+@layer components {
+  .field {
+    @apply w-full rounded-md border border-rule bg-sheet px-4 py-3 text-[0.95rem] text-ink placeholder:text-ink-3 focus:border-structure focus:outline-none focus:ring-2 focus:ring-structure/30;
+    min-height: 48px;
+  }
+  .field-label { @apply mb-2 block text-sm font-medium text-ink-2; }
 }
 
 html {
-  background-color: var(--background);
-  color: var(--text);
+  background-color: rgb(var(--paper));
+  color: rgb(var(--ink));
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Grid background pattern */
-.bg-grid {
-  background-image:
-    radial-gradient(circle, var(--border) 1px, transparent 1px);
-  background-size: 32px 32px;
+/* Display type: Inter Tight only for large statements, never body (Vellum). */
+.font-display, .font-heading {
+  font-family: var(--font-inter-tight), var(--font-inter), sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.018em;
+  line-height: 1.04;
 }
 
-/* Sketchy line style for borders */
-.border-sketch {
-  border: 1px solid var(--border-light);
-  box-shadow: 0 0 0 1px var(--border-light);
-}
+h1, h2, h3, h4 { text-wrap: balance; }
+p { text-wrap: pretty; }
 
-/* Sketchy glow */
-.glow-gold {
-  box-shadow: 0 0 20px rgba(212, 168, 75, 0.2), 0 0 40px rgba(212, 168, 75, 0.1);
-}
+::selection { background: rgb(var(--structure) / 0.28); }
 
-.glow-white {
-  box-shadow: 0 0 20px rgba(200, 200, 200, 0.15), 0 0 40px rgba(200, 200, 200, 0.08);
-}
-
-::selection {
-  background: rgba(200, 200, 200, 0.2);
-  color: #F0EDE8;
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--background);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
-}
-
-/* Ink blueprint button hover effect */
-.btn-sketch {
-  position: relative;
-  overflow: hidden;
-}
-.btn-sketch::after {
+/* The paper grain: a tiled PNG (the app's own tile) at multiply on light, overlay on dark. Off under increased contrast. */
+.paper-grain { position: relative; isolation: isolate; }
+.paper-grain::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent 40%, rgba(212, 168, 75, 0.08) 100%);
-  opacity: 0;
-  transition: opacity 0.2s;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('/paper-grain.png');
+  background-size: 180px 180px;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: var(--grain-blend);
 }
-.btn-sketch:hover::after {
-  opacity: 1;
+@media (prefers-contrast: more) { .paper-grain::before { display: none; } }
+
+/* Visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 3px solid rgb(var(--structure));
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ─── The dimensional press (Vellum's signature) ───────────────────────────────
+   Every button carries a 4px lip in its pigment's `edge`. Pressing collapses it, so
+   the face travels DOWN and layout never moves (the 4px margin below reserves the lip). Buttons only:
+   cards settle by scaling, never by lip. */
+.btn {
+  --face: var(--sheet);
+  --edge: var(--rule);
+  --on: var(--ink);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.4rem;
+  margin-bottom: 4px;
+  border-radius: 16px;
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  background: rgb(var(--face));
+  color: rgb(var(--on));
+  box-shadow: 0 4px 0 0 rgb(var(--edge));
+  transform: translateY(0);
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out, opacity 120ms;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active, .btn[aria-pressed='true'] { transform: translateY(4px); box-shadow: 0 0 0 0 rgb(var(--edge)); }
+.btn:disabled, .btn[aria-disabled='true'] { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 0 rgb(var(--edge)); }
+.btn-action { --face: var(--action); --edge: var(--action-edge); --on: var(--action-on); }
+.btn-structure { --face: var(--structure); --edge: var(--structure-edge); --on: var(--structure-on); }
+.btn-quiet { --face: var(--sheet); --edge: var(--rule); --on: var(--ink); border: 1px solid rgb(var(--rule)); }
+.btn-small { min-height: 40px; padding: 0 1rem; font-size: 0.875rem; border-radius: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: opacity 120ms; }
+  .btn:active { transform: none; box-shadow: 0 4px 0 0 rgb(var(--edge)); opacity: 0.7; }
+}
+
+/* Cards settle (scale) on press and lift on hover; they never get a lip. */
+.settle { transition: transform 160ms ease-out, box-shadow 160ms ease-out; }
+.settle:hover { box-shadow: 0 10px 28px rgb(var(--shadow) / 0.14); }
+.settle:active { transform: scale(0.985); }
+@media (prefers-reduced-motion: reduce) { .settle, .settle:active { transition: none; transform: none; } }
+
+/* Ink shadows (never black). */
+.sh1 { box-shadow: 0 1px 2px rgb(var(--shadow) / 0.10), 0 2px 8px rgb(var(--shadow) / 0.06); }
+.sh2 { box-shadow: 0 4px 16px rgb(var(--shadow) / 0.12); }
+.sh3 { box-shadow: 0 14px 40px rgb(var(--shadow) / 0.18); }
+
+/* Measurements and figures: mono, tabular, so numbers never reflow. */
+.num { font-family: var(--font-jetbrains-mono), monospace; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+
+/* Plan drawing: strokes draw themselves (framer-motion drives pathLength); this is the static fallback. */
+.plan-stroke { fill: none; stroke: rgb(var(--ink)); stroke-linecap: round; stroke-linejoin: round; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
 }

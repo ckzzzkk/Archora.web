@@ -142,7 +142,7 @@ export default function TermsPage() {
             <p className="text-text-secondary font-body text-sm leading-relaxed">
               If you have any questions about these Terms of Service, please contact us:
             </p>
-            <div className="mt-3 border border-sketch rounded-card bg-surface p-6">
+            <div className="mt-3 border border-rule rounded-card bg-surface p-6">
               <p className="text-text font-body text-sm font-medium">Crokora</p>
               <p className="text-text-secondary font-body text-sm">Legal Inquiries</p>
               <a href="mailto:asoria.app@gmail.com" className="text-primary font-body text-sm hover:text-accent transition-colors">

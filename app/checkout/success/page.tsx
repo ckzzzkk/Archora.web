@@ -32,19 +32,19 @@ export default function CheckoutSuccessPage() {
         </h1>
         <p className="text-text-secondary font-body text-lg leading-relaxed mb-10">
           Your subscription is now active. Open the ASORIA app to start using
-          your new features — everything syncs automatically.
+          your new features, everything syncs automatically.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
             href="asoria://subscription-success"
-            className="bg-primary text-background font-body font-semibold px-8 py-4 rounded-button text-sm hover:bg-accent transition-colors inline-block"
+            className="btn btn-action"
           >
             Open App
           </a>
           <Link
             href="/account"
-            className="border border-sketch bg-surface font-body font-medium text-text px-8 py-4 rounded-button text-sm hover:bg-elevated transition-colors inline-block"
+            className="btn btn-quiet"
           >
             Go to Account
           </Link>

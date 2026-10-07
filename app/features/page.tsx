@@ -1,77 +1,85 @@
 import type { Metadata } from 'next';
-import FeatureSection from '@/components/FeatureSection';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Features',
-  description: 'Discover ASORIA features: AI floor plan generation, design studio, AR room scanning, 3D walkthroughs, and community templates.',
+  description:
+    'What ASORIA does: a guided AI interview that drafts your plan, a design studio, furniture, an AR room scanner, 3D walkthroughs and a community of shared designs.',
 };
 
-const FEATURES = [
+interface Chapter {
+  id: string;
+  title: string;
+  lead: string;
+  points: Array<{ term: string; detail: string }>;
+}
+
+/** Facts here mirror the app's tier limits and feature list; plan names say where a feature starts. */
+const CHAPTERS: Chapter[] = [
   {
-    title: 'AI Floor Plan Generation',
-    description:
-      'Meet ARIA, your personal AI architect. Through a guided 7-step interview, she learns exactly what you want — building type, plot size, room count, style preferences, and more. Then she generates a structurally sound blueprint accounting for weather patterns, physics, and building codes.',
-    highlights: [
-      '7-step guided design interview with ARIA',
-      'Structural intelligence — accounts for load-bearing walls, ventilation, and natural light',
-      'Voice input support via AI transcription',
-      'Upload reference images for style inspiration',
-      '12 architectural styles from Minimalist to Victorian',
-      'Generate complete blueprints in under 30 seconds',
+    id: 'generation',
+    title: 'Meet ARIA, your AI architect',
+    lead: 'Not a single text box. ARIA interviews you in seven short steps, the way a designer would, then drafts a plan around your answers.',
+    points: [
+      { term: 'The interview', detail: 'Building type, plot size, rooms and extras, style, an optional reference photo, notes, then a review before anything is generated.' },
+      { term: 'Speak or type', detail: 'Dictate your notes and ARIA transcribes them (Pro and Architect).' },
+      { term: '16 design styles', detail: 'From minimalist to rustic. Starter includes three; every paid plan includes all of them.' },
+      { term: 'Checked before you see it', detail: 'Each plan comes with an engineering report on structure, light and exits that you can read and act on.' },
+      { term: 'Plans per month', detail: '40 on Creator, 100 on Pro, 300 on Architect.' },
     ],
   },
   {
-    title: 'Design Studio',
-    description:
-      'A professional-grade 2D and 3D design workspace right on your phone. Edit AI-generated blueprints or sketch from scratch. Place walls, doors, windows, and choose from over 65 procedural furniture pieces. Everything renders in real-time with our Skia and Three.js engines.',
-    highlights: [
-      'Full 2D blueprint editor with Skia canvas',
-      'Wall, door, and window placement tools',
-      '65+ procedural furniture pieces across 8 categories',
-      'Multi-floor support up to 10 floors',
-      'Undo/redo with shake gesture detection',
-      'Auto-save with configurable intervals',
-    ],
-    reversed: true,
-  },
-  {
-    title: 'AR System',
-    description:
-      'Bridge the gap between digital designs and physical spaces. ASORIA\'s augmented reality system lets you scan real rooms, place virtual furniture, and measure distances — all through your phone camera. Import scanned rooms directly into the design studio.',
-    highlights: [
-      'Photo Analysis mode — snap a photo, get room dimensions',
-      'Manual Measure mode — point-to-point AR measurements',
-      'Depth Scan mode — full 3D room capture',
-      'Furniture placement in AR — see how pieces fit before buying',
-      'Import scanned rooms into the design studio',
-      'Works with ARKit (iOS) and ARCore (Android)',
+    id: 'studio',
+    title: 'A design studio in your hand',
+    lead: 'Edit what ARIA drew, or start from a blank sketch. Everything works in 2D and 3D, and everything can be undone.',
+    points: [
+      { term: 'Walls, doors, windows', detail: 'Draw and adjust them on a smooth 2D canvas, then switch to 3D and orbit the result.' },
+      { term: 'Multiple floors', detail: 'Up to 5 floors on Creator, 10 on Pro and 20 on Architect.' },
+      { term: 'Sun study', detail: 'See how light falls through the day at your site (Creator and up).' },
+      { term: 'Undo, redo, shake', detail: 'Step back through your changes, or shake your phone to undo.' },
+      { term: 'Saved as you go', detail: 'Paid plans save automatically, as often as every 30 seconds.' },
     ],
   },
   {
-    title: '3D Walkthrough',
-    description:
-      'Step inside your designs before they are built. Our immersive first-person walkthrough mode lets you explore every room, hallway, and outdoor space with realistic materials, lighting, and furniture. Share walkthrough recordings with clients or family.',
-    highlights: [
-      'First-person camera with smooth navigation',
-      'Realistic material rendering and lighting',
-      'Furniture and fixtures rendered in full 3D',
-      'Walk through multi-floor buildings via staircases',
-      '50+ wall textures and 30+ floor materials',
-      'Screenshot and recording capture',
+    id: 'furniture',
+    title: 'Furniture that fits',
+    lead: 'Furnish a room from a library, or make a piece that does not exist yet.',
+    points: [
+      { term: '65+ pieces', detail: 'Sofas, beds, tables, storage, bathroom and outdoor furniture, all in true size.' },
+      { term: 'Your own pieces', detail: 'Photograph a chair or describe a sofa and ASORIA builds a model you can place in your design (higher plans).' },
+      { term: 'Finishes', detail: 'Choose from 50 wall textures and 30 floor materials, or generate a custom texture (Pro and Architect).' },
     ],
-    reversed: true,
   },
   {
-    title: 'Community & Templates',
-    description:
-      'Join a growing community of architects, designers, and enthusiasts. Browse published designs for inspiration, save your favourites, and rate the best ones. Publish your own templates to the marketplace and earn revenue with every download.',
-    highlights: [
-      'Browse thousands of community-published designs',
-      'Like, save, rate, and comment on designs',
-      'Publish your own templates to the marketplace',
-      'Earn up to 80% revenue share on template sales',
-      'Masonry layout feed with infinite scroll',
-      'Follow your favourite designers',
+    id: 'ar',
+    title: 'Your camera is a tape measure',
+    lead: 'Bring the real room into the design, and the design into the real room.',
+    points: [
+      { term: 'Scan', detail: 'Turn a room into a plan with your camera (Creator and up: 15 scans a month, unlimited on Pro and Architect).' },
+      { term: 'Place', detail: 'See furniture at true size in the space before you commit (Creator and up).' },
+      { term: 'Measure', detail: 'Measure walls, openings and distances point to point (Pro and Architect).' },
+      { term: 'Bring it back', detail: 'Import a scanned room into the studio and keep designing.' },
+      { term: 'Your device', detail: 'Works with ARKit on iPhone and ARCore on Android.' },
+    ],
+  },
+  {
+    id: 'walkthrough',
+    title: 'Walk through it before it exists',
+    lead: 'Step inside the model and look around.',
+    points: [
+      { term: 'First person', detail: 'Move through rooms, hallways and up staircases on multi-floor buildings.' },
+      { term: 'Cinematic tour', detail: 'Turn a walkthrough into a shareable tour (watermarked on Creator, clean on Pro and Architect).' },
+      { term: 'Renders', detail: 'Make photoreal renders of your design: 5 a month on Creator, 30 on Pro, 100 on Architect.' },
+    ],
+  },
+  {
+    id: 'community',
+    title: 'Share what you drew',
+    lead: 'Inspo is where ASORIA designs are shared.',
+    points: [
+      { term: 'Browse and save', detail: 'Explore designs, like, save, rate and comment. Reading is free on every plan.' },
+      { term: 'Publish templates', detail: 'Creators can publish 5 templates; Pro and Architect have no limit.' },
+      { term: 'Earn from them', detail: 'Creators and Pro keep 60% of template sales, Architect keeps 70%.' },
     ],
   },
 ];
@@ -79,54 +87,35 @@ const FEATURES = [
 export default function FeaturesPage() {
   return (
     <>
-      {/* Header */}
-      <section className="pt-16 pb-8 px-6 text-center">
-        <div className="max-w-3xl mx-auto">
-          <p className="text-primary font-heading text-sm tracking-widest uppercase mb-4">
-            Platform Features
-          </p>
-          <h1 className="font-heading text-4xl md:text-5xl text-text mb-6">
-            Built for architects, designers, and dreamers
-          </h1>
-          <p className="text-text-secondary font-body text-lg leading-relaxed">
-            From AI-powered generation to immersive AR experiences, ASORIA gives
-            you everything you need to bring architectural visions to life.
-          </p>
-        </div>
+      <section className="mx-auto max-w-6xl px-6 pb-6 pt-10 md:pt-16">
+        <h1 className="font-display max-w-3xl text-5xl sm:text-6xl">From a first question to a finished room.</h1>
+        <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-2">
+          Everything below runs on your phone. Features say which plan they start on, and every plan is listed on the{' '}
+          <Link href="/pricing" className="font-semibold text-structure-ink underline decoration-structure/40 underline-offset-4 hover:decoration-structure">
+            pricing page
+          </Link>
+          .
+        </p>
       </section>
 
-      {/* Feature sections */}
-      {FEATURES.map((feature, i) => (
-        <div
-          key={feature.title}
-          className={i % 2 === 1 ? 'bg-surface/30' : ''}
-        >
-          <FeatureSection
-            title={feature.title}
-            description={feature.description}
-            highlights={feature.highlights}
-            reversed={feature.reversed}
-          />
-        </div>
-      ))}
-
-      {/* Bottom CTA */}
-      <section className="py-24 px-6 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="font-heading text-3xl md:text-4xl text-text mb-6">
-            Ready to start designing?
-          </h2>
-          <p className="text-text-secondary font-body text-lg mb-10">
-            Download ASORIA for free and explore the AI architecture studio.
-          </p>
-          <a
-            href="/pricing"
-            className="inline-block bg-primary text-background font-body font-semibold px-10 py-4 rounded-button text-sm hover:bg-accent transition-colors"
-          >
-            View Plans
-          </a>
-        </div>
-      </section>
+      <div className="mx-auto max-w-6xl px-6 pb-24">
+        {CHAPTERS.map((c) => (
+          <section key={c.id} id={c.id} className="scroll-mt-28 border-t border-rule py-14 md:grid md:grid-cols-[0.9fr_1.1fr] md:gap-14">
+            <div className="md:sticky md:top-28 md:self-start">
+              <h2 className="font-display text-3xl sm:text-4xl">{c.title}</h2>
+              <p className="mt-4 max-w-md text-lg leading-relaxed text-ink-2">{c.lead}</p>
+            </div>
+            <dl className="mt-8 divide-y divide-rule-soft md:mt-0">
+              {c.points.map((p) => (
+                <div key={p.term} className="grid gap-1 py-4 sm:grid-cols-[11rem_1fr] sm:gap-6">
+                  <dt className="font-display text-lg">{p.term}</dt>
+                  <dd className="leading-relaxed text-ink-2">{p.detail}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
+      </div>
     </>
   );
 }

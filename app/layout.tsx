@@ -1,8 +1,15 @@
-import type { Metadata } from 'next';
-import { Inter, Architects_Daughter, JetBrains_Mono } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Inter, Inter_Tight, JetBrains_Mono } from 'next/font/google';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 import './globals.css';
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#E9E9E0' },
+    { media: '(prefers-color-scheme: dark)', color: '#15170F' },
+  ],
+};
 
 const inter = Inter({
   subsets: ['latin'],
@@ -10,10 +17,10 @@ const inter = Inter({
   display: 'swap',
 });
 
-const architectsDaughter = Architects_Daughter({
-  weight: '400',
+const interTight = Inter_Tight({
   subsets: ['latin'],
-  variable: '--font-architects-daughter',
+  weight: ['600', '700', '800'],
+  variable: '--font-inter-tight',
   display: 'swap',
 });
 
@@ -44,7 +51,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'ASORIA — AI-Powered Architecture Design',
     description: 'Describe it. Build it. Walk through it.',
-    url: 'https://asoria.app',
+    url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://asoria.vercel.app',
     siteName: 'ASORIA',
     type: 'website',
   },
@@ -54,7 +61,7 @@ export const metadata: Metadata = {
     description: 'Describe it. Build it. Walk through it.',
     creator: '@asoria_app',
   },
-  metadataBase: new URL('https://asoria.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://asoria.vercel.app'),
 };
 
 export default function RootLayout({
@@ -65,12 +72,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${architectsDaughter.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="font-body bg-background text-text antialiased">
-        <Nav />
-        <main className="min-h-screen pt-16">{children}</main>
-        <Footer />
+      <body className="font-body bg-paper text-ink antialiased">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-sheet focus:px-4 focus:py-3 focus:text-ink sh2"
+        >
+          Skip to content
+        </a>
+        <div className="paper-grain min-h-screen">
+          <Nav />
+          <main id="main" className="min-h-screen pt-[72px]">{children}</main>
+          <Footer />
+        </div>
       </body>
     </html>
   );

@@ -12,18 +12,21 @@ export default async function AccountPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const email = user?.email ?? '';
-  const displayName = (user?.user_metadata?.display_name as string) ?? email.split('@')[0];
+  let displayName = (user?.user_metadata?.display_name as string) ?? email.split('@')[0];
 
-  // Get current subscription tier from subscriptions table
+  // The tier is users.subscription_tier: the one value the app and every feature gate read, kept up to date by the Stripe
+  // and store webhooks (the highest plan across both). The page used to read `subscriptions` with `.single()`, which
+  // ignored that value and failed outright for anyone with two active rows.
   let tier = 'starter';
   if (user) {
-    const { data: subData } = await supabase
-      .from('subscriptions')
-      .select('tier')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .single();
-    tier = subData?.tier ?? 'starter';
+    const { data: row } = await supabase
+      .from('users')
+      .select('subscription_tier, display_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    const t = (row as { subscription_tier?: string | null; display_name?: string | null } | null) ?? null;
+    if (t?.subscription_tier) tier = t.subscription_tier;
+    if (t?.display_name) displayName = t.display_name;
   }
 
   return (

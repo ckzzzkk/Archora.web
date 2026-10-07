@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import { getPortalUrl, syncSubscription } from '@/lib/stripe';
-import { PRICING, type Tier } from '@/lib/pricing';
+import { PRICING, type Tier, FEATURE_COMPARISON } from '@/lib/pricing';
 
 interface AccountClientProps {
   email: string;
@@ -59,12 +59,9 @@ export default function AccountClient({ email, displayName, tier: initialTier }:
         </p>
 
         {/* Profile card */}
-        <div className="border border-sketch rounded-card bg-surface p-8 mb-8">
+        <div className="border border-rule rounded-card bg-surface p-8 mb-8">
           <div className="flex items-center gap-4 mb-6">
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center font-heading text-xl text-background"
-              style={{ backgroundColor: tierData.color }}
-            >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-structure font-display text-xl text-structure-on">
               {displayName.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -75,14 +72,7 @@ export default function AccountClient({ email, displayName, tier: initialTier }:
 
           {/* Tier badge */}
           <div className="flex items-center gap-3 mb-6">
-            <span
-              className="px-4 py-1.5 rounded-button text-xs font-body font-semibold"
-              style={{
-                backgroundColor: `${tierData.color}20`,
-                color: tierData.color,
-                border: `1px solid ${tierData.color}40`,
-              }}
-            >
+            <span className="rounded-sm border border-structure/30 bg-structure/10 px-3 py-1 text-xs font-semibold text-structure-ink">
               {tierData.label} Plan
             </span>
             {!isStarter && (
@@ -93,21 +83,25 @@ export default function AccountClient({ email, displayName, tier: initialTier }:
           <p className="text-text-secondary text-sm font-body">{tierData.description}</p>
         </div>
 
-        {/* Usage placeholder */}
-        <div className="border border-sketch rounded-card bg-surface p-8 mb-8">
-          <h2 className="font-heading text-xl text-text mb-6">Usage</h2>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <p className="text-text-dim text-xs font-body mb-1">AI Generations</p>
-              <p className="text-text font-mono text-2xl">--</p>
-              <p className="text-text-dim text-xs font-body">this month</p>
-            </div>
-            <div>
-              <p className="text-text-dim text-xs font-body mb-1">Projects</p>
-              <p className="text-text font-mono text-2xl">--</p>
-              <p className="text-text-dim text-xs font-body">active</p>
-            </div>
-          </div>
+        {/* What the plan includes (the real limits, not a placeholder) */}
+        <div className="border border-rule rounded-card bg-surface p-8 mb-8">
+          <h2 className="font-heading text-xl text-text mb-6">Your plan includes</h2>
+          <dl className="grid grid-cols-2 gap-6">
+            {[
+              { label: 'AI designs a month', row: 'AI designs/month' },
+              { label: 'Projects', row: 'Projects' },
+              { label: 'Renders a month', row: 'Renders/month' },
+              { label: 'AR scans a month', row: 'AR scans/month' },
+            ].map(({ label, row }) => {
+              const r = FEATURE_COMPARISON.find((x) => x.label === row);
+              return (
+                <div key={row}>
+                  <dt className="text-text-dim text-xs font-body mb-1">{label}</dt>
+                  <dd className="num text-2xl text-text">{r ? r[tier as Tier] : ''}</dd>
+                </div>
+              );
+            })}
+          </dl>
         </div>
 
         {/* Actions */}
@@ -116,11 +110,11 @@ export default function AccountClient({ email, displayName, tier: initialTier }:
             <button
               onClick={handleManageSubscription}
               disabled={loading}
-              className="w-full border border-sketch rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors disabled:opacity-50 group"
+              className="w-full border border-rule rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors disabled:opacity-50 group"
             >
               <div className="text-left">
                 <p className="font-body font-medium text-text">Manage Subscription</p>
-                <p className="text-text-dim text-sm font-body">Update payment, view invoices, or change plan</p>
+                <p className="text-text-dim text-sm font-body">Update payment, view invoices, or change plan. For a plan bought through the App Store or Google Play, manage it there instead.</p>
               </div>
               <svg className="w-5 h-5 text-text-dim group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -129,7 +123,7 @@ export default function AccountClient({ email, displayName, tier: initialTier }:
           ) : (
             <a
               href="/pricing"
-              className="w-full border border-sketch rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors group block"
+              className="w-full border border-rule rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors group block"
             >
               <div className="text-left">
                 <p className="font-body font-medium text-text">Upgrade Plan</p>
@@ -143,7 +137,7 @@ export default function AccountClient({ email, displayName, tier: initialTier }:
 
           <a
             href="asoria://home"
-            className="w-full border border-sketch rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors group block"
+            className="w-full border border-rule rounded-card bg-surface p-5 flex items-center justify-between hover:bg-elevated transition-colors group block"
           >
             <div className="text-left">
               <p className="font-body font-medium text-text">Open in App</p>
@@ -156,13 +150,13 @@ export default function AccountClient({ email, displayName, tier: initialTier }:
 
           <button
             onClick={handleSignOut}
-            className="w-full border border-sketch rounded-card bg-surface p-5 flex items-center justify-between hover:bg-error/10 transition-colors group"
+            className="w-full border border-rule rounded-card bg-surface p-5 flex items-center justify-between hover:bg-error/10 transition-colors group"
           >
             <div className="text-left">
-              <p className="font-body font-medium text-text group-hover:text-error transition-colors">Sign Out</p>
+              <p className="font-body font-medium text-text group-hover:text-error-ink transition-colors">Sign Out</p>
               <p className="text-text-dim text-sm font-body">Log out of your account</p>
             </div>
-            <svg className="w-5 h-5 text-text-dim group-hover:text-error transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5 text-text-dim group-hover:text-error-ink transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
             </svg>
           </button>
