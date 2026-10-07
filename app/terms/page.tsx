@@ -10,13 +10,13 @@ export default function TermsPage() {
     <section className="py-20 px-6">
       <div className="max-w-3xl mx-auto">
         <h1 className="font-heading text-4xl text-text mb-4">Terms of Service</h1>
-        <p className="text-text-dim font-body text-sm mb-12">Last updated: 9 April 2026</p>
+        <p className="text-text-dim font-body text-sm mb-12">Last updated: 7 October 2026</p>
 
         <div className="prose-custom space-y-8">
           <div>
             <h2 className="font-heading text-xl text-text mb-3">1. Introduction and Acceptance</h2>
             <p className="text-text-secondary font-body text-sm leading-relaxed">
-              These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User&quot;, &quot;you&quot;, or &quot;your&quot;) and Crokora (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), the operator of the ASORIA platform. ASORIA encompasses the website located at asoria.app, the ASORIA mobile application available for iOS and Android, and all related services, tools, and features (collectively, the &quot;Service&quot;).
+              These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User&quot;, &quot;you&quot;, or &quot;your&quot;) and Crokora (&quot;Company&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), the operator of the ASORIA platform. ASORIA encompasses the ASORIA website, the ASORIA mobile application available for iOS and Android, and all related services, tools, and features (collectively, the &quot;Service&quot;).
             </p>
             <p className="text-text-secondary font-body text-sm leading-relaxed mt-3">
               By creating an account, subscribing to a plan, or otherwise accessing or using the Service, you acknowledge that you have read, understood, and agree to be bound by these Terms. If you do not agree to these Terms, you must not use the Service.
@@ -47,7 +47,7 @@ export default function TermsPage() {
               <li><strong className="text-text">Auto-Renewal:</strong> All paid subscriptions automatically renew at the end of each billing period at the then-current price, unless cancelled before the renewal date. You will receive a reminder email at least 7 days before each renewal.</li>
               <li><strong className="text-text">Cancellation:</strong> You may cancel your subscription at any time through the Manage Subscription page in your account settings, which links to the Stripe billing portal. Upon cancellation, you will retain access to your paid features until the end of your current billing period. No partial refunds are provided for unused portions of a billing period.</li>
               <li><strong className="text-text">Plan Changes:</strong> You may upgrade your subscription at any time and will be charged a prorated amount for the remainder of your current billing period. Downgrades take effect at the end of the current billing period.</li>
-              <li><strong className="text-text">Payment Processing:</strong> All payments are processed securely by Stripe, Inc. By subscribing, you agree to Stripe&apos;s terms of service and privacy policy. We do not store your payment card information on our servers.</li>
+              <li><strong className="text-text">Payment Processing:</strong> Payments made on our website are processed securely by Stripe, Inc., and you agree to Stripe&apos;s terms of service and privacy policy when you subscribe there. Payments made in the app are processed by Apple (App Store) or Google (Google Play) under their terms, and you manage and cancel those subscriptions in your App Store or Google Play account. We do not store your payment card information on our servers.</li>
               <li><strong className="text-text">Free Trial:</strong> We may offer free trial periods for paid subscriptions. At the end of a free trial, your subscription will automatically convert to a paid subscription unless cancelled before the trial expires.</li>
             </ul>
           </div>

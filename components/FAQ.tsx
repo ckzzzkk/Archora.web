@@ -7,7 +7,7 @@ const FAQ_ITEMS = [
   {
     question: 'Can I change plans?',
     answer:
-      'Yes. Change your plan any time from your account page. The switch takes effect straight away, and Stripe adjusts your next charge for the difference.',
+      'Yes. Change your plan any time from your account page. An upgrade takes effect straight away and you pay the prorated difference. A downgrade takes effect at the end of your current billing period.',
   },
   {
     question: 'Do I lose my designs if I downgrade?',
