@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <section className="py-20 px-6">
       <div className="max-w-3xl mx-auto">
         <h1 className="font-heading text-4xl text-text mb-4">Privacy Policy</h1>
-        <p className="text-text-dim font-body text-sm mb-12">Last updated: 7 October 2026</p>
+        <p className="text-text-dim font-body text-sm mb-12">Last updated: 28 October 2026</p>
 
         <div className="prose-custom space-y-8">
           <div>
@@ -39,6 +39,7 @@ export default function PrivacyPage() {
               <li><strong className="text-text">AR Scan Data:</strong> Room dimensions, photographs, depth maps, and spatial data collected when you use the augmented reality scanning features.</li>
               <li><strong className="text-text">Voice Input:</strong> Audio recordings submitted through the voice-to-text feature during the design interview, which are transcribed and then deleted. We do not retain audio recordings beyond the transcription process.</li>
               <li><strong className="text-text">Reference Images:</strong> Photographs you upload as style references during the design process.</li>
+              <li><strong className="text-text">Approximate Location (optional):</strong> If you choose to use your location in the design interview, we read your approximate foreground location to design for your local sun, rain and wind, and to suggest which country&apos;s building rules the design&apos;s safety checks use. When we use it only to suggest the country, we keep the two-letter country and discard the coordinates. We never request precise or background location. Coordinates are rounded to about 1 km, and a project you generate stores the location at that precision. You can decline and search for a place instead.</li>
               <li><strong className="text-text">Contact Information:</strong> Name, email address, and message content submitted through our contact form.</li>
             </ul>
           </div>
@@ -69,6 +70,7 @@ export default function PrivacyPage() {
               <li><strong className="text-text">Google (OAuth Authentication):</strong> If you choose to sign in with Google, your Google profile information is shared with us to create your account.</li>
               <li><strong className="text-text">OpenAI (AI features):</strong> OpenAI is our only AI provider. The content you submit to an AI feature is sent to OpenAI&apos;s API to produce the result: design descriptions and plans (blueprint generation, edits, suggestions and chat), room and reference photos and AR camera frames (analysis, object detection and furniture models), plans, prompts and photos (renders and textures), voice recordings you make for voice input (transcription), and text and images for content moderation. OpenAI does not use API data to train its models, and may retain it for up to 30 days to detect abuse. We ask OpenAI not to store responses. AI results are stored in your account and you can delete them at any time.</li>
               <li><strong className="text-text">Cloudflare (CDN):</strong> Static assets and images are served through Cloudflare&apos;s content delivery network to improve performance.</li>
+              <li><strong className="text-text">Site data services:</strong> Open-Meteo and NASA POWER (climate), AWS Terrain Tiles (the ground&apos;s slope), ISRIC SoilGrids (soil) and the USGS earthquake catalogue (past earthquakes nearby). They receive only approximate coordinates, rounded to about 1 km, or a place name you search for, and never your account details.</li>
             </ul>
           </div>
 
@@ -173,6 +175,7 @@ export default function PrivacyPage() {
                 <tr><td className="px-4 py-3 text-text">OpenAI</td><td className="px-4 py-3 text-text-secondary">All AI features: blueprint generation and edits, chat, photo and AR-frame analysis, furniture models, renders and textures, voice transcription, content moderation</td><td className="px-4 py-3 text-primary">openai.com/privacy</td></tr>
                 <tr><td className="px-4 py-3 text-text">Upstash Redis</td><td className="px-4 py-3 text-text-secondary">Anonymous rate-limit counters</td><td className="px-4 py-3 text-primary">upstash.com/privacy</td></tr>
                 <tr><td className="px-4 py-3 text-text">Cloudflare CDN</td><td className="px-4 py-3 text-text-secondary">Static asset delivery</td><td className="px-4 py-3 text-primary">cloudflare.com/privacy</td></tr>
+                <tr><td className="px-4 py-3 text-text">Open-Meteo, NASA POWER, AWS Terrain Tiles, ISRIC SoilGrids, USGS</td><td className="px-4 py-3 text-text-secondary">Climate, terrain, soil and earthquake data for a design&apos;s site, from coordinates rounded to about 1 km (no account details)</td><td className="px-4 py-3 text-primary">open-meteo.com · power.larc.nasa.gov · aws.amazon.com/privacy · isric.org · usgs.gov</td></tr>
               </tbody>
             </table>
           </div>
@@ -186,6 +189,7 @@ export default function PrivacyPage() {
               <li><strong className="text-text">Camera</strong> — for AR room scanning. Images are processed on-device and used only to construct a room layout.</li>
               <li><strong className="text-text">Microphone</strong> — for voice-to-prompt. Audio is sent to OpenAI for transcription. We do not keep the recording; OpenAI may retain API data for up to 30 days to detect abuse.</li>
               <li><strong className="text-text">Photo Library</strong> — to save exported design renders. We do not read existing photos.</li>
+              <li><strong className="text-text">Location (approximate, while the app is open)</strong> — only when you choose to use your location in the design interview. Never precise, never in the background.</li>
             </ul>
           </div>
 
